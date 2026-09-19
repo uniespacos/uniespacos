@@ -80,3 +80,26 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx eslint resources/js --suppressions-location eslint-suppressions.empty.json 2>&1 | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # Job agregador: mantém o nome do check obrigatório na proteção da branch develop
+  # ("🔍 Lint & Static Analysis"), independente de como os jobs de lint são divididos.
+  # `if: always()` é essencial: sem ele, uma falha em lint-backend/lint-frontend deixaria
+  # este job como "skipped", e o GitHub trata check obrigatório pulado como aprovado.
+  lint:
+    name: 🔍 Lint & Static Analysis
+    if: always()
+    needs: [lint-backend, lint-frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verificar resultado dos jobs de lint
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados dos jobs de lint: $RESULTADOS"
+          for resultado in $RESULTADOS; do
+            if [ "$resultado" != "success" ]; then
+              echo "::error::Job de lint não concluiu com sucesso (resultados: $RESULTADOS)"
+              exit 1
+            fi
+          done
