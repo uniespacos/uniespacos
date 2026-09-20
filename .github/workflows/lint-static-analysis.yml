@@ -11,12 +11,16 @@ on:
       - synchronize
       - ready_for_review
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  lint:
-    name: 🔍 Lint & Static Analysis
+  lint-backend:
+    name: 🐘 PHP Lint (Pint)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -26,20 +30,42 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: mbstring, dom, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Pint (PHP Code Style)
+        run: vendor/bin/pint --test
+
+  lint-frontend:
+    name: ⚛️ Frontend Lint & Types
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm ci --no-optional
-
-      - name: Run Pint (PHP Code Style)
-        run: vendor/bin/pint --test
+        run: npm ci --prefer-offline
 
       - name: Run TypeScript Check
         run: npx tsc --noEmit
@@ -54,3 +80,26 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx eslint resources/js --suppressions-location eslint-suppressions.empty.json 2>&1 | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # Job agregador: mantém o nome do check obrigatório na proteção da branch develop
+  # ("🔍 Lint & Static Analysis"), independente de como os jobs de lint são divididos.
+  # `if: always()` é essencial: sem ele, uma falha em lint-backend/lint-frontend deixaria
+  # este job como "skipped", e o GitHub trata check obrigatório pulado como aprovado.
+  lint:
+    name: 🔍 Lint & Static Analysis
+    if: always()
+    needs: [lint-backend, lint-frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verificar resultado dos jobs de lint
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados dos jobs de lint: $RESULTADOS"
+          for resultado in $RESULTADOS; do
+            if [ "$resultado" != "success" ]; then
+              echo "::error::Job de lint não concluiu com sucesso (resultados: $RESULTADOS)"
+              exit 1
+            fi
+          done
