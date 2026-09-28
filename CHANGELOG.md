@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0-rc.82](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.81...v1.3.0-rc.82) (2026-09-28)
+
+
+### Miscellaneous Chores
+
+* sincronizar main em develop após release 1.3.0 ([179235e](https://github.com/uniespacos/uniespacos/commit/179235e572255342c75c512d301effd1c4430c03))
+* sincronizar main em develop após release 1.3.0 ([#427](https://github.com/uniespacos/uniespacos/issues/427)) ([d51546b](https://github.com/uniespacos/uniespacos/commit/d51546b3c00348af4792e04349ef27f1685208e8))
+
 ## [1.3.0](https://github.com/uniespacos/uniespacos/compare/v1.2.3...v1.3.0) (2026-08-20)
 
 
