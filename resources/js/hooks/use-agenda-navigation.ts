@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
 import { router } from '@inertiajs/react';
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, isAfter, isBefore } from 'date-fns';
+import { addWeeks, endOfWeek, format, isAfter, isBefore, startOfWeek, subWeeks } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
 
 interface UseAgendaNavigationProps {
     semanaInicial: Date;
@@ -10,13 +10,7 @@ interface UseAgendaNavigationProps {
     dataFinal?: Date;
 }
 
-export function useAgendaNavigation({
-    semanaInicial,
-    routeName,
-    routeParams = {},
-    dataInicial,
-    dataFinal,
-}: UseAgendaNavigationProps) {
+export function useAgendaNavigation({ semanaInicial, routeName, routeParams = {}, dataInicial, dataFinal }: UseAgendaNavigationProps) {
     const [semanaVisivel, setSemanaVisivel] = useState<Date>(semanaInicial);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -26,13 +20,11 @@ export function useAgendaNavigation({
 
     const podeVoltar = useMemo(() => {
         if (!dataInicial) return true;
-        // startsOn: 1 is Monday
         return isAfter(startOfWeek(semanaVisivel, { weekStartsOn: 1 }), dataInicial);
     }, [semanaVisivel, dataInicial]);
 
     const podeAvancar = useMemo(() => {
         if (!dataFinal) return true;
-        // startsOn: 1 is Monday
         return isBefore(endOfWeek(semanaVisivel, { weekStartsOn: 1 }), dataFinal);
     }, [semanaVisivel, dataFinal]);
 
@@ -41,11 +33,16 @@ export function useAgendaNavigation({
             route(routeName, routeParams),
             { semana: format(novaData, 'yyyy-MM-dd') },
             {
+                only: ['espaco', 'semana'],
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                onStart: () => setIsLoading(true),
-                onFinish: () => setIsLoading(false),
+                onStart: () => {
+                    setIsLoading(true);
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
         );
     };

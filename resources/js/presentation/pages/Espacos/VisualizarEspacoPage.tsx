@@ -1,7 +1,10 @@
-import AppLayout from '@/presentation/templates/app-layout';
+import { useEspacoLiveUpdates } from '@/hooks/use-espaco-live-updates';
+import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import AgendaEspaço from '@/presentation/organisms/EspacoAgenda';
+import AppLayout from '@/presentation/templates/AppLayout';
 import { BreadcrumbItem, Espaco, Reserva } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function VisualizarEspaço({
     espaco,
@@ -13,12 +16,32 @@ export default function VisualizarEspaço({
     reserva?: Reserva;
     isEditMode?: boolean;
     semana: {
-        // A página agora espera receber a prop 'semana'
         inicio: string;
         fim: string;
         referencia: string;
     };
 }) {
+    useReservationLiveUpdates();
+    useEspacoLiveUpdates(espaco.id);
+
+    useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        const handleUpdate = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                router.reload({ only: ['espaco'] });
+            }, 400);
+        };
+
+        document.addEventListener('reserva:updated', handleUpdate);
+
+        return () => {
+            document.removeEventListener('reserva:updated', handleUpdate);
+            clearTimeout(timer);
+        };
+    }, []);
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: isEditMode ? 'Reservas' : 'Espaços',
@@ -33,7 +56,7 @@ export default function VisualizarEspaço({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Agenda - ${espaco.nome}`} />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
                 <AgendaEspaço isEditMode={!!reserva} reserva={reserva} espaco={espaco} semana={semana} />
             </div>
         </AppLayout>

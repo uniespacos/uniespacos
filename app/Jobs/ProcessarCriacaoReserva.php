@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Events\ReservaEvent;
 use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
@@ -11,6 +13,7 @@ use App\Models\User;
 use App\Notifications\NewReservationNotification;
 use App\Notifications\ReservationCreatedNotification;
 use App\Notifications\ReservationFailedNotification;
+use App\Services\AutoAprovacaoService;
 use App\Services\ExpansaoHorariosService;
 use Carbon\Carbon;
 use Exception;
@@ -53,7 +56,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
      * O servico e injetado aqui, e nao no construtor: o job e serializado para a
      * fila e so as propriedades do construtor viajam junto.
      */
-    public function handle(ExpansaoHorariosService $expansao): void
+    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao): void
     {
         Log::info('ProcessarCriacaoReserva started', [
             'solicitante_id' => $this->solicitante->id,
@@ -70,7 +73,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
                 ->get()
                 ->keyBy('id');
 
-            [$reserva, $gestoresUnicos] = DB::transaction(function () use ($expansao, $agendasMap, $horariosData) {
+            [$reserva, $gestoresUnicos] = DB::transaction(function () use ($expansao, $autoAprovacao, $agendasMap, $horariosData) {
                 $reserva = Reserva::create([
                     'titulo' => $this->dadosRequisicao['titulo'],
                     'descricao' => $this->dadosRequisicao['descricao'] ?? '',
@@ -78,8 +81,25 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     'data_final' => $this->dadosRequisicao['data_final'],
                     'recorrencia' => $this->dadosRequisicao['recorrencia'],
                     'user_id' => $this->solicitante->id,
-                    'situacao' => 'em_analise',
+                    'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
                 ]);
+
+                // Adquirir lock pessimista sobre horarios da faixa de datas
+                $agendasAfetadas = collect($horariosData)
+                    ->pluck('agenda_id')
+                    ->unique()
+                    ->filter()
+                    ->values()
+                    ->sort()
+                    ->all();
+
+                $dataInicial = Carbon::parse($reserva->data_inicial)->toDateString();
+                $dataFinal = Carbon::parse($reserva->data_final)->toDateString();
+
+                Horario::whereIn('agenda_id', $agendasAfetadas)
+                    ->whereBetween('data', [$dataInicial, $dataFinal])
+                    ->lockForUpdate()
+                    ->get();
 
                 [$linhas, $agendasUsadas] = $expansao->montar(
                     $horariosData,
@@ -87,10 +107,22 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     (string) $reserva->recorrencia,
                     Carbon::parse($reserva->data_final),
                     (int) $reserva->id,
-                    fn (Agenda $agenda) => $agenda->user && $agenda->user->id === $this->solicitante->id
-                        ? 'deferida'
-                        : 'em_analise',
+                    fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoHorario($agenda, $this->solicitante->id),
                 );
+
+                // Revalidar conflitos sob lock, antes de inserir
+                foreach ($linhas as $novaLinha) {
+                    $conflito = Horario::where('agenda_id', $novaLinha['agenda_id'])
+                        ->where('data', $novaLinha['data'])
+                        ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
+                        ->where('horario_inicio', '<', $novaLinha['horario_fim'])
+                        ->where('horario_fim', '>', $novaLinha['horario_inicio'])
+                        ->exists();
+
+                    if ($conflito) {
+                        throw new Exception("Conflito detectado sob lock para agenda {$novaLinha['agenda_id']} em {$novaLinha['data']}. Outra reserva pode ter sido criada simultaneamente.");
+                    }
+                }
 
                 if ($linhas !== []) {
                     Horario::insert($linhas);
@@ -100,10 +132,9 @@ class ProcessarCriacaoReserva implements ShouldQueue
                 // o acesso direto a `$gestor->id` estourava nesse caso.
                 $gestoresUnicos = $agendasUsadas->map(fn (Agenda $a) => $a->user)->filter()->unique('id')->values();
 
-                if ($gestoresUnicos->count() === 1 && $gestoresUnicos->first()->id === $this->solicitante->id) {
-                    $reserva->update(['situacao' => 'deferida']);
-                } elseif ($gestoresUnicos->contains(fn ($g) => $g->id === $this->solicitante->id)) {
-                    $reserva->update(['situacao' => 'parcialmente_deferida']);
+                $novaSituacao = $autoAprovacao->calcularSituacaoReserva($gestoresUnicos, $this->solicitante->id);
+                if ($novaSituacao !== null) {
+                    $reserva->update(['situacao' => $novaSituacao]);
                 }
 
                 Log::info('Reservation created', [
@@ -120,7 +151,11 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     try {
                         $gestor->notify(new NewReservationNotification($reserva));
                     } catch (Exception $e) {
-                        Log::warning("Falha ao notificar gestor {$gestor->id}: ".$e->getMessage());
+                        Log::warning('Falha ao notificar gestor sobre nova reserva', [
+                            'gestor_id' => $gestor->id,
+                            'reserva_id' => $reserva->id,
+                            'exception' => $e,
+                        ]);
                     }
                 }
             }
@@ -129,17 +164,25 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
             Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
 
+            $espacoId = $reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
+            $horariosCount = $reserva->horarios()->count();
+            ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount);
+
             try {
                 $this->solicitante->notify(new ReservationCreatedNotification($reserva));
             } catch (Exception $e) {
-                Log::warning('Falha ao enviar notificação de sucesso: '.$e->getMessage());
+                Log::warning('Falha ao enviar notificação de reserva criada', [
+                    'reserva_id' => $reserva->id,
+                    'solicitante_id' => $this->solicitante->id,
+                    'exception' => $e,
+                ]);
             }
 
         } catch (Exception $e) {
             Log::error('ProcessarCriacaoReserva failed', [
                 'solicitante_id' => $this->solicitante->id,
                 'titulo' => $this->dadosRequisicao['titulo'],
-                'error' => $e->getMessage(),
+                'exception' => $e,
             ]);
             $this->fail($e);
         }
@@ -157,7 +200,10 @@ class ProcessarCriacaoReserva implements ShouldQueue
                 $this->solicitante
             ));
         } catch (Exception $e) {
-            Log::error('Falha fatal ao enviar notificação de erro: '.$e->getMessage());
+            Log::error('Falha fatal ao enviar notificação de erro de criação de reserva', [
+                'solicitante_id' => $this->solicitante->id,
+                'exception' => $e,
+            ]);
         }
     }
 }

@@ -34,11 +34,11 @@ interface EspacoRepositoryInterface
     public function getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator;
 
     /**
-     * Returns all Espaco records belonging to the given Instituicao with eager-loaded relations for admin
+     * Returns a paginated list of Espaco for the admin listing, scoped to an institution with optional filters
      *
-     * @return Collection<int, Espaco>
+     * @param  array<string, mixed>  $filters
      */
-    public function getAllByInstituicao(int $instituicaoId): Collection;
+    public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator;
 
     /**
      * Returns distinct capacidade_pessoas values for spaces in the given institution

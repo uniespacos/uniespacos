@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ListarEspacosRequest;
 use App\Models\Espaco;
 use App\Services\EspacoService;
 use Illuminate\Http\RedirectResponse;
@@ -18,10 +19,7 @@ class EspacoController extends Controller
         protected EspacoService $service,
     ) {}
 
-    /**
-     * Display the public listing of spaces with search and filter support.
-     */
-    public function index(Request $request): Response
+    public function index(ListarEspacosRequest $request): Response
     {
         $user = Auth::user();
         $filters = $request->only(['search', 'unidade', 'modulo', 'andar', 'capacidade']);
@@ -40,44 +38,32 @@ class EspacoController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified space with its week-filtered schedule.
-     */
     public function show(Request $request, Espaco $espaco): Response|RedirectResponse
     {
-        $data = $this->service->getWithWeekSchedule($espaco, $request->input('semana', 'today'));
-
-        if ($espaco->agendas()->whereNotNull('user_id')->count() === 0) {
+        if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
                 ->with('error', 'Este espaço ainda não possui um gestor definido.');
         }
 
+        $data = $this->service->getWithWeekSchedule($espaco, $request->input('semana', 'today'));
+
         return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }
 
-    /**
-     * Add the specified space to the authenticated user's favorites.
-     */
     public function favoritar(Espaco $espaco): RedirectResponse
     {
         $this->service->addFavorite(Auth::user(), $espaco);
 
-        return redirect()->back()->with('success', 'Espaço adicionado aos favoritos!');
+        return back()->with('success', 'Espaço adicionado aos favoritos!');
     }
 
-    /**
-     * Remove the specified space from the authenticated user's favorites.
-     */
     public function desfavoritar(Espaco $espaco): RedirectResponse
     {
         $this->service->removeFavorite(Auth::user(), $espaco);
 
-        return redirect()->back()->with('success', 'Espaço removido dos favoritos!');
+        return back()->with('success', 'Espaço removido dos favoritos!');
     }
 
-    /**
-     * Display the authenticated user's favorited spaces.
-     */
     public function meusFavoritos(): Response
     {
         $user = Auth::user();

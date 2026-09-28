@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import GenericHeader from '@/presentation/molecules/generic-header';
-import AppLayout from '@/presentation/templates/app-layout';
 import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
+import GenericHeader from '@/presentation/molecules/GenericHeader';
+import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
+import ModuloForm from '@/presentation/organisms/ModuloForm';
+import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao, Unidade } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
-import ModuloForm from '@/presentation/organisms/ModuloForm';
+
 const breadcrumbs = [
     {
         title: 'Gerenciar Modulos',
@@ -17,12 +17,13 @@ const breadcrumbs = [
         href: `/institucional/modulos/create`,
     },
 ];
-export interface CadastrarModuloForm {
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
+export type CadastrarModuloForm = {
     nome: string;
     unidade_id: string;
     andares: AndarFormData[];
-    [key: string]: any; // Para permitir outros campos dinâmicos
-}
+};
 
 export default function CadastrarModuloPage() {
     const { instituicao, unidades } = usePage<{ instituicao: Instituicao; unidades: Unidade[] }>().props;
@@ -33,24 +34,20 @@ export default function CadastrarModuloPage() {
         andares: [],
     });
 
-    const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    const submit = (e: React.SyntheticEvent) => {
         e.preventDefault();
-        let errors = false;
-        // Validação de integridade da estrutura
         const validacaoEstrutura = validarEstrutura(data.andares);
         if (!validacaoEstrutura.valido) {
-            errors = true;
             toast.error(`Estrutura inválida: ${validacaoEstrutura.erros.join(', ')}`);
             return;
         }
-
-        // Validar tipos de acesso para cada andar
+        let hasAcessoError = false;
         data.andares.forEach((andar) => {
             if (andar.tipo_acesso.length === 0) {
-                errors = true;
+                hasAcessoError = true;
             }
         });
-        if (errors) {
+        if (hasAcessoError) {
             toast.error('Todos os andares devem ter pelo menos um tipo de acesso definido.');
             return;
         }
@@ -60,22 +57,20 @@ export default function CadastrarModuloPage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Criar Modulo" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="container mx-auto space-y-6 py-6">
-                    <div className="container mx-auto space-y-6 p-6">
-                        <GenericHeader titulo="Cadastrar Modulo" descricao="Preencha os dados abaixo para cadastrar um novo modulo." />
-                        <ModuloForm
-                            data={data}
-                            setData={setData}
-                            submit={submit}
-                            errors={errors}
-                            processing={processing}
-                            title="Criar Novo Módulo"
-                            description="Preencha os dados abaixo para cadastrar um novo modulo."
-                            instituicao={instituicao}
-                            unidades={unidades}
-                        />
-                    </div>
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+                <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+                    <GenericHeader titulo="Cadastrar Modulo" descricao="Preencha os dados abaixo para cadastrar um novo modulo." />
+                    <ModuloForm
+                        data={data}
+                        setData={setData}
+                        submit={submit}
+                        errors={errors}
+                        processing={processing}
+                        title="Criar Novo Módulo"
+                        description="Preencha os dados abaixo para cadastrar um novo modulo."
+                        instituicao={instituicao}
+                        unidades={unidades}
+                    />
                 </div>
             </div>
         </AppLayout>

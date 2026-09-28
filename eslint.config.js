@@ -5,10 +5,19 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import typescript from 'typescript-eslint';
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
+export default typescript.config(
     js.configs.recommended,
     ...typescript.configs.recommended,
+    {
+        files: ['resources/js/**/*.ts', 'resources/js/**/*.tsx'],
+        extends: [...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
     {
         ...react.configs.flat.recommended,
         ...react.configs.flat['jsx-runtime'], // Required for React 17+
@@ -42,7 +51,7 @@ export default [
     },
     prettier, // Turn off all rules that might conflict with Prettier
     {
-        files: ['jest.setup.js'],
+        files: ['jest.setup.js', '__mocks__/**/*.js'],
         languageOptions: {
             globals: {
                 ...globals.jest,
@@ -53,4 +62,4 @@ export default [
             '@typescript-eslint/no-require-imports': 'off',
         },
     },
-];
+);

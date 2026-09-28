@@ -30,8 +30,16 @@ class RoleSeeder extends Seeder
             ['is_system' => true]
         );
 
+        // 'reservas.atualizar' fica de fora deliberadamente: a gestão de reservas
+        // (editar dados de terceiros) é exclusiva do gestor da agenda via avaliação.
+        // O institucional edita apenas a própria reserva, como qualquer usuário comum
+        // (ver ReservaPolicy::update()).
         $institucional->syncPermissions(
-            Permission::where('guard_name', 'web')->pluck('name')->toArray()
+            Permission::where('guard_name', 'web')
+                ->where('name', '!=', 'reservas.deletar')
+                ->where('name', '!=', 'reservas.atualizar')
+                ->pluck('name')
+                ->toArray()
         );
 
         $gestor->syncPermissions([
@@ -43,6 +51,7 @@ class RoleSeeder extends Seeder
             'relatorios.reservas-periodo',
             'relatorios.ocupacao-espacos',
             'relatorios.inventario-espacos',
+            'relatorios.escopo-agendas',
             'secao.relatorios',
         ]);
     }

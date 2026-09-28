@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react';
-import { useSlotSelection } from './use-slot-selection';
 import { SlotCalendario } from '@/types';
+import { act, renderHook } from '@testing-library/react';
+import { addWeeks, format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
-import { parseISO, addWeeks, format } from 'date-fns';
+import { useSlotSelection } from './use-slot-selection';
 
 jest.mock('sonner', () => ({
     toast: {
@@ -11,7 +11,7 @@ jest.mock('sonner', () => ({
 }));
 
 describe('useSlotSelection', () => {
-    const hoje = parseISO('2026-06-02'); // A Tuesday
+    const hoje = parseISO('2026-06-02');
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -32,9 +32,7 @@ describe('useSlotSelection', () => {
         expect(result.current.slotsSelecao).toEqual([]);
 
         const initialSlot = createSlot('1', '2026-06-03');
-        const { result: resultWithInit } = renderHook(() =>
-            useSlotSelection({ hoje, slotsIniciais: [initialSlot] })
-        );
+        const { result: resultWithInit } = renderHook(() => useSlotSelection({ hoje, slotsIniciais: [initialSlot] }));
 
         expect(resultWithInit.current.slotsSelecao).toEqual([initialSlot]);
     });
@@ -53,7 +51,6 @@ describe('useSlotSelection', () => {
         expect(result.current.slotsSelecao[0].id).toBe(slot.id);
         expect(result.current.isSlotSelecionado(slot)).toBe(true);
 
-        // Toggle again to remove
         act(() => {
             result.current.alternarSelecaoSlot(slot);
         });
@@ -64,7 +61,6 @@ describe('useSlotSelection', () => {
 
     it('should shift a past slot to next week and notify with toast', () => {
         const { result } = renderHook(() => useSlotSelection({ hoje }));
-        // 2026-06-01 is a Monday (in the past compared to Tuesday June 2)
         const pastSlot = createSlot('2026-06-01|08:20:00', '2026-06-01');
 
         act(() => {
@@ -77,9 +73,7 @@ describe('useSlotSelection', () => {
         expect(result.current.slotsSelecao).toHaveLength(1);
         expect(result.current.slotsSelecao[0].id).toBe(expectedId);
         expect(result.current.slotsSelecao[0].data).toEqual(expectedDate);
-        expect(toast.info).toHaveBeenCalledWith(
-            expect.stringContaining('foi movido para o dia')
-        );
+        expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('foi movido para o dia'));
     });
 
     it('should not alter selection if slot is already reserved', () => {
@@ -95,9 +89,7 @@ describe('useSlotSelection', () => {
 
     it('should clear selection', () => {
         const slot = createSlot('1', '2026-06-03');
-        const { result } = renderHook(() =>
-            useSlotSelection({ hoje, slotsIniciais: [slot] })
-        );
+        const { result } = renderHook(() => useSlotSelection({ hoje, slotsIniciais: [slot] }));
 
         expect(result.current.slotsSelecao).toHaveLength(1);
 

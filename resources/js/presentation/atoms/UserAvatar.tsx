@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { type User } from '@/types';
+import { useState } from 'react';
 
 interface UserAvatarProps {
     user: User;
@@ -8,16 +9,30 @@ interface UserAvatarProps {
     fallbackClassName?: string;
 }
 
-export function UserAvatar({ user, className = "h-8 w-8", fallbackClassName }: UserAvatarProps) {
+export function UserAvatar({ user, className = 'h-8 w-8', fallbackClassName }: UserAvatarProps) {
     const getInitials = useInitials();
-    const profilePic = user.profile_pic || ('avatar' in user ? String(user.avatar) : undefined);
+    const [hasImageError, setHasImageError] = useState(false);
+
+    const rawProfilePic =
+        typeof user.profile_pic === 'string'
+            ? user.profile_pic
+            : 'avatar' in user && typeof (user as { avatar: unknown }).avatar === 'string'
+              ? (user as { avatar: string }).avatar
+              : undefined;
+    const profilePic = rawProfilePic && rawProfilePic.trim() !== '' ? rawProfilePic : undefined;
 
     return (
         <Avatar className={`overflow-hidden rounded-full ${className}`}>
-            <AvatarImage src={profilePic || '/placeholder.svg'} alt={user.name} />
-            <AvatarFallback className={`rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white ${fallbackClassName}`}>
-                {getInitials(user.name)}
-            </AvatarFallback>
+            {profilePic && !hasImageError ? (
+                <AvatarImage
+                    src={profilePic}
+                    alt={user.name}
+                    onError={() => {
+                        setHasImageError(true);
+                    }}
+                />
+            ) : null}
+            <AvatarFallback className={`bg-muted text-foreground rounded-lg ${fallbackClassName}`}>{getInitials(user.name)}</AvatarFallback>
         </Avatar>
     );
 }

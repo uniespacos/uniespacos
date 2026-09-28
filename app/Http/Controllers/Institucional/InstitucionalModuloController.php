@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Institucional;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
+use App\Http\Requests\ListarModulosRequest;
 use App\Http\Requests\StoreModuloRequest;
 use App\Http\Requests\UpdateModuloRequest;
 use App\Models\Modulo;
@@ -26,23 +27,30 @@ class InstitucionalModuloController extends Controller
         protected UnidadeService $unidadeService,
     ) {}
 
-    /**
-     * Display a paginated listing of modules scoped to the authenticated user's institution.
-     */
-    public function index(): Response
+    public function index(ListarModulosRequest $request): Response
     {
         $this->authorize('viewAny', Modulo::class);
 
         $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $validated = $request->validated();
+        $search = $validated['search'] ?? null;
+        $unidade = $validated['unidade'] ?? null;
+
+        $modulos = $this->service->paginate($instituicaoId, 10, $search, $unidade);
+        $modulos->withQueryString();
+
+        $unidades = $this->unidadeService->getAllByInstituicao($instituicaoId);
 
         return Inertia::render('Administrativo/Modulos/Modulos', [
-            'modulos' => $this->service->paginate($instituicaoId, 10),
+            'modulos' => $modulos,
+            'unidades' => $unidades,
+            'filters' => [
+                'search' => $search,
+                'unidade' => $unidade,
+            ],
         ]);
     }
 
-    /**
-     * Show the form for creating a new module.
-     */
     public function create(): Response
     {
         $user = Auth::user();
@@ -54,9 +62,6 @@ class InstitucionalModuloController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created module along with its floors in storage.
-     */
     public function store(StoreModuloRequest $request): RedirectResponse
     {
         $this->authorize('create', Modulo::class);
@@ -71,9 +76,6 @@ class InstitucionalModuloController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified module.
-     */
     public function edit(Modulo $modulo): Response
     {
         $user = Auth::user();
@@ -88,9 +90,6 @@ class InstitucionalModuloController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified module and synchronize its floors in storage.
-     */
     public function update(UpdateModuloRequest $request, Modulo $modulo): RedirectResponse
     {
         $this->authorize('update', $modulo);
@@ -105,10 +104,6 @@ class InstitucionalModuloController extends Controller
         }
     }
 
-    /**
-     * Remove the specified module and its floors from storage.
-     * Requires password confirmation from the authenticated user.
-     */
     public function destroy(ConfirmPasswordRequest $request, Modulo $modulo): RedirectResponse
     {
         $this->authorize('delete', $modulo);
@@ -120,8 +115,7 @@ class InstitucionalModuloController extends Controller
         try {
             $this->service->delete($modulo);
 
-            return redirect()->route('institucional.modulos.index')
-                ->with('success', 'Módulo removido com sucesso!');
+            return back()->with('success', 'Módulo removido com sucesso!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Erro ao remover módulo: '.$e->getMessage()]);
         }

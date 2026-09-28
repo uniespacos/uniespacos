@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Setor;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class SetorRepositoryEloquent implements SetorRepositoryInterface
@@ -48,7 +49,28 @@ class SetorRepositoryEloquent implements SetorRepositoryInterface
         return $this->setor
             ->whereHas('unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->with(['unidade.instituicao'])
+            ->withCount('users')
             ->get();
+    }
+
+    /**
+     * Returns a paginated list of Setor belonging to the given Instituicao
+     *
+     * @return LengthAwarePaginator<int, Setor>
+     */
+    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null, ?int $unidadeId = null): LengthAwarePaginator
+    {
+        return $this->setor
+            ->whereHas('unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->when($unidadeId, fn ($q) => $q->where('unidade_id', $unidadeId))
+            ->when($search, fn ($q) => $q->where(
+                fn ($q2) => $q2->where('nome', 'ilike', "%{$search}%")
+                    ->orWhere('sigla', 'ilike', "%{$search}%")
+            ))
+            ->with(['unidade.instituicao'])
+            ->withCount('users')
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**

@@ -24,23 +24,17 @@ class GestorReservaController extends Controller
         protected ReservaService $service,
     ) {}
 
-    /**
-     * Display the gestor's reservation listing with week navigation and detail modal support.
-     */
     public function index(Request $request): Response
     {
         $data = $this->service->getGestorListing(
             Auth::user(),
             $request->input('semana', 'today'),
-            $request->only(['search', 'situacao', 'reserva'])
+            $request->only(['search', 'situacao', 'arquivo', 'ordenar', 'reserva'])
         );
 
         return Inertia::render('Reservas/Gestor/ReservasGestorPage', $data);
     }
 
-    /**
-     * Display the reservation detail page for gestor evaluation with conflict data.
-     */
     public function show(Request $request, Reserva $reserva): Response
     {
         $this->authorize('viewForGestor', $reserva);
@@ -54,18 +48,21 @@ class GestorReservaController extends Controller
         return Inertia::render('Reservas/Gestor/AvaliarReservaPage', $data);
     }
 
-    /**
-     * Dispatch the async job to evaluate a reservation.
-     */
     public function update(AvaliarReservaRequest $request, Reserva $reserva): RedirectResponse
     {
+        $this->authorize('viewForGestor', $reserva);
+
         try {
             $this->service->evaluate($reserva, $request->validated(), Auth::user());
 
             return redirect()->route('gestor.reservas.index')
                 ->with('success', 'Avaliação enviada para processamento em segundo plano. Você será notificado quando concluir.');
         } catch (\Exception $e) {
-            Log::error("Erro ao despachar AvaliarReservaJob para reserva {$reserva->id}: ".$e->getMessage());
+            Log::error('Erro ao despachar AvaliarReservaJob', [
+                'reserva_id' => $reserva->id,
+                'gestor_id' => Auth::id(),
+                'exception' => $e,
+            ]);
 
             return back()->with('error', 'Ocorreu um erro ao enviar a avaliação para processamento.');
         }

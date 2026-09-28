@@ -17,9 +17,9 @@ class InstituicaoService
     /**
      * Returns a paginated list of all institutions.
      */
-    public function paginate(int $perPage = 10): LengthAwarePaginator
+    public function paginate(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return $this->repoInstituicao->getPaginated($perPage);
+        return $this->repoInstituicao->getPaginated($perPage, $search);
     }
 
     /**

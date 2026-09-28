@@ -1,7 +1,9 @@
+import { SystemRole } from '@/contracts/roles.contract';
+
 // Roles
-export const ROLE_INSTITUCIONAL = 'institucional';
-export const ROLE_GESTOR = 'gestor';
-export const ROLE_COMUM = 'comum';
+export const ROLE_INSTITUCIONAL = SystemRole.INSTITUCIONAL;
+export const ROLE_GESTOR = SystemRole.GESTOR;
+export const ROLE_COMUM = SystemRole.COMUM;
 
 // Usuários
 export const PERMISSION_USUARIOS_LISTAR = 'usuarios.listar';

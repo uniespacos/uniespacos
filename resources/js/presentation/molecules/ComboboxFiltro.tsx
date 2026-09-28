@@ -1,16 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export interface OpcaoCombobox {
     id: number;
@@ -40,10 +33,7 @@ export function ComboboxFiltro({
 }: Props) {
     const [aberto, setAberto] = useState(false);
 
-    const selecionada = useMemo(
-        () => opcoes.find((opcao) => opcao.id === value),
-        [opcoes, value]
-    );
+    const selecionada = useMemo(() => opcoes.find((opcao) => opcao.id === value), [opcoes, value]);
 
     const handleSelect = (opcaoId: number) => {
         onChange(opcaoId === value ? undefined : opcaoId);
@@ -62,9 +52,7 @@ export function ComboboxFiltro({
                     disabled={disabled}
                     className="w-full justify-between font-normal"
                 >
-                    <span className={cn('truncate', !selecionada && 'text-muted-foreground')}>
-                        {selecionada ? selecionada.nome : placeholder}
-                    </span>
+                    <span className={cn('truncate', !selecionada && 'text-muted-foreground')}>{selecionada ? selecionada.nome : placeholder}</span>
                     <span className="flex items-center gap-1">
                         {selecionada && (
                             <span
@@ -83,10 +71,7 @@ export function ComboboxFiltro({
                     </span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-0"
-                align="start"
-            >
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                 <Command>
                     <CommandInput placeholder={placeholderBusca} />
                     <CommandList>
@@ -96,14 +81,11 @@ export function ComboboxFiltro({
                                 <CommandItem
                                     key={opcao.id}
                                     value={opcao.nome}
-                                    onSelect={() => handleSelect(opcao.id)}
+                                    onSelect={() => {
+                                        handleSelect(opcao.id);
+                                    }}
                                 >
-                                    <Check
-                                        className={cn(
-                                            'mr-2 h-4 w-4',
-                                            opcao.id === value ? 'opacity-100' : 'opacity-0'
-                                        )}
-                                    />
+                                    <Check className={cn('mr-2 h-4 w-4', opcao.id === value ? 'opacity-100' : 'opacity-0')} />
                                     {opcao.nome}
                                 </CommandItem>
                             ))}

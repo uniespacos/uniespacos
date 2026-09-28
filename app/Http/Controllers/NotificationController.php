@@ -4,36 +4,36 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MarkNotificationReadRequest;
+use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    /**
-     * Returns the 20 most recent notifications for the authenticated user.
-     */
+    public function __construct(
+        protected NotificationService $service,
+    ) {}
+
     public function index(): JsonResponse
     {
+        /** @var User $user */
         $user = Auth::user();
-        $notifications = $user->notifications()->latest()->limit(20)->get();
 
-        return response()->json($notifications);
+        return response()->json(
+            $this->service->getLatest($user)
+        );
     }
 
-    /**
-     * Marks notifications as read — all unread or only the specified IDs.
-     */
-    public function markAsRead(Request $request): RedirectResponse
+    public function markAsRead(MarkNotificationReadRequest $request): RedirectResponse
     {
+        /** @var User $user */
         $user = Auth::user();
+        $validated = $request->validated();
 
-        if ($request->has('ids')) {
-            $user->unreadNotifications->whereIn('id', $request->input('ids'))->markAsRead();
-        } else {
-            $user->unreadNotifications->markAsRead();
-        }
+        $this->service->markAsRead($user, $validated['ids'] ?? null);
 
         return back()->with('success', 'Notificações marcadas como lidas.');
     }

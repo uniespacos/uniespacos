@@ -1,68 +1,81 @@
-import CalendarShiftSection from '@/presentation/molecules/calendar-shift-section'; // Importa o componente que corrigimos
 import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { TURNOS_ORDENADOS } from '@/constants/turnos';
+import { useIsMobile } from '@/hooks/use-mobile';
+import AgendaLegenda from '@/presentation/molecules/AgendaLegenda';
+import CalendarDiaMobile from '@/presentation/molecules/CalendarDiaMobile';
+import CalendarShiftSection from '@/presentation/molecules/CalendarShiftSection';
 import { Agenda, AgendaDiasSemanaType, SlotCalendario } from '@/types';
+import { useMemo } from 'react';
 
-type AgendaCalendarioProps = {
+interface AgendaCalendarioProps {
     semanaInicio: Date;
     diasSemana: AgendaDiasSemanaType[];
     agendas: Agenda[];
     isSlotSelecionado: (slot: SlotCalendario) => boolean;
     alternarSelecaoSlot: (slot: SlotCalendario) => void;
-    // Adiciona a prop para passar os slots da reserva atual
     slotsDaReserva?: SlotCalendario[];
-};
+    isEditMode?: boolean;
+}
 
 export default function AgendaCalendario({
     diasSemana,
     agendas,
     isSlotSelecionado,
     alternarSelecaoSlot,
-    slotsDaReserva, // Recebe a nova prop
+    slotsDaReserva,
+    isEditMode,
 }: AgendaCalendarioProps) {
-    // Ordena as agendas por turno para uma exibição consistente
-    const agendasOrdenadas = [...agendas].sort((a, b) => {
-        const ordemTurnos = ['manha', 'tarde', 'noite'];
-        return ordemTurnos.indexOf(a.turno) - ordemTurnos.indexOf(b.turno);
-    });
+    const isMobile = useIsMobile();
+
+    const agendasPorTurno = useMemo(() => {
+        const mapa = new Map<string, Agenda>();
+        [...agendas]
+            .sort((a, b) => TURNOS_ORDENADOS.indexOf(a.turno) - TURNOS_ORDENADOS.indexOf(b.turno))
+            .forEach((agenda) => {
+                if (!mapa.has(agenda.turno) && agenda.user) {
+                    mapa.set(agenda.turno, agenda);
+                }
+            });
+        return Array.from(mapa.values());
+    }, [agendas]);
+
+    if (isMobile) {
+        return (
+            <Card className="gap-0 p-0">
+                <AgendaLegenda isEditMode={isEditMode} />
+                <CalendarDiaMobile
+                    key={diasSemana[0]?.valor}
+                    diasSemana={diasSemana}
+                    agendas={agendas}
+                    isSlotSelecionado={isSlotSelecionado}
+                    alternarSelecaoSlot={alternarSelecaoSlot}
+                    slotsDaReserva={slotsDaReserva}
+                />
+            </Card>
+        );
+    }
 
     return (
-        <Card className="p-0">
-            <div className="w-full overflow-auto">
-                <div className="min-w-[800px] rounded-xl">
-                    {/* Cabeçalho com os dias da semana */}
-                    <div className="bg-background sticky top-0 z-10 grid grid-cols-[80px_repeat(7,1fr)] border-b">
-                        <div className="text-muted-foreground p-2 text-center text-sm font-medium"></div>
-                        {diasSemana.map((dia) => (
-                            <div
-                                key={dia.valor}
-                                className={cn('border-l bg-gray-50 p-2 text-center text-sm font-medium', dia.ehHoje && 'bg-primary/5')}
-                            >
-                                <div>{dia.abreviado.replace('.', '')}</div>
-                                <div className="font-normal">{dia.diaMes.split('/')[0]}</div>
-                            </div>
+        <TooltipProvider delayDuration={200} skipDelayDuration={100}>
+            <Card className="gap-0 p-0">
+                <AgendaLegenda isEditMode={isEditMode} />
+                <div className="w-full overflow-auto">
+                    <div className="min-w-[800px] rounded-xl">
+                        {agendasPorTurno.map((agenda) => (
+                            <CalendarShiftSection
+                                key={agenda.id}
+                                titulo={agenda.turno}
+                                diasSemana={diasSemana}
+                                isSlotSelecionado={isSlotSelecionado}
+                                alternarSelecaoSlot={alternarSelecaoSlot}
+                                agenda={agenda}
+                                slotsSolicitados={slotsDaReserva}
+                            />
                         ))}
                     </div>
-                    {/* Renderiza uma seção para cada agenda (turno) */}
-                    {agendasOrdenadas.map((agenda) => {
-                        if (agenda.user)
-                            // Renderiza apenas se houver um gestor para o turno
-                            return (
-                                <CalendarShiftSection
-                                    key={agenda.id}
-                                    titulo={agenda.turno}
-                                    diasSemana={diasSemana}
-                                    isSlotSelecionado={isSlotSelecionado}
-                                    alternarSelecaoSlot={alternarSelecaoSlot}
-                                    agenda={agenda}
-                                    // Passa os slots da reserva para a seção correta
-                                    slotsSolicitados={slotsDaReserva}
-                                />
-                            );
-                        return null;
-                    })}
                 </div>
-            </div>
-        </Card>
+            </Card>
+        </TooltipProvider>
     );
 }

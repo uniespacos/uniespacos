@@ -18,9 +18,9 @@ class ModuloService
     /**
      * Returns a paginated list of modules belonging to the given institution.
      */
-    public function paginate(int $instituicaoId, int $perPage = 10): LengthAwarePaginator
+    public function paginate(int $instituicaoId, int $perPage = 10, ?string $search = null, ?string $unidadeNome = null): LengthAwarePaginator
     {
-        return $this->repoModulo->getPaginatedByInstituicao($instituicaoId, $perPage);
+        return $this->repoModulo->getPaginatedByInstituicao($instituicaoId, $perPage, $search, $unidadeNome);
     }
 
     /**

@@ -1,15 +1,21 @@
-import TabsItemEspacosFavoritos from '@/presentation/molecules/tabs-item-espacos-favoritos';
-import TabsItemReserva from '@/presentation/molecules/tabs-item-reserva';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppLayout from '@/presentation/templates/app-layout';
-import { Agenda, Espaco, Reserva, User, type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
-import { CheckCircle, Clock, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import EspacoCard from '@/presentation/organisms/EspacoCard';
-import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PERMISSION_SECAO_RELATORIOS } from '@/constants/permissions';
+import { useDadosRelatorio } from '@/hooks/use-dados-relatorio';
+import { useTranslation } from '@/i18n';
+import { hasPermission } from '@/lib/auth';
+import AppLayout from '@/presentation/templates/AppLayout';
+import { Agenda, Espaco, User, type BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { format, subDays } from 'date-fns';
+import { ArrowRight, BarChart3, CalendarSearch, Eye, ShieldCheck, Star } from 'lucide-react';
+import { lazy, Suspense, useMemo } from 'react';
+
+const GraficoReservasPeriodo = lazy(() => import('@/presentation/organisms/GraficoReservasPeriodo'));
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Painel Inicial',
@@ -17,198 +23,199 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({
-    user,
-    reservasPendentes,
-    statusDasReservas,
-    agendas,
-    espacosFavoritos,
-    reservas,
-}: {
-    user: User;
-    espacos: Espaco[];
-    reservasPendentes: Reserva[];
-    statusDasReservas: {
+interface DashboardGestorProps {
+    user?: User;
+    espacos?: Espaco[];
+    statusDasReservas?: {
         pendentes: number;
-        avaliadas_hoje: number;
-        total_espacos: number;
     };
-    agendas: Agenda[];
-    espacosFavoritos: Espaco[];
-    reservas: Reserva[];
-}) {
-    const [filteredEspacosFavoritos, setFilteredEspacosFavoritos] = useState<Espaco[]>(espacosFavoritos);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    useEffect(() => {
-        if (!searchTerm) {
-            setFilteredEspacosFavoritos(espacosFavoritos);
-            return;
-        }
+    agendas?: Agenda[];
+    espacosFavoritos?: Espaco[];
+}
 
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        const filtered = espacosFavoritos.filter(
-            (espaco) =>
-                espaco.nome.toLowerCase().includes(lowerSearchTerm) ||
-                espaco.andar?.nome?.toLowerCase().includes(lowerSearchTerm) ||
-                '' ||
-                espaco.andar?.modulo?.nome?.toLowerCase().includes(lowerSearchTerm) ||
-                '',
-        );
+export default function DashboardGestorPage(props: DashboardGestorProps) {
+    const { t } = useTranslation();
+    const pageProps = usePage<{
+        auth: { user: User };
+        user?: User;
+        espacos?: Espaco[];
+        statusDasReservas?: {
+            pendentes: number;
+        };
+        agendas?: Agenda[];
+        espacosFavoritos?: Espaco[];
+    }>().props;
 
-        setFilteredEspacosFavoritos(filtered);
-    }, [espacosFavoritos, searchTerm]);
-    const getUniqueEspacosFromAgendas = (agendas: Agenda[]): Espaco[] => {
-        // 1. Cria um Map para armazenar os espaços.
-        // A chave será o ID do espaço (number) e o valor será o objeto Espaco.
-        const espacosMap = new Map<number, Espaco>();
+    const user = props.user ?? pageProps.user ?? pageProps.auth.user;
+    const authUser = pageProps.auth.user;
+    const statusDasReservas = props.statusDasReservas ??
+        pageProps.statusDasReservas ?? {
+            pendentes: 0,
+        };
 
-        // 2. Itera sobre cada agenda da lista.
-        for (const agenda of agendas) {
-            // Verifica se a agenda realmente tem um espaço associado.
-            if (agenda.espaco && agenda.espaco.id) {
-                // 3. Adiciona o espaço ao Map usando seu ID como chave.
-                // Se um espaço com o mesmo ID já existir no Map,
-                // o `set` simplesmente substituirá o valor, resultando
-                // na desduplicação automática e eficiente.
-                espacosMap.set(agenda.espaco.id, agenda.espaco);
-            }
-        }
+    const podeVerRelatorios = hasPermission(authUser, PERMISSION_SECAO_RELATORIOS);
 
-        // 4. Converte os valores do Map (que são os objetos Espaco únicos) em um array.
-        return Array.from(espacosMap.values());
-    };
-    const espacosUnicos = getUniqueEspacosFromAgendas(agendas);
+    const filtrosPeriodo = useMemo(
+        () => ({
+            data_inicio: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+            data_fim: format(new Date(), 'yyyy-MM-dd'),
+        }),
+        [],
+    );
+
+    const { dados, status } = useDadosRelatorio(route('gestor.relatorios.dados'), podeVerRelatorios ? 'reservas_periodo' : undefined, filtrosPeriodo);
+
+    const atalhos: {
+        label: string;
+        descricao: string;
+        Icone: typeof Eye;
+        href: string;
+        badge?: string;
+        highlight?: boolean;
+    }[] = [
+        {
+            label: t('nav.gerir_reservas'),
+            descricao: t('reservas.gestor_subtitulo'),
+            Icone: Eye,
+            href: route('gestor.reservas.index'),
+            badge: statusDasReservas.pendentes > 0 ? `${String(statusDasReservas.pendentes)} ${t('dashboard.stats.pendentes').toLowerCase()}` : undefined,
+            highlight: statusDasReservas.pendentes > 0,
+        },
+        {
+            label: t('nav.consultar_espacos'),
+            descricao: t('espacos.consultar_espacos_desc'),
+            Icone: CalendarSearch,
+            href: route('espacos.index'),
+        },
+        {
+            label: t('espacos.favoritos_titulo'),
+            descricao: t('espacos.favoritos_desc'),
+            Icone: Star,
+            href: route('espacos.favoritos'),
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            {' '}
-            <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold">Painel do Gestor</h1>
-                            <p className="text-muted-foreground">Olá, {user.name} - Gerencie as reservas dos seus espaços</p>
+            <Head title={t('dashboard.gestor_title')} />
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
+                {/* Hero Banner do Gestor */}
+                <div className="border-border/80 from-card via-card/80 to-primary/5 relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 shadow-xs sm:p-8">
+                    <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-background/80 text-xs font-medium backdrop-blur-xs">
+                                    <ShieldCheck className="text-primary mr-1 h-3 w-3" />
+                                    {t('usuarios.roles.gestor')}
+                                </Badge>
+                                {statusDasReservas.pendentes > 0 && (
+                                    <Badge variant="outline" className="border-warning-accent/30 bg-warning/10 text-warning-accent text-xs font-medium">
+                                        {statusDasReservas.pendentes} {t('dashboard.stats.pendentes').toLowerCase()}
+                                    </Badge>
+                                )}
+                            </div>
+                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">{t('dashboard.welcome', { name: user.name })}</h1>
+                            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
+                                {t('reservas.gestor_subtitulo')}
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-2.5 sm:flex-row">
+                            <Button
+                                size="lg"
+                                onClick={() => {
+                                    router.get(route('gestor.reservas.index'));
+                                }}
+                                className="shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <Eye className="mr-2 h-5 w-5" />
+                                {t('nav.gerir_reservas')}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-
-                    {/* Stats Cards */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-                                <Clock className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{statusDasReservas.pendentes}</div>
-                                <p className="text-muted-foreground text-xs">Aguardando sua análise</p>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Avaliadas Hoje</CardTitle>
-                                <CheckCircle className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{statusDasReservas.avaliadas_hoje}</div>
-                                <p className="text-muted-foreground text-xs">Reservas Avaliadas hoje</p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Espaços Gerenciados</CardTitle>
-                                <Users className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{statusDasReservas.total_espacos}</div>
-                                <p className="text-muted-foreground text-xs">Sob sua responsabilidade</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Main Content */}
-                    <Tabs defaultValue="pendentes" className="space-y-4">
-                        <TabsList>
-                            <TabsTrigger value="pendentes">Reservas Pendente Analise</TabsTrigger>
-                            <TabsTrigger value="espacos">Espaços que gerencio</TabsTrigger>
-                            <TabsTrigger value="reservas"> Ultimas 5 reservas solicitadas </TabsTrigger>
-                            <TabsTrigger value="favoritos">Espaços Favoritos </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="reservas" className="space-y-4">
-                            <TabsItemReserva reservas={reservas} />
-                        </TabsContent>
-
-                        <TabsContent value="favoritos" className="space-y-4">
-                            <TabsItemEspacosFavoritos
-                                espacosFiltrados={filteredEspacosFavoritos}
-                                user={user}
-                                searchTerm={searchTerm}
-                                setSearchTerm={setSearchTerm}
-                            />
-                        </TabsContent>
-                        <TabsContent value="pendentes" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Reservas Aguardando Análise</CardTitle>
-                                    <CardDescription>Avalie as solicitações de reserva dos seus espaços</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {reservasPendentes.map((reserva) => (
-                                            <div key={reserva.id} className="rounded-lg border p-4">
-                                                <div className="mb-4 flex items-start justify-between">
-                                                    <div className="space-y-1">
-                                                        <h4 className="font-medium">{reserva.titulo}</h4>
-                                                        <p className="text-muted-foreground text-sm">{reserva.descricao}</p>
-                                                        <p className="text-muted-foreground text-xs">
-                                                            Solicitante: {reserva.user?.name} ({reserva.user?.setor?.nome})
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex-col">
-                                                        <SituacaoBadge situacao={reserva.situacao} />
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => router.get(route('gestor.reservas.show', reserva.id))}
-                                                            className="mt-5 bg-blue-600 hover:bg-blue-700"
-                                                        >
-                                                            <CheckCircle className="mr-1 h-4 w-4" />
-                                                            Avaliar
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="espacos" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Espaços Sob Sua Gestão</CardTitle>
-                                    <CardDescription>Espaços que você gerencia por turno</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                        {espacosUnicos?.map((espaco) => (
-                                            <EspacoCard
-                                                showFavoritar={false}
-                                                key={espaco?.id}
-                                                espaco={espaco}
-                                                user={user}
-                                                handleSolicitarReserva={() => router.get(route('espacos.show', espaco.id))}
-                                            />
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
                 </div>
+
+                {/* Atalhos Operacionais do Gestor */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {atalhos.map(({ label, descricao, Icone, href, badge, highlight }) => (
+                        <Card
+                            key={label}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                                router.get(href);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    router.get(href);
+                                }
+                            }}
+                            className={`border-border/70 group cursor-pointer transition-all duration-200 hover:shadow-sm ${
+                                highlight ? 'hover:border-primary/60 border-primary/30 bg-primary/5' : 'hover:border-primary/50'
+                            }`}
+                        >
+                            <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                    <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-3 transition-colors">
+                                        <Icone className="h-5 w-5" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
+                                            {badge && (
+                                                <Badge variant="secondary" className="shrink-0 bg-primary/15 text-primary text-xs font-semibold">
+                                                    {badge}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-muted-foreground truncate text-xs">{descricao}</p>
+                                    </div>
+                                </div>
+                                <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+
+                {/* Visão Geral com Gráfico Carregado Sob Demanda */}
+                {podeVerRelatorios && (
+                    <Card className="border-border/70">
+                        <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 p-5">
+                            <div>
+                                <CardTitle className="text-base font-semibold">{t('relatorios.gestor_titulo')}</CardTitle>
+                                <CardDescription className="text-xs">{t('relatorios.gestor_subtitulo')}</CardDescription>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    router.get(route('gestor.relatorios.index'));
+                                }}
+                            >
+                                <BarChart3 className="mr-2 h-4 w-4" />
+                                {t('relatorios.filtros.exportar')}
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="px-5 pt-0 pb-5">
+                            {status === 'loading' && <Skeleton className="h-[260px] w-full rounded-xl" />}
+                            {status === 'error' && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{t('relatorios.feedback.erro')}</AlertDescription>
+                                </Alert>
+                            )}
+                            {status === 'empty' && (
+                                <p className="text-muted-foreground py-10 text-center text-sm">{t('relatorios.empty_results_desc')}</p>
+                            )}
+                            {status === 'success' && dados && (
+                                <Suspense fallback={<Skeleton className="h-[260px] w-full rounded-xl" />}>
+                                    <GraficoReservasPeriodo dados={dados} />
+                                </Suspense>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

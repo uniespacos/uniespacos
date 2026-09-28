@@ -15,9 +15,6 @@ class HomeController extends Controller
         protected HomeService $service,
     ) {}
 
-    /**
-     * Display the dashboard for the authenticated user based on their permission type.
-     */
     public function index(): Response
     {
         $user = Auth::user();

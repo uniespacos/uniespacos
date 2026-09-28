@@ -23,6 +23,14 @@ class RoleService
      *
      * @return array{roles: array<int, array<string, mixed>>, permissions: array<string, array<int, array{id: int, name: string, group: string}>>}
      */
+    /**
+     * @return array<string, array<int, array{id: int, name: string, group: string}>>
+     */
+    public function getGroupedPermissions(): array
+    {
+        return $this->repoPermission->getAllGroupedByPrefix();
+    }
+
     public function getIndexData(): array
     {
         $roles = $this->repoRole->getAllWithCounts()

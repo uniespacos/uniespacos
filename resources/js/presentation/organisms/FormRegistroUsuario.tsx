@@ -1,11 +1,13 @@
-import InputError from '@/presentation/atoms/input-error';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/i18n';
+import { useMultiStepForm } from '@/hooks/useMultiStepForm';
+import { StepIndicator } from '@/presentation/molecules/StepIndicator';
+import { RegisterStepPersonal } from '@/presentation/molecules/RegisterStepPersonal';
+import { RegisterStepInstitution } from '@/presentation/molecules/RegisterStepInstitution';
+import { RegisterStepCredentials } from '@/presentation/molecules/RegisterStepCredentials';
 import type { Instituicao } from '@/types';
-import { LoaderCircle } from 'lucide-react';
-import type React from 'react';
-import { SeletorInstituicao } from '@/presentation/molecules/SeletorInstituicao';
+import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
+import React, { useCallback, useEffect } from 'react';
 
 interface FormRegistroUsuarioProps {
     data: {
@@ -21,140 +23,126 @@ interface FormRegistroUsuarioProps {
     errors: Record<string, string>;
     processing: boolean;
     instituicaos: Instituicao[];
-    onSubmit: (e: React.FormEvent) => void;
+    onSubmit: (e: React.SyntheticEvent) => void;
 }
 
+const TOTAL_STEPS = 3;
+
 export function FormRegistroUsuario({ data, onInputChange, errors, processing, instituicaos, onSubmit }: FormRegistroUsuarioProps) {
-    const formatPhoneNumber = (value: string) => {
-        const cleaned = value.replace(/\D/g, '');
-        const limited = cleaned.slice(0, 11);
+    const { t } = useTranslation();
+    const { currentStep, isFirstStep, isLastStep, nextStep, prevStep, goToStep } = useMultiStepForm({
+        totalSteps: TOTAL_STEPS,
+    });
 
-        if (limited.length <= 2) {
-            return `(${limited}`;
-        } else if (limited.length <= 6) {
-            return `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
-        } else if (limited.length <= 10) {
-            return `(${limited.slice(0, 2)}) ${limited.slice(2, 6)}-${limited.slice(6, 10)}`;
-        } else {
-            return `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7, 11)}`;
+    const stepHasError = useCallback(
+        (stepIndex: number): boolean => {
+            const errorKeys = Object.keys(errors);
+            if (errorKeys.length === 0) return false;
+
+            if (stepIndex === 0) {
+                return errorKeys.some((k) => ['name', 'email', 'phone'].includes(k));
+            }
+            if (stepIndex === 1) {
+                return errorKeys.some((k) => ['instituicao_id', 'setor_id', 'campus'].includes(k));
+            }
+            if (stepIndex === 2) {
+                return errorKeys.some((k) => ['password', 'password_confirmation'].includes(k));
+            }
+            return false;
+        },
+        [errors]
+    );
+
+    // Pula automaticamente para a primeira etapa com erro quando o backend retorna erros de validação
+    useEffect(() => {
+        const errorKeys = Object.keys(errors);
+        if (errorKeys.length === 0) return;
+
+        if (stepHasError(0)) {
+            goToStep(0);
+        } else if (stepHasError(1)) {
+            goToStep(1);
+        } else if (stepHasError(2)) {
+            goToStep(2);
         }
-    
-    };
+    }, [errors, goToStep, stepHasError]);
 
-    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const formatted = formatPhoneNumber(e.target.value);
-        onInputChange('phone', formatted);
+    const steps = [
+        { label: t('auth.register.step_personal_label'), hasError: stepHasError(0) },
+        { label: t('auth.register.step_institution_label'), hasError: stepHasError(1) },
+        { label: t('auth.register.step_credentials_label'), hasError: stepHasError(2) },
+    ];
+
+    const handleFormSubmit = (e: React.SyntheticEvent) => {
+        e.preventDefault();
+
+        if (isLastStep) {
+            onSubmit(e);
+        } else {
+            nextStep();
+        }
     };
 
     return (
-        <form onSubmit={onSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Nome completo *</Label>
-                        <Input
-                            id="name"
-                            value={data.name}
-                            onChange={(e) => onInputChange('name', e.target.value)}
-                            placeholder="Digite seu nome completo"
-                            required
-                            className="h-11"
-                        />
-                        <InputError message={errors.name} />
-                    </div>
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Step Indicator com suporte a clique e indicação de erro */}
+            <StepIndicator steps={steps} currentStep={currentStep} onStepClick={goToStep} />
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={data.email}
-                            onChange={(e) => onInputChange('email', e.target.value)}
-                            placeholder="seu@email.com"
-                            required
-                            className="h-11"
-                        />
-                        <InputError message={errors.email} />
-                    </div>
-                </div>
+            {/* Step Content — com transição */}
+            <div className="animate-fade-in-up min-h-[200px]" key={currentStep}>
+                {currentStep === 0 && (
+                    <RegisterStepPersonal data={data} onInputChange={onInputChange} errors={errors} processing={processing} />
+                )}
 
-                <div className="space-y-2">
-                    <Label htmlFor="phone">Número de celular </Label>
-                    <Input
-                        id="phone"
-                        value={data.phone}
-                        onChange={handlePhoneChange}
-                        placeholder="Exemplo: (XX) XXXXX-XXXX"
-                        maxLength={15}
-                        className="h-11"
-                    />
-                    <InputError message={errors.phone} />
-                </div>
-            </div>
-
-            {/* Institution Selection */}
-            <div className="space-y-4">
-                <div className="border-t pt-6">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">Informações Institucionais</h3>
-                    </div>
-                    <SeletorInstituicao
+                {currentStep === 1 && (
+                    <RegisterStepInstitution
                         instituicaos={instituicaos}
                         processing={processing}
-                        onInstituicaoChange={(instId) => onInputChange('instituicao_id', instId)}
-                        onSetorChange={(setorId) => onInputChange('setor_id', setorId)}
+                        onInstituicaoChange={(instId) => {
+                            onInputChange('instituicao_id', instId);
+                        }}
+                        onSetorChange={(setorId) => {
+                            onInputChange('setor_id', setorId);
+                        }}
                         errors={errors}
                     />
-                </div>
+                )}
+
+                {currentStep === 2 && (
+                    <RegisterStepCredentials data={data} onInputChange={onInputChange} errors={errors} processing={processing} />
+                )}
             </div>
 
-            {/* Password */}
-            <div className="space-y-4">
-                <div className="border-t pt-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Definir Senha</h3>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Senha *</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={data.password}
-                                onChange={(e) => onInputChange('password', e.target.value)}
-                                placeholder="Mínimo 8 caracteres"
-                                required
-                                className="h-11"
-                            />
-                            <InputError message={errors.password} />
-                        </div>
+            {/* Navigation Buttons */}
+            <div className="flex items-center gap-3 pt-2">
+                {!isFirstStep && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 flex-1"
+                        onClick={prevStep}
+                        disabled={processing}
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        {t('auth.register.btn_back')}
+                    </Button>
+                )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password_confirmation">Confirme sua senha *</Label>
-                            <Input
-                                id="password_confirmation"
-                                type="password"
-                                value={data.password_confirmation}
-                                onChange={(e) => onInputChange('password_confirmation', e.target.value)}
-                                placeholder="Digite a senha novamente"
-                                required
-                                className="h-11"
-                            />
-                            <InputError message={errors.password_confirmation} />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-6">
-                <Button type="submit" className="h-12 w-full text-base font-medium" disabled={processing}>
-                    {processing ? (
-                        <>
-                            <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                            Criando conta...
-                        </>
+                <Button type="submit" className="h-12 flex-1 text-base font-medium" disabled={processing}>
+                    {isLastStep ? (
+                        processing ? (
+                            <>
+                                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                                {t('auth.register.btn_submitting')}
+                            </>
+                        ) : (
+                            t('auth.register.btn_finish')
+                        )
                     ) : (
-                        'Criar conta'
+                        <>
+                            {t('auth.register.btn_next')}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
                     )}
                 </Button>
             </div>

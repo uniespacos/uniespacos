@@ -1,120 +1,98 @@
-'use client';
-
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { PermissionModal } from '@/presentation/organisms/PermissionModal';
-
-import { Head, router, usePage } from '@inertiajs/react';
-import { Edit, Settings, Shield, Trash } from 'lucide-react';
-import { useEffect, useState } from 'react';
-
-import DeleteItem from '@/presentation/molecules/delete-item';
-import GenericHeader from '@/presentation/molecules/generic-header';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import AppLayout from '@/presentation/templates/app-layout';
-import { ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL } from '@/constants/permissions';
-import { Instituicao, Permission, Setor, User } from '@/types';
-import { toast } from 'sonner';
+import { ROLE_COMUM } from '@/constants/permissions';
+import { getRoleBadgeClass, getRoleLabel } from '@/constants/role-labels';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+import { ColumnDef, DataTable } from '@/presentation/molecules/DataTable';
+import DeleteItem from '@/presentation/molecules/DeleteItem';
+import GenericHeader from '@/presentation/molecules/GenericHeader';
+import { SearchFilter } from '@/presentation/molecules/SearchFilter';
+import { ViewMode, ViewModeToggle } from '@/presentation/molecules/ViewModeToggle';
+import { EditUserModal } from '@/presentation/organisms/EditUserModal';
+import { PermissionModal } from '@/presentation/organisms/PermissionModal';
+import AppLayout from '@/presentation/templates/AppLayout';
+import type { Setor, User } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Edit, Key, MoreHorizontal, Trash2, UserPlus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 const breadcrumbs = [
     {
-        title: 'Gerenciar Usuarios',
+        title: 'Gerenciar Usuários',
         href: '/institucional/usuarios',
     },
 ];
 
 export default function UsuariosPage() {
-    const { props } = usePage<{
-        users: User[];
-        instituicoes: Instituicao[];
+    const { t } = useTranslation();
+    const { users, setores, filters } = usePage<{
+        users: {
+            data: User[];
+            links: { url: string | null; label: string; active: boolean }[];
+            meta: object;
+        };
         setores: Setor[];
-        permissionCatalog: Record<string, Permission[]>;
-    }>();
-    const { users: initialUsers, instituicoes, setores, permissionCatalog } = props;
+        filters?: { search: string | null; setor_id: string | null };
+    }>().props;
 
-    const [users, setUsers] = useState<User[]>(initialUsers);
-    const [filteredUsers, setFilteredUsers] = useState<User[]>(initialUsers);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedSetor, setSelectedSetor] = useState<Setor | undefined>(undefined);
     const [selectedUser, setSelectedUser] = useState<User | undefined>();
+    const [editingUser, setEditingUser] = useState<User | undefined>();
+    const [removerUsuario, setRemoverUsuario] = useState<User | undefined>();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
-    const [removerUsuario, setRemoverUsuario] = useState<User | undefined>();
-    useEffect(() => {
-        if (!searchTerm) {
-            setFilteredUsers(users);
-            return;
-        }
-        const filtered = users.filter(
-            (user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+    const [selectedSetorId, setSelectedSetorId] = useState<string>(filters?.setor_id ?? 'all');
+    const [viewMode, setViewMode] = useState<ViewMode>('table');
+
+    const { searchTerm, setSearchTerm } = useDebouncedSearch({
+        routeName: 'institucional.usuarios.index',
+        initialSearch: filters?.search ?? '',
+        extraParams: {
+            setor_id: selectedSetorId !== 'all' ? selectedSetorId : undefined,
+        },
+    });
+
+    const handleSetorChange = (setorId: string) => {
+        setSelectedSetorId(setorId);
+        router.get(
+            route('institucional.usuarios.index'),
+            {
+                search: searchTerm || undefined,
+                setor_id: setorId !== 'all' ? setorId : undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
         );
-        setFilteredUsers(filtered);
-    }, [searchTerm, users]);
-
-    useEffect(() => {
-        if (!selectedSetor) {
-            setFilteredUsers(users);
-            return;
-        }
-        const filtered = users.filter((user) => user.setor?.id === selectedSetor?.id);
-        setFilteredUsers(filtered);
-    }, [users, selectedSetor]);
-    const getPermissionLabel = (roleName: string): string => {
-        switch (roleName) {
-            case ROLE_INSTITUCIONAL:
-                return 'Institucional';
-            case ROLE_GESTOR:
-                return 'Gestor';
-            case ROLE_COMUM:
-                return 'Comum';
-            default:
-                return roleName || 'Desconhecido';
-        }
     };
 
-    const getPermissionColor = (roleName: string): string => {
-        switch (roleName) {
-            case ROLE_INSTITUCIONAL:
-                return 'bg-red-100 text-red-800';
-            case ROLE_GESTOR:
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const handleUserClick = (user: User) => {
+    const handleOpenPermissionModal = (user: User) => {
         setSelectedUser(user);
         setIsModalOpen(true);
     };
 
-    const handleEditUser = (user: User) => {
-        // Implementação futura para edição de usuário
-        toast('Funcionalidade de edição ainda não implementada. ' + user.name);
+    const handleOpenEditModal = (user: User) => {
+        setEditingUser(user);
     };
 
     const handlePermissionUpdate = (userId: number, roleName: string, agendas?: number[], directPermissions?: string[]) => {
         setProcessing(true);
         const payload: { role_name: string; agendas: number[]; direct_permissions?: string[] } = {
             role_name: roleName,
-            agendas: agendas || [],
+            agendas: agendas ?? [],
         };
         if (directPermissions !== undefined) {
             payload.direct_permissions = directPermissions;
         }
         router.put(route('institucional.usuarios.updatepermissions', { user: userId }), payload, {
             onSuccess: () => {
-                setUsers(
-                    users.map((user) =>
-                        user.id === userId
-                            ? { ...user, roles: [roleName], direct_permissions: directPermissions ?? user.direct_permissions }
-                            : user,
-                    ),
-                );
                 setIsModalOpen(false);
                 setSelectedUser(undefined);
             },
@@ -124,145 +102,214 @@ export default function UsuariosPage() {
         });
     };
 
-    return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Usuarios" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="container mx-auto space-y-6 p-6">
-                    <div className="container mx-auto space-y-6 p-6">
-                        <GenericHeader
-                            titulo={'Gestão de usuarios'}
-                            descricao={'Aqui voce pode gerir os usuarios, editando ou alterando as permissoes'}
-                        />
-                        <Card>
-                            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Buscar</Label>
-                                    <Input
-                                        placeholder="Buscar por nome ou email..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Setores</Label>
-                                    <Select
-                                        value={selectedSetor?.id.toString() || 'all'} // 5. O valor vem das props
-                                        onValueChange={(value) => {
-                                            setSelectedSetor(setores.find((s) => s.id.toString() === value));
-                                        }}
-                                    >
-                                        <SelectTrigger className="w-full sm:w-[180px]">
-                                            <SelectValue placeholder="Setores" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Todas</SelectItem>
-                                            {setores.map((setor) => (
-                                                <SelectItem key={setor.id} value={setor.id.toString()}>
-                                                    {setor.sigla}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </CardContent>
-                        </Card>
+    const renderUserActions = (user: User) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { handleOpenEditModal(user); }}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { handleOpenPermissionModal(user); }}>
+                    <Key className="mr-2 h-4 w-4" />
+                    Permissões
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className="text-destructive-accent focus:text-destructive-accent"
+                    onClick={() => {
+                        setRemoverUsuario(user);
+                    }}
+                >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 
-                        <div className="grid gap-4">
-                            {filteredUsers.map((user) => (
-                                <div key={user.id}>
-                                    <Card key={user.id} className="cursor-pointer transition-shadow hover:shadow-md">
-                                        <CardContent className="p-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-4">
-                                                    <Avatar className="h-12 w-12">
-                                                        <AvatarFallback>
-                                                            {user.name
-                                                                .split(' ')
-                                                                .map((n) => n[0])
-                                                                .join('')
-                                                                .toUpperCase()}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="space-y-1">
-                                                        <h3 className="text-lg font-semibold">{user.name}</h3>
-                                                        <p className="text-gray-600">{user.email}</p>
-                                                        <p className="text-sm text-gray-500">{user.telefone}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center space-x-3">
-                                                    <Badge className={getPermissionColor(user.roles?.[0] ?? ROLE_COMUM)}>
-                                                        {getPermissionLabel(user.roles?.[0] ?? ROLE_COMUM)}
-                                                    </Badge>
-                                                    <div className="flex items-center space-x-2">
-                                                        <div
-                                                            className={`h-2 w-2 rounded-full ${user.email_verified_at ? 'bg-green-500' : 'bg-red-500'}`}
-                                                        />
-                                                        <span className="text-xs text-gray-500">
-                                                            {user.email_verified_at ? 'Verificado' : 'Não verificado'}
-                                                        </span>
-                                                    </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="outline" size="sm">
-                                                                <Settings className="mr-2 h-4 w-4" />
-                                                                Gerenciar
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Editar
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleUserClick(user)}>
-                                                                <Shield className="mr-2 h-4 w-4" />
-                                                                Permissões
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => setRemoverUsuario(user)} className="text-red-600">
-                                                                <Trash className="mr-2 h-4 w-4" />
-                                                                Excluir
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                    {removerUsuario && removerUsuario.id === user.id && (
-                                        <div className="container mx-auto space-y-6 py-6">
-                                            <DeleteItem
-                                                key={user.id}
-                                                itemName={removerUsuario.name}
-                                                isOpen={(open) => {
-                                                    if (!open) {
-                                                        setRemoverUsuario(undefined);
-                                                    }
-                                                }}
-                                                route={route('institucional.usuarios.destroy', { usuario: removerUsuario.id })}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+    const columns: ColumnDef<User>[] = useMemo(
+        () => [
+            {
+                id: 'usuario',
+                header: t('usuarios.colunas.nome'),
+                cell: (user) => (
+                    <div className="flex items-center space-x-3">
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback>
+                                {user.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                            <div className="truncate font-medium">{user.name}</div>
+                            <div className="text-muted-foreground truncate text-sm">{user.email}</div>
+                            {user.telefone ? <div className="text-muted-foreground text-xs">{user.telefone}</div> : null}
                         </div>
+                    </div>
+                ),
+            },
+            {
+                id: 'setor',
+                header: t('usuarios.colunas.setor'),
+                cell: (user) => user.setor?.sigla ?? 'N/A',
+            },
+            {
+                id: 'papel',
+                header: t('usuarios.colunas.perfil'),
+                cell: (user) => <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{getRoleLabel(user.roles[0] ?? ROLE_COMUM)}</Badge>,
+            },
+            {
+                id: 'status',
+                header: t('usuarios.colunas.status'),
+                cell: (user) => (
+                    <div className="flex items-center space-x-2">
+                        <div className={cn('h-2 w-2 shrink-0 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
+                        <span className="text-muted-foreground text-xs whitespace-nowrap">
+                            {user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}
+                        </span>
+                    </div>
+                ),
+            },
+        ],
+        [t],
+    );
 
-                        {isModalOpen && selectedUser && (
-                            <PermissionModal
-                                key={selectedUser.id}
-                                user={selectedUser}
-                                isOpen={isModalOpen}
-                                onClose={() => {
-                                    setIsModalOpen(false);
-                                    setSelectedUser(undefined);
-                                }}
-                                onUpdate={handlePermissionUpdate}
-                                instituicoes={instituicoes}
-                                permissionCatalog={permissionCatalog}
-                                processing={processing}
-                            />
-                        )}
+    const renderUserCard = (user: User) => (
+        <Card key={user.id} className="border-border transition-shadow hover:shadow-md">
+            <CardContent className="space-y-4 p-4">
+                <div className="flex items-center space-x-3">
+                    <Avatar className="h-11 w-11 shrink-0">
+                        <AvatarFallback>
+                            {user.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-base font-semibold">{user.name}</h3>
+                        <p className="text-muted-foreground truncate text-sm">{user.email}</p>
+                        {user.telefone ? <p className="text-muted-foreground text-xs">{user.telefone}</p> : null}
                     </div>
                 </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                    <div className="flex items-center gap-2">
+                        <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{getRoleLabel(user.roles[0] ?? ROLE_COMUM)}</Badge>
+                        <div className="flex items-center space-x-1.5">
+                            <div className={cn('h-2 w-2 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
+                            <span className="text-muted-foreground text-xs">{user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}</span>
+                        </div>
+                    </div>
+                    <div>{renderUserActions(user)}</div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={t('usuarios.gerenciar_usuarios')} />
+
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+                <GenericHeader
+                    titulo={t('usuarios.gerenciar_usuarios')}
+                    descricao={t('usuarios.gerenciar_usuarios_desc')}
+                    buttonText="Novo Usuário"
+                    ButtonIcon={UserPlus}
+                    canSeeButton={false}
+                />
+
+                <Card>
+                    <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-end">
+                        <div className="w-full flex-1">
+                            <SearchFilter
+                                searchTerm={searchTerm}
+                                onSearchTermChange={setSearchTerm}
+                                placeholder={t('usuarios.buscar_placeholder')}
+                                variant="plain"
+                            />
+                        </div>
+                        <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-end">
+                            <div className="flex-1 space-y-2 sm:w-[180px]">
+                                <Label>Setor</Label>
+                                <Select value={selectedSetorId} onValueChange={handleSetorChange}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Setor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">{t('usuarios.todos_setores')}</SelectItem>
+                                        {setores.map((setor) => (
+                                            <SelectItem key={setor.id} value={setor.id.toString()}>
+                                                {setor.sigla}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="shrink-0 self-end sm:self-auto">
+                                <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <DataTable
+                    data={users.data}
+                    columns={columns}
+                    viewMode={viewMode}
+                    autoCardViewOnMobile={true}
+                    enableColumnVisibility={true}
+                    renderCard={renderUserCard}
+                    gridClassName="grid gap-4 grid-cols-1"
+                    pagination={{ links: users.links }}
+                    emptyState={{
+                        title: t('usuarios.nenhum_usuario'),
+                        description: t('usuarios.ajustar_busca'),
+                    }}
+                    actions={renderUserActions}
+                />
+
+                {removerUsuario && (
+                    <DeleteItem
+                        itemName={removerUsuario.name}
+                        isOpen={(open) => {
+                            if (!open) {
+                                setRemoverUsuario(undefined);
+                            }
+                        }}
+                        route={route('institucional.usuarios.destroy', { usuario: removerUsuario.id })}
+                    />
+                )}
+
+                <EditUserModal
+                    user={editingUser}
+                    isOpen={Boolean(editingUser)}
+                    onClose={() => {
+                        setEditingUser(undefined);
+                    }}
+                />
+
+                {isModalOpen && selectedUser && (
+                    <PermissionModal
+                        key={selectedUser.id}
+                        user={selectedUser}
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setSelectedUser(undefined);
+                        }}
+                        onUpdate={handlePermissionUpdate}
+                        processing={processing}
+                    />
+                )}
             </div>
         </AppLayout>
     );

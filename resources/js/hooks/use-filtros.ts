@@ -7,16 +7,14 @@ export function useFiltros(instituicao: Instituicao, unidades: Unidade[], setore
     const [selectedUnidade, setSelectedUnidade] = useState<string>('all');
     const [filteredUnidades, setFilteredUnidades] = useState<Unidade[]>(unidades);
 
-    // Filtrar unidades baseado na instituição selecionada
     useEffect(() => {
-        const newFilteredUnidades = instituicao?.unidades || [];
+        const newFilteredUnidades = instituicao.unidades || [];
         setFilteredUnidades(newFilteredUnidades);
         if (selectedUnidade !== 'all' && !newFilteredUnidades.find((u) => u.id.toString() === selectedUnidade)) {
             setSelectedUnidade('all');
         }
-    }, [selectedInstituicao, unidades, selectedUnidade, instituicao?.unidades]);
+    }, [selectedInstituicao, unidades, selectedUnidade, instituicao.unidades]);
 
-    // Filtrar setores baseado nos filtros aplicados
     const filteredSetores = useMemo(() => {
         return setores.filter((setor) => {
             const matchesSearch =

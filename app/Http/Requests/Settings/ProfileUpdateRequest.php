@@ -39,6 +39,8 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'phone' => ['required', 'string', 'max:20'],
             'setor_id' => ['required', 'exists:setors,id'],
+            'photo' => ['nullable', 'image', 'max:2048'],
+            'remove_photo' => ['nullable', 'boolean'],
         ];
     }
 }

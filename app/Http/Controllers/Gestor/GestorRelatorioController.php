@@ -50,7 +50,7 @@ final class GestorRelatorioController extends Controller
 
     public function dados(DadosRelatorioRequest $request): JsonResponse
     {
-        $dados = $this->service->agregar(
+        $dados = $this->service->agregarComCache(
             Auth::user(),
             TipoRelatorioEnum::from($request->string('tipo')->toString()),
             FiltrosRelatorio::fromArray($request->validated()),

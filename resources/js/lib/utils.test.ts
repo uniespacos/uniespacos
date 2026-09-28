@@ -1,4 +1,34 @@
-import { getCookie } from './utils';
+import { getCookie, getStatusReservaColor, getStatusReservaText } from './utils';
+
+/**
+ * As duas funções passaram a delegar para ESTILO_SITUACAO (constants/situacao-reserva)
+ * em vez de repetir o próprio switch — eram a terceira e quarta definição
+ * divergente do estilo de cada situação. `getStatusReservaText` também não
+ * tratava 'inativa' antes, caindo em "Desconhecido".
+ */
+describe('getStatusReservaColor', () => {
+    it.each([
+        ['em_analise', 'bg-warning'],
+        ['deferida', 'bg-success'],
+        ['indeferida', 'bg-destructive'],
+        ['parcialmente_deferida', 'bg-info'],
+        ['inativa', 'bg-neutral-accent'],
+    ] as const)('retorna o tom sólido de %s', (situacao, classe) => {
+        expect(getStatusReservaColor(situacao)).toBe(classe);
+    });
+});
+
+describe('getStatusReservaText', () => {
+    it.each([
+        ['em_analise', 'Em Análise'],
+        ['deferida', 'Deferida'],
+        ['indeferida', 'Indeferida'],
+        ['parcialmente_deferida', 'Parcialmente Deferida'],
+        ['inativa', 'Inativa / Cancelada'],
+    ] as const)('retorna o rótulo acentuado de %s', (situacao, rotulo) => {
+        expect(getStatusReservaText(situacao)).toBe(rotulo);
+    });
+});
 
 describe('getCookie', () => {
     const COOKIE_NAME = 'test_cookie';

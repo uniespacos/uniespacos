@@ -28,7 +28,7 @@ interface InstituicaoRepositoryInterface
     /**
      * Returns a paginated list of Instituicao ordered by latest
      */
-    public function getPaginated(int $perPage = 10): LengthAwarePaginator;
+    public function getPaginated(int $perPage = 10, ?string $search = null): LengthAwarePaginator;
 
     /**
      * Returns an instance of Instituicao from the given id

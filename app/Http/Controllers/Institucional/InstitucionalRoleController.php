@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Role;
 use App\Services\RoleService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 
 class InstitucionalRoleController extends Controller
@@ -28,38 +29,41 @@ class InstitucionalRoleController extends Controller
         return inertia('Administrativo/Roles/Roles', $this->roleService->getIndexData());
     }
 
-    public function store(StoreRoleRequest $request)
+    public function store(StoreRoleRequest $request): RedirectResponse
     {
+        $this->authorize('create', Role::class);
+
         $role = $this->roleService->create($request->validated());
 
         return redirect()->route('institucional.roles.index')
             ->with('success', "Papel '{$role->name}' criado com sucesso.");
     }
 
-    public function update(UpdateRoleRequest $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
+        $this->authorize('update', $role);
+
         $this->roleService->update($role, $request->validated());
 
-        return redirect()->route('institucional.roles.index')
-            ->with('success', "Papel '{$role->name}' atualizado com sucesso.");
+        return back()->with('success', "Papel '{$role->name}' atualizado com sucesso.");
     }
 
-    public function destroy(Role $role)
+    public function destroy(Role $role): RedirectResponse
     {
         $this->authorize('delete', $role);
 
         $name = $role->name;
         $this->roleService->delete($role);
 
-        return redirect()->route('institucional.roles.index')
-            ->with('success', "Papel '{$name}' removido com sucesso.");
+        return back()->with('success', "Papel '{$name}' removido com sucesso.");
     }
 
-    public function syncPermissions(SyncRolePermissionsRequest $request, Role $role)
+    public function syncPermissions(SyncRolePermissionsRequest $request, Role $role): RedirectResponse
     {
+        $this->authorize('update', $role);
+
         $this->roleService->syncPermissions($role, $request->validated()['permissions']);
 
-        return redirect()->route('institucional.roles.index')
-            ->with('success', "Permissões do papel '{$role->name}' atualizadas com sucesso.");
+        return back()->with('success', "Permissões do papel '{$role->name}' atualizadas com sucesso.");
     }
 }

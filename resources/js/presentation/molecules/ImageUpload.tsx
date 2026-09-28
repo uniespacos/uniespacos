@@ -3,11 +3,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FormCadastroValues } from '@/presentation/pages/Administrativo/Espacos/CadastroEspaco';
 import { useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
-import { FormCadastroValues } from '@/presentation/pages/Administrativo/Espacos/CadastroEspaco';
 export interface ImageWithPreview {
     file: File;
     preview: string;
@@ -23,6 +23,9 @@ interface ImageUploadProps {
     errors: { imagens?: string };
     setData: ReturnType<typeof useForm<FormCadastroValues>>['setData'];
 }
+
+const MAX_IMAGENS = 5;
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export function ImageUpload({
     imagesWithPreviews,
@@ -40,18 +43,24 @@ export function ImageUpload({
 
         const newImagePreviews: ImageWithPreview[] = [];
         const newImageFiles: File[] = [];
+        let vagasRestantes = MAX_IMAGENS - imagesWithPreviews.length;
 
         Array.from(files).forEach((file) => {
-            if (!file.type.startsWith('image/')) {
-                toast.warning(`Arquivo ${file.name} não é uma imagem.`);
+            if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+                toast.warning(`Arquivo ${file.name} não é um tipo de imagem aceito (use JPEG, PNG ou WEBP).`);
                 return;
             }
             if (file.size > 5 * 1024 * 1024) {
                 toast.warning(`Arquivo ${file.name} excede o limite de 5MB.`);
                 return;
             }
+            if (vagasRestantes <= 0) {
+                toast.warning(`Você pode enviar no máximo ${String(MAX_IMAGENS)} imagens.`);
+                return;
+            }
             newImagePreviews.push({ file, preview: URL.createObjectURL(file) });
             newImageFiles.push(file);
+            vagasRestantes -= 1;
         });
 
         setImagesWithPreviews((prev) => {
@@ -86,8 +95,15 @@ export function ImageUpload({
         <div className="space-y-4">
             <div className="space-y-2">
                 <Label htmlFor="images">Imagens do Espaço</Label>
-                <Input id="images" type="file" accept="image/*" multiple onChange={handleImagesUpload} disabled={processing} />
-                {errors.imagens && <p className="mt-1 text-sm text-red-500">{errors.imagens}</p>}
+                <Input
+                    id="images"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImagesUpload}
+                    disabled={processing || imagesWithPreviews.length >= MAX_IMAGENS}
+                />
+                {errors.imagens && <p className="text-destructive-accent mt-1 text-sm">{errors.imagens}</p>}
             </div>
 
             {imagesWithPreviews.length > 0 ? (
@@ -98,12 +114,14 @@ export function ImageUpload({
                             <div key={index} className="group relative">
                                 <div
                                     className={`aspect-square overflow-hidden rounded-md border ${
-                                        mainImageIndex === index ? 'ring-primary border-primary ring-2' : 'bg-slate-50'
+                                        mainImageIndex === index ? 'ring-primary border-primary ring-2' : 'bg-muted/50'
                                     }`}
                                 >
-                                    <img src={img.preview || Image} alt={`Imagem ${index + 1}`} className="h-full w-full object-cover" />
+                                    <img src={img.preview || Image} alt={`Imagem ${String(index + 1)}`} className="h-full w-full object-cover" />
                                     {mainImageIndex === index && (
-                                        <div className="bg-primary absolute top-0 left-0 rounded-br px-1.5 py-0.5 text-xs text-white">Principal</div>
+                                        <div className="bg-primary text-primary-foreground absolute top-0 left-0 rounded-br px-1.5 py-0.5 text-xs">
+                                            Principal
+                                        </div>
                                     )}
                                 </div>
                                 <div className="absolute -top-2 -right-2 flex gap-1">
@@ -111,8 +129,10 @@ export function ImageUpload({
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        className="h-6 w-6 rounded-full bg-white shadow-md"
-                                        onClick={() => setMainImageIndex(index)}
+                                        className="bg-background h-6 w-6 rounded-full shadow-md"
+                                        onClick={() => {
+                                            setMainImageIndex(index);
+                                        }}
                                         disabled={processing || mainImageIndex === index}
                                         title="Definir como imagem principal"
                                     >
@@ -126,20 +146,22 @@ export function ImageUpload({
                                             strokeWidth="2"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
-                                            className="h-3 w-3 text-amber-500"
+                                            className="text-warning-accent h-3 w-3"
                                         >
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                                         </svg>
                                     </Button>
                                     <Button
                                         type="button"
-                                        variant="destructive"
+                                        variant="outline"
                                         size="icon"
-                                        className="h-6 w-6 rounded-full opacity-90 shadow-md"
-                                        onClick={() => handleRemoveImage(index)}
+                                        className="h-6 w-6 rounded-full opacity-90 shadow-md text-destructive-accent hover:text-destructive-accent"
+                                        onClick={() => {
+                                            handleRemoveImage(index);
+                                        }}
                                         disabled={processing}
                                     >
-                                        <X className="h-3 w-3" />
+                                        <X className="h-3 w-3 text-destructive-accent" />
                                     </Button>
                                 </div>
                             </div>

@@ -15,7 +15,7 @@ class NewReservationNotification extends BaseNotification
     {
         parent::__construct(
             'Nova Solicitação de Reserva',
-            "Uma nova solicitação de reserva para '{$reserva->titulo}' foi criada por '{$reserva->user->name}'.",
+            "Uma nova solicitação de reserva para '{$reserva->titulo}' foi enviada por '{$reserva->user->name}'.",
             route('gestor.reservas.show', $reserva->id)
         );
         $this->reserva = $reserva;

@@ -18,9 +18,9 @@ class UnidadeService
     /**
      * Returns a paginated list of units belonging to the given institution.
      */
-    public function paginate(int $instituicaoId, int $perPage = 10): LengthAwarePaginator
+    public function paginate(int $instituicaoId, int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return $this->repoUnidade->getPaginatedByInstituicao($instituicaoId, $perPage);
+        return $this->repoUnidade->getPaginatedByInstituicao($instituicaoId, $perPage, $search);
     }
 
     /**

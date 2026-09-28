@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Events\ReservaEvent;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
@@ -45,6 +47,12 @@ class AvaliarReservaJob implements ShouldQueue
             'horarios_count' => count($this->validatedData['horarios_avaliados']),
         ]);
 
+        if ($this->reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+            throw new Exception('Cannot evaluate an archived reservation.');
+        }
+
+        $this->validateHorariosAutorization();
+
         try {
             DB::transaction(function () use ($conflictService) {
                 $scope = $this->validatedData['evaluation_scope'];
@@ -58,12 +66,12 @@ class AvaliarReservaJob implements ShouldQueue
                 if ($scope === 'single') {
                     foreach ($horariosDaAvaliacao as $avaliacao) {
                         $horarioId = $avaliacao['id'];
-                        $statusFinal = $avaliacao['status'] === 'solicitado' ? 'em_analise' : $avaliacao['status'];
+                        $statusFinal = $avaliacao['status'] === 'solicitado' ? SituacaoReservaEnum::EM_ANALISE->value : $avaliacao['status'];
                         $justificativaFinal = $motivoDoGestor;
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
                             $conflito = $conflitosMap->get($horarioId);
-                            $statusFinal = 'indeferida';
+                            $statusFinal = SituacaoReservaEnum::INDEFERIDA->value;
                             $justificativaFinal = "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}.";
                         }
 
@@ -84,7 +92,7 @@ class AvaliarReservaJob implements ShouldQueue
                                 : 'Conflito com outra reserva.';
 
                             Horario::where('id', $id)->update([
-                                'situacao' => 'indeferida',
+                                'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
                                 'justificativa' => $justificativa,
                                 'user_id' => $this->gestor->id,
                             ]);
@@ -111,8 +119,8 @@ class AvaliarReservaJob implements ShouldQueue
                             continue;
                         }
 
-                        $statusParaReplicar = $avaliacao['status'] === 'solicitado' ? 'em_analise' : $avaliacao['status'];
-                        $justificativaParaReplicar = $statusParaReplicar === 'indeferida' ? $motivoDoGestor : null;
+                        $statusParaReplicar = $avaliacao['status'] === 'solicitado' ? SituacaoReservaEnum::EM_ANALISE->value : $avaliacao['status'];
+                        $justificativaParaReplicar = $statusParaReplicar === SituacaoReservaEnum::INDEFERIDA->value ? $motivoDoGestor : null;
 
                         $this->reserva->horarios()
                             ->whereNotIn('id', $horariosConflitantesIds)
@@ -134,6 +142,10 @@ class AvaliarReservaJob implements ShouldQueue
             });
 
             $this->reserva->refresh();
+
+            $espacoId = $this->reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
+            $horariosCount = $this->reserva->horarios()->count();
+            ReservaEvent::dispatch('evaluated', $this->reserva->id, $espacoId, $horariosCount);
 
             Log::info('AvaliarReservaJob completed', [
                 'reserva_id' => $this->reserva->id,
@@ -160,16 +172,40 @@ class AvaliarReservaJob implements ShouldQueue
                     $this->gestor
                 ));
             } catch (Exception $e) {
-                Log::warning("Falha ao enviar notificação de avaliação para a reserva {$this->reserva->id}: ".$e->getMessage());
+                Log::warning('Falha ao enviar notificação de avaliação da reserva', [
+                    'reserva_id' => $this->reserva->id,
+                    'exception' => $e,
+                ]);
             }
 
         } catch (Exception $e) {
             Log::error('AvaliarReservaJob failed', [
                 'reserva_id' => $this->reserva->id,
                 'gestor_id' => $this->gestor->id,
-                'error' => $e->getMessage(),
+                'exception' => $e,
             ]);
             $this->fail($e);
+        }
+    }
+
+    /**
+     * Defense in depth: verify that all horarios being evaluated belong to agendas managed by the gestor.
+     */
+    private function validateHorariosAutorization(): void
+    {
+        $agendasDoGestorIds = $this->gestor->agendas()->pluck('id')->toArray();
+        $horariosIds = collect($this->validatedData['horarios_avaliados'])->pluck('id')->toArray();
+
+        if (empty($horariosIds)) {
+            return;
+        }
+
+        $horariosComAgendaInvalida = Horario::whereIn('id', $horariosIds)
+            ->whereNotIn('agenda_id', $agendasDoGestorIds)
+            ->exists();
+
+        if ($horariosComAgendaInvalida) {
+            throw new Exception('Authorization failed: one or more horarios do not belong to managed agendas.');
         }
     }
 
@@ -181,7 +217,7 @@ class AvaliarReservaJob implements ShouldQueue
         Log::error('AvaliarReservaJob exhausted all retries', [
             'reserva_id' => $this->reserva->id,
             'gestor_id' => $this->gestor->id,
-            'error' => $exception->getMessage(),
+            'exception' => $exception,
         ]);
     }
 
@@ -204,7 +240,10 @@ class AvaliarReservaJob implements ShouldQueue
         $reservasParaRevalidar = Reserva::query()
             ->where('id', '!=', $this->reserva->id)
             ->where('validation_status', 'completed')
-            ->where('situacao', 'em_analise')
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::EM_ANALISE->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
             ->whereHas('horarios', function ($query) use ($slotsOcupados) {
                 $query->where(function ($q) use ($slotsOcupados) {
                     foreach ($slotsOcupados as $slot) {
@@ -218,7 +257,10 @@ class AvaliarReservaJob implements ShouldQueue
             ->get();
 
         foreach ($reservasParaRevalidar as $reserva) {
-            Log::info("Disparando revalidação de conflito para Reserva ID {$reserva->id} devido à aprovação da Reserva ID {$this->reserva->id}");
+            Log::info('Disparando revalidação de conflito por aprovação de reserva', [
+                'reserva_id' => $reserva->id,
+                'reserva_aprovada_id' => $this->reserva->id,
+            ]);
             ValidateReservationConflictsJob::dispatch($reserva);
         }
     }
@@ -229,6 +271,10 @@ class AvaliarReservaJob implements ShouldQueue
      */
     private function updateReservaOverallStatus(Reserva $reserva): void
     {
+        if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+            return;
+        }
+
         $statusCounts = DB::table('horarios')
             ->where('reserva_id', $reserva->id)
             ->select('situacao', DB::raw('count(*) as total'))
@@ -238,21 +284,21 @@ class AvaliarReservaJob implements ShouldQueue
         $totalHorarios = $statusCounts->sum();
 
         if ($totalHorarios === 0) {
-            $reserva->situacao = 'indeferida';
+            $reserva->situacao = SituacaoReservaEnum::INDEFERIDA->value;
             $reserva->save();
 
             return;
         }
 
-        $deferidosCount = $statusCounts->get('deferida', 0);
-        $indeferidosCount = $statusCounts->get('indeferida', 0);
-        $emAnaliseCount = $statusCounts->get('em_analise', 0);
+        $deferidosCount = $statusCounts->get(SituacaoReservaEnum::DEFERIDA->value, 0);
+        $indeferidosCount = $statusCounts->get(SituacaoReservaEnum::INDEFERIDA->value, 0);
+        $emAnaliseCount = $statusCounts->get(SituacaoReservaEnum::EM_ANALISE->value, 0);
 
         $novaSituacao = match (true) {
-            $deferidosCount === $totalHorarios => 'deferida',
-            $indeferidosCount === $totalHorarios => 'indeferida',
-            $emAnaliseCount > 0 => 'em_analise',
-            default => 'parcialmente_deferida',
+            $deferidosCount === $totalHorarios => SituacaoReservaEnum::DEFERIDA->value,
+            $indeferidosCount === $totalHorarios => SituacaoReservaEnum::INDEFERIDA->value,
+            $emAnaliseCount > 0 => SituacaoReservaEnum::EM_ANALISE->value,
+            default => SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
         };
 
         $reserva->situacao = $novaSituacao;

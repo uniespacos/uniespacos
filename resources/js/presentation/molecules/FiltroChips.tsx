@@ -22,16 +22,12 @@ export function FiltroChips({ label, opcoes, selecionados, onChange }: Props) {
                     <Toggle
                         key={opcao.value}
                         pressed={selecionados.includes(opcao.value)}
-                        onPressedChange={(on) =>
-                            onChange(
-                                on
-                                    ? [...selecionados, opcao.value]
-                                    : selecionados.filter((v) => v !== opcao.value)
-                            )
-                        }
+                        onPressedChange={(on) => {
+                            onChange(on ? [...selecionados, opcao.value] : selecionados.filter((v) => v !== opcao.value));
+                        }}
                         variant="outline"
                         size="sm"
-                        className="rounded-full px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary"
+                        className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary rounded-full px-3"
                         aria-label={opcao.label}
                     >
                         {opcao.label}

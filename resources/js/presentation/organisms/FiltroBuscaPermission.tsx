@@ -4,16 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getTurnoText } from '@/lib/utils';
+import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { Andar, Espaco, Instituicao, Modulo, SelectedAgenda, Unidade } from '@/types';
-import { router } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
-type FiltroBuscaPermissionProps = {
+interface FiltroBuscaPermissionProps {
     instituicoes: Instituicao[];
     selectedAgendas: SelectedAgenda[];
     setSelectedAgendas: React.Dispatch<React.SetStateAction<SelectedAgenda[]>>;
-};
+}
 
 export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, setSelectedAgendas }: FiltroBuscaPermissionProps) {
     const [localFilters, setLocalFilters] = useState({
@@ -23,7 +23,6 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
         selectedAndar: '',
         selectedEspaco: '',
     });
-    const isInitialMount = useRef(true);
     const [selectedAgendaId, setSelectedAgendaId] = useState<string>('');
     const [unidades, setUnidades] = useState<Unidade[]>(
         instituicoes.find((i) => i.id.toString() === localFilters.selectedInstituicao)?.unidades || [],
@@ -31,27 +30,6 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
     const [modulos, setModulos] = useState<Modulo[]>(unidades.find((u) => u.id.toString() === localFilters.selectedUnidade)?.modulos || []);
     const [andares, setAndares] = useState<Andar[]>(modulos.find((m) => m.id.toString() === localFilters.selectedModulo)?.andars || []);
     const [espacos, setEspacos] = useState<Espaco[]>(andares.find((a) => a.id.toString() === localFilters.selectedAndar)?.espacos || []);
-
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-
-        const queryParams = Object.fromEntries(
-            Object.entries(localFilters).filter(([key, value]) => {
-                if (value === null || value === '') return false;
-                if (['unidade', 'modulo', 'andar', 'espaco'].includes(key) && value === 'all') return false;
-                return true;
-            }),
-        );
-
-        router.get(route('institucional.usuarios.index'), queryParams, {
-            preserveState: true, // Mantém o estado dos filtros na página
-            preserveScroll: true, // Não rola a página para o topo
-            replace: true,
-        });
-    }, [localFilters]);
 
     const handleFilterChange = (name: keyof typeof localFilters, value: string) => {
         setLocalFilters((prevFilters) => {
@@ -147,8 +125,10 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                         <div className="space-y-2">
                             <Label>Instituição</Label>
                             <Select
-                                value={localFilters.selectedInstituicao.toString()}
-                                onValueChange={(value) => handleFilterChange('selectedInstituicao', value)}
+                                value={localFilters.selectedInstituicao}
+                                onValueChange={(value) => {
+                                    handleFilterChange('selectedInstituicao', value);
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione a instituição" />
@@ -167,7 +147,9 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                             <Label>Unidade</Label>
                             <Select
                                 value={localFilters.selectedUnidade}
-                                onValueChange={(value) => handleFilterChange('selectedUnidade', value)}
+                                onValueChange={(value) => {
+                                    handleFilterChange('selectedUnidade', value);
+                                }}
                                 disabled={!localFilters.selectedInstituicao}
                             >
                                 <SelectTrigger>
@@ -187,7 +169,9 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                             <Label>Módulo</Label>
                             <Select
                                 value={localFilters.selectedModulo}
-                                onValueChange={(value) => handleFilterChange('selectedModulo', value)}
+                                onValueChange={(value) => {
+                                    handleFilterChange('selectedModulo', value);
+                                }}
                                 disabled={!localFilters.selectedUnidade}
                             >
                                 <SelectTrigger>
@@ -207,7 +191,9 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                             <Label>Andar</Label>
                             <Select
                                 value={localFilters.selectedAndar}
-                                onValueChange={(value) => handleFilterChange('selectedAndar', value)}
+                                onValueChange={(value) => {
+                                    handleFilterChange('selectedAndar', value);
+                                }}
                                 disabled={!localFilters.selectedModulo}
                             >
                                 <SelectTrigger>
@@ -216,7 +202,7 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                                 <SelectContent>
                                     {andares.map((andar) => (
                                         <SelectItem key={andar.id} value={andar.id.toString()}>
-                                            {andar.nome}
+                                            {getAndarLabelByValue(andar.nome)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -227,7 +213,9 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                             <Label>Espaço</Label>
                             <Select
                                 value={localFilters.selectedEspaco}
-                                onValueChange={(value) => handleFilterChange('selectedEspaco', value)}
+                                onValueChange={(value) => {
+                                    handleFilterChange('selectedEspaco', value);
+                                }}
                                 disabled={!localFilters.selectedAndar}
                             >
                                 <SelectTrigger>
@@ -290,13 +278,19 @@ export default function FiltroBuscaPermission({ instituicoes, selectedAgendas, s
                                         <div className="font-medium">
                                             {selectedAgenda.espaco.nome} - {getTurnoText(selectedAgenda.agenda.turno)}
                                         </div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-muted-foreground text-sm">
                                             {selectedAgenda.instituicao.nome} → {selectedAgenda.unidade.nome} → {selectedAgenda.modulo.nome} →{' '}
-                                            {selectedAgenda.andar.nome}
+                                            {getAndarLabelByValue(selectedAgenda.andar.nome)}
                                         </div>
                                         <Badge variant="outline">Capacidade: {selectedAgenda.espaco.capacidade_pessoas} pessoas</Badge>
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={() => handleRemoveAgenda(selectedAgenda.agenda.id)}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            handleRemoveAgenda(selectedAgenda.agenda.id);
+                                        }}
+                                    >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>

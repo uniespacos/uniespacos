@@ -1,5 +1,5 @@
-import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
 import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
+import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
 import { Modulo } from '@/types';
 import { criarTerreoInicial, nivelParaNome, nomeParaNivel } from './AndarHelpers';
 
@@ -53,5 +53,5 @@ export function transformFormDataToModulo(formData: CadastrarModuloForm): {
  * Verifica se é modo de edição baseado na presença de um módulo
  */
 export function isEditMode(modulo?: Modulo): boolean {
-    return modulo !== undefined && modulo.id !== undefined;
+    return modulo?.id !== undefined;
 }

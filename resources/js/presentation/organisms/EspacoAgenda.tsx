@@ -1,23 +1,23 @@
-import { Button } from '@/components/ui/button';
-import { diasDaSemana } from '@/lib/utils';
-import { Espaco, Reserva } from '@/types';
-import { Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
-import AgendaCalendario from '@/presentation/organisms/AgendaCalendario';
-import AgendaDialogReserva from '@/presentation/organisms/AgendaDialogReserva';
+import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
+import { useAgendaSelection } from '@/hooks/use-agenda-selection';
+import { cn, diasDaSemana } from '@/lib/utils';
 import AgendaEditModeAlert from '@/presentation/molecules/AgendaEditModeAlert';
 import AgendaHeader from '@/presentation/molecules/AgendaHeader';
 import AgendaNavegacao from '@/presentation/molecules/AgendaNavegacao';
-import { useAgendaSelectionUseCase } from '@/application/espacos/use-cases/use-agenda-selection-usecase';
-import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
+import { ReservaStickySummaryBar } from '@/presentation/molecules/ReservaStickySummaryBar';
+import AgendaCalendario from '@/presentation/organisms/AgendaCalendario';
+import { ReservaStepperModal } from '@/presentation/organisms/ReservaStepperModal';
+import { Espaco, Reserva } from '@/types';
 import { parseISO } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 
-type AgendaEspacoProps = {
+interface AgendaEspacoProps {
     isEditMode?: boolean;
     espaco: Espaco;
     reserva?: Reserva;
     semana: { referencia: string };
-};
+}
 
 export default function AgendaEspaço({ isEditMode = false, espaco, reserva, semana }: AgendaEspacoProps) {
     const { agendas } = espaco;
@@ -27,13 +27,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
     const routeName = isEditMode ? 'reservas.edit' : 'espacos.show';
     const routeParams = useMemo(() => (isEditMode ? { reserva: reserva!.id } : { espaco: espaco.id }), [isEditMode, reserva, espaco.id]);
 
-    const {
-        semanaVisivel,
-        isLoading,
-        irParaSemanaAnterior,
-        irParaProximaSemana,
-        irParaSemanaAtual,
-    } = useAgendaNavigation({
+    const { semanaVisivel, isLoading, irParaSemanaAnterior, irParaProximaSemana, irParaSemanaAtual } = useAgendaNavigation({
         semanaInicial,
         routeName,
         routeParams,
@@ -51,7 +45,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
         setFormData,
         processing,
         handleFormSubmit,
-    } = useAgendaSelectionUseCase({
+    } = useAgendaSelection({
         espaco,
         reserva,
         isEditMode,
@@ -76,7 +70,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
     }, [agendas]);
 
     return (
-        <div className="container mx-auto max-w-7xl space-y-4 py-4">
+        <div className={cn('container mx-auto max-w-7xl space-y-4 py-4', slotsSelecao.length > 0 && 'pb-32 md:pb-24')}>
             {isEditMode && reserva && <AgendaEditModeAlert reserva={reserva} />}
             <AgendaHeader espaco={espaco} gestoresPorTurno={gestoresPorTurno} />
             <AgendaNavegacao
@@ -94,34 +88,40 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
                     semanaInicio={semanaVisivel}
                     agendas={agendas || []}
                     slotsDaReserva={slotsSelecao}
+                    isEditMode={isEditMode}
                 />
                 {isLoading && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/70 backdrop-blur-sm">
+                    <div className="bg-background/70 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm">
                         <Loader2 className="text-primary h-8 w-8 animate-spin" />
                     </div>
                 )}
             </div>
 
             {slotsSelecao.length > 0 && (
-                <div className="fixed right-4 bottom-4 z-20 flex flex-col items-end gap-2">
-                    <AgendaDialogReserva
-                        isOpen={dialogAberto}
-                        onOpenChange={setDialogAberto}
-                        onSubmit={handleFormSubmit}
-                        slotsSelecao={slotsSelecao}
-                        hoje={hoje}
-                        isSubmitting={processing}
-                        isEditMode={isEditMode}
-                        espaco={espaco}
-                        formData={formData}
-                        setFormData={setFormData}
-                        setSlotsSelecao={setSlotsSelecao}
-                    />
-                    <Button variant="outline" size="sm" onClick={limparSelecao}>
-                        Limpar seleção
-                    </Button>
-                </div>
+                <ReservaStickySummaryBar
+                    slots={slotsSelecao}
+                    onConfirm={() => {
+                        setDialogAberto(true);
+                    }}
+                    onClear={limparSelecao}
+                    disabled={processing}
+                    isEditMode={isEditMode}
+                />
             )}
+
+            <ReservaStepperModal
+                isOpen={dialogAberto}
+                onOpenChange={setDialogAberto}
+                onSubmit={handleFormSubmit}
+                slotsSelecao={slotsSelecao}
+                hoje={hoje}
+                isSubmitting={processing}
+                isEditMode={isEditMode}
+                espaco={espaco}
+                formData={formData}
+                setFormData={setFormData}
+                setSlotsSelecao={setSlotsSelecao}
+            />
         </div>
     );
 }

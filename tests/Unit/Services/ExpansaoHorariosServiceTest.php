@@ -206,4 +206,32 @@ class ExpansaoHorariosServiceTest extends TestCase
         $this->assertSame([], $linhas);
         $this->assertCount(0, $agendas);
     }
+
+    public function test_personalizado_expande_semanalmente_ate_data_final(): void
+    {
+        // Blindagem da Fase 05: 'personalizado' = periodo customizado pelo
+        // usuario, mas com a MESMA semantica semanal de '15dias'/'1mes' -- nao
+        // e selecao livre de datas avulsas (H1 da auditoria foi reclassificada
+        // como falso positivo; ver docs/recorrencia-semantica.md).
+        $slots = [
+            $this->slot('2026-09-01', '10:00:00', '11:00:00'), // terca
+            $this->slot('2026-09-03', '14:00:00', '15:00:00'), // quinta
+        ];
+
+        [$linhas] = $this->service->montar(
+            $slots, $this->agendas(), 'personalizado', Carbon::parse('2026-09-30'), 7, fn () => 'em_analise'
+        );
+
+        $datas = $this->datas($linhas);
+        $tercas = array_filter($datas, fn (string $d) => Carbon::parse($d)->dayOfWeek === Carbon::TUESDAY);
+        $quintas = array_filter($datas, fn (string $d) => Carbon::parse($d)->dayOfWeek === Carbon::THURSDAY);
+
+        $this->assertCount(9, $linhas, 'Deve gerar 9 horarios (5 tercas + 4 quintas) ate 30/09.');
+        $this->assertCount(5, $tercas, 'Tercas: 01, 08, 15, 22, 29.');
+        $this->assertCount(4, $quintas, 'Quintas: 03, 10, 17, 24 (proxima seria 01/10, fora do periodo).');
+
+        foreach ($datas as $data) {
+            $this->assertLessThanOrEqual('2026-09-30', $data, 'Nenhum horario pode ultrapassar data_final.');
+        }
+    }
 }

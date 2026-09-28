@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED=true
-ARG XDEBUG_MODE=develop,coverage,debug,profile
+ARG XDEBUG_MODE=develop,debug
 ARG XDEBUG_HOST=host.docker.internal
 ARG XDEBUG_IDE_KEY=DOCKER
 ARG XDEBUG_LOG=/dev/stdout
@@ -82,6 +82,21 @@ RUN if getent group ${GID}; then \
 # Dynamically update php-fpm to use the new user and group
 RUN sed -i "s/user = www-data/user = www/g" /usr/local/etc/php-fpm.d/www.conf && \
     sed -i "s/group = www-data/group = $group_name/g" /usr/local/etc/php-fpm.d/www.conf
+
+# Keep environment variables (e.g. XDEBUG_MODE from docker-compose `environment:`) reaching the
+# FPM workers. Without this, php-fpm's implicit default (clear_env=yes) strips them, and Xdebug
+# silently falls back to whatever mode was baked into the ini at image build time.
+RUN sed -i "s/;clear_env = no/clear_env = no/" /usr/local/etc/php-fpm.d/www.conf
+
+# The stock pool ships tuned for a resource-constrained server (max_children=5), which starves
+# local dev: any page firing more than 5 concurrent requests (e.g. several XHRs + broadcast auth
+# + polling) queues the rest behind it, and the browser's own per-host connection limit then backs
+# up too — a reservation POST was observed queued 1.6min client-side waiting for a free connection.
+# Dev containers here run unconstrained (no CPU/memory limit), so raise the pool accordingly.
+RUN sed -i "s/^pm.max_children = 5/pm.max_children = 20/" /usr/local/etc/php-fpm.d/www.conf && \
+    sed -i "s/^pm.start_servers = 2/pm.start_servers = 4/" /usr/local/etc/php-fpm.d/www.conf && \
+    sed -i "s/^pm.min_spare_servers = 1/pm.min_spare_servers = 2/" /usr/local/etc/php-fpm.d/www.conf && \
+    sed -i "s/^pm.max_spare_servers = 3/pm.max_spare_servers = 8/" /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /var/www
 

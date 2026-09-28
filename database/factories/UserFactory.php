@@ -32,9 +32,21 @@ class UserFactory extends Factory
             Setor::factory()->create();
         }
 
+        // fake()->unique() só garante ausência de repetição dentro do mesmo método de teste —
+        // o TestCase recria a aplicação (e o gerador do Faker) a cada teste, então a marca
+        // d'água de "já usado" não sobrevive entre métodos. Com centenas de usuários criados ao
+        // longo da suíte, dois testes diferentes eventualmente sorteiam o mesmo nome+domínio e o
+        // insert quebra com UniqueConstraintViolationException — intermitente, não relacionado a
+        // quem tocou o código por último. Str::random() usa random_bytes() (CSPRNG), não o
+        // gerador do Faker, então o sufixo garante unicidade real entre testes.
+        [$local, $domain] = explode('@', fake()->safeEmail(), 2);
+
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            // O projeto exige e-mail em minúsculas (regra 'lowercase' em
+            // ProfileUpdateRequest/StoreRegisterRequest) — Str::random() gera
+            // maiúsculas e minúsculas por padrão, então precisa de Str::lower().
+            'email' => Str::lower($local.'.'.Str::random(10).'@'.$domain),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'telefone' => fake()->phoneNumber(),

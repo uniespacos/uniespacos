@@ -5,7 +5,7 @@ declare global {
     const route: typeof routeFn;
     interface Window {
         Pusher: typeof Pusher;
-        Echo: Echo;
+        Echo: Echo<'reverb'>;
         Uniespacos: {
             reverb: {
                 app_key: string;

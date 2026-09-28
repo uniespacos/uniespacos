@@ -1,5 +1,3 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import {
     criarNovoAndar,
@@ -12,8 +10,8 @@ import {
     proximoNivelSubsolo,
     proximoNivelSuperior,
 } from '@/lib/utils/andars/AndarHelpers';
-import { ArrowDown, ArrowUp, Building, Info } from 'lucide-react';
 import AndarCard, { AndarFormData } from '@/presentation/organisms/AndarFormCard';
+import { ArrowDown, ArrowUp, Building, Info } from 'lucide-react';
 
 interface AndaresManagerProps {
     andares: AndarFormData[];
@@ -45,7 +43,6 @@ export default function AndaresManager({ andares, onUpdate, onRemove, onAdd, err
 
     return (
         <div className="space-y-6">
-            {/* Controles de Adição */}
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
                 <Button
                     type="button"
@@ -76,7 +73,6 @@ export default function AndaresManager({ andares, onUpdate, onRemove, onAdd, err
                 </Button>
             </div>
 
-            {/* Informações */}
             <div className="space-y-2 text-center">
                 <div className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
                     <Building className="h-4 w-4" />
@@ -85,7 +81,6 @@ export default function AndaresManager({ andares, onUpdate, onRemove, onAdd, err
                     </span>
                 </div>
 
-                {/* Dica sobre remoção */}
                 {andares.length > 1 && (
                     <div className="text-muted-foreground flex items-center justify-center gap-2 text-xs">
                         <Info className="h-3 w-3" />
@@ -100,7 +95,6 @@ export default function AndaresManager({ andares, onUpdate, onRemove, onAdd, err
                 )}
             </div>
 
-            {/* Lista de Andares */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {andaresOrdenados.map((andar, index) => (
                     <AndarCard
@@ -115,13 +109,12 @@ export default function AndaresManager({ andares, onUpdate, onRemove, onAdd, err
                 ))}
             </div>
 
-            {/* Limitações */}
             <div className="space-y-1 text-center">
-                {!podeAdicionarAcima && <p className="text-xs text-amber-600">⚠️ Máximo de 10 andares superiores atingido</p>}
-                {!podeAdicionarAbaixo && <p className="text-xs text-amber-600">⚠️ Máximo de 2 subsolos atingido</p>}
+                {!podeAdicionarAcima && <p className="text-warning-accent text-xs">⚠️ Máximo de 10 andares superiores atingido</p>}
+                {!podeAdicionarAbaixo && <p className="text-warning-accent text-xs">⚠️ Máximo de 2 subsolos atingido</p>}
             </div>
 
-            {errors?.andares && <p className="text-center text-sm text-red-500">{errors.andares}</p>}
+            {errors?.andares && <p className="text-destructive-accent text-center text-sm">{errors.andares}</p>}
         </div>
     );
 }

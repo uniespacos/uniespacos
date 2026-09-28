@@ -42,9 +42,15 @@ class InstituicaoRepositoryEloquent implements InstituicaoRepositoryInterface
     /**
      * Returns a paginated list of Instituicao ordered by latest
      */
-    public function getPaginated(int $perPage = 10): LengthAwarePaginator
+    public function getPaginated(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return $this->instituicao->latest()->paginate($perPage);
+        return $this->instituicao
+            ->when($search, fn ($q) => $q->where(
+                fn ($q2) => $q2->where('nome', 'ilike', "%{$search}%")
+                    ->orWhere('sigla', 'ilike', "%{$search}%")
+            ))
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**

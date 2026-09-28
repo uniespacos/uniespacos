@@ -1,0 +1,2516 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Events\\ReservaEvent\:\:broadcastAs\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Events/ReservaEvent.php
+
+		-
+			message: '#^Cannot access property \$email on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/ConfirmablePasswordController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			message: '#^Cannot call method sendEmailVerificationNotification\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationPromptController.php
+
+		-
+			message: '#^Parameter \#1 \$key of function __ expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/RegisteredUserController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Cannot call method markEmailAsVerified\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\EspacoService\:\:addFavorite\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\EspacoService\:\:getFavoritedByUser\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\EspacoService\:\:removeFavorite\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Parameter \#2 \$weekReference of method App\\Services\\EspacoService\:\:getWithWeekSchedule\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/EspacoController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method App\\Enums\\Relatorio\\TipoRelatorioEnum\:\:disponiveisPara\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:agregar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:gerar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:opcoesInventario\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$gestor of method App\\Services\\ReservaService\:\:getGestorListing\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$gestor of method App\\Services\\ReservaService\:\:getForGestorReview\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getGestorListing\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorReservaController.php
+
+		-
+			message: '#^Parameter \#3 \$gestor of method App\\Services\\ReservaService\:\:evaluate\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorReservaController.php
+
+		-
+			message: '#^Parameter \#3 \$weekRef of method App\\Services\\ReservaService\:\:getForGestorReview\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Gestor/GestorReservaController.php
+
+		-
+			message: '#^Cannot call method hasPermissionTo\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\HomeService\:\:getDashboardData\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
+
+		-
+			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
+
+		-
+			message: '#^Parameter \#4 \$pathsToDelete of method App\\Services\\EspacoService\:\:update\(\) expects array\<string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
+
+		-
+			message: '#^Parameter \#2 \$search of method App\\Services\\InstituicaoService\:\:paginate\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalInstituicaoController.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\Instituicao\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Parameter \#3 \$search of method App\\Services\\ModuloService\:\:paginate\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Parameter \#4 \$unidadeNome of method App\\Services\\ModuloService\:\:paginate\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method App\\Enums\\Relatorio\\TipoRelatorioEnum\:\:disponiveisPara\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:agregar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:gerar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
+
+		-
+			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:opcoesInventario\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Institucional\\InstitucionalRoleController\:\:index\(\) should return Inertia\\Response but returns Inertia\\Response\|Inertia\\ResponseFactory\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRoleController.php
+
+		-
+			message: '#^Parameter \#2 \$permissionNames of method App\\Services\\RoleService\:\:syncPermissions\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalRoleController.php
+
+		-
+			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Cannot call method load\(\) on App\\Models\\Instituicao\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Parameter \#3 \$search of method App\\Services\\SetorService\:\:paginate\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
+
+		-
+			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
+
+		-
+			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
+
+		-
+			message: '#^Parameter \#3 \$search of method App\\Services\\UnidadeService\:\:paginate\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalUsuarioController.php
+
+		-
+			message: '#^Parameter \#1 \$authUser of method App\\Services\\UserService\:\:getIndexData\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalUsuarioController.php
+
+		-
+			message: '#^Parameter \#2 \$search of method App\\Services\\UserService\:\:getIndexData\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Institucional/InstitucionalUsuarioController.php
+
+		-
+			message: '#^Parameter \#2 \$ids of method App\\Services\\NotificationService\:\:markAsRead\(\) expects array\<int, string\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\ReservaService\:\:getListingForUser\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Services\\ReservaService\:\:cancel\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Services\\ReservaService\:\:create\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getEditData\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getListingForUser\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Parameter \#3 \$user of method App\\Services\\ReservaService\:\:update\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReservaController.php
+
+		-
+			message: '#^Cannot call method update\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			message: '#^Cannot access property \$email_verified_at on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot access property \$profile_pic on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method delete\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method fill\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method getRawOriginal\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method isDirty\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method save\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$paths of method Illuminate\\Filesystem\\FilesystemAdapter\:\:delete\(\) expects array\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\HandleInertiaRequests\:\:formatAuthUser\(\) has parameter \$user with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\HandleInertiaRequests\:\:formatAuthUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Access to an undefined property \(object\|string\|null\)\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AlterarGestoresEspacoRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AlterarGestoresEspacoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AlterarGestoresEspacoRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\PasswordResetLinkRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/PasswordResetLinkRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\ResetPasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/ResetPasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\StoreRegisterRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/StoreRegisterRequest.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Cannot access offset ''dadosReserva'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Cannot access offset ''horarioDB'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Cannot access offset ''id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AvaliarReservaRequest\:\:after\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AvaliarReservaRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\AvaliarReservaRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/AvaliarReservaRequest.php
+
+		-
+			message: '#^Cannot access property \$password on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Requests/ConfirmPasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ConfirmPasswordRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ConfirmPasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ConfirmPasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ConfirmPasswordRequest.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:check\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Requests/ConfirmPasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\DeleteProfileRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/DeleteProfileRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Relatorio\\DadosRelatorioRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Relatorio/DadosRelatorioRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Relatorio\\GerarRelatorioRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Relatorio/GerarRelatorioRequest.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Requests/Settings/ProfileUpdateRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Settings\\UpdatePasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Settings/UpdatePasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAndarRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreAndarRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAndarRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreAndarRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAndarRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreAndarRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreEspacoRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreEspacoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreEspacoRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreEspacoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreInstituicaoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreInstituicaoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreInstituicaoRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreInstituicaoRequest.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 2
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Cannot access offset ''nome'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Cannot access offset ''tipo_acesso'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Cannot access offset mixed on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:validateAndaresStructure\(\) has parameter \$validator with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:validateAndaresUniqueness\(\) has parameter \$validator with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:validateSequenceIntegrity\(\) has parameter \$validator with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:validateTerreoExists\(\) has parameter \$validator with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:withValidator\(\) has parameter \$validator with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_column expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Parameter \#1 \$nome of method App\\Http\\Requests\\StoreModuloRequest\:\:formatAndarName\(\) expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Possibly invalid array key type mixed\.$#'
+			identifier: offsetAccess.invalidOffset
+			count: 1
+			path: app/Http/Requests/StoreModuloRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreReservaRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreReservaRequest.php
+
+		-
+			message: '#^Cannot call method can\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Requests/StoreRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreRoleRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreSetorRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreSetorRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreSetorRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreSetorRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreUnidadeRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreUnidadeRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreUnidadeRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreUnidadeRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUserRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/StoreUserRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreUserRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreUserRequest.php
+
+		-
+			message: '#^Cannot call method hasPermissionTo\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Requests/SyncRolePermissionsRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\SyncRolePermissionsRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/SyncRolePermissionsRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdatePermissionsRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdatePermissionsRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateReservaRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateReservaRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateReservaRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateReservaRequest.php
+
+		-
+			message: '#^Access to an undefined property \(object\|string\|null\)\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/UpdateRoleRequest.php
+
+		-
+			message: '#^Cannot call method can\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Requests/UpdateRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateRoleRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateUserRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/UpdateUserRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateUserRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateUserRequest.php
+
+		-
+			message: '#^Parameter \#1 \$path of method Illuminate\\Routing\\Redirector\:\:to\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Responses/CustomLoginResponse.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$agenda_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$horario_inicio\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Cannot access property \$conflito_reserva_titulo on stdClass\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Cannot access property \$conflito_user_name on stdClass\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Cannot call method notify\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Method App\\Jobs\\AvaliarReservaJob\:\:__construct\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 3
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 3
+			path: app/Jobs/AvaliarReservaJob.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Parameter \#1 \$reservationTitle of class App\\Notifications\\ReservationFailedNotification constructor expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Parameter \#1 \$slots of method App\\Services\\ExpansaoHorariosService\:\:montar\(\) expects array\<int, array\<string, mixed\>\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Parameter \#1 \$value of function collect expects Illuminate\\Contracts\\Support\\Arrayable\<\(int\|string\), mixed\>\|iterable\<\(int\|string\), mixed\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Jobs/ProcessarCriacaoReserva.php
+
+		-
+			message: '#^Method App\\Jobs\\UpdateReservaJob\:\:__construct\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Parameter \#1 \$agendaId of method App\\Jobs\\UpdateReservaJob\:\:chaveHorario\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Parameter \#3 \$horarioInicio of method App\\Jobs\\UpdateReservaJob\:\:chaveHorario\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Jobs/UpdateReservaJob.php
+
+		-
+			message: '#^Class App\\Models\\Agenda uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Agenda.php
+
+		-
+			message: '#^Parameter \#1 \$keys of function array_fill_keys expects an array of values castable to string, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Espaco.php
+
+		-
+			message: '#^Class App\\Models\\Horario uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Horario.php
+
+		-
+			message: '#^Class App\\Models\\Modulo uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Modulo.php
+
+		-
+			message: '#^Cannot access property \$agenda on App\\Models\\Horario\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$dayName on Carbon\\Carbon\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$espaco on App\\Models\\Agenda\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$horario_fim on App\\Models\\Horario\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$horario_inicio on App\\Models\\Horario\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$nome on App\\Models\\Espaco\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot access property \$turno on App\\Models\\Agenda\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Cannot call method format\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Method App\\Models\\Reserva\:\:getResumoHorariosAttribute\(\) should return array\<int, object\> but returns array\<mixed\>\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Method App\\Models\\Reserva\:\:scopeWithHorariosStats\(\) has parameter \$agendaIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Method App\\Models\\Reserva\:\:scopeWithHorariosStats\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Method App\\Models\\Reserva\:\:scopeWithHorariosStats\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Reserva.php
+
+		-
+			message: '#^Method App\\Models\\Role\:\:delete\(\) should return bool but returns bool\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Class App\\Models\\Unidade uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Unidade.php
+
+		-
+			message: '#^Binary operation "\." between ''App\.Models\.User\.'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:profilePic\(\) return type with generic class Illuminate\\Database\\Eloquent\\Casts\\Attribute does not specify its types\: TGet, TSet$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Parameter \$get of static method Illuminate\\Database\\Eloquent\\Casts\\Attribute\<mixed,mixed\>\:\:make\(\) expects \(callable\(mixed, array\<string, mixed\>\)\: \(string\|null\)\)\|null, Closure\(string\|null\)\: \(string\|null\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/BaseNotification.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Notifications/BaseNotification.php
+
+		-
+			message: '#^Cannot access property \$name on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Notifications/NewReservationNotification.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Str\:\:lower\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Providers/FortifyServiceProvider.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AgendaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/AndarRepositoryInterface.php
+
+		-
+			message: '#^Binary operation "\." between ''%%'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 3
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:applyFilters\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:applyFilters\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getDistinctCapacidadesByInstituicao\(\) should return Illuminate\\Support\\Collection\<int, int\> but returns Illuminate\\Support\\Collection\<\(int\|string\), mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getPaginatedForAdmin\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getPaginatedForPublic\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getPaginatedForAdmin\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getPaginatedForPublic\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/EspacoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/HorarioRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getPaginated\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getPaginated\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/InstituicaoRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ModuloRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ModuloRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ModuloRepositoryInterface.php
+
+		-
+			message: '#^Binary operation "\." between ''%%'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getPaginatedForGestor\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getPaginatedForUser\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Part \$s \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 2
+			path: app/Repositories/ReservaRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForGestor\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForUser\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/ReservaRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryEloquent\:\:all\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/RoleRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryEloquent\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/RoleRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryEloquent\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/RoleRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/RoleRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryInterface\:\:all\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/RoleRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryInterface\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/RoleRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryInterface\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/RoleRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\RoleRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/RoleRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/SetorRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/UnidadeRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/UnidadeRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UnidadeRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryEloquent\:\:getPaginatedForAdminByInstituicao\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/UserRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryEloquent.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryInterface\:\:getPaginatedForAdminByInstituicao\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Repositories/UserRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryInterface.php
+
+		-
+			message: '#^Method App\\Repositories\\UserRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Repositories/UserRepositoryInterface.php
+
+		-
+			message: '#^Cannot access offset ''agenda_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Rules/HorarioDisponivel.php
+
+		-
+			message: '#^Cannot access offset ''data'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Rules/HorarioDisponivel.php
+
+		-
+			message: '#^Cannot access offset ''horario_inicio'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Rules/HorarioDisponivel.php
+
+		-
+			message: '#^Cannot access offset string on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Rules/HorarioDisponivel.php
+
+		-
+			message: '#^Method App\\Rules\\HorarioDisponivel\:\:setData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Rules/HorarioDisponivel.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$setor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
+
+		-
+			message: '#^Cannot access property \$modulo on App\\Models\\Andar\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Modulo\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot access property \$modulo on App\\Models\\Andar\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot access property \$name on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot call method format\(\) on Carbon\\Carbon\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Method App\\Services\\EspacoService\:\:getFavoritedByUser\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Method App\\Services\\EspacoService\:\:getPaginatedForAdmin\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Method App\\Services\\EspacoService\:\:getPaginatedForPublic\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Parameter \#1 \$id of method App\\Repositories\\UserRepositoryInterface\:\:get\(\) expects int\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Parameter \#3 \$turno of class App\\Notifications\\UserAssignedAsManagerNotification constructor expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Parameter \#3 \$turno of class App\\Notifications\\UserRemovedAsManagerNotification constructor expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Possibly invalid array key type mixed\.$#'
+			identifier: offsetAccess.invalidOffset
+			count: 1
+			path: app/Services/EspacoService.php
+
+		-
+			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Cannot call method lte\(\) on Carbon\\Carbon\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Cannot call method toDateString\(\) on Carbon\\Carbon\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<int,App\\Models\\Agenda\>\:\:get\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Parameter \#2 \$array of function implode expects array\<string\>, array\<int, mixed\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/ExpansaoHorariosService.php
+
+		-
+			message: '#^Method App\\Services\\HomeService\:\:buildRecentReservasQuery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/HomeService.php
+
+		-
+			message: '#^Method App\\Services\\InstituicaoService\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/InstituicaoService.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 2
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Cannot access offset ''nome'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Cannot access offset ''tipo_acesso'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Method App\\Services\\ModuloService\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Method App\\Services\\ModuloService\:\:update\(\) should return App\\Models\\Modulo but returns App\\Models\\Modulo\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Parameter \#1 \$value of function collect expects Illuminate\\Contracts\\Support\\Arrayable\<\(int\|string\), mixed\>\|iterable\<\(int\|string\), mixed\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Services/ModuloService.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\DadosRelatorio\:\:__construct\(\) has parameter \$colunas with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/DadosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\DadosRelatorio\:\:__construct\(\) has parameter \$filtrosAplicados with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/DadosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\DadosRelatorio\:\:__construct\(\) has parameter \$linhas with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/DadosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\DadosRelatorio\:\:__construct\(\) has parameter \$sumario with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/DadosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\FiltrosRelatorio\:\:__construct\(\) has parameter \$agendaIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/FiltrosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\FiltrosRelatorio\:\:__construct\(\) has parameter \$situacoes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/FiltrosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\FiltrosRelatorio\:\:__construct\(\) has parameter \$turnos with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/FiltrosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\FiltrosRelatorio\:\:fromArray\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/FiltrosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Data\\FiltrosRelatorio\:\:resumo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Data/FiltrosRelatorio.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exporters\\ExporterFactory\:\:__construct\(\) has parameter \$exporters with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exporters/ExporterFactory.php
+
+		-
+			message: '#^Parameter \#1 \$paper of method Barryvdh\\DomPDF\\PDF\:\:setPaper\(\) expects array\<float\>\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Relatorio/Exporters/PdfExporter.php
+
+		-
+			message: '#^Parameter \#2 \$orientation of method Barryvdh\\DomPDF\\PDF\:\:setPaper\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Relatorio/Exporters/PdfExporter.php
+
+		-
+			message: '#^Cannot access offset mixed on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Class App\\Services\\Relatorio\\Exports\\RelatorioExport implements generic interface Maatwebsite\\Excel\\Concerns\\WithMapping but does not specify its types\: RowType$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exports\\RelatorioExport\:\:array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exports\\RelatorioExport\:\:columnFormats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exports\\RelatorioExport\:\:headings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exports\\RelatorioExport\:\:map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Method App\\Services\\Relatorio\\Exports\\RelatorioExport\:\:styles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Relatorio/Exports/RelatorioExport.php
+
+		-
+			message: '#^Parameter \#1 \$class of function class_exists expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Relatorio/RelatorioFactory.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\Andar\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\Modulo\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$modulo on App\\Models\\Andar\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$nome on App\\Models\\Andar\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$nome on App\\Models\\Modulo\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$nome on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Modulo\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Part \$limite \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: app/Services/Relatorio/RelatorioService.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 3
+			path: app/Services/Relatorio/Reports/IndicadoresConsolidadosRelatorio.php
+
+		-
+			message: '#^Binary operation "/" between mixed and int\<1, max\> results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: app/Services/Relatorio/Reports/InventarioEspacosRelatorio.php
+
+		-
+			message: '#^Cannot access offset ''taxa_ocupacao'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot access property \$capacidade_pessoas on App\\Models\\Espaco\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\Espaco\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot access property \$nome on App\\Models\\Espaco\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot call method isSunday\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Services/Relatorio/Reports/ReservasPeriodoRelatorio.php
+
+		-
+			message: '#^Cannot access property \$conflito_reserva_titulo on stdClass\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot access property \$conflito_user_name on stdClass\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot access property \$id on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot call method format\(\) on Carbon\\Carbon\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot call method notify\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 2
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$reservas contains generic class Illuminate\\Pagination\\LengthAwarePaginator but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Parameter \#1 \$agendaIds of method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForGestor\(\) expects array\<int\>, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:transform\(\) expects callable\(mixed, int\|string\)\: mixed, Closure\(App\\Models\\Reserva\)\: App\\Models\\Reserva given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Parameter \#1 \$ids of method App\\Repositories\\AgendaRepositoryInterface\:\:getWithUserByIds\(\) expects array\<int\>, array\<int, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Parameter \#2 \$agendaIds of method App\\Repositories\\ReservaRepositoryInterface\:\:findForGestorModal\(\) expects array\<int\>, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Property App\\Models\\Reserva\:\:\$existing_justification \(string\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/ReservaService.php
+
+		-
+			message: '#^Method App\\Services\\RoleService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RoleService.php
+
+		-
+			message: '#^Method App\\Services\\RoleService\:\:getIndexData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RoleService.php
+
+		-
+			message: '#^Method App\\Services\\RoleService\:\:syncPermissions\(\) has parameter \$permissionNames with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RoleService.php
+
+		-
+			message: '#^Method App\\Services\\RoleService\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/RoleService.php
+
+		-
+			message: '#^Method App\\Services\\UnidadeService\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/UnidadeService.php
+
+		-
+			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Cannot call method getAllPermissions\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Cannot call method getDirectPermissions\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Cannot call method getRoleNames\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Cannot call method toArray\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_diff expects an array of values castable to string, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$permissions of method App\\Models\\User\:\:syncPermissions\(\) expects array\|BackedEnum\|Illuminate\\Support\\Collection\|int\|Spatie\\Permission\\Contracts\\Permission\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/UserService.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$arrays of function array_diff expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/UserService.php
+

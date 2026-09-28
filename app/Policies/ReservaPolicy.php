@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Reserva;
 use App\Models\User;
 
@@ -19,6 +20,11 @@ class ReservaPolicy
 
     /**
      * Determine whether the user can view the model.
+     *
+     * ATENÇÃO: este método é a única barreira contra IDOR nas rotas
+     * reservas.index (?reserva=), reservas.show e reservas.edit. A permission
+     * 'reservas.visualizar' é intencional: o papel 'institucional' depende dela
+     * para visualizar reservas de terceiros. Não reduzir para apenas user_id.
      */
     public function view(User $user, Reserva $reserva): bool
     {
@@ -44,12 +50,12 @@ class ReservaPolicy
             return true;
         }
 
-        if ($user->id !== $reserva->user_id || $reserva->situacao !== 'em_analise') {
+        if ($user->id !== $reserva->user_id || $reserva->situacao !== SituacaoReservaEnum::EM_ANALISE->value) {
             return false;
         }
 
         $hasProcessedSlots = $reserva->horarios()
-            ->whereIn('situacao', ['deferida', 'indeferida'])
+            ->whereIn('situacao', [SituacaoReservaEnum::DEFERIDA->value, SituacaoReservaEnum::INDEFERIDA->value])
             ->exists();
 
         return ! $hasProcessedSlots;
@@ -86,6 +92,10 @@ class ReservaPolicy
     public function viewForGestor(User $user, Reserva $reserva): bool
     {
         if (! $user->hasPermissionTo('reservas.avaliar')) {
+            return false;
+        }
+
+        if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
             return false;
         }
 

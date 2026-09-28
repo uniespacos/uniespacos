@@ -38,10 +38,6 @@ final class OcupacaoEspacosRelatorio implements RelatorioInterface
         if ($filtros->turnos !== null) {
             $query->whereHas('agenda', fn ($q) => $q->whereIn('turno', $filtros->turnos));
         }
-
-        // Conta slots distintos, nao registros: o mesmo par (data, horario_inicio)
-        // pode ter varias linhas em horarios para uma unica reserva, e contar as
-        // repeticoes levava a taxa de ocupacao acima de 100%.
         $contagens = $query
             ->join('agendas', 'horarios.agenda_id', '=', 'agendas.id')
             ->groupBy('agendas.espaco_id')

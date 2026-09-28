@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface UserRepositoryInterface
 {
@@ -39,11 +40,15 @@ interface UserRepositoryInterface
     public function getAllWithAgendasByInstituicao(int $instituicaoId): Collection;
 
     /**
-     * Returns all User records for the admin index page with full eager-loaded relations
-     *
-     * @return Collection<int, User>
+     * Returns a paginated list of User records for the admin index page,
+     * carrying only the columns and the role relation the listing renders.
      */
-    public function getAllForAdminByInstituicao(int $instituicaoId): Collection;
+    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, int $perPage = 10): LengthAwarePaginator;
+
+    /**
+     * Returns a single User with the agendas and permission sets the permission modal needs.
+     */
+    public function getWithPermissionContext(int|string $id): ?User;
 
     /**
      * Returns an instance of User from the given id

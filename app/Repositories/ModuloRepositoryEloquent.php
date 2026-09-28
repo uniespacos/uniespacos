@@ -42,10 +42,12 @@ class ModuloRepositoryEloquent implements ModuloRepositoryInterface
     /**
      * Returns a paginated list of Modulo belonging to the given Instituicao
      */
-    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null, ?string $unidadeNome = null): LengthAwarePaginator
     {
         return $this->modulo
             ->whereHas('unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->when($search, fn ($q) => $q->where('nome', 'ilike', "%{$search}%"))
+            ->when($unidadeNome && $unidadeNome !== 'all', fn ($q) => $q->whereHas('unidade', fn ($q2) => $q2->where('nome', $unidadeNome)))
             ->with(['andars', 'unidade.instituicao'])
             ->latest()
             ->paginate($perPage);

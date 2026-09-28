@@ -17,9 +17,6 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Show the registration page.
-     */
     public function create(): Response
     {
         return Inertia::render('auth/register', [
@@ -27,9 +24,6 @@ class RegisteredUserController extends Controller
         ]);
     }
 
-    /**
-     * Handle an incoming registration request.
-     */
     public function store(StoreRegisterRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -39,7 +33,7 @@ class RegisteredUserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'telefone' => $validated['phone'] ?? 'XX XXXXXXXXX',
-            'profile_pic' => 'aushaushuahsas',
+            'profile_pic' => '',
             'setor_id' => $validated['setor_id'],
         ]);
 

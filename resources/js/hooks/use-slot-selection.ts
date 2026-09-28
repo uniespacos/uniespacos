@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
 import { SlotCalendario } from '@/types';
 import { addWeeks, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale/pt-BR';
+import { ptBR } from 'date-fns/locale';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface UseSlotSelectionProps {
@@ -15,10 +15,11 @@ export function useSlotSelection({ hoje, slotsIniciais = [] }: UseSlotSelectionP
     const lastInitialSlotsRef = useRef(slotsIniciais);
 
     useEffect(() => {
-        const hasChanged = slotsIniciais.length !== lastInitialSlotsRef.current.length ||
+        const hasChanged =
+            slotsIniciais.length !== lastInitialSlotsRef.current.length ||
             slotsIniciais.some((slot, idx) => {
                 const prev = lastInitialSlotsRef.current[idx];
-                return !prev || slot.id !== prev.id || slot.status !== prev.status;
+                return slot.id !== prev.id || slot.status !== prev.status;
             });
 
         if (hasChanged) {
@@ -29,7 +30,9 @@ export function useSlotSelection({ hoje, slotsIniciais = [] }: UseSlotSelectionP
 
     const isSlotSelecionado = (slot: SlotCalendario) => slotsSelecao.some((s) => s.id === slot.id);
 
-    const limparSelecao = () => setSlotsSelecao([]);
+    const limparSelecao = () => {
+        setSlotsSelecao([]);
+    };
 
     const alternarSelecaoSlot = (slot: SlotCalendario) => {
         if (slot.status === 'reservado') {

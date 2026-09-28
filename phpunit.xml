@@ -18,7 +18,13 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <!-- force="true" pelo mesmo motivo dos demais abaixo: o container de
+             desenvolvimento exporta APP_ENV=development via .env, entao sem ele
+             a suite rodava com env "development". Isso silenciava os guards de
+             App::environment('testing') — o bypass da pagina de erro Inertia
+             nunca era exercitado como documentado, e runningUnitTests() era
+             false. Ver issue #112. -->
+        <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_URL" value="http://localhost"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

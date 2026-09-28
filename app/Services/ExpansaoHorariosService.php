@@ -66,9 +66,6 @@ class ExpansaoHorariosService
     {
         $linhas = [];
         $agendasUsadas = collect();
-
-        // Dedup defensivo: com o indice unico no ar, um payload que repita o
-        // mesmo slot derrubaria a transacao inteira em vez de so duplicar linha.
         $unicos = collect($slots)->unique(
             fn (array $slot) => $this->chaveSlot($slot)
         );

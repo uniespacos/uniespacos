@@ -39,12 +39,14 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'quote' => function () {
+                [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+
+                return ['message' => trim($message), 'author' => trim($author)];
+            },
             'auth' => [
                 'user' => fn () => $request->user() ? $this->formatAuthUser($request->user()) : null,
             ],
@@ -53,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
             'sidebarOpen' => $request->cookie('sidebar_state') === 'true',
+            'locale' => fn () => app()->getLocale(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

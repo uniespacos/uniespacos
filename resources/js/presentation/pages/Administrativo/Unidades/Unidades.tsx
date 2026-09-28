@@ -1,15 +1,16 @@
-import DeleteItem from '@/presentation/molecules/delete-item';
-import GenericHeader from '@/presentation/molecules/generic-header';
-import Paginacao from '@/presentation/molecules/paginacao-listas';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import AppLayout from '@/presentation/templates/app-layout';
-import { Instituicao, Unidade } from '@/types';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useTranslation } from '@/i18n';
+import { ColumnDef, DataTable } from '@/presentation/molecules/DataTable';
+import DeleteItem from '@/presentation/molecules/DeleteItem';
+import GenericHeader from '@/presentation/molecules/GenericHeader';
+import { SearchFilter } from '@/presentation/molecules/SearchFilter';
+import AppLayout from '@/presentation/templates/AppLayout';
+import type { Instituicao, Unidade } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { FilePenLine, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { UnidadeFilters } from '@/presentation/molecules/UnidadeFilters';
+import { useState } from 'react';
+
 const breadcrumbs = [
     {
         title: 'Gerenciar Unidades',
@@ -17,104 +18,86 @@ const breadcrumbs = [
     },
 ];
 
+const columns: ColumnDef<Unidade>[] = [
+    { id: 'nome', header: 'Nome', accessorKey: 'nome', enableSorting: true },
+    { id: 'sigla', header: 'Sigla', accessorKey: 'sigla', width: '120px', enableSorting: true },
+    { id: 'instituicao', header: 'Instituição', cell: (unidade) => unidade.instituicao?.sigla ?? 'N/A' },
+];
+
 export default function UnidadesPage() {
-    const { unidades } = usePage<{
+    const { t } = useTranslation();
+    const { unidades, filters } = usePage<{
         unidades: {
             data: Unidade[];
             links: { url: string | null; label: string; active: boolean }[];
             meta: object;
         };
         instituicoes: Instituicao[];
+        filters?: { search: string | null };
     }>().props;
-    const unidadesData = unidades.data;
-    const [removerUnidade, setRemoverUnidade] = useState<Unidade | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedInstituicao] = useState<Instituicao | undefined>(undefined);
-    const [unidadesFilter, setUnidadesFilter] = useState<Unidade[]>(unidades.data);
 
-    useEffect(() => {
-        if (!searchTerm && selectedInstituicao === undefined) {
-            setUnidadesFilter(unidadesData);
-            return;
-        }
-        setUnidadesFilter(
-            unidadesData.filter((unidade) => {
-                const matchesSearch = unidade.nome.toLowerCase().includes(searchTerm.toLowerCase());
-                const matchesInstituicao = selectedInstituicao ? unidade.instituicao?.id === selectedInstituicao.id : true;
-                return matchesSearch && matchesInstituicao;
-            }),
-        );
-    }, [searchTerm, selectedInstituicao, unidadesData]);
+    const [removerUnidade, setRemoverUnidade] = useState<Unidade | null>(null);
+    const { searchTerm, setSearchTerm } = useDebouncedSearch({
+        routeName: 'institucional.unidades.index',
+        initialSearch: filters?.search ?? '',
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Unidades" />
+            <Head title={t('admin.unidades.titulo')} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="container mx-auto space-y-6 py-6">
-                    <div className="container mx-auto space-y-6 p-6">
-                        <GenericHeader
-                            titulo="Gerenciar Unidades"
-                            descricao="Aqui você consegue gerenciar as unidades cadastradas"
-                            buttonText="Criar nova"
-                            buttonLink={route('institucional.unidades.create')}
-                            ButtonIcon={PlusCircle}
-                            canSeeButton={true}
-                        />
-                        <Card>
-                            <CardContent>
-                                <UnidadeFilters searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Nome</TableHead>
-                                            <TableHead>Sigla</TableHead>
-                                            <TableHead>Instituicao</TableHead>
-                                            <TableHead className="w-[120px]">Ações</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {unidadesFilter.map((unidade: Unidade) => {
-                                            return (
-                                                <TableRow key={unidade.id}>
-                                                    <TableCell>{unidade.nome}</TableCell>
-                                                    <TableCell>{unidade.sigla}</TableCell>
-                                                    <TableCell>{unidade.instituicao?.sigla}</TableCell>
-                                                    <TableCell className="flex items-center gap-2">
-                                                        <Link href={route('institucional.unidades.edit', { unidade: unidade.id })}>
-                                                            <Button variant="outline" size="icon">
-                                                                <FilePenLine className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
-                                                        <Button variant="destructive" size="icon" onClick={() => setRemoverUnidade(unidade)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                                <Paginacao links={unidades.links} />
-                            </CardContent>
-                        </Card>
-                        {removerUnidade && (
-                            <DeleteItem
-                                isOpen={(open) => {
-                                    if (!open) {
-                                        setRemoverUnidade(null);
-                                    }
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+                <GenericHeader
+                    titulo={t('admin.unidades.titulo')}
+                    descricao={t('admin.unidades.desc')}
+                    buttonText={t('admin.unidades.novo')}
+                    buttonLink={route('institucional.unidades.create')}
+                    ButtonIcon={PlusCircle}
+                    canSeeButton={true}
+                />
+                <SearchFilter searchTerm={searchTerm} onSearchTermChange={setSearchTerm} placeholder={t('common.actions.search')} variant="card" />
+                <DataTable
+                    data={unidades.data}
+                    columns={columns}
+                    autoCardViewOnMobile={true}
+                    enableColumnVisibility={true}
+                    pagination={{ links: unidades.links }}
+                    emptyState={{
+                        title: t('admin.unidades.nenhuma'),
+                        description: t('common.empty.adjustFilter'),
+                    }}
+                    actions={(unidade) => (
+                        <div className="flex justify-end gap-2">
+                            <Link href={route('institucional.unidades.edit', { unidade: unidade.id })}>
+                                <Button variant="outline" size="icon" aria-label={t('common.actions.edit')}>
+                                    <FilePenLine className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="text-destructive-accent hover:text-destructive-accent"
+                                onClick={() => {
+                                    setRemoverUnidade(unidade);
                                 }}
-                                itemName={removerUnidade?.nome || 'Unidade'}
-                                route={route('institucional.unidades.destroy', removerUnidade.id)}
-                            />
-                        )}
-                    </div>
-                </div>
+                                aria-label={t('common.actions.delete')}
+                            >
+                                <Trash2 className="h-4 w-4 text-destructive-accent" />
+                            </Button>
+                        </div>
+                    )}
+                />
+                {removerUnidade && (
+                    <DeleteItem
+                        isOpen={(open) => {
+                            if (!open) {
+                                setRemoverUnidade(null);
+                            }
+                        }}
+                        itemName={removerUnidade.nome}
+                        route={route('institucional.unidades.destroy', removerUnidade.id)}
+                    />
+                )}
             </div>
         </AppLayout>
     );

@@ -13,23 +13,33 @@ class ReservaEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct($message)
-    {
-        $this->message = $message;
-    }
+    public function __construct(
+        public string $action,
+        public int $reservaId,
+        public int $espacoId,
+        public int $horariosCount,
+    ) {}
 
     public function broadcastOn()
     {
-        return ['reserva-channel'];
+        return ['reserva-channel', "App.Models.Espaco.{$this->espacoId}"];
     }
 
     public function broadcastAs()
     {
         return 'reserva-event';
+    }
+
+    /**
+     * @return array<string, string|int>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'action' => $this->action,
+            'reservaId' => $this->reservaId,
+            'espacoId' => $this->espacoId,
+            'horariosCount' => $this->horariosCount,
+        ];
     }
 }

@@ -1,5 +1,32 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
+import type { SupportedLocale } from '@/i18n';
+import type {
+    SituacaoReservaType,
+    SituacaoHorarioType,
+    ValidationStatusType,
+    TipoRelatorioType,
+    FormatoRelatorioType,
+    TurnoType,
+    ModoArquivoType,
+    OrdenacaoReservaType,
+    ErrorCodeType,
+    RecorrenciaReservaType,
+    RoleType,
+} from '@/contracts';
+
+export type SituacaoReserva = SituacaoReservaType;
+export type SituacaoHorario = SituacaoHorarioType;
+export type ValidationStatus = ValidationStatusType;
+export type TipoRelatorio = TipoRelatorioType;
+export type FormatoRelatorio = FormatoRelatorioType;
+export type Turno = TurnoType;
+export type ModoArquivo = ModoArquivoType;
+export type OrdenacaoReserva = OrdenacaoReservaType;
+export type ErrorCode = ErrorCodeType;
+export type RecorrenciaReserva = RecorrenciaReservaType;
+export type ValorOcorrenciaType = RecorrenciaReservaType;
+export type SystemRole = RoleType;
 
 // =============================================================================
 // 1. TIPOS GERAIS DA APLICAÇÃO E AUTENTICAÇÃO
@@ -14,6 +41,7 @@ export interface SharedData {
     ziggy: Config & { location: string };
     flash: FlashMessages;
     sidebarOpen: boolean;
+    locale?: SupportedLocale;
     name?: string;
     quote?: {
         message: string;
@@ -114,11 +142,8 @@ export interface BreadcrumbItem {
     href: string;
 }
 
-export type ValidationStatus = 'pending' | 'processing' | 'completed' | 'failed';
-
 export interface ConflictInfo {
     horario_checado_id: number;
-    conflito_reserva_id: number;
     conflito_reserva_titulo: string;
     conflito_user_name: string;
 }
@@ -127,6 +152,13 @@ export interface ConflictInfo {
 // 2. TIPOS DA HIERARQUIA DE LOCALIZAÇÃO (MODELOS DO LARAVEL)
 // Estrutura física da instituição, em ordem hierárquica.
 // =============================================================================
+
+export interface Campus {
+    id: number;
+    nome: string;
+    sigla: string;
+    instituicao_id: number;
+}
 
 export interface Instituicao {
     id: number;
@@ -152,6 +184,7 @@ export interface Setor {
     sigla: string;
     unidade?: Unidade; // Relação aninhada
     users?: User[]; // Relação aninhada, array de usuários
+    users_count?: number;
 }
 
 export interface Modulo {
@@ -189,17 +222,11 @@ export interface Espaco {
 // =============================================================================
 
 /**
- * Representa os possíveis status de uma reserva ou de um horário.
- * Adicionado 'parcialmente_deferido' para o status geral da reserva.
- */
-export type SituacaoReserva = 'em_analise' | 'indeferida' | 'parcialmente_deferida' | 'deferida' | 'inativa';
-
-/**
  * Modelo de Agenda, que define turnos e gestores para um Espaço.
  */
 export interface Agenda {
     id: number;
-    turno: 'manha' | 'tarde' | 'noite';
+    turno: Turno;
     espaco?: Espaco; // Relação aninhada
     user?: User; // Relação com o gestor da agenda
     horarios?: Horario[];
@@ -215,9 +242,10 @@ export interface Horario {
     horario_fim: string;
     agenda?: Agenda; // Relação aninhada
     reserva?: Reserva;
-    situacao: 'em_analise' | 'indeferida' | 'deferida' | 'inativa';
+    situacao: SituacaoHorario;
     justificativa?: string | null; // Justificativa opcional para indeferimento
     user?: User;
+    avaliador?: User; // Gestor que avaliou este horário (null enquanto em_analise)
     is_conflicted?: boolean;
     conflict_details?: string;
 
@@ -246,7 +274,7 @@ export interface Reserva {
     user?: User; // O usuário que fez a reserva (carregar com with('usuario'))
     horarios: Horario[]; // O array de horários pertencentes a esta reserva
     can_update?: boolean; // Permissão de edição dinâmica
-    validation_status?: 'processing' | 'pending' | 'completed' | string; // Validação de conflitos em segundo plano
+    validation_status?: ValidationStatus; // Validação de conflitos em segundo plano
 }
 
 // =============================================================================
@@ -264,19 +292,18 @@ export interface ReservaFormData {
     data_final: Date | null;
     recorrencia: ValorOcorrenciaType; // Tipo de recorrência selecionada
     horarios_solicitados: Partial<Horario>[]; // Horários que o usuário seleciona
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
  * Tipo para o painel de controle que mostra o resumo dos status.
  */
-export type DashboardStatusReservasType = {
+export interface DashboardStatusReservasType {
     em_analise: number;
     parcialmente_deferida: number; // Novo status adicionado
     deferida: number;
     indeferida: number;
-};
+}
 
 // =============================================================================
 // 5. Tipoas para "View Model"
@@ -295,10 +322,10 @@ export interface SlotCalendario {
         horarioDB: Horario; // O objeto Horario original do banco
         autor: string;
         reserva_titulo: string;
-        conflito?: string | null; // <-- ADICIONE ESTA LINHA
+        conflito?: string | null;
     };
     isLocked?: boolean;
-    isPast?: boolean; // <-- ADICIONE ESTA LINHA
+    isPast?: boolean;
     // Se o status for 'livre', conterá o ID da agenda para criar uma nova reserva.
     agenda_id?: number;
     isShowReservation?: boolean;
@@ -311,7 +338,6 @@ export interface OpcoesRecorrencia {
     calcularDataFinal: (dataInicial: Date) => Date;
 }
 
-export type ValorOcorrenciaType = 'unica' | '15dias' | '1mes' | 'personalizado';
 
 // Define a estrutura de um único link da paginação do Laravel
 interface PaginatorLink {
@@ -344,21 +370,21 @@ export interface ImageWithPreview {
     path?: string; // Path relativo para imagens existentes
 }
 
-export type AgendaGestoresPorTurnoType = {
+export interface AgendaGestoresPorTurnoType {
     nome: string;
     email: string;
     departamento: string;
     agenda_id: number;
-};
+}
 
-export type AgendaDiasSemanaType = {
+export interface AgendaDiasSemanaType {
     data: Date;
     nome: string;
     abreviado: string;
     diaMes: string;
     valor: string;
     ehHoje: boolean;
-};
+}
 
 export type AgendaSlotsDoTurnoType = Record<string, SlotCalendario[]>;
 export interface SelectedAgenda {
@@ -370,14 +396,6 @@ export interface SelectedAgenda {
     instituicao: Instituicao;
 }
 
-export interface FiltrosEspacosType {
-    search?: string;
-    unidade?: string;
-    modulo?: string;
-    andar?: string;
-    capacidade?: string;
-}
-
 interface ReservaAvaliadaNotificationPayload {
     type: string; // 'App\\Notifications\\ReservaAvaliadaNotification'
     reserva_id: number;
@@ -386,19 +404,11 @@ interface ReservaAvaliadaNotificationPayload {
     url: string;
 }
 
-export type TipoRelatorio =
-    | 'reservas_periodo'
-    | 'ocupacao_espacos'
-    | 'inventario_espacos'
-    | 'indicadores_consolidados';
-
-export type FormatoRelatorio = 'pdf' | 'csv' | 'xlsx';
-
 export interface FiltrosRelatorio {
     data_inicio?: string;
     data_fim?: string;
     situacoes?: SituacaoReserva[];
-    turnos?: Array<'manha' | 'tarde' | 'noite'>;
+    turnos?: Turno[];
     unidade_id?: number;
     modulo_id?: number;
     andar_id?: number;
@@ -412,10 +422,10 @@ export interface TipoRelatorioOption {
 }
 
 export interface OpcoesInventario {
-    unidades: Array<{ id: number; nome: string }>;
-    modulos: Array<{ id: number; nome: string; unidade_id: number }>;
-    andares: Array<{ id: number; nome: string; modulo_id: number }>;
-    espacos: Array<{ id: number; nome: string; andar_id: number }>;
+    unidades: { id: number; nome: string }[];
+    modulos: { id: number; nome: string; unidade_id: number }[];
+    andares: { id: number; nome: string; modulo_id: number }[];
+    espacos: { id: number; nome: string; andar_id: number }[];
 }
 
 export interface ColunaRelatorio {

@@ -7,7 +7,9 @@ namespace App\Services;
 use App\Models\Setor;
 use App\Notifications\SectorUpdatedNotification;
 use App\Repositories\SetorRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 class SetorService
 {
@@ -16,8 +18,6 @@ class SetorService
     ) {}
 
     /**
-     * Returns all sectors belonging to the given institution.
-     *
      * @return Collection<int, Setor>
      */
     public function getAllByInstituicao(int $instituicaoId): Collection
@@ -26,8 +26,14 @@ class SetorService
     }
 
     /**
-     * Creates and persists a new sector.
-     *
+     * @return LengthAwarePaginator<int, Setor>
+     */
+    public function paginate(int $instituicaoId, int $perPage = 10, ?string $search = null, ?int $unidadeId = null): LengthAwarePaginator
+    {
+        return $this->repoSetor->getPaginatedByInstituicao($instituicaoId, $perPage, $search, $unidadeId);
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     public function store(array $data): Setor
@@ -36,8 +42,6 @@ class SetorService
     }
 
     /**
-     * Updates an existing sector and notifies its users.
-     *
      * @param  array<string, mixed>  $data
      */
     public function update(Setor $setor, array $data): Setor
@@ -46,15 +50,20 @@ class SetorService
         $setor->load(['users']);
 
         foreach ($setor->users as $user) {
-            $user->notify(new SectorUpdatedNotification($setor, $user));
+            try {
+                $user->notify(new SectorUpdatedNotification($setor, $user));
+            } catch (\Exception $e) {
+                Log::warning('Falha ao enviar notificação de setor atualizado', [
+                    'setor_id' => $setor->id,
+                    'user_id' => $user->id,
+                    'exception' => $e,
+                ]);
+            }
         }
 
         return $setor;
     }
 
-    /**
-     * Deletes the given sector from the database.
-     */
     public function delete(Setor $setor): bool
     {
         return $this->repoSetor->destroy($setor->id);

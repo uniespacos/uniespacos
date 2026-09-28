@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\SituacaoReserva\ModoArquivoEnum;
+use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use Carbon\Carbon;
 use Database\Factories\ReservaFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,19 +47,62 @@ class Reserva extends Model
     ];
 
     /**
+     * Aplica o eixo de arquivamento a uma listagem.
+     *
+     * Fica no model, e nao em cada repositorio, porque a regra estava escrita
+     * de duas formas divergentes: getPaginatedForGestor tinha o default certo,
+     * e getPaginatedForUser aplicava `!= 'inativa'` incondicionalmente — o que
+     * transformava um filtro por arquivadas na contradicao
+     * `situacao != 'inativa' AND situacao = 'inativa'`. Uma definicao so
+     * elimina a chance de as duas divergirem de novo.
+     *
+     * @param  Builder<Reserva>  $query
+     * @return Builder<Reserva>
+     */
+    public function scopeArquivo(Builder $query, mixed $modo): Builder
+    {
+        return match (ModoArquivoEnum::fromFiltro($modo)) {
+            ModoArquivoEnum::ARQUIVADAS => $query->where('situacao', 'inativa'),
+            ModoArquivoEnum::TODAS => $query,
+            ModoArquivoEnum::ATIVAS => $query->where('situacao', '!=', 'inativa'),
+        };
+    }
+
+    /**
+     * Aplica o criterio de ordenacao escolhido pelo usuario nas listagens
+     * (Minhas Reservas / Gerenciar Reservas).
+     *
+     * Por situacao usa uma prioridade fixa (pendente > parcial > indeferida >
+     * deferida > inativa) em vez da ordem alfabetica das cases do enum, que
+     * nao carrega esse significado. `->latest()` como desempate: dentro do
+     * mesmo grupo de situacao, a mais recente primeiro.
+     *
+     * @param  Builder<Reserva>  $query
+     * @return Builder<Reserva>
+     */
+    public function scopeOrdenar(Builder $query, mixed $criterio): Builder
+    {
+        return match (OrdenacaoReservaEnum::fromFiltro($criterio)) {
+            OrdenacaoReservaEnum::SITUACAO => $query->orderByRaw(
+                "CASE situacao
+                    WHEN 'em_analise' THEN 1
+                    WHEN 'parcialmente_deferida' THEN 2
+                    WHEN 'indeferida' THEN 3
+                    WHEN 'deferida' THEN 4
+                    WHEN 'inativa' THEN 5
+                    ELSE 6
+                END"
+            )->latest(),
+            OrdenacaoReservaEnum::DATA_SOLICITACAO => $query->latest(),
+        };
+    }
+
+    /**
      * Returns a human-readable label for the current situacao value.
      */
     public function getSituacaoFormatadaAttribute(): string
     {
-        return match ($this->situacao) {
-            'em_analise' => 'Em Análise',
-            'deferida' => 'Deferida',
-            'indeferida' => 'Indeferida',
-            'parcialmente_deferida' => 'Parcialmente Deferida',
-            /** @phpstan-ignore match.alwaysTrue */
-            'inativa' => 'Inativa',
-            default => ucfirst(str_replace('_', ' ', $this->situacao)),
-        };
+        return SituacaoReservaEnum::labelDe($this->situacao);
     }
 
     /**
@@ -120,5 +167,31 @@ class Reserva extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Adiciona contadores de horários por status à query.
+     * Útil para exibição na lista do gestor.
+     */
+    public function scopeWithHorariosStats(Builder $query, ?array $agendaIds = null): Builder
+    {
+        return $query
+            ->addSelect([
+                'horarios_deferida' => Horario::query()
+                    ->whereColumn('reserva_id', 'reservas.id')
+                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
+                    ->where('situacao', 'deferida')
+                    ->selectRaw('count(*)'),
+                'horarios_indeferida' => Horario::query()
+                    ->whereColumn('reserva_id', 'reservas.id')
+                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
+                    ->where('situacao', 'indeferida')
+                    ->selectRaw('count(*)'),
+                'horarios_em_analise' => Horario::query()
+                    ->whereColumn('reserva_id', 'reservas.id')
+                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
+                    ->where('situacao', 'em_analise')
+                    ->selectRaw('count(*)'),
+            ]);
     }
 }

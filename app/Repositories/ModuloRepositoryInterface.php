@@ -28,7 +28,7 @@ interface ModuloRepositoryInterface
     /**
      * Returns a paginated list of Modulo belonging to the given Instituicao
      */
-    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10): LengthAwarePaginator;
+    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null, ?string $unidadeNome = null): LengthAwarePaginator;
 
     /**
      * Returns all Modulo records belonging to the given Instituicao with eager-loaded relations

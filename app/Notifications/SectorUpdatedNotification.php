@@ -19,7 +19,7 @@ class SectorUpdatedNotification extends BaseNotification
         parent::__construct(
             'Setor Atualizado',
             'O setor '.$setor->nome.' foi atualizado.',
-            route('institucional.setors.show', $setor->id)
+            route('institucional.setors.index')
         );
         $this->setor = $setor;
         $this->user = $user;

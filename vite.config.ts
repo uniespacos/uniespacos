@@ -4,7 +4,7 @@ import laravel from 'laravel-vite-plugin';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
@@ -30,5 +30,25 @@ export default defineConfig({
         hmr: {
             host: 'localhost', // O navegador se conectará ao HMR via localhost
         }
-    }
-});
+    },
+    build: {
+        rollupOptions: isSsrBuild
+            ? {}
+            : {
+                output: {
+                    manualChunks: {
+                        'vendor-react': ['react', 'react-dom', '@inertiajs/react'],
+                        'vendor-radix': [
+                            '@radix-ui/react-dialog',
+                            '@radix-ui/react-popover',
+                            '@radix-ui/react-dropdown-menu',
+                            '@radix-ui/react-select',
+                        ],
+                        'vendor-charts': ['recharts'],
+                        'vendor-dates': ['date-fns', 'react-day-picker'],
+                    },
+                },
+            },
+        chunkSizeWarningLimit: 600,
+    },
+}));

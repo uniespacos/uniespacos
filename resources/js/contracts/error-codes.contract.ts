@@ -1,0 +1,13 @@
+export const ErrorCode = {
+    UNAUTHENTICATED: 'UNAUTHENTICATED',
+    FORBIDDEN: 'FORBIDDEN',
+    NOT_FOUND: 'NOT_FOUND',
+    METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+    PAGE_EXPIRED: 'PAGE_EXPIRED',
+    VALIDATION_FAILED: 'VALIDATION_FAILED',
+    TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+    BAD_REQUEST: 'BAD_REQUEST',
+    SERVER_ERROR: 'SERVER_ERROR',
+} as const;
+
+export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -14,8 +14,8 @@ class ReservationCreatedNotification extends BaseNotification
     public function __construct(Reserva $reserva)
     {
         parent::__construct(
-            'Sua reserva foi criada!',
-            'Sua solicitação de reserva para "'.$reserva->titulo.'" foi processada com sucesso.',
+            'Solicitação de Reserva Enviada',
+            'Sua solicitação de reserva para "'.$reserva->titulo.'" foi enviada e está em análise.',
             route('reservas.show', $reserva->id)
         );
         $this->reserva = $reserva;
@@ -27,7 +27,7 @@ class ReservationCreatedNotification extends BaseNotification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Sua reserva foi criada!: '.$this->reserva->titulo)
+            ->subject('Solicitação de Reserva Enviada: '.$this->reserva->titulo)
             ->view('emails.reservations.reservation_created', ['reserva' => $this->reserva, 'url' => $this->url]);
     }
 }

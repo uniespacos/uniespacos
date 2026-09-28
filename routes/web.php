@@ -15,6 +15,7 @@ use App\Http\Controllers\Institucional\InstitucionalRoleController;
 use App\Http\Controllers\Institucional\InstitucionalSetorController;
 use App\Http\Controllers\Institucional\InstitucionalUnidadeController;
 use App\Http\Controllers\Institucional\InstitucionalUsuarioController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservaController;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,9 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 })->name('home');
+
+// Troca de idioma da interface (acessível por autenticados e não autenticados)
+Route::post('/locale/{locale}', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -60,7 +64,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rotas para Usuário Gestor
     // ---------------------------
     Route::middleware(['permission:secao.gestao-reservas'])->prefix('gestor')->name('gestor.')->group(function () {
-        Route::resource('reservas', GestorReservaController::class);
+        // GestorReservaController implementa apenas estes três métodos; sem o
+        // only(), as rotas create/store/edit/destroy eram registradas apontando
+        // para métodos inexistentes e retornavam 500 em vez de 404.
+        Route::resource('reservas', GestorReservaController::class)->only(['index', 'show', 'update']);
     });
 
     // ---------------------------
@@ -79,6 +86,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('usuarios', InstitucionalUsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::put('usuarios/{user}/edit-permissions', [InstitucionalUsuarioController::class, 'updatePermissions'])
             ->name('usuarios.updatepermissions');
+        Route::get('usuarios/{usuario}/contexto-permissoes', [InstitucionalUsuarioController::class, 'permissionContext'])
+            ->name('usuarios.permission-context');
+        Route::post('usuarios/{usuario}/resend-verification', [InstitucionalUsuarioController::class, 'resendVerification'])
+            ->name('usuarios.resend-verification');
+        Route::post('usuarios/{usuario}/reset-password', [InstitucionalUsuarioController::class, 'sendPasswordReset'])
+            ->name('usuarios.reset-password');
     });
 
     // Gestão de Instituições
@@ -98,6 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Gestão de Setores
     Route::middleware(['permission:secao.gestao-setores'])->prefix('institucional')->name('institucional.')->group(function () {
+        Route::get('setors/{setor}/usuarios', [InstitucionalSetorController::class, 'usuarios'])->name('setors.usuarios');
         Route::resource('setors', InstitucionalSetorController::class);
     });
 

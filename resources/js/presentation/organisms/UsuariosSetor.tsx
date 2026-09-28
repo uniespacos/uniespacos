@@ -1,19 +1,53 @@
-import { UserAvatar } from '@/presentation/atoms/UserAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { UserAvatar } from '@/presentation/atoms/UserAvatar';
 import { Setor, User } from '@/types';
-import { Mail, Phone } from 'lucide-react';
+import { Loader2, Mail, Phone } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     setor: Setor;
-    usuarios: User[];
+    usuarios?: User[];
 }
 
-export function UsuariosSetor({ setor, usuarios }: Props) {
+export function UsuariosSetor({ setor, usuarios: initialUsuarios }: Props) {
+    const [usuarios, setUsuarios] = useState<User[]>(initialUsuarios ?? []);
+    const [loading, setLoading] = useState<boolean>(!initialUsuarios);
+
+    useEffect(() => {
+        if (initialUsuarios) {
+            setUsuarios(initialUsuarios);
+            setLoading(false);
+            return;
+        }
+
+        let isMounted = true;
+        setLoading(true);
+
+        fetch(route('institucional.setors.usuarios', setor.id), {
+            headers: { Accept: 'application/json' },
+        })
+            .then((res) => res.json() as Promise<User[]>)
+            .then((data) => {
+                if (isMounted) {
+                    setUsuarios(data);
+                    setLoading(false);
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [setor.id, initialUsuarios]);
+
     return (
         <div className="space-y-4">
-            {/* Informações do Setor */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -26,13 +60,17 @@ export function UsuariosSetor({ setor, usuarios }: Props) {
                 </CardHeader>
             </Card>
 
-            {/* Lista de Usuários */}
             <Card>
                 <CardHeader>
                     <CardTitle>Usuários Vinculados</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {usuarios.length === 0 ? (
+                    {loading ? (
+                        <div className="text-muted-foreground flex items-center justify-center py-8">
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                            <span>Carregando usuários...</span>
+                        </div>
+                    ) : usuarios.length === 0 ? (
                         <div className="text-muted-foreground py-8 text-center">
                             <UsuarioIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
                             <p>Nenhum usuário vinculado a este setor</p>

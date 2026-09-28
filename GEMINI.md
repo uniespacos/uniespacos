@@ -1,151 +1,87 @@
-# GEMINI.md: UniEspaços Project Guide
+# UniEspaços
 
-This document provides a comprehensive overview of the UniEspaços project, its structure, and key development workflows.
+Sistema de reserva de espaços da UESB. Laravel 12 (PHP 8.4) + Inertia 2 + React 19 + TypeScript 5.8,
+Tailwind v4 (Catppuccin Theming), PostgreSQL 16, Laravel Reverb (WebSocket), tudo em Docker.
 
-## Project Overview
+## Regras invioláveis
 
-UniEspaços is a full-stack web application designed for managing space reservations.
+1. **Nunca use `RefreshDatabase` em teste.** Ele apaga o banco de desenvolvimento. Use sempre
+   `DatabaseTransactions` (já é o padrão em `tests/TestCase.php`).
+2. **BANIDO: `migrate:fresh`, `migrate:reset`, `db:wipe`, `cache:clear --database`.** Não rode esses
+   comandos em ambiente local/desenvolvimento. Eles limpam o banco ou cache. Se um teste quebrou
+   e você acha que o banco está sujo, relata ao dev; nunca limpe por conta própria.
+3. **Toda Notification implementa `ShouldQueue`.** Envio síncrono trava a request.
+4. **`notify()` dentro de Job sempre em `try-catch`.** Sem isso, uma falha do provedor de e-mail
+   derruba a lógica central do job e dispara alerta falso de "falha" para o usuário.
+5. **`REVERB_SCHEME=http` para comunicação interna** (backend → Reverb, dentro do Docker).
+   HTTPS só no caminho externo (browser → Caddy → Reverb).
+6. **Não commitar com trailer de co-autoria.** Os commits saem só com a autoria do dev.
 
-- **Backend:** A robust API built with **Laravel (PHP 12.x)**.
-- **Frontend:** A modern, single-page application (SPA) using **React (v18)** and **Inertia.js**.
-- **Database:** **PostgreSQL (v16)** is the primary data store.
-- **Real-time:** **Laravel Reverb** handles WebSockets for real-time notifications.
-- **Development Environment:** The entire stack is containerized using **Docker** and orchestrated with **Docker Compose**.
-- **Frontend Tooling:** **Vite** is used for fast frontend development and bundling, with **Tailwind CSS** for styling.
-- **CI/CD:** The project uses **GitHub Actions** for automated linting, testing, and deployment.
+## Comandos
 
-## Getting Started: Development Environment
+Tudo roda dentro do container — `php artisan` no host falha porque o host `postgres` só resolve
+na rede do Docker.
 
-The project is designed to run within a Dockerized environment.
+```bash
+# Backend
+docker exec uniespacos-workspace-1 php artisan <comando>
+docker exec -e APP_ENV=testing uniespacos-workspace-1 php artisan test
+docker exec uniespacos-workspace-1 vendor/bin/pint          # lint PHP
 
-### Prerequisites
+# Frontend (rodam no host)
+npx tsc --noEmit          # checagem de tipos
+npx jest                  # testes de frontend
+npx prettier --write <arquivo>
+```
 
-- Docker and Docker Compose
-- PHP >= 8.2 (for local tooling if needed)
-- Composer (for local tooling if needed)
-- Node.js/npm (for local tooling if needed)
+`-e APP_ENV=testing` no teste é obrigatório: sem ele o ambiente vaza e dá 419 (CSRF).
 
-### Initial Setup
+## Fluxo de trabalho
 
-1. **Clone the Repository:**
+- Branch a partir de `develop`. **PR obrigatória** — há CI/CD, não existe push direto em `develop`.
+- Conventional commits, mensagem em português (`fix:`, `feat:`, `perf:`, `chore:`).
+- Antes de dar merge: `npx tsc --noEmit`, `npx jest` e os testes de backend precisam passar.
+- **Nunca criar a PR sozinho ao terminar uma tarefa.** Deixe branch e commit prontos, rode as
+  verificações, e pare — só abra a PR quando o usuário validar o trabalho e autorizar explicitamente
+  a criação. Commitar/pushar a branch de trabalho é ok; `gh pr create` não.
+- **A PR do `release-please` é aprovada e mergeada manualmente pelo usuário.** Não aprove, não
+  aprove-e-mergeie, não faça squash/merge nela por conta própria.
 
-    ```bash
-    git clone git@github.com:uniespacos/app.git
-    cd app
-    ```
+## Arquitetura
 
-2. **Configure Environment:** Copy the development environment file.
+- **Backend em camadas:** Controller → Service → Repository (Interface + implementação Eloquent),
+  com binding no `AppServiceProvider`. Validação em `FormRequest`, autorização em Policy + Spatie.
+- **Frontend em atomic design:** `resources/js/presentation/{atoms,molecules,organisms,pages,templates}`.
+  Primitivos shadcn ficam em `resources/js/components/ui`.
+- **Linter & Qualidade:** ESLint 9 Flat Config (`strict-type-checked`). **Tolerância Zero a Suppressions**:
+  `eslint-suppressions.json` está 100% purgado; novos arquivos ou linhas alteradas nunca devem introduzir
+  supressões no linter.
 
-    ```bash
-    cp .env.dev .env
-    ```
+Detalhe de convenção mora nas skills (carregam sob demanda, não pesam no contexto):
+`backend-conventions`, `frontend-conventions`, `testing-and-env`.
 
-3. **Start Services:** Launch the Docker containers in detached mode.
+## Agentes
 
-    ```bash
-    docker compose -f compose.dev.yml up -d
-    ```
+O projeto define os próprios agentes em `.agents/plugins/uniespacos/agents/`: `master` (orquestrador de sessão),
+`planner`, `frontend`, `backend`, `docs`.
 
-4. **Access the Workspace Container:** Most subsequent commands should be run inside the `workspace` container, which contains all the necessary tools like Composer, NPM, and Artisan.
+Cada um já declara o `model` e o `effort` adequados à sua função. **Ao delegar, não sobrescreva o
+modelo** — a definição do agente prevalece (isto é uma exceção deliberada à preferência global de
+usar sempre o modelo mais leve).
 
-    ```bash
-    docker compose -f compose.dev.yml exec workspace bash
-    ```
+## Armadilhas conhecidas
 
-5. **Install Dependencies:**
-
-    ```bash
-    # Inside the workspace container
-    composer install
-    npm install
-    ```
-
-6. **Prepare the Application:**
-
-    ```bash
-    # Inside the workspace container
-    php artisan key:generate
-    php artisan storage:link
-    php artisan migrate --seed
-    ```
-
-    *Note: Ensure `REVERB_APP_ID`, `REVERB_APP_KEY`, and `REVERB_APP_SECRET` are set in `.env` for real-time features.*
-
-7. **Run the Dev Server:** Start the Vite development server for hot-reloading.
-
-    ```bash
-    # Inside the workspace container
-    npm run dev
-    ```
-
-The application should now be accessible at `https://localhost` (via Nginx proxy). The Adminer database interface is at `http://localhost:9080`.
-
-## Key Commands
-
-All commands below are intended to be run from the host machine unless specified to be run inside the `workspace` container.
-
-- **Start Environment:** `docker compose -f compose.dev.yml up -d`
-- **Stop Environment:** `docker compose -f compose.dev.yml down`
-- **Enter Workspace:** `docker compose -f compose.dev.yml exec workspace bash`
-- **Run Artisan Commands:** `docker compose -f compose.dev.yml exec workspace php artisan <command>`
-- **Run Composer:** `docker compose -f compose.dev.yml exec workspace composer <command>`
-- **Run NPM/Vite:** `docker compose -f compose.dev.yml exec workspace npm <command>`
-- **Check Queue Logs:** `docker compose -f compose.dev.yml logs -f queue-worker`
-
-## Real-time Configuration (Laravel Reverb)
-
-The project uses Laravel Reverb for WebSockets. The configuration decouples internal Docker communication from external browser access:
-
-- **Internal (Backend -> Reverb):** Uses **HTTP** on port **9000**.
-  - `REVERB_HOST="reverb"`
-  - `REVERB_PORT=9000`
-  - `REVERB_SCHEME=http`
-- **External (Browser -> Nginx -> Reverb):** Uses **HTTPS** (WSS) on port **443**.
-  - `VITE_REVERB_HOST="localhost"`
-  - `VITE_REVERB_PORT=443`
-  - `VITE_REVERB_SCHEME=https`
-
-**Note:** The `queue-worker` container must have the `pcntl` PHP extension installed to handle Reverb signals correctly.
-
-## Development Conventions
-
-### Code Style & Linting
-
-- **PHP:** [Laravel Pint](https://laravel.com/docs/pint) is used for enforcing code style.
-  - Check for issues: `docker compose -f compose.dev.yml exec workspace vendor/bin/pint --test`
-  - Fix issues: `docker compose -f compose.dev.yml exec workspace vendor/bin/pint`
-
-- **JavaScript/TypeScript/React:** ESLint and Prettier are used.
-  - Check formatting: `npm run format:check`
-  - Fix formatting: `npm run format`
-  - Run linter: `npm run lint`
-
-### Testing
-
-- **Backend (PHPUnit):** The backend has both unit and feature tests, configured in `phpunit.xml`.
-  - **CRITICAL:** Always explicitly pass `-e APP_ENV=testing` to the container to prevent CSRF 419 errors caused by testing environment bleeding.
-  - Run all tests: `docker compose -f compose.dev.yml exec -e APP_ENV=testing workspace php artisan test`
-  - Alternatively: `docker compose -f compose.dev.yml exec -e APP_ENV=testing workspace ./vendor/bin/phpunit`
-
-## Mandatory Rules
-
-1. **Test Isolation:** **NEVER** use the `RefreshDatabase` trait in tests. This will wipe the development database. **ALWAYS** use `DatabaseTransactions` for test isolation.
-2. **Resilient Notifications:** All system notifications must implement `ShouldQueue` for asynchronous background delivery.
-3. **Job Safety:** When dispatching notifications from within critical jobs (e.g., reservation creation), always wrap the `notify()` calls in a `try-catch` block. This prevents external service failures (like Mailtrap rate limits) from crashing the core job logic and sending false "failure" alerts to users.
-4. **Reverb Connectivity:** For internal Docker broadcasting to work correctly without TLS handshake timeouts, `REVERB_SCHEME` must strictly be set to `http` in the host's `.env.dev` file.
-
-### CI/CD Pipeline (`.github/workflows/main-pipeline.yml`)
-
-The pipeline automates quality checks and deployment:
-
-1. **Lint & Static Analysis:** Runs `vendor/bin/pint --test`.
-2. **PHPUnit Tests:** Runs `php artisan test`.
-3. **Docker Build Check:** Ensures the production Docker image builds successfully.
-4. **Deploy to Production:** On a push to the `main` branch, automatically deploys the application to the production server via SSH.
-
-i### Don't forget
-
-Triggers who dont can forget:
-
-1. **Context7 MCP**
-   - Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+- `ErrorHandlingTest > inertia request does not receive the envelope` falha localmente quando existe
+  `public/build/manifest.json`. É pré-existente, não é regressão sua.
+- O Vite às vezes passa a servir um módulo **vazio** (~167 bytes) depois de um arquivo ser reescrito;
+  a tela quebra com `Element type is invalid`. Confirme com
+  `curl -s http://localhost:5173/<caminho>.tsx | wc -c` e resolva com `touch` no arquivo.
+- **`queue:work` não relê código.** O worker carrega a aplicação na memória ao subir; qualquer
+  alteração em Job, Event, Notification ou nas classes que eles usam só passa a valer depois de
+  `docker restart uniespacos-queue-worker-1`. O sintoma engana: o job roda, é marcado DONE e a parte
+  antiga do código funciona normalmente — só o trecho novo é que nunca executa, sem erro nenhum.
+  Antes de investigar comportamento assíncrono que "não acontece", compare
+  `docker inspect uniespacos-queue-worker-1 --format '{{.State.StartedAt}}'` (UTC) com a data do
+  commit que introduziu o código. Para broadcast, `docker logs uniespacos-reverb-1 | grep
+"Broadcasting To"` mostra se o evento chegou ao Reverb, separando problema de backend de
+  problema de frontend.

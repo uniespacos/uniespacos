@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Institucional;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlterarGestoresEspacoRequest;
 use App\Http\Requests\ConfirmPasswordRequest;
+use App\Http\Requests\ListarEspacosRequest;
 use App\Http\Requests\StoreEspacoRequest;
 use App\Http\Requests\UpdateEspacoRequest;
 use App\Models\Espaco;
@@ -26,29 +27,26 @@ class InstitucionalEspacoController extends Controller
         protected EspacoService $service,
     ) {}
 
-    /**
-     * Display the admin listing of spaces with managers and structural data.
-     */
-    public function index(): Response
+    public function index(ListarEspacosRequest $request): Response
     {
         $this->authorize('viewAny', Espaco::class);
 
         $user = Auth::user();
         $instituicaoId = $user->setor->unidade->instituicao_id;
-        $formData = $this->service->getFormData($instituicaoId);
+        $filters = $request->validated();
+        $filterOptions = $this->service->getFilterOptions($instituicaoId);
 
         return Inertia::render('Administrativo/Espacos/GerenciarEspacos', [
-            'espacos' => $this->service->getAdminListing($instituicaoId),
-            'andares' => $formData['andares'],
-            'modulos' => $formData['modulos'],
-            'unidades' => $formData['unidades'],
+            'espacos' => $this->service->getPaginatedForAdmin($instituicaoId, $filters)->withQueryString(),
+            'andares' => $filterOptions['andares'],
+            'modulos' => $filterOptions['modulos'],
+            'unidades' => $filterOptions['unidades'],
+            'capacidadeEspacos' => $filterOptions['capacidades'],
+            'filters' => $filters,
             'users' => $this->service->getUsersWithAgendas($instituicaoId),
         ]);
     }
 
-    /**
-     * Show the form for creating a new space.
-     */
     public function create(): Response
     {
         $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
@@ -57,9 +55,6 @@ class InstitucionalEspacoController extends Controller
         return Inertia::render('Administrativo/Espacos/CadastroEspaco', $formData);
     }
 
-    /**
-     * Store a newly created space with images and shift agendas in storage.
-     */
     public function store(StoreEspacoRequest $request): RedirectResponse
     {
         $this->authorize('create', Espaco::class);
@@ -73,7 +68,7 @@ class InstitucionalEspacoController extends Controller
             return redirect()->route('institucional.espacos.index')
                 ->with('success', 'Espaço cadastrado com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao criar espaço: '.$e->getMessage());
+            Log::error('Erro ao criar espaço', ['exception' => $e]);
 
             return redirect()->back()
                 ->with('error', 'Ocorreu um erro inesperado ao criar o espaço.')
@@ -81,9 +76,6 @@ class InstitucionalEspacoController extends Controller
         }
     }
 
-    /**
-     * Display the specified space with its agenda managers and reserved slots.
-     */
     public function show(Espaco $espaco): Response|RedirectResponse
     {
         try {
@@ -96,9 +88,6 @@ class InstitucionalEspacoController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified space.
-     */
     public function edit(Espaco $espaco): Response
     {
         $espaco->load('andar.modulo.unidade');
@@ -111,9 +100,6 @@ class InstitucionalEspacoController extends Controller
         ));
     }
 
-    /**
-     * Update the specified space in storage, managing image changes.
-     */
     public function update(UpdateEspacoRequest $request, Espaco $espaco): RedirectResponse
     {
         $this->authorize('update', $espaco);
@@ -126,10 +112,12 @@ class InstitucionalEspacoController extends Controller
                 $request->validated('images_to_delete', [])
             );
 
-            return redirect()->route('institucional.espacos.index')
-                ->with('success', 'Espaço atualizado com sucesso!');
+            return back()->with('success', 'Espaço atualizado com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar espaço: '.$e->getMessage());
+            Log::error('Erro ao atualizar espaço', [
+                'espaco_id' => $espaco->id,
+                'exception' => $e,
+            ]);
 
             return redirect()->back()
                 ->with('error', 'Ocorreu um erro inesperado ao atualizar o espaço.')
@@ -137,10 +125,6 @@ class InstitucionalEspacoController extends Controller
         }
     }
 
-    /**
-     * Remove the specified space from storage.
-     * Requires password confirmation from the authenticated user.
-     */
     public function destroy(ConfirmPasswordRequest $request, Espaco $espaco): RedirectResponse
     {
         $this->authorize('delete', $espaco);
@@ -152,16 +136,12 @@ class InstitucionalEspacoController extends Controller
         try {
             $this->service->delete($espaco);
 
-            return redirect()->route('institucional.espacos.index')
-                ->with('success', 'Espaço excluído com sucesso!');
+            return back()->with('success', 'Espaço excluído com sucesso!');
         } catch (\Exception $error) {
             return redirect()->back()->with('error', 'Erro ao excluir, favor tentar novamente.');
         }
     }
 
-    /**
-     * Update the shift managers for the specified space.
-     */
     public function alterarGestores(AlterarGestoresEspacoRequest $request, Espaco $espaco): RedirectResponse
     {
         $this->authorize('updateGestores', $espaco);
@@ -169,10 +149,12 @@ class InstitucionalEspacoController extends Controller
         try {
             $this->service->updateGestores($espaco, $request->validated());
 
-            return redirect()->route('institucional.espacos.index')
-                ->with('success', 'Gestores atualizados com sucesso!');
+            return back()->with('success', 'Gestores atualizados com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar gestores do espaço: '.$e->getMessage());
+            Log::error('Erro ao atualizar gestores do espaço', [
+                'espaco_id' => $espaco->id,
+                'exception' => $e,
+            ]);
 
             return redirect()->back()
                 ->with('error', 'Ocorreu um erro ao atualizar os gestores do espaço.');

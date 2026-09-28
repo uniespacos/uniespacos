@@ -43,7 +43,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'telefone' => $input['phone'],
             'setor_id' => $input['setor_id'],
-            'profile_pic' => 'aushaushuahsas', // TODO: Impl avatars system
+            'profile_pic' => '',
             'password' => Hash::make($input['password']),
         ]);
 

@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\Espaco;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 
@@ -47,19 +48,10 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator
     {
-        return $this->espaco->newQuery()
-            ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
-            ->when($filters['search'] ?? null, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nome', 'like', '%'.$search.'%')
-                        ->orWhereHas('andar', fn ($q) => $q->where('nome', 'like', '%'.$search.'%'))
-                        ->orWhereHas('andar.modulo', fn ($q) => $q->where('nome', 'like', '%'.$search.'%'));
-                });
-            })
-            ->when($filters['unidade'] ?? null, fn ($q, $unidade) => $q->whereHas('andar.modulo', fn ($q) => $q->where('unidade_id', $unidade)))
-            ->when($filters['modulo'] ?? null, fn ($q, $modulo) => $q->whereHas('andar', fn ($q) => $q->where('modulo_id', $modulo)))
-            ->when($filters['andar'] ?? null, fn ($q, $andar) => $q->where('andar_id', $andar))
-            ->when($filters['capacidade'] ?? null, fn ($q, $capacidade) => $q->where('capacidade_pessoas', '>=', $capacidade))
+        $query = $this->espaco->newQuery()
+            ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
+
+        return $this->applyFilters($query, $filters)
             ->with([
                 'andar:id,nome,modulo_id',
                 'andar.modulo:id,nome,unidade_id',
@@ -70,16 +62,40 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
     }
 
     /**
-     * Returns all Espaco records belonging to the given Instituicao with eager-loaded relations for admin
+     * Returns a paginated list of Espaco for the admin listing, scoped to an institution with optional filters
      *
-     * @return Collection<int, Espaco>
+     * @param  array<string, mixed>  $filters
      */
-    public function getAllByInstituicao(int $instituicaoId): Collection
+    public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->espaco->newQuery()
-            ->whereHas('andar.modulo.unidade.instituicao', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+        $query = $this->espaco->newQuery()
+            ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
+
+        return $this->applyFilters($query, $filters)
             ->with(['andar.modulo.unidade.instituicao', 'agendas.user'])
-            ->get();
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * Applies the shared search/unidade/modulo/andar/capacidade filters to a Espaco query
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyFilters(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['search'] ?? null, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nome', 'like', '%'.$search.'%')
+                        ->orWhereHas('andar', fn ($q) => $q->where('nome', 'like', '%'.$search.'%'))
+                        ->orWhereHas('andar.modulo', fn ($q) => $q->where('nome', 'like', '%'.$search.'%'));
+                });
+            })
+            ->when($filters['unidade'] ?? null, fn ($q, $unidade) => $q->whereHas('andar.modulo', fn ($q) => $q->where('unidade_id', $unidade)))
+            ->when($filters['modulo'] ?? null, fn ($q, $modulo) => $q->whereHas('andar', fn ($q) => $q->where('modulo_id', $modulo)))
+            ->when($filters['andar'] ?? null, fn ($q, $andar) => $q->where('andar_id', $andar))
+            ->when($filters['capacidade'] ?? null, fn ($q, $capacidade) => $q->where('capacidade_pessoas', '>=', $capacidade));
     }
 
     /**

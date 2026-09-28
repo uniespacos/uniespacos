@@ -1,14 +1,17 @@
-import TabsItemEspacosFavoritos from '@/presentation/molecules/tabs-item-espacos-favoritos';
-import TabsItemReserva from '@/presentation/molecules/tabs-item-reserva';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppLayout from '@/presentation/templates/app-layout';
+import { useTranslation } from '@/i18n';
+import { getTurnoText } from '@/lib/utils';
+import TabsItemEspacosFavoritos from '@/presentation/molecules/TabsItemEspacosFavoritos';
+import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
+import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, Reserva, Unidade, User, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Building, Calendar, Plus, Settings, UserCheck, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, Building2, Calendar, CalendarDays, Globe, Layers, ListChecks, Plus, Star, UserCheck, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Painel Inicial',
@@ -16,17 +19,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({
-    estatisticasPainel,
-    espacos,
-    user,
-    gestores,
-    unidades,
-    espacosFavoritos,
-    reservas,
-}: {
+interface DashboardInstitucionalProps {
     user: User;
-    users: User[];
+    users?: User[];
     estatisticasPainel: {
         total_espacos: number;
         total_gestores: number;
@@ -37,269 +32,278 @@ export default function Dashboard({
     unidades: Unidade[];
     espacosFavoritos: Espaco[];
     reservas: Reserva[];
-}) {
-    const [filteredEspacosFavoritos, setFilteredEspacosFavoritos] = useState<Espaco[]>(espacosFavoritos);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    useEffect(() => {
-        if (!searchTerm) {
-            setFilteredEspacosFavoritos(espacosFavoritos);
-            return;
-        }
+}
 
+export default function DashboardInstitucionalPage({
+    estatisticasPainel,
+    espacos,
+    user,
+    gestores,
+    unidades,
+    espacosFavoritos,
+    reservas,
+}: DashboardInstitucionalProps) {
+    const { t } = useTranslation();
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
+    const filteredEspacosFavoritos = useMemo(() => {
+        if (!searchTerm.trim()) return espacosFavoritos;
         const lowerSearchTerm = searchTerm.toLowerCase();
-        const filtered = espacosFavoritos.filter(
+        return espacosFavoritos.filter(
             (espaco) =>
                 espaco.nome.toLowerCase().includes(lowerSearchTerm) ||
-                espaco.andar?.nome?.toLowerCase().includes(lowerSearchTerm) ||
-                '' ||
-                espaco.andar?.modulo?.nome?.toLowerCase().includes(lowerSearchTerm) ||
-                '',
+                espaco.andar?.nome.toLowerCase().includes(lowerSearchTerm) ||
+                espaco.andar?.modulo?.nome.toLowerCase().includes(lowerSearchTerm),
         );
-
-        setFilteredEspacosFavoritos(filtered);
     }, [espacosFavoritos, searchTerm]);
 
-    const getTurnoLabel = (turno: string) => {
-        switch (turno) {
-            case 'manha':
-                return 'Manhã';
-            case 'tarde':
-                return 'Tarde';
-            case 'noite':
-                return 'Noite';
-            default:
-                return turno;
-        }
-    };
+    const kpiCards = [
+        {
+            title: t('dashboard.stats.total_reservas'),
+            value: estatisticasPainel.total_espacos,
+            description: t('espacos.titulo'),
+            icon: Building2,
+            iconBg: 'bg-primary/10 text-primary',
+        },
+        {
+            title: t('usuarios.roles.gestor'),
+            value: estatisticasPainel.total_gestores,
+            description: t('usuarios.subtitulo'),
+            icon: Users,
+            iconBg: 'bg-primary/10 text-primary',
+        },
+        {
+            title: t('nav.minhas_reservas'),
+            value: estatisticasPainel.reservas_mes,
+            description: t('reservas.titulo'),
+            icon: CalendarDays,
+            iconBg: 'bg-primary/10 text-primary',
+        },
+        {
+            title: t('admin.unidades.titulo'),
+            value: unidades.length,
+            description: t('admin.unidades.desc'),
+            icon: Layers,
+            iconBg: 'bg-primary/10 text-primary',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold">Painel Institucional</h1>
-                            <p className="text-muted-foreground">Olá, {user.name} bem vindo ao UniEspaços</p>
+            <Head title={t('dashboard.institucional_title')} />
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6">
+                {/* Banner Institucional com Gradiente Catppuccin */}
+                <div className="border-border/70 from-primary/15 via-primary/5 to-card relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 shadow-xs sm:p-8">
+                    <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-background/80 text-xs font-medium backdrop-blur-xs">
+                                    <Globe className="text-primary mr-1 h-3 w-3" />
+                                    {t('dashboard.institucional_title')}
+                                </Badge>
+                            </div>
+                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">{t('dashboard.welcome', { name: user.name })}</h1>
+                            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
+                                {t('relatorios.institucional_subtitulo', { institution_name: 'UESB' })}
+                            </p>
                         </div>
-                        <div className="flex gap-2">
-                            <Button onClick={() => router.get(route('institucional.espacos.create'))}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Novo Espaço
-                            </Button>
-                        </div>
+                        <Button
+                            size="lg"
+                            onClick={() => {
+                                router.get(route('institucional.espacos.create'));
+                            }}
+                            className="shrink-0"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            {t('admin.espacos.novo')}
+                        </Button>
                     </div>
+                </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total de Espaços</CardTitle>
-                                <Building className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{estatisticasPainel.total_espacos}</div>
-                                <p className="text-muted-foreground text-xs">Espaços cadastrados</p>
-                            </CardContent>
-                        </Card>
+                {/* Grid de Métricas Principais (Cards de KPI) */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {kpiCards.map((kpi) => {
+                        const Icon = kpi.icon;
+                        return (
+                            <Card key={kpi.title} className="border-border/70 bg-card hover:border-primary/40 transition-colors">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 pb-2">
+                                    <CardTitle className="text-muted-foreground text-sm font-medium">{kpi.title}</CardTitle>
+                                    <div className={`rounded-xl p-2.5 ${kpi.iconBg}`}>
+                                        <Icon className="h-4 w-4" />
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="px-5 pt-0 pb-5">
+                                    <div className="text-foreground text-3xl font-bold tracking-tight">{kpi.value}</div>
+                                    <p className="text-muted-foreground mt-1 text-xs">{kpi.description}</p>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
 
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Gestores Ativos</CardTitle>
-                                <Users className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{estatisticasPainel.total_gestores}</div>
-                                <p className="text-muted-foreground text-xs">Gestores delegados</p>
-                            </CardContent>
-                        </Card>
+                {/* Tabs de Conteúdo: Reservas, Espaços, Gestores e Favoritos */}
+                <Tabs defaultValue="reservas" className="w-full space-y-4">
+                    <TabsList className="bg-muted/60 flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl p-1 sm:w-auto">
+                        <TabsTrigger value="reservas" className="text-xs sm:text-sm">
+                            <ListChecks className="mr-2 h-4 w-4" />
+                            {t('dashboard.tabs.solicitacoes')} ({reservas.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="espacos" className="text-xs sm:text-sm">
+                            <Building2 className="mr-2 h-4 w-4" />
+                            {t('espacos.titulo')} ({espacos.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="gestores" className="text-xs sm:text-sm">
+                            <Users className="mr-2 h-4 w-4" />
+                            {t('usuarios.roles.gestor')} ({gestores.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="favoritos" className="text-xs sm:text-sm">
+                            <Star className="mr-2 h-4 w-4" />
+                            {t('dashboard.tabs.favoritos')} ({espacosFavoritos.length})
+                        </TabsTrigger>
+                    </TabsList>
 
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Reservas do Mês</CardTitle>
-                                <BarChart3 className="text-muted-foreground h-4 w-4" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{estatisticasPainel.reservas_mes}</div>
-                                <p className="text-muted-foreground text-xs">Total de reservas</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Main Content */}
-                    <Tabs defaultValue="reservas" className="space-y-4">
-                        <TabsList>
-                            <TabsTrigger value="reservas"> Ultimas 5 reservas solicitadas </TabsTrigger>
-                            <TabsTrigger value="favoritos">Espaços Favoritos </TabsTrigger>
-                            <TabsTrigger value="espacos">Gerenciar Espaços</TabsTrigger>
-                            <TabsTrigger value="gestores">Delegar Gestores</TabsTrigger>
-                            <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="reservas" className="space-y-4">
+                    {/* Aba Reservas */}
+                    <TabsContent value="reservas" className="mt-0">
+                        {reservas.length > 0 ? (
                             <TabsItemReserva reservas={reservas} />
-                        </TabsContent>
+                        ) : (
+                            <Card className="border-border/70">
+                                <CardContent className="text-muted-foreground py-12 text-center text-sm">
+                                    {t('dashboard.empty.no_reservas')}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </TabsContent>
 
-                        <TabsContent value="favoritos" className="space-y-4">
+                    {/* Aba Espaços */}
+                    <TabsContent value="espacos" className="mt-0 space-y-4">
+                        <Card className="border-border/70">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5">
+                                <div>
+                                    <CardTitle className="text-base font-semibold">{t('espacos.titulo')}</CardTitle>
+                                    <CardDescription className="text-xs">{t('espacos.consultar_espacos_desc')}</CardDescription>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        router.get(route('institucional.espacos.index'));
+                                    }}
+                                >
+                                    {t('nav.gerir_espacos')}
+                                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="px-5 pt-0 pb-5">
+                                <div className="divide-border/60 divide-y">
+                                    {espacos.map((espaco) => (
+                                        <div key={espaco.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
+                                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                                <h4 className="text-foreground text-sm font-semibold">{espaco.nome}</h4>
+                                                <span className="text-muted-foreground text-xs">
+                                                    {espaco.andar?.modulo?.unidade?.nome ?? 'UESB'} • {espaco.andar?.modulo?.nome} •{' '}
+                                                    {espaco.capacidade_pessoas ? t('espacos.capacidade', { count: String(espaco.capacidade_pessoas) }) : ''}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                <span className="text-muted-foreground text-xs font-medium">{t('relatorios.filtros.turnos')}:</span>
+                                                {espaco.agendas && espaco.agendas.length > 0 ? (
+                                                    espaco.agendas.map((agenda) => (
+                                                        <div
+                                                            key={agenda.id}
+                                                            className="border-border/70 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs"
+                                                        >
+                                                            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                                                                {getTurnoText(agenda.turno)}
+                                                            </Badge>
+                                                            <span className="text-muted-foreground">{agenda.user?.name ?? t('reservas.detalhes.gestor_nao_definido')}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-muted-foreground text-xs italic">{t('common.empty.noData')}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Aba Gestores */}
+                    <TabsContent value="gestores" className="mt-0 space-y-4">
+                        <Card className="border-border/70">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5">
+                                <div>
+                                    <CardTitle className="text-base font-semibold">{t('usuarios.roles.gestor')}</CardTitle>
+                                    <CardDescription className="text-xs">{t('usuarios.subtitulo')}</CardDescription>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        router.get(route('institucional.usuarios.index'));
+                                    }}
+                                >
+                                    {t('nav.gerenciar_usuarios')}
+                                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="px-5 pt-0 pb-5">
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    {gestores.map((gestor) => (
+                                        <Card key={gestor.id} className="border-border/70 bg-card/60">
+                                            <CardContent className="space-y-3 p-4">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="min-w-0 truncate text-sm font-semibold">{gestor.name}</h4>
+                                                        <Badge variant="secondary" className="shrink-0 text-[10px]">
+                                                            <UserCheck className="mr-1 h-3 w-3" />
+                                                            {t('usuarios.roles.gestor')}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-muted-foreground truncate text-xs">{gestor.email}</p>
+                                                    <p className="text-muted-foreground truncate text-[11px]">
+                                                        {gestor.setor?.nome ?? t('usuarios.sem_setor_vinculado')}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 w-full text-xs"
+                                                    onClick={() => {
+                                                        router.get(route('institucional.usuarios.index'));
+                                                    }}
+                                                >
+                                                    <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                                                    {t('common.actions.viewDetails')}
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Aba Favoritos */}
+                    <TabsContent value="favoritos" className="mt-0">
+                        {espacosFavoritos.length > 0 ? (
                             <TabsItemEspacosFavoritos
-                                espacosFiltrados={filteredEspacosFavoritos}
                                 user={user}
+                                espacosFiltrados={filteredEspacosFavoritos}
                                 searchTerm={searchTerm}
                                 setSearchTerm={setSearchTerm}
                             />
-                        </TabsContent>
-
-                        <TabsContent value="espacos" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Ultimos 5 espaços cadastrados</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {espacos.map((espaco) => (
-                                            <div key={espaco.id} className="rounded-lg border p-4">
-                                                <div className="mb-4 flex items-start justify-between">
-                                                    <div className="space-y-1">
-                                                        <h4 className="font-medium">{espaco.nome}</h4>
-                                                        <p className="text-muted-foreground text-sm">
-                                                            Capacidade: {espaco.capacidade_pessoas} pessoas
-                                                        </p>
-                                                        <p className="text-muted-foreground text-xs">
-                                                            {espaco.andar?.nome} - {espaco.andar?.modulo?.nome}, {espaco.andar?.modulo?.unidade?.nome}
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => {
-                                                            router.get(route('institucional.espacos.index'));
-                                                        }}
-                                                    >
-                                                        <Settings className="mr-1 h-4 w-4" />
-                                                        Editar
-                                                    </Button>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <h5 className="text-sm font-medium">Gestores por turno:</h5>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {espaco.agendas?.map((agenda) => (
-                                                            <div key={agenda.id} className="flex items-center gap-2">
-                                                                <Badge variant="outline">{getTurnoLabel(agenda.turno)}</Badge>
-                                                                {agenda.user ? (
-                                                                    <span className="text-muted-foreground text-sm">{agenda.user.name}</span>
-                                                                ) : (
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        onClick={() => {
-                                                                            router.get(route('institucional.espacos.index'));
-                                                                        }}
-                                                                    >
-                                                                        <UserCheck className="mr-1 h-3 w-3" />
-                                                                        Delegar
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                        ) : (
+                            <Card className="border-border/70">
+                                <CardContent className="text-muted-foreground py-12 text-center text-sm">
+                                    {t('dashboard.empty.no_favoritos')}
                                 </CardContent>
                             </Card>
-                        </TabsContent>
-
-                        <TabsContent value="gestores" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Gestores Cadastrados</CardTitle>
-                                    <CardDescription>Visualize todos os gestores e suas delegações</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                        {gestores.map((gestor) => (
-                                            <Card key={gestor.id}>
-                                                <CardContent className="p-4">
-                                                    <div className="space-y-2">
-                                                        <h4 className="font-medium">{gestor.name}</h4>
-                                                        <p className="text-muted-foreground text-sm">{gestor.email}</p>
-                                                        <p className="text-muted-foreground text-xs">{gestor.setor?.nome}</p>
-                                                        <Badge variant="secondary">
-                                                            <Users className="mr-1 h-3 w-3" />
-                                                            Gestor
-                                                        </Badge>
-                                                    </div>
-                                                    <Button
-                                                        size="sm"
-                                                        className="mt-3 w-full bg-transparent"
-                                                        variant="outline"
-                                                        onClick={() => router.get(route('institucional.usuarios.index'))}
-                                                    >
-                                                        <Calendar className="mr-2 h-4 w-4" />
-                                                        Ver Delegações
-                                                    </Button>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="relatorios" className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Relatórios e Estatísticas</CardTitle>
-                                    <CardDescription>Visualize dados e métricas do sistema</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-lg">Ocupação por Unidade</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-2">
-                                                    {unidades.map((unidade) => (
-                                                        <div key={unidade.id} className="flex items-center justify-between">
-                                                            <span className="text-sm">{unidade.nome}</span>
-                                                            <Badge variant="outline">{Math.floor(Math.random() * 40 + 60)}%</Badge>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-lg">Reservas por Período</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm">Manhã</span>
-                                                        <Badge variant="outline">45%</Badge>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm">Tarde</span>
-                                                        <Badge variant="outline">35%</Badge>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm">Noite</span>
-                                                        <Badge variant="outline">20%</Badge>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
-                </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
             </div>
         </AppLayout>
     );

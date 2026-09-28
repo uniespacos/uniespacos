@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Models\Agenda;
 use App\Models\Espaco;
 use App\Models\User;
@@ -14,22 +15,29 @@ use App\Repositories\EspacoRepositoryInterface;
 use App\Repositories\ModuloRepositoryInterface;
 use App\Repositories\UnidadeRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
+use App\Services\Relatorio\RelatorioService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EspacoService
 {
+    protected RelatorioService $relatorioService;
+
     public function __construct(
         protected EspacoRepositoryInterface $repoEspaco,
         protected AndarRepositoryInterface $repoAndar,
         protected ModuloRepositoryInterface $repoModulo,
         protected UnidadeRepositoryInterface $repoUnidade,
         protected UserRepositoryInterface $repoUser,
-    ) {}
+        ?RelatorioService $relatorioService = null,
+    ) {
+        $this->relatorioService = $relatorioService ?? app(RelatorioService::class);
+    }
 
     /**
      * Returns a paginated list of spaces for the public listing with optional filters.
@@ -57,13 +65,13 @@ class EspacoService
     }
 
     /**
-     * Returns all spaces for the admin/institucional listing.
+     * Returns a paginated list of spaces for the admin/institucional listing with optional filters.
      *
-     * @return Collection<int, Espaco>
+     * @param  array<string, mixed>  $filters
      */
-    public function getAdminListing(int $instituicaoId): Collection
+    public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->repoEspaco->getAllByInstituicao($instituicaoId);
+        return $this->repoEspaco->getPaginatedForAdmin($instituicaoId, $filters, $perPage);
     }
 
     /**
@@ -194,7 +202,7 @@ class EspacoService
      */
     public function store(array $data, array $files = []): Espaco
     {
-        return DB::transaction(function () use ($data, $files) {
+        $espaco = DB::transaction(function () use ($data, $files) {
             $storedPaths = [];
             $mainImagePath = null;
 
@@ -228,6 +236,10 @@ class EspacoService
 
             return $espaco;
         });
+
+        $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
+
+        return $espaco;
     }
 
     /**
@@ -240,7 +252,7 @@ class EspacoService
      */
     public function update(Espaco $espaco, array $data, array $newFiles = [], array $pathsToDelete = []): Espaco
     {
-        return DB::transaction(function () use ($espaco, $data, $newFiles, $pathsToDelete) {
+        $updatedEspaco = DB::transaction(function () use ($espaco, $data, $newFiles, $pathsToDelete) {
             $currentPaths = $espaco->imagens ?? [];
 
             if (! empty($pathsToDelete)) {
@@ -273,16 +285,29 @@ class EspacoService
 
             foreach ($espaco->agendas as $agenda) {
                 if ($agenda->user) {
-                    $agenda->user->notify(new UserAssignedAsManagerNotification(
-                        $agenda->user,
-                        $espaco->nome,
-                        $agenda->turno
-                    ));
+                    try {
+                        $agenda->user->notify(new UserAssignedAsManagerNotification(
+                            $agenda->user,
+                            $espaco->nome,
+                            $agenda->turno
+                        ));
+                    } catch (\Exception $e) {
+                        Log::warning('Falha ao notificar gestor sobre atualizacao do espaco', [
+                            'user_id' => $agenda->user->id,
+                            'espaco_id' => $espaco->id,
+                            'turno' => $agenda->turno,
+                            'exception' => $e,
+                        ]);
+                    }
                 }
             }
 
             return $espaco;
         });
+
+        $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
+
+        return $updatedEspaco;
     }
 
     /**
@@ -315,7 +340,16 @@ class EspacoService
                     $newUser = $this->repoUser->get($userId);
                     if ($newUser && ! $newUser->hasPermissionTo('reservas.avaliar')) {
                         $newUser->assignRole('gestor');
-                        $newUser->notify(new UserAssignedAsManagerNotification($newUser, $espaco->nome, $turno));
+                        try {
+                            $newUser->notify(new UserAssignedAsManagerNotification($newUser, $espaco->nome, $turno));
+                        } catch (\Exception $e) {
+                            Log::warning('Falha ao notificar novo gestor do espaco', [
+                                'user_id' => $newUser->id,
+                                'espaco_id' => $espaco->id,
+                                'turno' => $turno,
+                                'exception' => $e,
+                            ]);
+                        }
                     }
                 }
 
@@ -323,11 +357,22 @@ class EspacoService
                     $oldUser = $this->repoUser->get($oldUserId);
                     if ($oldUser && ! Agenda::where('user_id', $oldUserId)->exists()) {
                         $oldUser->removeRole('gestor');
-                        $oldUser->notify(new UserRemovedAsManagerNotification($oldUser, $espaco->nome, $turno));
+                        try {
+                            $oldUser->notify(new UserRemovedAsManagerNotification($oldUser, $espaco->nome, $turno));
+                        } catch (\Exception $e) {
+                            Log::warning('Falha ao notificar remocao de gestor do espaco', [
+                                'user_id' => $oldUser->id,
+                                'espaco_id' => $espaco->id,
+                                'turno' => $turno,
+                                'exception' => $e,
+                            ]);
+                        }
                     }
                 }
             }
         });
+
+        $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
     }
 
     /**
@@ -335,7 +380,13 @@ class EspacoService
      */
     public function delete(Espaco $espaco): bool
     {
-        return $this->repoEspaco->destroy($espaco->id);
+        $destroyed = $this->repoEspaco->destroy($espaco->id);
+
+        if ($destroyed) {
+            $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
+        }
+
+        return $destroyed;
     }
 
     /**
@@ -356,6 +407,7 @@ class EspacoService
     public function addFavorite(User $user, Espaco $espaco): void
     {
         $user->favoritos()->attach($espaco->id);
+        Espaco::forgetFavoritosCache($user->id);
     }
 
     /**
@@ -364,5 +416,14 @@ class EspacoService
     public function removeFavorite(User $user, Espaco $espaco): void
     {
         $user->favoritos()->detach($espaco->id);
+        Espaco::forgetFavoritosCache($user->id);
+    }
+
+    /**
+     * Checks if the space has at least one manager assigned.
+     */
+    public function hasManager(Espaco $espaco): bool
+    {
+        return $espaco->agendas()->whereNotNull('user_id')->exists();
     }
 }

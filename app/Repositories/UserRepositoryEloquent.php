@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepositoryEloquent implements UserRepositoryInterface
 {
@@ -65,19 +66,40 @@ class UserRepositoryEloquent implements UserRepositoryInterface
     }
 
     /**
-     * Returns all User records for the admin index page with full eager-loaded relations
+     * Returns a paginated list of User records for the admin index page.
      *
-     * @return Collection<int, User>
+     * Carrega apenas o que o card da listagem realmente desenha (nome, e-mail,
+     * telefone, selo de verificação e o papel). Agendas, permissões e a cadeia
+     * de localização NÃO entram aqui: são exclusivas do modal de permissões e
+     * chegam sob demanda via getWithPermissionContext() para um único usuário.
      */
-    public function getAllForAdminByInstituicao(int $instituicaoId): Collection
+    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, int $perPage = 10): LengthAwarePaginator
     {
         return $this->user
+            ->select(['id', 'name', 'email', 'telefone', 'email_verified_at', 'setor_id'])
             ->whereHas('setor.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->when($search, fn ($q) => $q->where(
+                fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
+            ))
+            ->when($setorId, fn ($q) => $q->where('setor_id', $setorId))
+            ->with('roles:id,name')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Returns a single User with everything the permission modal needs:
+     * current agendas (with their full location chain) and permission sets.
+     */
+    public function getWithPermissionContext(int|string $id): ?User
+    {
+        return $this->user
             ->with([
-                'setor.unidade.instituicao',
                 'agendas.espaco.andar.modulo.unidade.instituicao',
+                'roles.permissions',
+                'permissions',
             ])
-            ->get();
+            ->find($id);
     }
 
     /**

@@ -2,75 +2,85 @@
 
 This document outlines the strategic development plan for UniEspaços, organized by version milestones.
 
-## 🎯 v1.x: Stabilization & Pilot Consolidation
-*Focus: Turning the MVP into a robust, reliable product for the initial campus pilot.*
+## 🎯 v1.x: Stabilization, Modernization & Pilot Consolidation
+*Focus: Turning the MVP into a robust, high-performance, modern and reliable product for university campus pilot.*
 
-*   **🛡️ Stability & Quality**
-    *   [ ] **Bug Squashing Campaign:**
-        *   [ ] Admin Page: Managers List Order Incorrect (#101)
-        *   [x] Browser Tab Title (Title Tag) Not Updating Correctly (#110)
-        *   [ ] Delete Confirmation Alert Positioned Incorrectly (#111)
+*   **🛡️ Stability, Architecture & Quality**
+    *   [x] **Bug Squashing & Reliability Campaign:**
+        *   [x] Browser Tab Title (Title Tag) Not Updating Correctly (#110).
         *   [x] Reverb/Broadcasting Timeout and "Double Notification" Bug:
-            *   Stabilized internal Docker broadcasting by forcing HTTP on port 9000.
-            *   Implemented `ShouldQueue` on `BaseNotification` for resilient asynchronous delivery.
-            *   Wrapped notification dispatches in `try-catch` to prevent external service failures from crashing core application jobs.
-    *   [/] **Test Coverage:** Complete frontend (Jest/RTL) and backend (PHPUnit) test coverage.
-    *   [x] **CI/CD Finalization:** Ensure GitHub Actions pipelines are 100% reliable for testing and deployment.
+            *   Stabilized internal Docker broadcasting by forcing HTTP on port 9000 (`REVERB_SCHEME=http`).
+            *   Implemented `ShouldQueue` on all notifications (`BaseNotification`) for resilient asynchronous queue delivery.
+            *   Wrapped notification dispatches in `try-catch` to prevent external mail service failures from crashing core application jobs.
+        *   [x] Reservation Week Link in Notifications: Fixed calendar navigation link parameter targeting the correct week (#222).
+        *   [x] Soft Delete & Archive Separation: Implemented independent `modo_arquivo` (`ModoArquivoEnum`) distinct from evaluation status (`situacao`), with password confirmation on cancellation (#108).
+        *   [x] IDOR Protection & Strict Authorization: Enforced Laravel Policies (`ReservaPolicy`, `EspacoPolicy`) + Spatie Permissions across all endpoints (#119).
+    *   [x] **Stack Modernization (2026):**
+        *   [x] Upgrade to React 19 (`^19.2.8`) with React DOM 19 and `@types/react: ^19.2.18`.
+        *   [x] Upgrade to Tailwind CSS v4 (`^4.2.1`) using `@theme` and semantic Catppuccin color tokens (Latte / Frappé).
+        *   [x] Upgrade to Inertia.js 2, Radix UI primitives, Vaul drawer, Lucide React icons, and Sonner notifications.
+        *   [x] ESLint 9 Flat Config with `strict-type-checked` rules and 100% purged `eslint-suppressions.json` (Zero Tolerance Policy).
+        *   [x] Strict TypeScript 5.8 type checking (`npx tsc --noEmit` passing with 0 errors).
+    *   [x] **Frontend Atomic Design Restructuring:**
+        *   [x] Reorganized UI codebase into `resources/js/presentation/{atoms,molecules,organisms,pages,templates}` and UI primitives in `resources/js/components/ui/`.
+    *   [x] **Test Coverage & Quality Gates:**
+        *   [x] Frontend test suite in Jest 30 + React Testing Library 16 (36 suites, 202 tests).
+        *   [x] Backend test suite in PHPUnit 12 with `DatabaseTransactions` (190+ tests).
+        *   [x] Code formatting standard with Laravel Pint 1.29.
+    *   [x] **CI/CD Finalization:** Reliable GitHub Actions pipelines for automated testing, linting, and release-please versioning.
 
-*   **⚡ Performance**
-    *   [x] **Database Optimization:** Review slow queries and add missing indexes (Foreign Keys, search columns).
+*   **⚡ Performance & Database**
+    *   [x] **Database Optimization:** Optimized queries, added composite foreign keys and search indexes on `reservas`, `horarios`, `agendas` and `espacos`.
+    *   [x] **N+1 Prevention:** Explicit Eager Loading and request-scoped static caching on computed model accessors (e.g. `is_favorited_by_user`).
 
-*   **👥 User Experience**
-    *   [/] **Admin Dashboard 2.0:** Enhance tools for campus/sector managers (better tables, filters, quick actions).
-    *   [ ] **UX Refinements:**
-        *   [x] Enhance Email and Reverb Notification Templates (#103)
-        *   [ ] UI: Reservation List UI: Display Space and Module Information (#105)
-        *   [ ] UI: Calendar UI: Add Day of Week to Slot Groups (#106)
-        *   [x] Improve the reservation flow, calendar interaction, and feedback messages.
-            *   Fixed datepicker bugs preventing manual date changes.
-            *   Implemented "smart shift" for past slots and manual date adjustments.
-            *   Added dynamic alerts for recurrence and conflict detection.
-            *   Improved calendar UI by highlighting past slots and setting the week to start on Monday.
-            *   Fixed `useCallback` import to resolve runtime error.
-
-*   **🔒 Security & Privacy (LGPD)**
-    *   [ ] Resolver apontamentos críticos de segurança e LGPD (Gerenciado internamente no GitHub Projects).
+*   **👥 User Experience & Mobile Ergonomics**
+    *   [x] **Mobile-First Ergonomics:**
+        *   [x] Implemented `<ResponsiveModal>`: Adaptive component switching between Vaul Bottom Drawer (mobile `< 768px`) and Radix Dialog (desktop `>= 768px`).
+        *   [x] Implemented `<MobileBottomBar>`: Floating thumb-friendly bottom dock navigation with reactive notification indicators.
+        *   [x] Implemented `<ReservaCard>` and touch-friendly interactive lists.
+    *   [x] **Reservation Flow & Calendar UX:**
+        *   [x] Fixed datepicker manual date selection and date-fns v4 localization (pt-BR).
+        *   [x] Implemented "smart shift" for past slots and manual date adjustments.
+        *   [x] Added dynamic alerts for recurrence and conflict detection in real time.
+        *   [x] Improved weekly calendar UI with Monday start and shift grouping (Matutino, Vespertino, Noturno).
+    *   [x] **Manager Auto-Approval:** Automatic approval when a space manager requests slots in their own managed spaces, suppressing redundant notification emails (#109).
 
 ---
 
-## 🚀 v2.x: Expansion & Intelligence
-*Focus: Integrating with the ecosystem and providing data-driven insights.*
+## 🚀 v2.x: Expansion, Performance & Intelligence
+*Focus: Scaling the platform, high-performance data handling, and ecosystem integrations.*
+
+*   **⚡ High-Performance Data & UI Components**
+    *   [ ] **TanStack Table Integration:** High-performance data table engine with virtualized scrolling for massive listings (spaces, audit logs, reservations).
+    *   [ ] **Virtualized Search & Combobox:** Infinite scroll and debounced async virtualized selector for institutions with thousands of users and assets.
+    *   [ ] **Unified Skeleton System:** Standardized loading skeleton states across all Inertia pages replacing full-page spinners.
+    *   [ ] **Asynchronous Reporting Queue:** Background export generator for PDF and Excel reports with progress notifications via WebSocket.
 
 *   **🔌 Integration & API**
-    *   [ ] **RESTful API:**
-        *   [ ] Implement robust error handling and logging mechanisms for API endpoints (#112)
-        *   [ ] Build a secure API to expose space/reservation data to other university systems (Academic, HR).
-    *   [ ] **Calendar Sync:** Integration with Google Calendar and Outlook for personal schedule synchronization.
+    *   [ ] **RESTful API & Token Auth:**
+        *   [ ] Secure API endpoints for integration with university Academic and HR management systems (#112).
+        *   [ ] Standardized JSON error envelopes (`error_code`, `message`, `details`).
+    *   [ ] **Calendar Synchronization:** 2-way sync with Google Calendar, Microsoft Outlook, and standard iCal feeds.
 
-*   **📊 Data & Analytics**
-    *   [/] **Manager Analytics:** Dashboards showing occupancy rates, idle times, and peak usage hours.
-    *   [ ] **Data Model Refactoring:** Optimize the database schema based on v1 learnings to support scale.
-    *   [ ] **Advanced Management:**
-        *   [ ] "Gerenciar Reservas" Page: Add Sorting Options (#102)
-        *   [ ] UI: "Gerenciar Reservas" List: Implement Filter/Archive (Soft Delete) Option (#108)
-        *   [x] Optimize Notification: No Email for Self-Requested Manager Reservations (#109)
+*   **📊 Analytics & Operational Insights**
+    *   [x] **Manager Analytics Dashboard:** Real-time occupancy charts, peak hour distribution, and consolidated institutional indicators using Recharts.
+    *   [ ] **Heatmap & Space Utilization Metrics:** Visual heatmap of underutilized spaces and recommendations for load balancing across campus modules.
 
 ---
 
 ## 🔭 v3.x: Innovation & Automation
-*Focus: Advanced features and intelligent resource management.*
+*Focus: Autonomous resource optimization, mobile PWA capabilities, and intelligent allocation.*
 
-*   **🧠 Intelligent Allocation**
-    *   [ ] **Smart Distribution:** Automatically suggest or allocate spaces based on sector needs (class hours, capacity) and rules.
-    *   [ ] **Customizable Availability:**
-        *   [ ] Manager Slot Template Configuration (#104)
-        *   [ ] Alert for Pending Overlapping Requests (#107)
+*   **🧠 Intelligent & Automated Allocation**
+    *   [ ] **Smart Distribution Engine:** Automatically suggest or allocate spaces based on academic departmental constraints, equipment needs, and capacity.
+    *   [ ] **Customizable Availability Templates:** Manager slot template configuration (#104) and pre-approval rules for recurring academic semesters.
 
-*   **📱 Mobile Experience**
-    *   [ ] **Mobile App (PWA/Native):** Dedicated mobile interface for quick reservations and checking schedules.
+*   **📱 Progressive Web App (PWA) & Push**
+    *   [ ] **PWA Offline Mode:** Service Worker caching for offline viewing of confirmed schedules and room details.
+    *   [ ] **Web Push Notifications:** Real-time push notifications for reservation status changes, approvals, and reminders.
 
 *   **🔮 Predictive Modeling**
-    *   [ ] **Demand Forecasting:** Use Machine Learning on historical data to predict future space needs and optimize planning.
+    *   [ ] **Demand Forecasting:** Machine Learning models on historical booking series to forecast seasonal campus demand and optimize energy/space allocation.
 
 ---
-*Last updated: February 26, 2026*
+*Last updated: August 25, 2026*

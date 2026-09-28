@@ -72,7 +72,7 @@
         ],
         "lint": "./vendor/bin/pint",
         "lint:check": "./vendor/bin/pint --test",
-        "analyse": "./vendor/bin/phpstan analyse --memory-limit=512M"
+        "analyse": "./vendor/bin/phpstan analyse --memory-limit=1G"
     },
     "extra": {
         "laravel": {

@@ -1,15 +1,15 @@
-import InputError from '@/presentation/atoms/input-error';
-import AppLayout from '@/presentation/templates/app-layout';
-import SettingsLayout from '@/presentation/templates/settings/layout';
+import InputError from '@/presentation/atoms/InputError';
+import AppLayout from '@/presentation/templates/AppLayout';
+import SettingsLayout from '@/presentation/templates/settings/Layout';
 import { type BreadcrumbItem } from '@/types';
-import { Transition } from '@headlessui/react';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler, useRef } from 'react';
+import { SyntheticEvent, useRef } from 'react';
 
-import HeadingSmall from '@/presentation/atoms/heading-small';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/i18n';
+import HeadingSmall from '@/presentation/atoms/HeadingSmall';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -19,6 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Password() {
+    const { t } = useTranslation();
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -28,12 +29,14 @@ export default function Password() {
         password_confirmation: '',
     });
 
-    const updatePassword: FormEventHandler = (e) => {
+    const updatePassword = (e: SyntheticEvent) => {
         e.preventDefault();
 
         put(route('settings.password.update'), {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                reset();
+            },
             onError: (errors) => {
                 if (errors.password) {
                     reset('password', 'password_confirmation');
@@ -50,78 +53,76 @@ export default function Password() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Configurações de Senha" />
+            <Head title={t('settings.password.title')} />
 
             <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall
-                        title="Atualizar Senha"
-                        description="Certifique-se que sua conta está usando uma senha longa e aleatória para permanecer segura"
+                        title={t('settings.password.title')}
+                        description={t('settings.password.desc')}
                     />
 
                     <form onSubmit={updatePassword} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="current_password">Senha Atual</Label>
+                            <Label htmlFor="current_password">{t('settings.password.current')}</Label>
 
                             <Input
                                 id="current_password"
                                 ref={currentPasswordInput}
                                 value={data.current_password}
-                                onChange={(e) => setData('current_password', e.target.value)}
+                                onChange={(e) => {
+                                    setData('current_password', e.target.value);
+                                }}
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="current-password"
-                                placeholder="Senha atual"
+                                placeholder={t('settings.password.current_placeholder')}
                             />
 
                             <InputError message={errors.current_password} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Nova Senha</Label>
+                            <Label htmlFor="password">{t('settings.password.new')}</Label>
 
                             <Input
                                 id="password"
                                 ref={passwordInput}
                                 value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
+                                onChange={(e) => {
+                                    setData('password', e.target.value);
+                                }}
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
-                                placeholder="Nova senha"
+                                placeholder={t('settings.password.new_placeholder')}
                             />
 
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">Confirmar Senha</Label>
+                            <Label htmlFor="password_confirmation">{t('settings.password.confirm')}</Label>
 
                             <Input
                                 id="password_confirmation"
                                 value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                onChange={(e) => {
+                                    setData('password_confirmation', e.target.value);
+                                }}
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
-                                placeholder="Confirmar senha"
+                                placeholder={t('settings.password.confirm_placeholder')}
                             />
 
                             <InputError message={errors.password_confirmation} />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Salvar Senha</Button>
+                            <Button disabled={processing}>{t('settings.password.submit')}</Button>
 
-                            <Transition
-                                show={recentlySuccessful}
-                                enter="transition ease-in-out"
-                                enterFrom="opacity-0"
-                                leave="transition ease-in-out"
-                                leaveTo="opacity-0"
-                            >
-                                <p className="text-sm text-neutral-600">Salvo</p>
-                            </Transition>
+                            {recentlySuccessful && <p className="text-muted-foreground text-sm">{t('settings.password.saved')}</p>}
                         </div>
                     </form>
                 </div>

@@ -38,6 +38,26 @@
 
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
+    --color-destructive-subtle: var(--destructive-subtle);
+    --color-destructive-accent: var(--destructive-accent);
+
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-success-subtle: var(--success-subtle);
+    --color-success-accent: var(--success-accent);
+
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-warning-subtle: var(--warning-subtle);
+    --color-warning-accent: var(--warning-accent);
+
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-info-subtle: var(--info-subtle);
+    --color-info-accent: var(--info-accent);
+
+    --color-neutral-subtle: var(--neutral-subtle);
+    --color-neutral-accent: var(--neutral-accent);
 
     --color-border: var(--border);
     --color-input: var(--input);
@@ -57,15 +77,15 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --color-brand-blue-darkest: var(--brand-blue-darkest);
+    --color-brand-surface: var(--brand-surface);
 }
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
 */
 @layer base {
     *,
@@ -78,74 +98,143 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    /* Catppuccin Latte (Light Theme) */
+    --background: oklch(0.96 0.008 250); /* Latte Base */
+    --foreground: oklch(0.38 0.04 270); /* Latte Text */
+
+    --card: oklch(0.99 0.002 250); /* Superfície Branca Suave */
+    --card-foreground: oklch(0.38 0.04 270);
+
+    --popover: oklch(0.99 0.002 250);
+    --popover-foreground: oklch(0.38 0.04 270);
+
+    --primary: oklch(0.54 0.22 260); /* Latte Blue */
+    --primary-foreground: oklch(0.98 0 0);
+
+    --secondary: oklch(0.93 0.012 250); /* Latte Mantle / Surface */
+    --secondary-foreground: oklch(0.38 0.04 270);
+
+    --muted: oklch(0.93 0.012 250);
+    --muted-foreground: oklch(0.52 0.035 270); /* Latte Subtext */
+
+    --accent: oklch(0.9 0.015 250); /* Latte Crust */
+    --accent-foreground: oklch(0.38 0.04 270);
+
+    --success: oklch(0.62 0.17 145); /* Latte Green */
+    --success-foreground: oklch(0.98 0 0);
+    --success-subtle: oklch(0.95 0.035 145);
+    --success-accent: oklch(0.42 0.16 145);
+
+    --warning: oklch(0.68 0.16 75); /* Latte Peach/Yellow */
+    --warning-foreground: oklch(0.98 0 0);
+    --warning-subtle: oklch(0.96 0.04 75);
+    --warning-accent: oklch(0.48 0.14 75);
+
+    --info: oklch(0.65 0.13 230); /* Latte Sapphire */
+    --info-foreground: oklch(0.98 0 0);
+    --info-subtle: oklch(0.95 0.03 230);
+    --info-accent: oklch(0.45 0.13 230);
+
+    --destructive: oklch(0.55 0.22 25); /* Latte Red */
+    --destructive-foreground: oklch(0.98 0 0);
+    --destructive-subtle: oklch(0.96 0.035 25);
+    --destructive-accent: oklch(0.5 0.2 25);
+
+    --neutral-subtle: oklch(0.93 0.012 250);
+    --neutral-accent: oklch(0.52 0.035 270);
+
+    --border: oklch(0.88 0.015 255); /* Latte Surface 0 */
+    --input: oklch(0.88 0.015 255);
+    --ring: oklch(0.54 0.22 260);
+
+    --chart-1: oklch(0.54 0.22 260); /* Blue */
+    --chart-2: oklch(0.62 0.17 145); /* Green */
+    --chart-3: oklch(0.68 0.16 75); /* Peach */
+    --chart-4: oklch(0.65 0.13 230); /* Sapphire */
+    --chart-5: oklch(0.56 0.2 300); /* Mauve */
+
+    --radius: 0.75rem;
+
+    --sidebar: oklch(0.93 0.012 250); /* Latte Mantle */
+    --sidebar-foreground: oklch(0.38 0.04 270);
+    --sidebar-primary: oklch(0.54 0.22 260);
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.88 0.02 260);
+    --sidebar-accent-foreground: oklch(0.54 0.22 260);
+    --sidebar-border: oklch(0.88 0.015 255);
+    --sidebar-ring: oklch(0.54 0.22 260);
+
+    --brand-blue-darkest: oklch(0.2 0.025 265);
+    --brand-surface: oklch(1 0 0);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Catppuccin Frappé (Dark Theme) */
+    --background: oklch(0.28 0.025 265); /* Frappé Base */
+    --foreground: oklch(0.85 0.05 270); /* Frappé Text */
+
+    --card: oklch(0.35 0.028 265); /* Frappé Surface 0 */
+    --card-foreground: oklch(0.85 0.05 270);
+
+    --popover: oklch(0.35 0.028 265);
+    --popover-foreground: oklch(0.85 0.05 270);
+
+    --primary: oklch(0.72 0.12 260); /* Frappé Blue */
+    --primary-foreground: oklch(0.22 0.025 265);
+
+    --secondary: oklch(0.42 0.03 265); /* Frappé Surface 1 */
+    --secondary-foreground: oklch(0.85 0.05 270);
+
+    --muted: oklch(0.42 0.03 265);
+    --muted-foreground: oklch(0.73 0.045 270); /* Frappé Subtext */
+
+    --accent: oklch(0.48 0.032 265); /* Frappé Surface 2 */
+    --accent-foreground: oklch(0.85 0.05 270);
+
+    --success: oklch(0.79 0.13 145); /* Frappé Green */
+    --success-foreground: oklch(0.22 0.025 265);
+    --success-subtle: oklch(0.33 0.045 145);
+    --success-accent: oklch(0.82 0.12 145);
+
+    --warning: oklch(0.82 0.11 85); /* Frappé Yellow/Peach */
+    --warning-foreground: oklch(0.22 0.025 265);
+    --warning-subtle: oklch(0.34 0.045 85);
+    --warning-accent: oklch(0.85 0.11 85);
+
+    --info: oklch(0.78 0.09 230); /* Frappé Sapphire */
+    --info-foreground: oklch(0.22 0.025 265);
+    --info-subtle: oklch(0.32 0.04 230);
+    --info-accent: oklch(0.8 0.09 230);
+
+    --destructive: oklch(0.68 0.14 25); /* Frappé Red */
+    --destructive-foreground: oklch(0.98 0 0);
+    --destructive-subtle: oklch(0.33 0.05 25);
+    --destructive-accent: oklch(0.78 0.13 25);
+
+    --neutral-subtle: oklch(0.42 0.03 265);
+    --neutral-accent: oklch(0.73 0.045 270);
+
+    --border: oklch(0.38 0.028 265); /* Frappé Surface 1 Border */
+    --input: oklch(0.38 0.028 265);
+    --ring: oklch(0.72 0.12 260);
+
+    --chart-1: oklch(0.72 0.12 260); /* Blue */
+    --chart-2: oklch(0.79 0.13 145); /* Green */
+    --chart-3: oklch(0.82 0.11 85); /* Peach */
+    --chart-4: oklch(0.78 0.09 230); /* Sapphire */
+    --chart-5: oklch(0.76 0.12 300); /* Mauve */
+
+    --sidebar: oklch(0.24 0.025 265); /* Frappé Mantle */
+    --sidebar-foreground: oklch(0.85 0.05 270);
+    --sidebar-primary: oklch(0.72 0.12 260);
+    --sidebar-primary-foreground: oklch(0.22 0.025 265);
+    --sidebar-accent: oklch(0.32 0.035 260);
+    --sidebar-accent-foreground: oklch(0.72 0.12 260);
+    --sidebar-border: oklch(0.32 0.025 265);
+    --sidebar-ring: oklch(0.72 0.12 260);
+
+    --brand-blue-darkest: oklch(0.2 0.025 265);
+    --brand-surface: oklch(1 0 0);
 }
 
 @layer base {
@@ -153,7 +242,68 @@
         @apply border-border;
     }
 
+    html,
     body {
         @apply bg-background text-foreground;
+        overscroll-behavior-y: contain;
+    }
+}
+
+/* ── Auth Layout Animations ── */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes gradient-shift {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out both;
+}
+
+.animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 12s ease infinite;
+}
+
+.animation-delay-100 {
+    animation-delay: 100ms;
+}
+.animation-delay-200 {
+    animation-delay: 200ms;
+}
+.animation-delay-300 {
+    animation-delay: 300ms;
+}
+.animation-delay-400 {
+    animation-delay: 400ms;
+}
+.animation-delay-500 {
+    animation-delay: 500ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up,
+    .animate-gradient-shift {
+        animation: none;
+    }
+
+    .animate-fade-in-up {
+        opacity: 1;
+        transform: none;
     }
 }

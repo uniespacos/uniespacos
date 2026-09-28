@@ -1,0 +1,17 @@
+{
+  "agent": "master",
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)",
+      "Bash(npx prettier *)",
+      "Bash(docker exec uniespacos-workspace-1 *)",
+      "Bash(docker exec -e APP_ENV=testing uniespacos-workspace-1 *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit -m *)"
+    ]
+  }
+}

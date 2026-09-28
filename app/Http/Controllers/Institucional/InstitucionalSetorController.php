@@ -6,13 +6,14 @@ namespace App\Http\Controllers\Institucional;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
+use App\Http\Requests\ListarSetoresRequest;
 use App\Http\Requests\StoreSetorRequest;
 use App\Http\Requests\UpdateSetorRequest;
 use App\Models\Setor;
 use App\Services\SetorService;
 use App\Services\UnidadeService;
-use App\Services\UserService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -25,40 +26,50 @@ class InstitucionalSetorController extends Controller
     public function __construct(
         protected SetorService $service,
         protected UnidadeService $unidadeService,
-        protected UserService $userService,
     ) {}
 
-    /**
-     * Display a listing of sectors with related institution, units and users.
-     */
-    public function index(): Response
+    public function index(ListarSetoresRequest $request): Response
     {
         $this->authorize('viewAny', Setor::class);
 
         $user = Auth::user();
         $instituicao = $user->setor->unidade->instituicao->load(['unidades']);
         $instituicaoId = $instituicao->id;
+        $validated = $request->validated();
+        $search = $validated['search'] ?? null;
+        $unidadeId = isset($validated['unidade_id']) ? (int) $validated['unidade_id'] : null;
+
+        $setores = $this->service->paginate($instituicaoId, 10, $search, $unidadeId);
+        $setores->withQueryString();
 
         return Inertia::render('Administrativo/Setores/Setores', [
             'instituicao' => $instituicao,
             'unidades' => $this->unidadeService->getAllByInstituicao($instituicaoId)->load(['setors']),
-            'setores' => $this->service->getAllByInstituicao($instituicaoId),
-            'usuarios' => $this->userService->getAllByInstituicao($instituicaoId),
+            'setores' => $setores,
+            'filters' => [
+                'search' => $search,
+                'unidade_id' => $unidadeId,
+            ],
         ]);
     }
 
-    /**
-     * Redirect to the sector panel — sectors are managed inline, not via a separate create page.
-     */
+    public function usuarios(Setor $setor): JsonResponse
+    {
+        $this->authorize('view', $setor);
+
+        $usuarios = $setor->users()
+            ->select(['id', 'name', 'email', 'telefone', 'profile_pic', 'email_verified_at', 'setor_id'])
+            ->get();
+
+        return response()->json($usuarios);
+    }
+
     public function create(): RedirectResponse
     {
         return redirect()->route('institucional.setors.index')
             ->with('error', 'A criação de setores é a partir do painel administrativo de setores.');
     }
 
-    /**
-     * Store a newly created sector in storage.
-     */
     public function store(StoreSetorRequest $request): RedirectResponse
     {
         $this->authorize('create', Setor::class);
@@ -73,18 +84,12 @@ class InstitucionalSetorController extends Controller
         }
     }
 
-    /**
-     * Redirect to the sector panel — sectors are edited inline.
-     */
     public function edit(Setor $setor): RedirectResponse
     {
         return redirect()->route('institucional.setors.index')
             ->with('error', 'A edição de setores é a partir do painel administrativo de setores.');
     }
 
-    /**
-     * Update the specified sector in storage and notify its users.
-     */
     public function update(UpdateSetorRequest $request, Setor $setor): RedirectResponse
     {
         $this->authorize('update', $setor);
@@ -92,17 +97,12 @@ class InstitucionalSetorController extends Controller
         try {
             $this->service->update($setor, $request->validated());
 
-            return redirect()->route('institucional.setors.index')
-                ->with('success', 'Setor atualizado com sucesso!');
+            return back()->with('success', 'Setor atualizado com sucesso!');
         } catch (\Exception $e) {
             return back()->with(['error' => 'Erro ao atualizar setor: '.$e->getMessage()])->withInput();
         }
     }
 
-    /**
-     * Remove the specified sector from storage.
-     * Requires password confirmation from the authenticated user.
-     */
     public function destroy(ConfirmPasswordRequest $request, Setor $setor): RedirectResponse
     {
         $this->authorize('delete', $setor);
@@ -114,8 +114,7 @@ class InstitucionalSetorController extends Controller
         try {
             $this->service->delete($setor);
 
-            return redirect()->route('institucional.setors.index')
-                ->with('success', 'Setor removido com sucesso!');
+            return back()->with('success', 'Setor removido com sucesso!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Erro ao remover setor: '.$e->getMessage()]);
         }

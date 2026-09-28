@@ -15,6 +15,7 @@ use App\Repositories\UserRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserService
@@ -39,30 +40,74 @@ class UserService
      *
      * @return array<string, mixed>
      */
-    public function getIndexData(User $authUser): array
+    public function getIndexData(User $authUser, ?string $search = null, ?int $setorId = null): array
     {
         $instituicaoId = $authUser->setor->unidade->instituicao_id;
 
-        $users = $this->repoUser->getAllForAdminByInstituicao($instituicaoId)
-            ->map(fn (User $user) => array_merge($user->toArray(), [
-                'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name'),
-                'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
-            ]));
-
-        $instituicoes = Instituicao::with(['unidades.modulos.andars.espacos.agendas'])->get();
-
-        $setores = Setor::with([
-            'unidade.instituicao',
-            'users.agendas.espaco.andar.modulo.unidade.instituicao',
-        ])->get();
+        $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId);
+        $users->through(fn (User $user) => array_merge($user->toArray(), [
+            'roles' => $user->getRoleNames(),
+        ]));
+        $users->withQueryString();
+        $setores = Setor::select(['id', 'sigla'])->orderBy('sigla')->get();
 
         return [
             'users' => $users,
-            'instituicoes' => $instituicoes,
             'setores' => $setores,
+            'filters' => ['search' => $search, 'setor_id' => $setorId],
+        ];
+    }
+
+    /**
+     * Returns everything the permission modal needs for a single user.
+     *
+     * Fica fora do index de propósito: a árvore de instituições e as agendas do
+     * usuário só fazem sentido quando o modal de permissões abre, e carregá-las
+     * na listagem custava segundos por request.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPermissionContext(User $user): array
+    {
+        $user = $this->repoUser->getWithPermissionContext($user->id);
+
+        return [
+            'user' => array_merge($user->toArray(), [
+                'roles' => $user->getRoleNames(),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
+            ]),
+            'instituicoes' => Instituicao::select(['id', 'nome', 'sigla'])
+                ->with([
+                    'unidades:id,nome,instituicao_id',
+                    'unidades.modulos:id,nome,unidade_id',
+                    'unidades.modulos.andars:id,nome,modulo_id',
+                    'unidades.modulos.andars.espacos:id,nome,capacidade_pessoas,andar_id',
+                    'unidades.modulos.andars.espacos.agendas:id,turno,espaco_id',
+                ])
+                ->get(),
             'permissionCatalog' => $this->repoPermission->getAllGroupedByPrefix(),
         ];
+    }
+
+    /**
+     * Sends the email verification notification to the given user, for an admin to trigger on their behalf.
+     */
+    public function resendVerificationEmail(User $user): void
+    {
+        if ($user->hasVerifiedEmail()) {
+            throw new \RuntimeException('Este e-mail já está verificado.');
+        }
+
+        $user->sendEmailVerificationNotification();
+    }
+
+    /**
+     * Sends a password reset link to the given user's email, for an admin to trigger on their behalf.
+     */
+    public function sendPasswordResetLink(User $user): bool
+    {
+        return Password::sendResetLink(['email' => $user->email]) === Password::RESET_LINK_SENT;
     }
 
     /**
@@ -98,7 +143,10 @@ class UserService
                 try {
                     $user->notify(new UserAssignedAsManagerNotification($user));
                 } catch (\Exception $e) {
-                    Log::warning("Failed to notify user {$user->id} of manager assignment: ".$e->getMessage());
+                    Log::warning('Falha ao notificar usuário sobre atribuição como gestor', [
+                        'user_id' => $user->id,
+                        'exception' => $e,
+                    ]);
                 }
             } else {
                 Agenda::where('user_id', $user->id)->update(['user_id' => null]);
@@ -106,12 +154,38 @@ class UserService
                 try {
                     $user->notify(new UserRemovedAsManagerNotification($user));
                 } catch (\Exception $e) {
-                    Log::warning("Failed to notify user {$user->id} of manager removal: ".$e->getMessage());
+                    Log::warning('Falha ao notificar usuário sobre remoção como gestor', [
+                        'user_id' => $user->id,
+                        'exception' => $e,
+                    ]);
                 }
             }
 
             app(PermissionRegistrar::class)->forgetCachedPermissions();
         });
+    }
+
+    /**
+     * Creates and persists a new user.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function create(array $data): User
+    {
+        return $this->repoUser->store($data);
+    }
+
+    /**
+     * Updates an existing user with the given data.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function update(User $user, array $data): User
+    {
+        $data['telefone'] = $data['phone'] ?? $user->telefone;
+        unset($data['phone']);
+
+        return $this->repoUser->update($data, $user->id);
     }
 
     /**

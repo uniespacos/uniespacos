@@ -55,10 +55,14 @@ class UnidadeRepositoryEloquent implements UnidadeRepositoryInterface
     /**
      * Returns a paginated list of Unidade belonging to the given Instituicao
      */
-    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
         return $this->unidade
             ->where('instituicao_id', $instituicaoId)
+            ->when($search, fn ($q) => $q->where(
+                fn ($q2) => $q2->where('nome', 'ilike', "%{$search}%")
+                    ->orWhere('sigla', 'ilike', "%{$search}%")
+            ))
             ->with(['instituicao'])
             ->latest()
             ->paginate($perPage);

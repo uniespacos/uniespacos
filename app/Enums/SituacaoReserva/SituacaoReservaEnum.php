@@ -24,6 +24,24 @@ enum SituacaoReservaEnum: string
     }
 
     /**
+     * Situacoes que resultam de avaliacao — o eixo legitimo do filtro
+     * `situacao` nas listagens.
+     *
+     * INATIVA fica de fora porque nao e resultado de avaliacao, e sim estado
+     * de arquivamento; ela e tratada pelo eixo `arquivo`
+     * (ver ModoArquivoEnum,.
+     *
+     * @return array<int, string>
+     */
+    public static function valoresDeAvaliacao(): array
+    {
+        return array_map(
+            fn (self $caso) => $caso->value,
+            array_filter(self::cases(), fn (self $caso) => $caso !== self::INATIVA)
+        );
+    }
+
+    /**
      * Converte um valor cru do banco no rotulo legivel, sem quebrar
      * caso apareca uma situacao desconhecida.
      */

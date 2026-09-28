@@ -20,13 +20,22 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
         XDEBUG_ENABLED: ${XDEBUG_ENABLED:-true}
-        XDEBUG_MODE: ${XDEBUG_MODE:-develop,coverage,debug,profile}
+        # 'coverage' e 'profile' instrumentam/perfilam TODO request e custavam
+        # 5-6x no tempo de resposta (ex.: /espacos 1.9s -> 0.3s ao removê-los).
+        # 'debug' continua aqui, então breakpoints seguem funcionando normalmente.
+        # Para rodar cobertura de testes: XDEBUG_MODE=coverage docker compose ...
+        XDEBUG_MODE: ${XDEBUG_MODE:-develop,debug}
         XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
         XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
         XDEBUG_LOG: ${XDEBUG_LOG:-/dev/stdout}
         XDEBUG_LOG_LEVEL: ${XDEBUG_LOG_LEVEL:-0}
     env_file:
       - .env
+    environment:
+      # O Xdebug 3 lê XDEBUG_MODE do ambiente e ele tem precedência sobre o ini
+      # gravado no build — assim dá para ajustar o modo com um restart do
+      # container, sem precisar reconstruir a imagem.
+      XDEBUG_MODE: ${XDEBUG_MODE:-develop,debug}
     volumes:
       - ./:/var/www
     depends_on:
@@ -54,7 +63,11 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
         XDEBUG_ENABLED: ${XDEBUG_ENABLED:-true}
-        XDEBUG_MODE: ${XDEBUG_MODE:-develop,coverage,debug,profile}
+        # 'coverage' e 'profile' instrumentam/perfilam TODO request e custavam
+        # 5-6x no tempo de resposta (ex.: /espacos 1.9s -> 0.3s ao removê-los).
+        # 'debug' continua aqui, então breakpoints seguem funcionando normalmente.
+        # Para rodar cobertura de testes: XDEBUG_MODE=coverage docker compose ...
+        XDEBUG_MODE: ${XDEBUG_MODE:-develop,debug}
         XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
         XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
         XDEBUG_LOG: ${XDEBUG_LOG:-/dev/stdout}
@@ -67,6 +80,8 @@ services:
       - ./:/var/www
     env_file:
       - .env
+    environment:
+      XDEBUG_MODE: ${XDEBUG_MODE:-develop,debug}
   reverb:
     build:
       context: .

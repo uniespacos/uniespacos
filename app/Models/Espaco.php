@@ -72,6 +72,27 @@ class Espaco extends Model
     }
 
     /**
+     * IDs dos espaços favoritados, memorizados por usuário durante o request.
+     *
+     * @var array<int, array<int, true>>
+     */
+    protected static array $favoritosPorUsuario = [];
+
+    /**
+     * Descarta o cache de favoritos (após favoritar/desfavoritar).
+     */
+    public static function forgetFavoritosCache(?int $userId = null): void
+    {
+        if ($userId === null) {
+            static::$favoritosPorUsuario = [];
+
+            return;
+        }
+
+        unset(static::$favoritosPorUsuario[$userId]);
+    }
+
+    /**
      * Returns whether the currently authenticated user has favorited this space.
      */
     public function getIsFavoritedByUserAttribute(): bool
@@ -82,6 +103,16 @@ class Espaco extends Model
             return false;
         }
 
-        return $user->favoritos()->where('espaco_id', $this->id)->exists();
+        // Como este atributo está em $appends, ele é calculado toda vez que um
+        // Espaco vira array/JSON. Antes cada espaço disparava seu próprio
+        // EXISTS: telas que serializam a árvore de espaços passavam de 100
+        // queries por request só com isto. Agora é uma query por usuário,
+        // reaproveitada por todos os espaços do mesmo request.
+        static::$favoritosPorUsuario[$user->id] ??= array_fill_keys(
+            $user->favoritos()->pluck('espacos.id')->all(),
+            true
+        );
+
+        return isset(static::$favoritosPorUsuario[$user->id][$this->id]);
     }
 }

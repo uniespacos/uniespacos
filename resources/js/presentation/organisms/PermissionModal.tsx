@@ -1,21 +1,20 @@
-'use client';
-
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Badge } from '@/components/ui/badge';
-import { ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL, PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS } from '@/constants/permissions';
 import { getGroupLabel, getPermissionLabel } from '@/constants/permission-labels';
-import { Agenda, Instituicao, Permission, SelectedAgenda, User } from '@/types';
-import { useEffect, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { usePage } from '@inertiajs/react';
+import { PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS, ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL } from '@/constants/permissions';
 import { hasPermission } from '@/lib/auth';
+import { Modal } from '@/presentation/molecules/Modal';
 import FiltroBuscaPermission from '@/presentation/organisms/FiltroBuscaPermission';
+import { Instituicao, Permission, SelectedAgenda, User } from '@/types';
+import { usePage } from '@inertiajs/react';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const ROLE_OPTIONS = [
     { value: ROLE_INSTITUCIONAL, label: 'Institucional' },
@@ -29,47 +28,77 @@ interface PermissionModalProps {
     processing?: boolean;
     onClose: () => void;
     onUpdate: (userId: number, roleName: string, agendas?: number[], directPermissions?: string[]) => void;
-    instituicoes: Instituicao[];
-    permissionCatalog: Record<string, Permission[]>;
-    initialAgendas?: Agenda[];
 }
 
-export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes, permissionCatalog, processing = false }: PermissionModalProps) {
+interface PermissionContext {
+    user: User;
+    instituicoes: Instituicao[];
+    permissionCatalog: Record<string, Permission[]>;
+}
+
+export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = false }: PermissionModalProps) {
     const { props } = usePage<{ auth: { user: User } }>();
     const currentUser = props.auth.user;
     const canManageDirectPermissions = hasPermission(currentUser, PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS);
 
-    const [selectedRole, setSelectedRole] = useState<string>(ROLE_COMUM);
-    const [selectedAgendas, setSelectedAgendas] = useState<SelectedAgenda[]>(
-        user?.agendas!.map(
-            (agenda) =>
-                ({
-                    agenda: agenda,
-                    espaco: agenda.espaco,
-                    andar: agenda.espaco?.andar,
-                    modulo: agenda.espaco?.andar?.modulo,
-                    unidade: agenda.espaco?.andar?.modulo?.unidade,
-                    instituicao: agenda.espaco?.andar?.modulo?.unidade?.instituicao,
-                }) as SelectedAgenda,
-        ) || [],
-    );
+    const [context, setContext] = useState<PermissionContext | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const [directPermissions, setDirectPermissions] = useState<string[]>(user?.direct_permissions || []);
+    const [selectedRole, setSelectedRole] = useState<string>(ROLE_COMUM);
+    const [selectedAgendas, setSelectedAgendas] = useState<SelectedAgenda[]>([]);
+    const [directPermissions, setDirectPermissions] = useState<string[]>([]);
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        if (user) {
-            setSelectedRole(user.roles?.[0] ?? ROLE_COMUM);
-            setDirectPermissions(user?.direct_permissions || []);
+        if (!isOpen || !user) {
+            setContext(null);
+            return;
         }
-    }, [user]);
+
+        let cancelled = false;
+        setLoading(true);
+
+        fetch(route('institucional.usuarios.permission-context', { usuario: user.id }), {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Falha ao carregar as permissões do usuário.');
+                return response.json() as Promise<PermissionContext>;
+            })
+            .then((data) => {
+                if (cancelled) return;
+                setContext(data);
+                setSelectedRole(data.user.roles[0] ?? ROLE_COMUM);
+                setDirectPermissions(data.user.direct_permissions ?? []);
+                setSelectedAgendas(
+                    (data.user.agendas ?? []).map(
+                        (agenda) =>
+                            ({
+                                agenda: agenda,
+                                espaco: agenda.espaco,
+                                andar: agenda.espaco?.andar,
+                                modulo: agenda.espaco?.andar?.modulo,
+                                unidade: agenda.espaco?.andar?.modulo?.unidade,
+                                instituicao: agenda.espaco?.andar?.modulo?.unidade?.instituicao,
+                            }) as SelectedAgenda,
+                    ),
+                );
+            })
+            .catch(() => {
+                if (!cancelled) toast.error('Não foi possível carregar as permissões deste usuário.');
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, user]);
 
     const handleTogglePermission = (permissionName: string) => {
-        setDirectPermissions((prev) =>
-            prev.includes(permissionName)
-                ? prev.filter((p) => p !== permissionName)
-                : [...prev, permissionName]
-        );
+        setDirectPermissions((prev) => (prev.includes(permissionName) ? prev.filter((p) => p !== permissionName) : [...prev, permissionName]));
     };
 
     const handleSubmit = () => {
@@ -81,22 +110,32 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
 
     if (!user) return null;
 
-    const inheritedPermissions = (user.permissions || []).filter((p) => !directPermissions.includes(p));
+    const inheritedPermissions = (context?.user.permissions ?? []).filter((p) => !directPermissions.includes(p));
+    const permissionCatalog = context?.permissionCatalog ?? {};
+    const instituicoes = context?.instituicoes ?? [];
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Gerenciar Permissões - {user.name}</DialogTitle>
-                </DialogHeader>
-
+        <Modal
+            open={isOpen}
+            onOpenChange={onClose}
+            size="xl"
+            className="max-h-[90vh] max-w-5xl overflow-y-auto"
+            title={`Gerenciar Permissões - ${user.name}`}
+            description="Defina o papel do usuário e, se necessário, conceda permissões diretas adicionais."
+        >
+            {loading || !context ? (
+                <div className="text-muted-foreground flex items-center justify-center gap-2 py-12 text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando permissões...
+                </div>
+            ) : (
                 <Tabs defaultValue="role" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="role">Papel</TabsTrigger>
                         {canManageDirectPermissions && <TabsTrigger value="permissions">Permissões Diretas</TabsTrigger>}
                     </TabsList>
 
-                    <TabsContent value="role" className="space-y-6 mt-6">
+                    <TabsContent value="role" className="mt-6 space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="permission-type">Papel do usuário</Label>
                             <Select value={selectedRole} onValueChange={setSelectedRole}>
@@ -132,11 +171,11 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                     </TabsContent>
 
                     {canManageDirectPermissions && (
-                        <TabsContent value="permissions" className="space-y-6 mt-6">
-                            <div className="flex items-center justify-between mb-3">
+                        <TabsContent value="permissions" className="mt-6 space-y-6">
+                            <div className="mb-3 flex items-center justify-between">
                                 <div>
                                     <Label className="text-base">Permissões Diretas</Label>
-                                    <p className="text-xs text-muted-foreground mt-1">
+                                    <p className="text-muted-foreground mt-1 text-xs">
                                         Permissões herdadas via papel aparecem desabilitadas. Marque para conceder permissões extras.
                                     </p>
                                 </div>
@@ -153,10 +192,12 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                                         <Collapsible
                                             key={group}
                                             open={isOpen}
-                                            onOpenChange={(o) => setOpenGroups((prev) => ({ ...prev, [group]: o }))}
+                                            onOpenChange={(o) => {
+                                                setOpenGroups((prev) => ({ ...prev, [group]: o }));
+                                            }}
                                             className="rounded-md border"
                                         >
-                                            <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 hover:bg-muted/50 text-left">
+                                            <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 p-3 text-left">
                                                 <span className="font-medium">{getGroupLabel(group)}</span>
                                                 <Badge variant={directInGroup > 0 ? 'default' : 'outline'} className="text-xs">
                                                     {directInGroup} direta{directInGroup !== 1 ? 's' : ''}
@@ -166,13 +207,11 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                                                         {inheritedInGroup} herdada{inheritedInGroup !== 1 ? 's' : ''}
                                                     </Badge>
                                                 )}
-                                                <ChevronDown
-                                                    className={`h-4 w-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                                                />
+                                                <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                                             </CollapsibleTrigger>
 
                                             <CollapsibleContent>
-                                                <div className="border-t bg-muted/20 p-3 space-y-2">
+                                                <div className="bg-muted/20 space-y-2 border-t p-3">
                                                     {perms.map((perm) => {
                                                         const isInherited = inheritedPermissions.includes(perm.name);
                                                         const isDirect = directPermissions.includes(perm.name);
@@ -180,7 +219,7 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                                                         return (
                                                             <Label
                                                                 key={perm.name}
-                                                                className={`flex items-start gap-3 p-2 rounded ${isInherited ? 'opacity-60' : 'hover:bg-background cursor-pointer'} text-foreground font-normal leading-normal select-none`}
+                                                                className={`flex items-start gap-3 rounded p-2 ${isInherited ? 'opacity-60' : 'hover:bg-background cursor-pointer'} text-foreground leading-normal font-normal select-none`}
                                                             >
                                                                 <Checkbox
                                                                     checked={isInherited || isDirect}
@@ -188,14 +227,16 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                                                                     onCheckedChange={() => !isInherited && handleTogglePermission(perm.name)}
                                                                     className="mt-0.5"
                                                                 />
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="text-sm flex items-center gap-2">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="flex items-center gap-2 text-sm">
                                                                         {getPermissionLabel(perm.name)}
                                                                         {isInherited && (
-                                                                            <Badge variant="secondary" className="text-xs">herdada</Badge>
+                                                                            <Badge variant="secondary" className="text-xs">
+                                                                                herdada
+                                                                            </Badge>
                                                                         )}
                                                                     </div>
-                                                                    <div className="text-xs text-muted-foreground font-mono">{perm.name}</div>
+                                                                    <div className="text-muted-foreground font-mono text-xs">{perm.name}</div>
                                                                 </div>
                                                             </Label>
                                                         );
@@ -207,7 +248,7 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                                 })}
                             </div>
 
-                            <div className="flex justify-end space-x-2 pt-4 border-t">
+                            <div className="flex justify-end space-x-2 border-t pt-4">
                                 <Button variant="outline" onClick={onClose}>
                                     Cancelar
                                 </Button>
@@ -218,7 +259,7 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, instituicoes,
                         </TabsContent>
                     )}
                 </Tabs>
-            </DialogContent>
-        </Dialog>
+            )}
+        </Modal>
     );
 }

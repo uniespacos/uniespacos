@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 use App\Services\Relatorio\Reports\IndicadoresConsolidadosRelatorio;
 use App\Services\Relatorio\Reports\InventarioEspacosRelatorio;
 use App\Services\Relatorio\Reports\OcupacaoEspacosRelatorio;
@@ -15,12 +16,13 @@ return [
     ],
     'limites' => [
         'max_linhas_csv_xlsx' => 10_000,
-        'max_linhas_pdf' => 1_500,
     ],
+    'cache_ttl' => (int) env('RELATORIOS_CACHE_TTL', 1800),
     'pdf' => [
         'orientacao_padrao' => 'portrait',
         'tamanho' => 'A4',
-        'cor_primaria' => '#1a1a1a',
+        'max_linhas_amostra' => 30,
+        'cor_primaria' => '#0284c7',
     ],
     'csv' => [
         'delimiter' => ';',

@@ -35,7 +35,7 @@ interface UnidadeRepositoryInterface
     /**
      * Returns a paginated list of Unidade belonging to the given Instituicao
      */
-    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10): LengthAwarePaginator;
+    public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null): LengthAwarePaginator;
 
     /**
      * Returns an instance of Unidade from the given id

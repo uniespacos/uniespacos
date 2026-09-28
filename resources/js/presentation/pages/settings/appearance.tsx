@@ -1,31 +1,34 @@
-/* import { Head } from '@inertiajs/react';
-
-import AppearanceTabs from '@/presentation/molecules/appearance-tabs';
-import HeadingSmall from '@/presentation/atoms/heading-small';
+import { useTranslation } from '@/i18n';
+import HeadingSmall from '@/presentation/atoms/HeadingSmall';
+import AppearanceTabs from '@/presentation/molecules/AppearanceTabs';
+import AppLayout from '@/presentation/templates/AppLayout';
+import SettingsLayout from '@/presentation/templates/settings/Layout';
 import { type BreadcrumbItem } from '@/types';
-
-import AppLayout from '@/presentation/templates/app-layout';
-import SettingsLayout from '@/presentation/templates/settings/layout';
+import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Appearance settings',
+        title: 'Aparência',
         href: '/settings/appearance',
     },
 ];
 
 export default function Appearance() {
+    const { t } = useTranslation();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Appearance settings" />
+            <Head title={t('settings.appearance.title')} />
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall title="Appearance settings" description="Atualizar as configurações de aparência da sua conta" />
+                    <HeadingSmall
+                        title={t('settings.appearance.title')}
+                        description={t('settings.appearance.desc')}
+                    />
                     <AppearanceTabs />
                 </div>
             </SettingsLayout>
         </AppLayout>
     );
 }
- */

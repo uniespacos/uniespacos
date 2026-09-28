@@ -1,23 +1,23 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { SelectContent, SelectItem, SelectTrigger, Select as SelectUI, SelectValue } from '@/components/ui/select';
 import { criarTerreoInicial, garantirTerreo, nivelParaNome } from '@/lib/utils/andars/AndarHelpers';
 import { isEditMode, transformModuloToFormData } from '@/lib/utils/andars/ModuloDataFormTransformer';
-import { Instituicao, Modulo, Unidade } from '@/types';
-import { useForm } from '@inertiajs/react';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
-import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
+import { FormField } from '@/presentation/molecules/FormField';
 import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
 import AndaresManager from '@/presentation/organisms/AndarManager';
-import AndarStickFormActions from '@/presentation/molecules/AndarStickFormActions';
+import AndarStickFormActions from '@/presentation/organisms/AndarStickFormActions';
+import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
+import { Instituicao, Modulo, Unidade } from '@/types';
+import { useForm } from '@inertiajs/react';
+import type React from 'react';
+import { forwardRef, useEffect, useMemo, useRef } from 'react';
 
-export type ModuloFormProps = {
+export interface ModuloFormProps {
     data: CadastrarModuloForm;
     setData: ReturnType<typeof useForm<CadastrarModuloForm>>['setData'];
-    submit: (e: React.FormEvent<HTMLFormElement>) => void;
+    submit: (e: React.SyntheticEvent) => void;
     errors: Record<string, string>;
     processing: boolean;
     title: string;
@@ -25,7 +25,8 @@ export type ModuloFormProps = {
     instituicao: Instituicao;
     unidades: Unidade[];
     modulo?: Modulo;
-};
+}
+
 export default function ModuloForm({
     data,
     setData,
@@ -41,26 +42,21 @@ export default function ModuloForm({
     const topRef = useRef<HTMLDivElement>(null);
     const andaresRef = useRef<HTMLDivElement>(null);
 
-    // Criar um Card com forwardRef para a seção de andares
     const AndaresCard = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => <Card ref={ref}>{children}</Card>);
     AndaresCard.displayName = 'AndaresCard';
 
-    // Inicializar dados do formulário
     useEffect(() => {
         if (modulo && isEditMode(modulo)) {
             const formData = transformModuloToFormData(modulo);
-            // Garantir que tem térreo mesmo nos dados vindos do backend
             const andaresComTerreo = garantirTerreo(formData.andares);
             setData({
                 ...formData,
                 andares: andaresComTerreo.map((andar) => ({ ...andar, nome: nivelParaNome(andar.nivel) })),
             });
-        } else if (data.andares.length === 0) {
-            // Se não é edição e não tem andares, criar térreo inicial
-            setData((prev: CadastrarModuloForm) => ({
-                ...prev,
-                andares: [criarTerreoInicial()],
-            }));
+        } else {
+            setData((prev: CadastrarModuloForm) =>
+                prev.andares.length === 0 ? { ...prev, andares: [criarTerreoInicial()] } : prev,
+            );
         }
     }, [modulo, setData]);
 
@@ -71,14 +67,12 @@ export default function ModuloForm({
     const handleAddAndar = (novoAndar: AndarFormData) => {
         setData((prev: CadastrarModuloForm) => {
             const novosAndares = [...prev.andares, novoAndar];
-            // Sempre garantir que tem térreo
             return {
                 ...prev,
                 andares: garantirTerreo(novosAndares),
             };
         });
 
-        // Scroll suave para a seção de andares
         setTimeout(() => {
             andaresRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
@@ -93,18 +87,15 @@ export default function ModuloForm({
 
     const handleRemoveAndar = (andarId: string) => {
         setData((prev: CadastrarModuloForm) => {
-            // Encontrar o andar que está sendo removido
             const andarParaRemover = prev.andares.find((a: AndarFormData) => a.id === andarId);
 
-            // PROTEÇÃO EXTRA: Nunca permitir remover térreo
-            if (andarParaRemover && andarParaRemover.nivel === 0) {
+            if (andarParaRemover?.nivel === 0) {
                 console.warn('Tentativa de remover térreo bloqueada no handleRemoveAndar');
-                return prev; // Não fazer nada
+                return prev;
             }
 
             const novosAndares = prev.andares.filter((a: AndarFormData) => a.id !== andarId);
 
-            // Sempre garantir que tem térreo após remoção
             return {
                 ...prev,
                 andares: garantirTerreo(novosAndares),
@@ -121,7 +112,6 @@ export default function ModuloForm({
     return (
         <div ref={topRef}>
             <form onSubmit={submit} className="space-y-6 pb-20">
-                {/* Informações Básicas do Módulo */}
                 <Card>
                     <CardHeader>
                         <CardTitle>{title}</CardTitle>
@@ -129,21 +119,19 @@ export default function ModuloForm({
                         {editMode && <div className="text-muted-foreground text-sm">ID do Módulo: {modulo?.id}</div>}
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Select de Instituição */}
-                        <div className="space-y-2">
-                            <Label htmlFor="instituicao">Instituição</Label>
+                        <FormField label="Instituição" htmlFor="instituicao">
                             <Input id="instituicao" value={instituicao.nome} disabled />
-                        </div>
+                        </FormField>
 
-                        {/* Select de Unidade */}
-                        <div className="space-y-2">
-                            <Label htmlFor="unidade_id">Unidade</Label>
+                        <FormField label="Unidade" htmlFor="unidade_id" error={errors.unidade_id} required>
                             <SelectUI
                                 value={data.unidade_id}
-                                onValueChange={(value) => setData((prev: CadastrarModuloForm) => ({ ...prev, unidade_id: value }))}
+                                onValueChange={(value) => {
+                                    setData((prev: CadastrarModuloForm) => ({ ...prev, unidade_id: value }));
+                                }}
                                 disabled={processing}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="unidade_id">
                                     <SelectValue placeholder="Selecione uma unidade" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -154,24 +142,22 @@ export default function ModuloForm({
                                     ))}
                                 </SelectContent>
                             </SelectUI>
-                            {errors.unidade_id && <p className="mt-1 text-sm text-red-500">{errors.unidade_id}</p>}
-                        </div>
+                        </FormField>
 
-                        {/* Input Nome do Módulo */}
-                        <div className="space-y-2">
-                            <Label htmlFor="nome">Nome do módulo</Label>
+                        <FormField label="Nome do módulo" htmlFor="nome" error={errors.nome} required>
                             <Input
                                 id="nome"
                                 value={data.nome}
-                                onChange={(e) => setData((prev: CadastrarModuloForm) => ({ ...prev, nome: e.target.value }))}
+                                onChange={(e) => {
+                                    setData((prev: CadastrarModuloForm) => ({ ...prev, nome: e.target.value }));
+                                }}
                                 placeholder="Ex: Bloco Administrativo"
+                                disabled={processing}
                             />
-                            {errors.nome && <p className="mt-1 text-sm text-red-500">{errors.nome}</p>}
-                        </div>
+                        </FormField>
                     </CardContent>
                 </Card>
 
-                {/* Seção de Andares */}
                 <AndaresCard ref={andaresRef}>
                     <CardHeader>
                         <CardTitle>Andares do Módulo</CardTitle>
@@ -191,7 +177,6 @@ export default function ModuloForm({
                     </CardContent>
                 </AndaresCard>
 
-                {/* Botões de Ação Fixos */}
                 <Card>
                     <CardFooter className="flex justify-end space-x-2">
                         <Button type="submit" disabled={processing}>
@@ -201,7 +186,6 @@ export default function ModuloForm({
                 </Card>
             </form>
 
-            {/* Ações Sticky */}
             <AndarStickFormActions processing={processing} isEditMode={editMode} onScrollToTop={scrollToTop} andaresCount={data.andares.length} />
         </div>
     );
