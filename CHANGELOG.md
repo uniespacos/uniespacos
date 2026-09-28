@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/uniespacos/uniespacos/compare/v1.2.3...v1.3.0) (2026-08-20)
+
+
+### Features
+
+* add new features to main ([#251](https://github.com/uniespacos/uniespacos/issues/251)) ([80c4fee](https://github.com/uniespacos/uniespacos/commit/80c4fee8b82996a5fa08a11da5b1c7a030c043fd))
+
 ## [1.3.0-rc.81](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.80...v1.3.0-rc.81) (2026-09-02)
 
 
