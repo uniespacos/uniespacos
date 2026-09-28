@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0-rc.83](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.82...v1.3.0-rc.83) (2026-09-28)
+
+
+### Bug Fixes
+
+* corrigir testes com datas fixas que venceram ([3b7dc13](https://github.com/uniespacos/uniespacos/commit/3b7dc1318487eec4c3d9131c78c2bd0bc6a39840))
+* corrigir testes com datas fixas que venceram ([3acca62](https://github.com/uniespacos/uniespacos/commit/3acca6205d1e581b2a201d27237c6e74f0ab0952))
+
 ## [1.3.0-rc.82](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.81...v1.3.0-rc.82) (2026-09-28)
 
 
