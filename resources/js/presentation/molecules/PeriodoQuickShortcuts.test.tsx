@@ -3,6 +3,15 @@ import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMon
 import { PeriodoQuickShortcuts } from './PeriodoQuickShortcuts';
 
 describe('PeriodoQuickShortcuts', () => {
+    beforeEach(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-09-28T12:00:00'));
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
     it('renders all shortcut buttons', () => {
         const onSelectRange = jest.fn();
         render(<PeriodoQuickShortcuts onSelectRange={onSelectRange} />);

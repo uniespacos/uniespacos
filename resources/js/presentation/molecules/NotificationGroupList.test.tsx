@@ -13,57 +13,67 @@ jest.mock('@inertiajs/react', () => ({
 }));
 
 describe('NotificationGroupList', () => {
-    const now = new Date();
+    beforeEach(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-09-28T12:00:00'));
+    });
 
-    const mockNotifications: DatabaseNotificationItem[] = [
-        {
-            id: 'notif-1',
-            type: 'App\\Notifications\\ReservationEvaluatedNotification',
-            read_at: null,
-            created_at: formatISO(now),
-            data: {
-                titulo: 'Reserva Deferida',
-                mensagem: 'Sua reserva no Auditório foi aprovada com sucesso.',
-                tipo: 'reserva_deferida',
-                reserva_id: 101,
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    function getMockNotifications(): DatabaseNotificationItem[] {
+        const now = new Date();
+        return [
+            {
+                id: 'notif-1',
+                type: 'App\\Notifications\\ReservationEvaluatedNotification',
+                read_at: null,
+                created_at: formatISO(now),
+                data: {
+                    titulo: 'Reserva Deferida',
+                    mensagem: 'Sua reserva no Auditório foi aprovada com sucesso.',
+                    tipo: 'reserva_deferida',
+                    reserva_id: 101,
+                },
             },
-        },
-        {
-            id: 'notif-2',
-            type: 'App\\Notifications\\ReservationEvaluatedNotification',
-            read_at: formatISO(now),
-            created_at: formatISO(subDays(now, 1)),
-            data: {
-                titulo: 'Reserva Indeferida',
-                mensagem: 'Sua reserva foi indeferida pelo gestor.',
-                tipo: 'reserva_indeferida',
-                url: '/reservas/102',
+            {
+                id: 'notif-2',
+                type: 'App\\Notifications\\ReservationEvaluatedNotification',
+                read_at: formatISO(now),
+                created_at: formatISO(subDays(now, 1)),
+                data: {
+                    titulo: 'Reserva Indeferida',
+                    mensagem: 'Sua reserva foi indeferida pelo gestor.',
+                    tipo: 'reserva_indeferida',
+                    url: '/reservas/102',
+                },
             },
-        },
-        {
-            id: 'notif-3',
-            type: 'App\\Notifications\\NewReservationNotification',
-            read_at: null,
-            created_at: formatISO(subDays(now, 3)),
-            data: {
-                titulo: 'Nova Solicitação',
-                mensagem: 'Solicitação de reserva aguardando análise.',
-                tipo: 'reserva_solicitada',
-                reserva_id: 103,
+            {
+                id: 'notif-3',
+                type: 'App\\Notifications\\NewReservationNotification',
+                read_at: null,
+                created_at: formatISO(subDays(now, 3)),
+                data: {
+                    titulo: 'Nova Solicitação',
+                    mensagem: 'Solicitação de reserva aguardando análise.',
+                    tipo: 'reserva_solicitada',
+                    reserva_id: 103,
+                },
             },
-        },
-        {
-            id: 'notif-4',
-            type: 'App\\Notifications\\BaseNotification',
-            read_at: formatISO(now),
-            created_at: formatISO(subWeeks(now, 2)),
-            data: {
-                titulo: 'Aviso do Sistema',
-                descricao: 'Manutenção programada dos servidores.',
-                tipo: 'sistema',
+            {
+                id: 'notif-4',
+                type: 'App\\Notifications\\BaseNotification',
+                read_at: formatISO(now),
+                created_at: formatISO(subWeeks(now, 2)),
+                data: {
+                    titulo: 'Aviso do Sistema',
+                    descricao: 'Manutenção programada dos servidores.',
+                    tipo: 'sistema',
+                },
             },
-        },
-    ];
+        ];
+    }
 
     it('renders empty state when there are no notifications', () => {
         render(<NotificationGroupList notifications={[]} />);
@@ -72,6 +82,7 @@ describe('NotificationGroupList', () => {
     });
 
     it('groups notifications by temporal categories (Hoje, Ontem, etc.)', () => {
+        const mockNotifications = getMockNotifications();
         render(<NotificationGroupList notifications={mockNotifications} />);
 
         expect(screen.getByTestId('notification-group-hoje')).toBeInTheDocument();
@@ -88,6 +99,7 @@ describe('NotificationGroupList', () => {
     });
 
     it('renders correct links and message descriptions', () => {
+        const mockNotifications = getMockNotifications();
         render(<NotificationGroupList notifications={mockNotifications} />);
 
         const item1 = screen.getByTestId('notification-item-notif-1');
@@ -103,6 +115,7 @@ describe('NotificationGroupList', () => {
     });
 
     it('calls onItemClick when a notification is clicked', () => {
+        const mockNotifications = getMockNotifications();
         const handleClick = jest.fn();
         render(<NotificationGroupList notifications={mockNotifications} onItemClick={handleClick} />);
 

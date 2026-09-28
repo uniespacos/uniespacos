@@ -35,7 +35,15 @@ describe('CalendarDiaMobile', () => {
         alternarSelecaoSlot: jest.fn(),
     };
 
-    beforeEach(() => jest.clearAllMocks());
+    beforeEach(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-09-07T06:00:00'));
+        jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
 
     it('renderiza os turnos na ordem canonica, nao na ordem recebida', () => {
         render(<CalendarDiaMobile {...props} />);

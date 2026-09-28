@@ -130,6 +130,9 @@ describe('useAgendaNavigation', () => {
     });
 
     it('should navigate to current week on irParaSemanaAtual', () => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-06-15T12:00:00'));
+
         const { result } = renderHook(() =>
             useAgendaNavigation({
                 semanaInicial,
@@ -142,6 +145,8 @@ describe('useAgendaNavigation', () => {
             result.current.irParaSemanaAtual();
         });
 
-        expect(router.get).toHaveBeenCalledWith(expect.any(String), { semana: format(new Date(), 'yyyy-MM-dd') }, expect.any(Object));
+        expect(router.get).toHaveBeenCalledWith(expect.any(String), { semana: '2026-06-15' }, expect.any(Object));
+
+        jest.useRealTimers();
     });
 });
