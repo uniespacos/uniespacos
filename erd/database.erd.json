@@ -284,7 +284,6 @@
           "tbl-reservas-user_id",
           "tbl-reservas-validation_status",
           "tbl-reservas-conflict_cache",
-          "tbl-reservas-cache_validated_at",
           "tbl-reservas-created_at",
           "tbl-reservas-updated_at"
         ],
@@ -300,7 +299,6 @@
           "tbl-reservas-user_id",
           "tbl-reservas-validation_status",
           "tbl-reservas-conflict_cache",
-          "tbl-reservas-cache_validated_at",
           "tbl-reservas-created_at",
           "tbl-reservas-updated_at"
         ],
@@ -1471,26 +1469,6 @@
           "widthName": 76,
           "widthComment": 60,
           "widthDataType": 60,
-          "widthDefault": 60
-        },
-        "meta": {
-          "updateAt": 1775343489063,
-          "createAt": 1775343489063
-        }
-      },
-      "tbl-reservas-cache_validated_at": {
-        "id": "tbl-reservas-cache_validated_at",
-        "tableId": "tbl-reservas",
-        "name": "cache_validated_at",
-        "comment": "",
-        "dataType": "TIMESTAMP",
-        "default": "",
-        "options": 0,
-        "ui": {
-          "keys": 0,
-          "widthName": 101,
-          "widthComment": 60,
-          "widthDataType": 65,
           "widthDefault": 60
         },
         "meta": {

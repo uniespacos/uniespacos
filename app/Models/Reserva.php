@@ -35,7 +35,6 @@ class Reserva extends Model
         'user_id',
         'validation_status',
         'conflict_cache',
-        'cache_validated_at',
     ];
 
     /**
@@ -43,7 +42,6 @@ class Reserva extends Model
      */
     protected $casts = [
         'conflict_cache' => 'array',
-        'cache_validated_at' => 'datetime',
     ];
 
     /**
