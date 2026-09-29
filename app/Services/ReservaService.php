@@ -13,6 +13,7 @@ use App\Jobs\ProcessarCriacaoReserva;
 use App\Jobs\UpdateReservaJob;
 use App\Jobs\ValidateReservationConflictsJob;
 use App\Models\Espaco;
+use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Notifications\ReservationCanceledNotification;
@@ -247,16 +248,12 @@ class ReservaService
     /**
      * Dispara revalidação para reservas que possuem horários nos slots liberados.
      *
-     * @param  Collection<int, mixed>  $horariosLiberados
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Horario>  $horariosLiberados
      */
     private function revalidateConflictedReservations(Collection $horariosLiberados): void
     {
         $slotsLiberados = $horariosLiberados
             ->map(function ($h) {
-                if (! is_object($h)) {
-                    return null;
-                }
-
                 $data = $h->data ?? null;
                 $agendaId = $h->agenda_id ?? null;
                 if (! is_string($data) || ! is_int($agendaId)) {

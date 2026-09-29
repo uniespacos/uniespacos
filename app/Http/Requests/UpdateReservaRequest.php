@@ -30,6 +30,8 @@ class UpdateReservaRequest extends FormRequest
      * trás será manual (autorizada pelo gestor/admin).
      *
      * Vide: docs/plano-execucao-regras-reserva/fase-03-validacao-datas/INSTRUCOES.md (T3.2)
+     *
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {

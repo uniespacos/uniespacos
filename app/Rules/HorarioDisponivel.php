@@ -27,7 +27,7 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
     /**
      * Sets the full request data, called by Laravel before validation runs.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function setData(array $data): static
     {

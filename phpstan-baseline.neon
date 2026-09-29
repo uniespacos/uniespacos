@@ -865,18 +865,6 @@ parameters:
 			path: app/Http/Requests/UpdatePermissionsRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\UpdateReservaRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/UpdateReservaRequest.php
-
-		-
-			message: '#^Method App\\Http\\Requests\\UpdateReservaRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/UpdateReservaRequest.php
-
-		-
 			message: '#^Access to an undefined property \(object\|string\|null\)\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2051,18 +2039,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Services/Relatorio/Exporters/ExporterFactory.php
-
-		-
-			message: '#^Parameter \#1 \$paper of method Barryvdh\\DomPDF\\PDF\:\:setPaper\(\) expects array\<float\>\|string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/Relatorio/Exporters/PdfExporter.php
-
-		-
-			message: '#^Parameter \#2 \$orientation of method Barryvdh\\DomPDF\\PDF\:\:setPaper\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/Relatorio/Exporters/PdfExporter.php
 
 		-
 			message: '#^Cannot access offset mixed on mixed\.$#'
