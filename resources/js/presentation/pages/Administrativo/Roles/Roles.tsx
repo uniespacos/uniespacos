@@ -2,12 +2,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from '@/i18n';
 import { ColumnDef, DataTable } from '@/presentation/molecules/DataTable';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
+import { SearchFilter } from '@/presentation/molecules/SearchFilter';
 import { DeleteRoleConfirmation } from '@/presentation/organisms/DeleteRoleConfirmation';
 import { RoleFormModal } from '@/presentation/organisms/RoleFormModal';
 import AppLayout from '@/presentation/templates/AppLayout';
@@ -199,14 +199,12 @@ export default function RolesPage() {
 
                 <Card>
                     <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-end">
-                        <div className="flex-1 space-y-2">
-                            <Label>{t('common.actions.search')}</Label>
-                            <Input
+                        <div className="flex-1">
+                            <SearchFilter
+                                searchTerm={searchTerm}
+                                onSearchTermChange={setSearchTerm}
                                 placeholder={t('common.actions.search')}
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                }}
+                                variant="plain"
                             />
                         </div>
 
