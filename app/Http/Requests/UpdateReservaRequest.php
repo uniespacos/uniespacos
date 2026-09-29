@@ -43,7 +43,7 @@ class UpdateReservaRequest extends FormRequest
             'horarios_solicitados' => ['present', 'array', new HorariosMesmoEspaco],
             'horarios_solicitados.*.data' => ['required', 'date'],
             'horarios_solicitados.*.horario_inicio' => ['required', 'date_format:H:i:s'],
-            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s'],
+            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s', 'after:horarios_solicitados.*.horario_inicio'],
             'horarios_solicitados.*.agenda_id' => [
                 'required',
                 'integer',
@@ -69,6 +69,7 @@ class UpdateReservaRequest extends FormRequest
             'data_final.after_or_equal' => 'A data final deve ser igual ou posterior à data inicial.',
             'horarios_solicitados.*.data.required' => 'A data de cada horário é obrigatória.',
             'horarios_solicitados.*.data.date' => 'A data de cada horário deve ser uma data válida.',
+            'horarios_solicitados.*.horario_fim.after' => 'O horário de término deve ser posterior ao horário de início.',
         ];
     }
 }

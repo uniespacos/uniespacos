@@ -215,13 +215,15 @@ class UpdateReservaJob implements ShouldQueue
                 'scope' => $this->validatedData['edit_scope'],
             ]);
 
-            try {
-                $this->user->notify(new ReservationUpdatedNotification($this->reserva));
-            } catch (Exception $e) {
-                Log::warning('Failed to send reservation update notification', [
-                    'reserva_id' => $this->reserva->id,
-                    'exception' => $e,
-                ]);
+            if ($this->reserva->user !== null) {
+                try {
+                    $this->reserva->user->notify(new ReservationUpdatedNotification($this->reserva));
+                } catch (Exception $e) {
+                    Log::warning('Failed to send reservation update notification', [
+                        'reserva_id' => $this->reserva->id,
+                        'exception' => $e,
+                    ]);
+                }
             }
 
             ValidateReservationConflictsJob::dispatch($this->reserva);
@@ -261,13 +263,15 @@ class UpdateReservaJob implements ShouldQueue
             'exception' => $exception,
         ]);
 
-        try {
-            $this->user->notify(new ReservationUpdateFailedNotification($this->reserva, $this->user));
-        } catch (Exception $e) {
-            Log::error('Failed to send reservation update failure notification', [
-                'reserva_id' => $this->reserva->id,
-                'exception' => $e,
-            ]);
+        if ($this->reserva->user !== null) {
+            try {
+                $this->reserva->user->notify(new ReservationUpdateFailedNotification($this->reserva, $this->user));
+            } catch (Exception $e) {
+                Log::error('Failed to send reservation update failure notification', [
+                    'reserva_id' => $this->reserva->id,
+                    'exception' => $e,
+                ]);
+            }
         }
     }
 }

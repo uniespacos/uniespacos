@@ -523,4 +523,221 @@ class ReservaValidationTest extends TestCase
             'Reserva com data válida deveria passar na validação de datas'
         );
     }
+
+    #[Test]
+    public function it_rejects_horario_fim_equal_to_horario_inicio_in_store(): void
+    {
+        $tomorrow = today()->addDay();
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create();
+
+        $response = $this->actingAs($user)->postJson(route('reservas.store'), [
+            'titulo' => 'Teste Horário Igual',
+            'descricao' => '',
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => 'unica',
+            'horarios_solicitados' => [
+                [
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '10:00:00',
+                ],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('horarios_solicitados.0.horario_fim');
+    }
+
+    #[Test]
+    public function it_rejects_horario_fim_before_horario_inicio_in_store(): void
+    {
+        $tomorrow = today()->addDay();
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create();
+
+        $response = $this->actingAs($user)->postJson(route('reservas.store'), [
+            'titulo' => 'Teste Ordem Horários',
+            'descricao' => '',
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => 'unica',
+            'horarios_solicitados' => [
+                [
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '11:00:00',
+                    'horario_fim' => '10:00:00',
+                ],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('horarios_solicitados.0.horario_fim');
+    }
+
+    #[Test]
+    public function it_accepts_valid_horario_interval_in_store(): void
+    {
+        $tomorrow = today()->addDay();
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('reservas.store'), [
+            'titulo' => 'Teste Horário Válido',
+            'descricao' => '',
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => 'unica',
+            'horarios_solicitados' => [
+                [
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '11:00:00',
+                ],
+            ],
+        ]);
+
+        $this->assertNull(
+            session('errors')?->get('horarios_solicitados.0.horario_fim'),
+            'Intervalo válido não deveria ser rejeitado'
+        );
+    }
+
+    #[Test]
+    public function it_rejects_horario_fim_equal_to_horario_inicio_in_update(): void
+    {
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $user->id]);
+        $tomorrow = today()->addDay();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'data_inicial' => $tomorrow,
+            'data_final' => $tomorrow,
+        ]);
+
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => $tomorrow->format('Y-m-d'),
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $response = $this->actingAs($user)->putJson(route('reservas.update', $reserva->id), [
+            'titulo' => $reserva->titulo,
+            'descricao' => $reserva->descricao,
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $tomorrow->format('Y-m-d'),
+            'horarios_solicitados' => [
+                [
+                    'id' => Horario::first()->id,
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '10:00:00',
+                ],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('horarios_solicitados.0.horario_fim');
+    }
+
+    #[Test]
+    public function it_rejects_horario_fim_before_horario_inicio_in_update(): void
+    {
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $user->id]);
+        $tomorrow = today()->addDay();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'data_inicial' => $tomorrow,
+            'data_final' => $tomorrow,
+        ]);
+
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => $tomorrow->format('Y-m-d'),
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $response = $this->actingAs($user)->putJson(route('reservas.update', $reserva->id), [
+            'titulo' => $reserva->titulo,
+            'descricao' => $reserva->descricao,
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $tomorrow->format('Y-m-d'),
+            'horarios_solicitados' => [
+                [
+                    'id' => Horario::first()->id,
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '11:00:00',
+                    'horario_fim' => '10:00:00',
+                ],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('horarios_solicitados.0.horario_fim');
+    }
+
+    #[Test]
+    public function it_accepts_valid_horario_interval_in_update(): void
+    {
+        $user = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $user->id]);
+        $tomorrow = today()->addDay();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'data_inicial' => $tomorrow,
+            'data_final' => $tomorrow,
+        ]);
+
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => $tomorrow->format('Y-m-d'),
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('reservas.update', $reserva->id), [
+            'titulo' => $reserva->titulo,
+            'descricao' => $reserva->descricao,
+            'data_inicial' => $tomorrow->format('Y-m-d'),
+            'data_final' => $tomorrow->format('Y-m-d'),
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $tomorrow->format('Y-m-d'),
+            'horarios_solicitados' => [
+                [
+                    'id' => Horario::first()->id,
+                    'agenda_id' => $agenda->id,
+                    'data' => $tomorrow->format('Y-m-d'),
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '11:00:00',
+                ],
+            ],
+        ]);
+
+        $this->assertNull(
+            session('errors')?->get('horarios_solicitados.0.horario_fim'),
+            'Intervalo válido não deveria ser rejeitado'
+        );
+    }
 }
