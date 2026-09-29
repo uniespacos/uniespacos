@@ -111,7 +111,6 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
                         ]);
                 },
             ])
-            ->withHorariosStats($agendaIds)
             ->ordenar($filters['ordenar'] ?? null)
             ->paginate($perPage);
     }

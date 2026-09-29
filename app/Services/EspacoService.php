@@ -26,18 +26,14 @@ use Illuminate\Support\Facades\Storage;
 
 class EspacoService
 {
-    protected RelatorioService $relatorioService;
-
     public function __construct(
         protected EspacoRepositoryInterface $repoEspaco,
         protected AndarRepositoryInterface $repoAndar,
         protected ModuloRepositoryInterface $repoModulo,
         protected UnidadeRepositoryInterface $repoUnidade,
         protected UserRepositoryInterface $repoUser,
-        ?RelatorioService $relatorioService = null,
-    ) {
-        $this->relatorioService = $relatorioService ?? app(RelatorioService::class);
-    }
+        protected RelatorioService $relatorioService,
+    ) {}
 
     /**
      * Returns a paginated list of spaces for the public listing with optional filters.
