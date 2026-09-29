@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Reserva;
 use App\Rules\HorarioDisponivel;
 use App\Rules\HorariosMesmoEspaco;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,7 +34,7 @@ class UpdateReservaRequest extends FormRequest
     public function rules(): array
     {
         $route = $this->route('reserva');
-        $reservaId = $route instanceof \App\Models\Reserva ? $route->id : null;
+        $reservaId = $route instanceof Reserva ? $route->id : null;
 
         return [
             'titulo' => ['required', 'string', 'max:255'],

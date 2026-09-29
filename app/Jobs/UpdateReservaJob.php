@@ -71,8 +71,8 @@ class UpdateReservaJob implements ShouldQueue
 
                 if ($scope === 'single') {
                     $editedWeekDate = $this->validatedData['edited_week_date'] ?? null;
-                    if (! is_string($editedWeekDate)) {
-                        throw new Exception('edited_week_date deve ser uma string válida');
+                    if (! is_string($editedWeekDate) && ! $editedWeekDate instanceof \DateTimeInterface) {
+                        throw new Exception('edited_week_date deve ser uma string ou data válida');
                     }
 
                     $dataReferencia = Carbon::parse($editedWeekDate);

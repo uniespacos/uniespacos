@@ -134,7 +134,7 @@ final class RelatorioService
             }
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
             $agendaIds = $escopo['agendaIds'] ?? [];
-            if (is_array($agendaIds) && !empty($agendaIds)) {
+            if (is_array($agendaIds) && ! empty($agendaIds)) {
                 $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
             }
         } else {

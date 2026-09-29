@@ -56,15 +56,17 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
         $horarioFim = $horario['horario_fim'] ?? null;
         $horarioInicio = $horario['horario_inicio'] ?? null;
 
-        if (! is_string($data) || ! is_string($agendaId) || ! is_string($horarioFim) || ! is_string($horarioInicio)) {
+        if (! is_string($data) || (! is_int($agendaId) && ! is_string($agendaId)) || ! is_string($horarioFim) || ! is_string($horarioInicio)) {
             $fail('Dados de horário inválidos.');
 
             return;
         }
 
+        $agendaIdInt = is_int($agendaId) ? $agendaId : (int) $agendaId;
+
         $query = DB::table('horarios')
             ->where('data', $data)
-            ->where('agenda_id', (int) $agendaId)
+            ->where('agenda_id', $agendaIdInt)
             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
             ->where('horario_inicio', '<', $horarioFim)
             ->where('horario_fim', '>', $horarioInicio);
