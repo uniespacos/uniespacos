@@ -32,7 +32,7 @@ class UpdateReservaJob implements ShouldQueue
     public int $tries = 3;
 
     /**
-     * @param  array{titulo: string, descricao?: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string}  $validatedData
+     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface}  $validatedData
      */
     public function __construct(
         protected Reserva $reserva,
@@ -108,17 +108,43 @@ class UpdateReservaJob implements ShouldQueue
                     }
 
                     foreach ($horariosSolicitados->whereNull('id') as $novoHorario) {
+                        $agendaIdRaw = $novoHorario['agenda_id'] ?? 0;
+                        $dataRaw = $novoHorario['data'] ?? '';
+                        $horarioFimRaw = $novoHorario['horario_fim'] ?? '';
+                        $horarioInicioRaw = $novoHorario['horario_inicio'] ?? '';
+
+                        // Convertendo após atribuição para não confundir PHPStan
+                        if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
+                            $agendaIdRaw = 0;
+                        }
+                        if (! is_string($dataRaw)) {
+                            $dataRaw = '';
+                        }
+                        if (! is_string($horarioFimRaw)) {
+                            $horarioFimRaw = '';
+                        }
+                        if (! is_string($horarioInicioRaw)) {
+                            $horarioInicioRaw = '';
+                        }
+
+                        $agendaId = (int) $agendaIdRaw;
+                        $data = (string) $dataRaw;
+                        $horarioFim = (string) $horarioFimRaw;
+                        $horarioInicio = (string) $horarioInicioRaw;
+
                         // Revalidar conflito sob lock, antes de inserir
-                        $conflito = Horario::where('agenda_id', $novoHorario['agenda_id'])
-                            ->where('data', $novoHorario['data'])
+                        $conflito = Horario::where('agenda_id', $agendaId)
+                            ->where('data', $data)
                             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
                             ->where('reserva_id', '!=', $this->reserva->id)
-                            ->where('horario_inicio', '<', $novoHorario['horario_fim'])
-                            ->where('horario_fim', '>', $novoHorario['horario_inicio'])
+                            ->where('horario_inicio', '<', $horarioFim)
+                            ->where('horario_fim', '>', $horarioInicio)
                             ->exists();
 
                         if ($conflito) {
-                            throw new Exception("Conflito detectado sob lock para agenda {$novoHorario['agenda_id']} em {$novoHorario['data']}. Outra reserva pode ter sido editada simultaneamente.");
+                            $msg = 'Conflito detectado sob lock para agenda '.$agendaId.' em '.$data.'. Outra reserva pode ter sido editada simultaneamente.';
+
+                            throw new Exception($msg);
                         }
 
                         $this->reserva->horarios()->create($novoHorario);
@@ -182,28 +208,70 @@ class UpdateReservaJob implements ShouldQueue
                         // a agenda, o horario ja nasce deferido. Vale o dono, e
                         // nao quem edita — senao um gestor editando a reserva de
                         // outra pessoa a deferiria sem querer.
-                        fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoHorario($agenda, $this->reserva->user_id),
+                        fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoHorario($agenda, (int) $this->reserva->user_id),
                     );
 
                     // Revalidar conflitos sob lock, antes de inserir
                     foreach ($linhas as $novaLinha) {
-                        $conflito = Horario::where('agenda_id', $novaLinha['agenda_id'])
-                            ->where('data', $novaLinha['data'])
+                        $agendaIdRaw = $novaLinha['agenda_id'] ?? 0;
+                        $dataRaw = $novaLinha['data'] ?? '';
+                        $horarioFimRaw = $novaLinha['horario_fim'] ?? '';
+                        $horarioInicioRaw = $novaLinha['horario_inicio'] ?? '';
+
+                        if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
+                            $agendaIdRaw = 0;
+                        }
+                        if (! is_string($dataRaw)) {
+                            $dataRaw = '';
+                        }
+                        if (! is_string($horarioFimRaw)) {
+                            $horarioFimRaw = '';
+                        }
+                        if (! is_string($horarioInicioRaw)) {
+                            $horarioInicioRaw = '';
+                        }
+
+                        $agendaId = (int) $agendaIdRaw;
+                        $data = (string) $dataRaw;
+                        $horarioFim = (string) $horarioFimRaw;
+                        $horarioInicio = (string) $horarioInicioRaw;
+
+                        $conflito = Horario::where('agenda_id', $agendaId)
+                            ->where('data', $data)
                             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
                             ->where('reserva_id', '!=', $this->reserva->id)
-                            ->where('horario_inicio', '<', $novaLinha['horario_fim'])
-                            ->where('horario_fim', '>', $novaLinha['horario_inicio'])
+                            ->where('horario_inicio', '<', $horarioFim)
+                            ->where('horario_fim', '>', $horarioInicio)
                             ->exists();
 
                         if ($conflito) {
-                            throw new Exception("Conflito detectado sob lock para agenda {$novaLinha['agenda_id']} em {$novaLinha['data']}. Outra reserva pode ter sido editada simultaneamente.");
+                            $msg = 'Conflito detectado sob lock para agenda '.$agendaId.' em '.$data.'. Outra reserva pode ter sido editada simultaneamente.';
+
+                            throw new Exception($msg);
                         }
                     }
 
                     foreach ($linhas as $indice => $linha) {
-                        $anterior = $avaliacoes->get(
-                            $this->chaveHorario($linha['agenda_id'], $linha['data'], $linha['horario_inicio'])
-                        );
+                        $agendaIdRaw = $linha['agenda_id'] ?? 0;
+                        $dataRaw = $linha['data'] ?? '';
+                        $horarioRaw = $linha['horario_inicio'] ?? '';
+
+                        if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
+                            $agendaIdRaw = 0;
+                        }
+                        if (! is_string($dataRaw)) {
+                            $dataRaw = '';
+                        }
+                        if (! is_string($horarioRaw)) {
+                            $horarioRaw = '';
+                        }
+
+                        $agendaIdInt = (int) $agendaIdRaw;
+                        $dataStr = (string) $dataRaw;
+                        $horarioStr = (string) $horarioRaw;
+
+                        $chaveHor = $this->chaveHorario($agendaIdInt, $dataStr, $horarioStr);
+                        $anterior = $avaliacoes->get($chaveHor);
 
                         if ($anterior !== null) {
                             $linhas[$indice]['situacao'] = $anterior->situacao;
@@ -255,9 +323,11 @@ class UpdateReservaJob implements ShouldQueue
      * estava avaliado. `data` vem como string do banco e como string do
      * expansor, mas passa por Carbon para nao depender desse formato.
      */
-    private function chaveHorario(int $agendaId, mixed $data, string $horarioInicio): string
+    private function chaveHorario(int $agendaId, string $data, string $horarioInicio): string
     {
-        return implode('-', [$agendaId, Carbon::parse($data)->toDateString(), $horarioInicio]);
+        $dataString = Carbon::parse($data)->toDateString();
+
+        return implode('-', [$agendaId, $dataString, $horarioInicio]);
     }
 
     /**
