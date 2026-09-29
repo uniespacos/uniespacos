@@ -112,9 +112,6 @@ describe('AvaliarReservaPage', () => {
                 horario_inicio: '10:00',
                 horario_fim: '11:00',
                 situacao: 'em_analise',
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: {
                     id: 1,
                     turno: Turno.MANHA,

@@ -24,9 +24,6 @@ describe('derivarSlotsDoTurno', () => {
             horario_inicio: '07:30:00',
             horario_fim: '08:20:00',
             situacao: 'deferida',
-            validation_status: 'completed',
-            conflict_cache: null,
-            cache_validated_at: null,
             reserva: {
                 id: 99,
                 titulo: 'Aula de Cálculo',

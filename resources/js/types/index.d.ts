@@ -259,12 +259,6 @@ export interface Horario {
     avaliador?: User; // Gestor que avaliou este horário (null enquanto em_analise)
     is_conflicted?: boolean;
     conflict_details?: string;
-
-    // --- NOVOS CAMPOS VINDOS DO BACKEND ---
-    validation_status: ValidationStatus;
-    // O cache é um objeto onde a chave é o ID do horário (string) e o valor são os detalhes do conflito
-    conflict_cache: Record<string, ConflictInfo> | null;
-    cache_validated_at: string | null;
 }
 
 /**
