@@ -65,7 +65,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
         try {
             $horariosData = $this->dadosRequisicao['horarios_solicitados'];
-            if (! is_array($horariosData) || empty($horariosData)) {
+            if (empty($horariosData)) {
                 throw new Exception('horarios_solicitados deve ser um array não-vazio');
             }
 

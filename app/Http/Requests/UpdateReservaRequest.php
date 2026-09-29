@@ -32,6 +32,11 @@ class UpdateReservaRequest extends FormRequest
      */
     public function rules(): array
     {
+        $reservaId = $this->route('reserva')?->id;
+        if (! is_int($reservaId)) {
+            $reservaId = null;
+        }
+
         return [
             'titulo' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string'],
@@ -48,7 +53,7 @@ class UpdateReservaRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:agendas,id',
-                new HorarioDisponivel($this->route('reserva')?->id),
+                new HorarioDisponivel($reservaId),
             ],
         ];
     }
