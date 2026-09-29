@@ -250,6 +250,8 @@ export const es = {
             conflicts_detected: 'Advertencia: {{count}} franja(s) horaria(s) de esta reserva se superpone(n) con otra(s) reserva(s).',
             conflict_with_user: 'Solicitante: {{user}}',
             conflicts_note: 'Puede optar por deferir incluso con conflictos. Considere analizar las reservas conflictivas antes de continuar.',
+            conflict_cache_snapshot_title: 'Captura de Conflictos ({{count}} detectados)',
+            conflict_cache_snapshot_note: 'Esta es una captura histórica del momento en que el sistema procesó la reserva. Puede estar desactualizada. Los conflictos actuales se muestran arriba.',
         },
         stepper: {
             step1_title: 'Horarios y Recurrencia',

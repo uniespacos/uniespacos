@@ -271,7 +271,10 @@ class ReservaService
 
         $reservasParaRevalidar = Reserva::query()
             ->where('validation_status', 'completed')
-            ->where('situacao', SituacaoReservaEnum::INDEFERIDA->value)
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::INDEFERIDA->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
             ->whereHas('horarios', function ($query) use ($slotsLiberados) {
                 $query->where(function ($q) use ($slotsLiberados) {
                     foreach ($slotsLiberados as $slot) {
@@ -365,6 +368,7 @@ class ReservaService
             'reserva' => $reserva,
             'semana' => ['referencia' => $reference],
             'todosOsConflitos' => $conflitosMap,
+            'conflictCacheSnapshot' => $reserva->conflict_cache,
         ];
     }
 

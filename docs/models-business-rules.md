@@ -32,6 +32,8 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 | `conflict_cache` | array (JSON) | Cache dos conflitos detectados |
 | `cache_validated_at` | datetime \| null | Timestamp da última validação de conflitos |
 
+**Nota sobre `conflict_cache`:** Este é um snapshot histórico gravado por `ValidateReservationConflictsJob` no momento do processamento, exposto na interface do gestor como informação secundária de auditoria — não é fonte de verdade. Veja [`docs/conflict-cache-contract.md`](./conflict-cache-contract.md) para contrato completo, incluso divergência esperada com conflitos recalculados ao vivo.
+
 ### Atributos Dinâmicos (Computados em Runtime)
 
 - **`can_update`** — Boolean, definido por `ReservaService` via policy check. Indica se o usuário autenticado pode editar a reserva.
