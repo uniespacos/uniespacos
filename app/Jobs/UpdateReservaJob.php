@@ -107,6 +107,13 @@ class UpdateReservaJob implements ShouldQueue
                             ->get();
                     }
 
+                    // Mesma regra do escopo recurring: quem administra a agenda e
+                    // o dono da reserva — nunca quem edita — decide se o horario
+                    // novo ja nasce deferido.
+                    $agendasMapSingle = Agenda::whereIn('id', $agendasAfetodasSingle)
+                        ->get()
+                        ->keyBy('id');
+
                     foreach ($horariosSolicitados->whereNull('id') as $novoHorario) {
                         $agendaIdRaw = $novoHorario['agenda_id'] ?? 0;
                         $dataRaw = $novoHorario['data'] ?? '';
@@ -146,6 +153,13 @@ class UpdateReservaJob implements ShouldQueue
 
                             throw new Exception($msg);
                         }
+
+                        $agenda = $agendasMapSingle->get($agendaId);
+                        $situacao = $agenda !== null
+                            ? $autoAprovacao->resolverSituacaoHorario($agenda, (int) $this->reserva->user_id)
+                            : SituacaoReservaEnum::EM_ANALISE->value;
+
+                        $novoHorario['situacao'] = $situacao;
 
                         $this->reserva->horarios()->create($novoHorario);
                     }

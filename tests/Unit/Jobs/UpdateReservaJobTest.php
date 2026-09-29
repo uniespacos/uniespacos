@@ -251,6 +251,37 @@ class UpdateReservaJobTest extends TestCase
         $this->assertSame('deferida', $reserva->fresh()->horarios->first()->situacao);
     }
 
+    public function test_single_scope_novo_horario_do_proprio_gestor_nasce_deferido(): void
+    {
+        Notification::fake();
+
+        $donoEGestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $donoEGestor->id]);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $donoEGestor->id,
+            'data_inicial' => '2026-09-01',
+            'data_final' => '2026-09-01',
+            'recorrencia' => 'unica',
+        ]);
+
+        $slots = [
+            $this->slot($agenda->id, '2026-09-01'),
+        ];
+
+        $this->executar(
+            $reserva,
+            $this->dados($slots, 'unica', '2026-09-01', '2026-09-01', 'single')
+                + ['edited_week_date' => '2026-09-01'],
+            $donoEGestor
+        );
+
+        $reserva->refresh();
+
+        $this->assertCount(1, $reserva->horarios);
+        $this->assertSame('deferida', $reserva->horarios->first()->situacao);
+    }
+
     public function test_single_scope_preserves_period_for_other_weeks(): void
     {
         Notification::fake();
