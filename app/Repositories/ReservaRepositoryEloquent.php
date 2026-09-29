@@ -37,17 +37,23 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
     }
 
     /**
-     * Returns a paginated list of Reserva for a specific user, filtered by optional criteria
+     * Returns a paginated list of Reserva for a specific user, with optional filters
      *
      * @param  array<string, mixed>  $filters
      */
-    public function getPaginatedForUser(int $userId, string $weekStart, string $weekEnd, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedForUser(int $userId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
         return $this->reserva->newQuery()
             ->where('user_id', $userId)
             ->arquivo($filters['arquivo'] ?? null)
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($q2) => $q2->where('titulo', 'like', '%'.$s.'%')->orWhere('descricao', 'like', '%'.$s.'%')))
             ->when($filters['situacao'] ?? null, fn ($q, $s) => $q->where('situacao', $s))
+            ->when(
+                isset($filters['data_inicio'], $filters['data_fim']) && $filters['data_inicio'] && $filters['data_fim'],
+                fn ($q) => $q->whereHas('horarios', function ($qh) use ($filters) {
+                    $qh->whereBetween('data', [$filters['data_inicio'], $filters['data_fim']]);
+                })
+            )
             ->with([
                 'horarios' => function ($query) {
                     $query->orderBy('data')->orderBy('horario_inicio')
@@ -83,7 +89,12 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
     public function getPaginatedForGestor(array $agendaIds, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
         return $this->reserva->newQuery()
-            ->whereHas('horarios', fn ($q) => $q->whereIn('agenda_id', $agendaIds))
+            ->whereHas('horarios', function ($q) use ($agendaIds, $filters) {
+                $q->whereIn('agenda_id', $agendaIds);
+                if (isset($filters['data_inicio'], $filters['data_fim']) && $filters['data_inicio'] && $filters['data_fim']) {
+                    $q->whereBetween('data', [$filters['data_inicio'], $filters['data_fim']]);
+                }
+            })
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($q2) => $q2->where('titulo', 'like', "%{$s}%")->orWhere('descricao', 'like', "%{$s}%")))
             ->arquivo($filters['arquivo'] ?? null)
             ->when($filters['situacao'] ?? null, fn ($q, $s) => $q->where('situacao', $s))

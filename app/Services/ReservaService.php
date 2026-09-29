@@ -48,7 +48,7 @@ class ReservaService
         $filters = $this->normalizarFiltros($filters);
 
         /** @var LengthAwarePaginator<Reserva> $reservas */
-        $reservas = $this->repoReserva->getPaginatedForUser($user->id, $weekStart, $weekEnd, $filters, $perPage)
+        $reservas = $this->repoReserva->getPaginatedForUser($user->id, $filters, $perPage)
             ->withQueryString();
 
         $reservas->getCollection()->transform(function (Reserva $reserva) use ($user) {
@@ -196,6 +196,24 @@ class ReservaService
 
         $filters['arquivo'] = ModoArquivoEnum::fromFiltro($filters['arquivo'] ?? null)->value;
         $filters['ordenar'] = OrdenacaoReservaEnum::fromFiltro($filters['ordenar'] ?? null)->value;
+
+        // Normalizar filtros de data (Opção A: dia único, ambos campos iguais)
+        $dataInicio = $filters['data_inicio'] ?? null;
+
+        $filters['data_inicio'] = null;
+        $filters['data_fim'] = null;
+
+        if ($dataInicio && \is_string($dataInicio)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $dataInicio);
+                if ($parsed && $parsed->toDateString() === $dataInicio) {
+                    $filters['data_inicio'] = $dataInicio;
+                    $filters['data_fim'] = $dataInicio;  // Ambos iguais (dia único)
+                }
+            } catch (\Exception) {
+                // valor inválido é ignorado silenciosamente
+            }
+        }
 
         return $filters;
     }

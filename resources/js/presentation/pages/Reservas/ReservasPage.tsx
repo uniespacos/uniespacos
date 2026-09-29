@@ -27,13 +27,11 @@ export default function MinhasReservas({
     filters,
     reservas: paginator,
     reservaToShow,
-    semana,
 }: {
     user: User;
     reservas: Paginator<Reserva>;
     filters: { search?: string; situacao?: SituacaoReservaType | ''; arquivo?: ModoArquivoType; ordenar?: OrdenacaoReservaType };
     reservaToShow?: Reserva;
-    semana: { referencia: string };
 }) {
     const { t } = useTranslation();
     const isMobile = useIsMobile();
@@ -53,7 +51,6 @@ export default function MinhasReservas({
     } = useReservasFilters({
         routeName: 'reservas.index',
         initialFilters: filters,
-        initialSemana: semana,
     });
 
     return (
