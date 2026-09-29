@@ -1,6 +1,7 @@
 import * as UseReservationLiveUpdatesModule from '@/hooks/use-reservation-live-updates';
 import * as UseReservaRefreshOnEventModule from '@/hooks/use-reserva-refresh-on-event';
 import { ValidationStatus } from '@/contracts';
+import { Turno } from '@/contracts/turnos.contract';
 import { __resetEchoChannelRegistryForTests } from '@/lib/echo-channel-registry';
 import AvaliarReservaPage from './AvaliarReservaPage';
 import type { Reserva } from '@/types';
@@ -93,7 +94,7 @@ jest.mock('@/i18n', () => ({
 }));
 
 describe('AvaliarReservaPage', () => {
-    const mockReserva = {
+    const mockReserva: Reserva = {
         id: 1,
         titulo: 'Teste Reserva',
         descricao: 'Uma reserva de teste',
@@ -116,7 +117,7 @@ describe('AvaliarReservaPage', () => {
                 cache_validated_at: null,
                 agenda: {
                     id: 1,
-                    turno: { id: 1, nome: 'Manhã' },
+                    turno: Turno.MANHA,
                     espaco: {
                         id: 1,
                         nome: 'Sala 101',
@@ -129,7 +130,7 @@ describe('AvaliarReservaPage', () => {
             },
         ],
         validation_status: ValidationStatus.COMPLETED,
-    } as Reserva;
+    };
 
     const mockSemana = {
         inicio: '2024-08-19',
@@ -181,7 +182,7 @@ describe('AvaliarReservaPage', () => {
         const mockUseReservaRefreshOnEvent = jest.mocked(UseReservaRefreshOnEventModule.useReservaRefreshOnEvent);
         expect(mockUseReservaRefreshOnEvent).toHaveBeenCalled();
         // Verify the hook was called with options containing 'only' with 'reserva'
-        expect((mockUseReservaRefreshOnEvent.mock.calls[0][0] as Record<string, unknown>).only).toEqual(['reserva']);
+        expect(mockUseReservaRefreshOnEvent.mock.calls[0][0].only).toEqual(['reserva']);
     });
 
     it('should render ConflictAlertBox and ConflictCacheSnapshotPanel', () => {

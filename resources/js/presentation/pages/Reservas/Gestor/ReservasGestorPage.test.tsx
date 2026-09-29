@@ -158,6 +158,6 @@ describe('ReservasGestorPage', () => {
         const mockUseReservaRefreshOnEvent = jest.mocked(UseReservaRefreshOnEventModule.useReservaRefreshOnEvent);
         expect(mockUseReservaRefreshOnEvent).toHaveBeenCalled();
         // Verify the hook was called with options containing correct only array
-        expect((mockUseReservaRefreshOnEvent.mock.calls[0][0] as Record<string, unknown>).only).toContain('reservas');
+        expect(mockUseReservaRefreshOnEvent.mock.calls[0][0].only).toContain('reservas');
     });
 });
