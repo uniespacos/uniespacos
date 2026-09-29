@@ -12,6 +12,7 @@ use App\Policies\RelatorioPolicy;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
 use App\Services\Relatorio\Exporters\ExporterFactory;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -243,6 +244,8 @@ final class RelatorioService
 
     /**
      * @return array<string, mixed>
+     *
+     * @throws AuthorizationException
      */
     private function obterEscopo(User $usuario): array
     {
@@ -250,7 +253,7 @@ final class RelatorioService
             ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
 
         if (! is_array($escopo) || empty($escopo)) {
-            abort(403, 'Sem permissão para acessar relatórios.');
+            throw new AuthorizationException('Sem permissão para acessar relatórios.');
         }
 
         return $escopo;
