@@ -43,14 +43,31 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $index = explode('.', $attribute)[1];
-        $horario = $this->data['horarios_solicitados'][$index];
+        $horario = $this->data['horarios_solicitados'][$index] ?? null;
+
+        if (! is_array($horario)) {
+            $fail('Dados de horário inválidos.');
+
+            return;
+        }
+
+        $data = $horario['data'] ?? null;
+        $agendaId = $horario['agenda_id'] ?? null;
+        $horarioFim = $horario['horario_fim'] ?? null;
+        $horarioInicio = $horario['horario_inicio'] ?? null;
+
+        if (! is_string($data) || ! is_string($agendaId) || ! is_string($horarioFim) || ! is_string($horarioInicio)) {
+            $fail('Dados de horário inválidos.');
+
+            return;
+        }
 
         $query = DB::table('horarios')
-            ->where('data', $horario['data'])
-            ->where('agenda_id', $horario['agenda_id'])
+            ->where('data', $data)
+            ->where('agenda_id', (int) $agendaId)
             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
-            ->where('horario_inicio', '<', $horario['horario_fim'])
-            ->where('horario_fim', '>', $horario['horario_inicio']);
+            ->where('horario_inicio', '<', $horarioFim)
+            ->where('horario_fim', '>', $horarioInicio);
 
         if ($this->ignorarReservaId !== null) {
             $query->where('reserva_id', '!=', $this->ignorarReservaId);

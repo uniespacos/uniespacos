@@ -41,7 +41,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
     public int $timeout = 360;
 
     /**
-     * @param  array<string, mixed>  $dadosRequisicao  Validated data from StoreReservaRequest.
+     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, horarios_solicitados: array<int, array<string, mixed>>}  $dadosRequisicao  Validated data from StoreReservaRequest.
      * @param  User  $solicitante  The user making the reservation request.
      */
     public function __construct(
@@ -65,11 +65,16 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
         try {
             $horariosData = $this->dadosRequisicao['horarios_solicitados'];
+            if (! is_array($horariosData) || empty($horariosData)) {
+                throw new Exception('horarios_solicitados deve ser um array não-vazio');
+            }
 
             // Uma query para todas as agendas e seus gestores, em vez de um
             // findOrFail por slot dentro do loop.
+            /** @var array<int, int> $agendasIds */
+            $agendasIds = collect($horariosData)->pluck('agenda_id')->unique()->filter()->all();
             $agendasMap = Agenda::with('user')
-                ->whereIn('id', collect($horariosData)->pluck('agenda_id')->unique()->filter()->all())
+                ->whereIn('id', $agendasIds)
                 ->get()
                 ->keyBy('id');
 

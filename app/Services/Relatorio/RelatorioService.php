@@ -121,22 +121,21 @@ final class RelatorioService
     {
         $espacosQuery = Espaco::query()->with('andar.modulo.unidade');
 
-        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
-            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
-
-        if (empty($escopo)) {
-            abort(403, 'Sem permissão para acessar relatórios.');
-        }
+        $escopo = $this->obterEscopo($usuario);
 
         if (($escopo['tipo'] ?? null) === 'institucional') {
-            $instituicaoId = $escopo['instituicaoId'] ?? null;
-            $espacosQuery->whereHas(
-                'andar.modulo.unidade',
-                fn ($u) => $u->where('instituicao_id', $instituicaoId)
-            );
+            $instituicaoId = (int) ($escopo['instituicaoId'] ?? 0);
+            if ($instituicaoId > 0) {
+                $espacosQuery->whereHas(
+                    'andar.modulo.unidade',
+                    fn ($u) => $u->where('instituicao_id', $instituicaoId)
+                );
+            }
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
             $agendaIds = $escopo['agendaIds'] ?? [];
-            $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+            if (is_array($agendaIds) && !empty($agendaIds)) {
+                $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+            }
         } else {
             abort(403, 'Sem permissão para acessar relatórios.');
         }
@@ -152,8 +151,19 @@ final class RelatorioService
 
         foreach ($espacos as $espaco) {
             $andar = $espaco->andar;
+            if (! $andar) {
+                continue;
+            }
+
             $modulo = $andar->modulo;
+            if (! $modulo) {
+                continue;
+            }
+
             $unidade = $modulo->unidade;
+            if (! $unidade) {
+                continue;
+            }
 
             $unidades[$unidade->id] = ['id' => $unidade->id, 'nome' => $unidade->nome];
             $modulos[$modulo->id] = [
@@ -189,12 +199,7 @@ final class RelatorioService
 
     private function aplicarEscopo(User $usuario, FiltrosRelatorio $filtros): FiltrosRelatorio
     {
-        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
-            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
-
-        if (empty($escopo)) {
-            abort(403, 'Sem permissão para acessar relatórios.');
-        }
+        $escopo = $this->obterEscopo($usuario);
 
         if (($escopo['tipo'] ?? null) === 'institucional') {
             return new FiltrosRelatorio(
@@ -202,7 +207,7 @@ final class RelatorioService
                 dataFim: $filtros->dataFim,
                 situacoes: $filtros->situacoes,
                 turnos: $filtros->turnos,
-                instituicaoId: $escopo['instituicaoId'] ?? null,
+                instituicaoId: isset($escopo['instituicaoId']) && is_int($escopo['instituicaoId']) ? $escopo['instituicaoId'] : null,
                 unidadeId: $filtros->unidadeId,
                 moduloId: $filtros->moduloId,
                 andarId: $filtros->andarId,
@@ -213,6 +218,11 @@ final class RelatorioService
         }
 
         if (($escopo['tipo'] ?? null) === 'gestor') {
+            $agendaIds = $escopo['agendaIds'] ?? [];
+            if (! is_array($agendaIds)) {
+                $agendaIds = [];
+            }
+
             return new FiltrosRelatorio(
                 dataInicio: $filtros->dataInicio,
                 dataFim: $filtros->dataFim,
@@ -224,11 +234,26 @@ final class RelatorioService
                 andarId: null,
                 espacoId: $filtros->espacoId,
                 setorId: null,
-                agendaIds: $escopo['agendaIds'] ?? [],
+                agendaIds: $agendaIds,
             );
         }
 
         abort(403, 'Sem permissão para acessar relatórios.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function obterEscopo(User $usuario): array
+    {
+        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
+            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
+
+        if (! is_array($escopo) || empty($escopo)) {
+            abort(403, 'Sem permissão para acessar relatórios.');
+        }
+
+        return $escopo;
     }
 
     private function validarLimites(DadosRelatorio $dados, FormatoRelatorioEnum $formato): void

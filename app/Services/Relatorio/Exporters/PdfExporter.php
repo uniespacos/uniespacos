@@ -25,7 +25,7 @@ final class PdfExporter implements ExporterInterface
         $linhasAmostra = array_slice($dados->linhas, 0, $maxLinhasPdf);
         $totalOmitidas = max(0, count($dados->linhas) - $maxLinhasPdf);
 
-        $orientacao = count($dados->colunas) > 6 ? 'landscape' : config('relatorios.pdf.orientacao_padrao', 'portrait');
+        $orientacao = count($dados->colunas) > 6 ? 'landscape' : (string) config('relatorios.pdf.orientacao_padrao', 'portrait');
 
         $pdf = Pdf::loadView('relatorios.pdf.tabela', [
             'dados' => $dados,
@@ -33,7 +33,7 @@ final class PdfExporter implements ExporterInterface
             'totalOmitidas' => $totalOmitidas,
             'maxLinhasPdf' => $maxLinhasPdf,
         ]);
-        $pdf->setPaper(config('relatorios.pdf.tamanho', 'A4'), $orientacao);
+        $pdf->setPaper((string) config('relatorios.pdf.tamanho', 'A4'), $orientacao);
 
         return response()->streamDownload(
             function () use ($pdf) {

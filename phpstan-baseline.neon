@@ -109,12 +109,6 @@ parameters:
 			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
 
 		-
-			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:agregar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Gestor/GestorRelatorioController.php
-
-		-
 			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:gerar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -242,12 +236,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$user of static method App\\Enums\\Relatorio\\TipoRelatorioEnum\:\:disponiveisPara\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
-
-		-
-			message: '#^Parameter \#1 \$usuario of method App\\Services\\Relatorio\\RelatorioService\:\:agregar\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php

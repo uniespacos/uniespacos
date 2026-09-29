@@ -31,6 +31,9 @@ class UpdateReservaJob implements ShouldQueue
 
     public int $tries = 3;
 
+    /**
+     * @param  array{titulo: string, descricao?: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string}  $validatedData
+     */
     public function __construct(
         protected Reserva $reserva,
         protected array $validatedData,
@@ -67,7 +70,12 @@ class UpdateReservaJob implements ShouldQueue
                 $horariosSolicitados = collect($this->validatedData['horarios_solicitados']);
 
                 if ($scope === 'single') {
-                    $dataReferencia = Carbon::parse($this->validatedData['edited_week_date']);
+                    $editedWeekDate = $this->validatedData['edited_week_date'] ?? null;
+                    if (! is_string($editedWeekDate)) {
+                        throw new Exception('edited_week_date deve ser uma string válida');
+                    }
+
+                    $dataReferencia = Carbon::parse($editedWeekDate);
                     $inicioSemana = $dataReferencia->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
                     $fimSemana = $dataReferencia->copy()->endOfWeek(Carbon::SUNDAY)->toDateString();
 

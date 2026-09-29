@@ -250,7 +250,16 @@ class ReservaService
     private function revalidateConflictedReservations(Collection $horariosLiberados): void
     {
         $slotsLiberados = $horariosLiberados
-            ->map(fn ($h) => ['data' => $h->data, 'agenda_id' => $h->agenda_id])
+            ->map(function ($h) {
+                $data = $h->data ?? null;
+                $agendaId = $h->agenda_id ?? null;
+                if (! is_string($data) || ! is_int($agendaId)) {
+                    return null;
+                }
+
+                return ['data' => $data, 'agenda_id' => $agendaId];
+            })
+            ->filter()
             ->unique(fn ($item) => $item['data'].$item['agenda_id']);
 
         if ($slotsLiberados->isEmpty()) {

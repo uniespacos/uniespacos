@@ -50,8 +50,13 @@ final class InstitucionalRelatorioController extends Controller
 
     public function dados(DadosRelatorioRequest $request): JsonResponse
     {
+        $usuario = Auth::user();
+        if (! $usuario) {
+            abort(401, 'Unauthenticated');
+        }
+
         $dados = $this->service->agregarComCache(
-            Auth::user(),
+            $usuario,
             TipoRelatorioEnum::from($request->string('tipo')->toString()),
             FiltrosRelatorio::fromArray($request->validated()),
         );
