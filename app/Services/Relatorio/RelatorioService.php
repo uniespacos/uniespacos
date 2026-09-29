@@ -52,7 +52,8 @@ final class RelatorioService
         $filtros = $this->aplicarEscopo($usuario, $filtros);
 
         $cacheKey = $this->gerarCacheKey($tipo, $usuario->id, $filtros);
-        $cacheTtl = (int) config('relatorios.cache_ttl', 1800);
+        $cacheTtlRaw = config('relatorios.cache_ttl', 1800);
+        $cacheTtl = is_int($cacheTtlRaw) ? $cacheTtlRaw : 1800;
 
         return Cache::remember($cacheKey, $cacheTtl, function () use ($usuario, $tipo, $filtros) {
             Log::info('Agregando relatório (cache miss)', [
@@ -75,7 +76,8 @@ final class RelatorioService
     {
         if ($usuarioId !== null) {
             $versionKey = "relatorio_version:{$tipo->value}:{$usuarioId}";
-            $novaVersao = ((int) (Cache::get($versionKey) ?? 1)) + 1;
+            $versaoAnterior = Cache::get($versionKey) ?? 1;
+            $novaVersao = (is_int($versaoAnterior) ? $versaoAnterior : 1) + 1;
             Cache::forever($versionKey, $novaVersao);
 
             Log::info('Cache de relatório invalidado (usuário específico)', [
@@ -85,7 +87,8 @@ final class RelatorioService
             ]);
         } else {
             $versionKey = "relatorio_version:{$tipo->value}";
-            $novaVersao = ((int) (Cache::get($versionKey) ?? 1)) + 1;
+            $versaoAnterior = Cache::get($versionKey) ?? 1;
+            $novaVersao = (is_int($versaoAnterior) ? $versaoAnterior : 1) + 1;
             Cache::forever($versionKey, $novaVersao);
 
             Log::info('Cache de relatório invalidado (global)', [
@@ -125,7 +128,8 @@ final class RelatorioService
         $escopo = $this->obterEscopo($usuario);
 
         if (($escopo['tipo'] ?? null) === 'institucional') {
-            $instituicaoId = (int) ($escopo['instituicaoId'] ?? 0);
+            $instituicaoIdRaw = $escopo['instituicaoId'] ?? 0;
+            $instituicaoId = is_int($instituicaoIdRaw) ? $instituicaoIdRaw : 0;
             if ($instituicaoId > 0) {
                 $espacosQuery->whereHas(
                     'andar.modulo.unidade',
@@ -249,14 +253,15 @@ final class RelatorioService
      */
     private function obterEscopo(User $usuario): array
     {
-        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
+        $escopoRaw = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
             ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
 
-        if (! is_array($escopo) || empty($escopo)) {
+        if (! is_array($escopoRaw) || empty($escopoRaw)) {
             throw new AuthorizationException('Sem permissão para acessar relatórios.');
         }
 
-        return $escopo;
+        /** @var array<string, mixed> $escopoRaw */
+        return $escopoRaw;
     }
 
     private function validarLimites(DadosRelatorio $dados, FormatoRelatorioEnum $formato): void
@@ -268,7 +273,8 @@ final class RelatorioService
         }
 
         $totalLinhas = $dados->totalLinhas();
-        $limite = (int) config('relatorios.limites.max_linhas_csv_xlsx', 10_000);
+        $limiteRaw = config('relatorios.limites.max_linhas_csv_xlsx', 10_000);
+        $limite = is_int($limiteRaw) ? $limiteRaw : 10_000;
 
         if ($totalLinhas > $limite) {
             abort(422, "Relatório excede o limite de {$limite} linhas para este formato. Refine os filtros.");
@@ -280,8 +286,10 @@ final class RelatorioService
      */
     private function gerarCacheKey(TipoRelatorioEnum $tipo, int $usuarioId, FiltrosRelatorio $filtros): string
     {
-        $versaoGlobal = (int) (Cache::get("relatorio_version:{$tipo->value}") ?? 1);
-        $versaoUsuario = (int) (Cache::get("relatorio_version:{$tipo->value}:{$usuarioId}") ?? 1);
+        $versaoGlobalRaw = Cache::get("relatorio_version:{$tipo->value}") ?? 1;
+        $versaoGlobal = is_int($versaoGlobalRaw) ? $versaoGlobalRaw : 1;
+        $versaoUsuarioRaw = Cache::get("relatorio_version:{$tipo->value}:{$usuarioId}") ?? 1;
+        $versaoUsuario = is_int($versaoUsuarioRaw) ? $versaoUsuarioRaw : 1;
 
         $situacoes = $filtros->situacoes;
         if (is_array($situacoes)) {

@@ -117,15 +117,40 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
                 // Revalidar conflitos sob lock, antes de inserir
                 foreach ($linhas as $novaLinha) {
-                    $conflito = Horario::where('agenda_id', $novaLinha['agenda_id'])
-                        ->where('data', $novaLinha['data'])
+                    $agendaIdRaw = $novaLinha['agenda_id'] ?? 0;
+                    $dataRaw = $novaLinha['data'] ?? '';
+                    $horarioFimRaw = $novaLinha['horario_fim'] ?? '';
+                    $horarioInicioRaw = $novaLinha['horario_inicio'] ?? '';
+
+                    if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
+                        $agendaIdRaw = 0;
+                    }
+                    if (! is_string($dataRaw)) {
+                        $dataRaw = '';
+                    }
+                    if (! is_string($horarioFimRaw)) {
+                        $horarioFimRaw = '';
+                    }
+                    if (! is_string($horarioInicioRaw)) {
+                        $horarioInicioRaw = '';
+                    }
+
+                    $agendaId = (int) $agendaIdRaw;
+                    $data = (string) $dataRaw;
+                    $horarioFim = (string) $horarioFimRaw;
+                    $horarioInicio = (string) $horarioInicioRaw;
+
+                    $conflito = Horario::where('agenda_id', $agendaId)
+                        ->where('data', $data)
                         ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
-                        ->where('horario_inicio', '<', $novaLinha['horario_fim'])
-                        ->where('horario_fim', '>', $novaLinha['horario_inicio'])
+                        ->where('horario_inicio', '<', $horarioFim)
+                        ->where('horario_fim', '>', $horarioInicio)
                         ->exists();
 
                     if ($conflito) {
-                        throw new Exception("Conflito detectado sob lock para agenda {$novaLinha['agenda_id']} em {$novaLinha['data']}. Outra reserva pode ter sido criada simultaneamente.");
+                        $msg = 'Conflito detectado sob lock para agenda '.$agendaId.' em '.$data.'. Outra reserva pode ter sido criada simultaneamente.';
+
+                        throw new Exception($msg);
                     }
                 }
 

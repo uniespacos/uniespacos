@@ -26,6 +26,8 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
 
     /**
      * Sets the full request data, called by Laravel before validation runs.
+     *
+     * @param array<string, mixed> $data
      */
     public function setData(array $data): static
     {
@@ -43,7 +45,15 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $index = explode('.', $attribute)[1];
-        $horario = $this->data['horarios_solicitados'][$index] ?? null;
+        $horariosRaw = $this->data['horarios_solicitados'] ?? [];
+
+        if (! is_array($horariosRaw)) {
+            $fail('Dados de horário inválidos.');
+
+            return;
+        }
+
+        $horario = $horariosRaw[$index] ?? null;
 
         if (! is_array($horario)) {
             $fail('Dados de horário inválidos.');
