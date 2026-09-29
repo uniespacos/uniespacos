@@ -32,10 +32,8 @@ class UpdateReservaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $reservaId = $this->route('reserva')?->id;
-        if (! is_int($reservaId)) {
-            $reservaId = null;
-        }
+        $route = $this->route('reserva');
+        $reservaId = $route instanceof \App\Models\Reserva ? $route->id : null;
 
         return [
             'titulo' => ['required', 'string', 'max:255'],
