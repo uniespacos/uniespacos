@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { SituacaoReserva, ValidationStatus, type SituacaoReservaType } from '@/contracts';
 import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
 import { useAvaliarReserva } from '@/hooks/use-avaliar-reserva';
+import { useReservaRefreshOnEvent } from '@/hooks/use-reserva-refresh-on-event';
 import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import { useReservationSlots } from '@/hooks/use-reservation-slots';
 import { useTranslation } from '@/i18n';
@@ -53,6 +54,7 @@ export default function AvaliarReservaPage({
 }: AvaliarReservaPageProps) {
     const { t } = useTranslation();
     useReservationLiveUpdates();
+    useReservaRefreshOnEvent({ only: ['reserva'] });
 
     const isReavaliacao = reserva.situacao !== SituacaoReserva.EM_ANALISE;
 

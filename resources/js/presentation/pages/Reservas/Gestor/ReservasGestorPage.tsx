@@ -1,4 +1,6 @@
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useReservaRefreshOnEvent } from '@/hooks/use-reserva-refresh-on-event';
+import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import { useReservasFilters } from '@/hooks/use-reservas-filters';
 import { useTranslation } from '@/i18n';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
@@ -35,6 +37,9 @@ export default function MinhasReservas({
     const { t } = useTranslation();
     const isMobile = useIsMobile();
     const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? 'grid' : 'table');
+
+    useReservationLiveUpdates();
+    useReservaRefreshOnEvent({ only: ['reservas', 'filters', 'reservaToShow'] });
 
     const {
         searchTerm,
