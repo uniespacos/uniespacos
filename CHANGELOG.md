@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0-rc.84](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.83...v1.3.0-rc.84) (2026-09-30)
+
+
+### Bug Fixes
+
+* débitos técnicos de setembro/2026 (broadcast, reservas, phpstan, limpeza) ([#432](https://github.com/uniespacos/uniespacos/issues/432)) ([660042a](https://github.com/uniespacos/uniespacos/commit/660042a8961f55ea7bf1a9b63df927fa20445b15))
+
 ## [1.3.0-rc.83](https://github.com/uniespacos/uniespacos/compare/v1.3.0-rc.82...v1.3.0-rc.83) (2026-09-28)
 
 
