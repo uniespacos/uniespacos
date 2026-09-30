@@ -54,9 +54,6 @@ describe('useAgendaSelection', () => {
                 horario_inicio: '08:20:00',
                 horario_fim: '09:10:00',
                 situacao: 'deferida',
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
         ];

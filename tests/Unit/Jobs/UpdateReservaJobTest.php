@@ -11,11 +11,13 @@ use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Notifications\ReservationUpdatedNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UpdateReservaJobTest extends TestCase
@@ -247,6 +249,37 @@ class UpdateReservaJobTest extends TestCase
         );
 
         $this->assertSame('deferida', $reserva->fresh()->horarios->first()->situacao);
+    }
+
+    public function test_single_scope_novo_horario_do_proprio_gestor_nasce_deferido(): void
+    {
+        Notification::fake();
+
+        $donoEGestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $donoEGestor->id]);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $donoEGestor->id,
+            'data_inicial' => '2026-09-01',
+            'data_final' => '2026-09-01',
+            'recorrencia' => 'unica',
+        ]);
+
+        $slots = [
+            $this->slot($agenda->id, '2026-09-01'),
+        ];
+
+        $this->executar(
+            $reserva,
+            $this->dados($slots, 'unica', '2026-09-01', '2026-09-01', 'single')
+                + ['edited_week_date' => '2026-09-01'],
+            $donoEGestor
+        );
+
+        $reserva->refresh();
+
+        $this->assertCount(1, $reserva->horarios);
+        $this->assertSame('deferida', $reserva->horarios->first()->situacao);
     }
 
     public function test_single_scope_preserves_period_for_other_weeks(): void
@@ -534,5 +567,39 @@ class UpdateReservaJobTest extends TestCase
         Event::assertDispatched(ReservaEvent::class, function ($event) use ($reserva) {
             return $event->action === 'updated' && $event->reservaId === $reserva->id;
         });
+    }
+
+    #[Test]
+    public function it_notifies_reservation_owner_not_editor_on_update(): void
+    {
+        Notification::fake();
+
+        $dono = User::factory()->create();
+        $editor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $dono->id]);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $dono->id,
+            'data_inicial' => '2026-09-01',
+            'data_final' => '2026-09-01',
+            'recorrencia' => 'unica',
+        ]);
+
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => '2026-09-01',
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $slots = [
+            $this->slot($agenda->id, '2026-09-01', '10:00:00', '11:00:00'),
+        ];
+
+        $this->executar($reserva, $this->dados($slots, 'unica', '2026-09-01', '2026-09-01'), $editor);
+
+        Notification::assertSentTo($dono, ReservationUpdatedNotification::class);
+        Notification::assertNotSentTo($editor, ReservationUpdatedNotification::class);
     }
 }

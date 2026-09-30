@@ -50,7 +50,6 @@ Table reservas {
   situacao varchar [note: "enum: em_analise|parcialmente_deferida|deferida|indeferida|inativa. Eixo de AVALIAÇÃO — 'inativa' é exclusão lógica, não resultado de avaliação"]
   validation_status varchar [default: 'pending', note: "enum: pending|processing|completed|failed. Estado do ValidateReservationConflictsJob"]
   conflict_cache json [nullable, note: "Resultado do último conflict detection: array de conflitos encontrados"]
-  cache_validated_at timestamp [nullable, note: "Timestamp do último ValidateReservationConflictsJob bem-sucedido"]
   data_inicial datetime
   data_final datetime
   recorrencia varchar [note: "enum: unica|15dias|1mes|personalizado"]

@@ -3,7 +3,7 @@ import { act } from 'react';
 import React from 'react';
 import type { ReactNode } from 'react';
 import type { Reserva, Paginator } from '@/types';
-import { SituacaoReserva, RecorrenciaReserva, ValidationStatus } from '@/contracts';
+import { SituacaoReserva, RecorrenciaReserva } from '@/contracts';
 
 const mockRouterGet = jest.fn();
 
@@ -93,9 +93,6 @@ const createMockReserva = (overrides?: Partial<Reserva>): Reserva => ({
             horario_inicio: '08:00',
             horario_fim: '10:00',
             situacao: SituacaoReserva.DEFERIDA,
-            validation_status: ValidationStatus.PENDING,
-            conflict_cache: null,
-            cache_validated_at: null,
         },
     ],
     ...overrides,
@@ -139,9 +136,6 @@ describe('ReservasList - handleAbrirDetalhes', (): void => {
                     horario_inicio: '08:00',
                     horario_fim: '10:00',
                     situacao: SituacaoReserva.DEFERIDA,
-                    validation_status: ValidationStatus.PENDING,
-                    conflict_cache: null,
-                    cache_validated_at: null,
                 },
             ],
         });
@@ -181,9 +175,6 @@ describe('ReservasList - handleAbrirDetalhes', (): void => {
                     horario_inicio: '14:00',
                     horario_fim: '16:00',
                     situacao: SituacaoReserva.DEFERIDA,
-                    validation_status: ValidationStatus.PENDING,
-                    conflict_cache: null,
-                    cache_validated_at: null,
                 },
             ],
         });

@@ -29,7 +29,7 @@ export interface FormCadastroValues {
     [key: string]: string | number | File[] | string[] | undefined;
 }
 
-export default function CadastroEspacoPage() {
+export default function CadastrarEspacoPage() {
     const { unidades, modulos, andares, espaco } = usePage<{
         unidades: Unidade[];
         modulos: Modulo[];

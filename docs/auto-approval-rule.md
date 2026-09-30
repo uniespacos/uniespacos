@@ -144,6 +144,35 @@ Em uma edição (escopo `recurring`), o proprietário de referência é o **dono
 
 **Nota:** O recálculo agregado da situação de uma reserva acontece em outro mecanismo completamente diferente: `AvaliarReservaJob::updateReservaOverallStatus()`, chamado quando um gestor avalia horários. Esse mecanismo está documentado em `docs/models-business-rules.md` (seção "Regras de Negócio — Cascata de Situação") e não é afetado por esta fase.
 
+---
+
+### Uso em Edição de Reserva (Escopo `single`)
+
+**Arquivo:** `app/Jobs/UpdateReservaJob.php` (ramo `single` do `handle()`)
+
+```php
+$agendasMapSingle = Agenda::whereIn('id', $agendasAfetodasSingle)
+    ->get()
+    ->keyBy('id');
+
+// ... dentro do foreach de horarios novos (sem `id` no payload) ...
+
+$agenda = $agendasMapSingle->get($agendaId);
+$situacao = $agenda !== null
+    ? $autoAprovacao->resolverSituacaoHorario($agenda, (int) $this->reserva->user_id)
+    : SituacaoReservaEnum::EM_ANALISE->value;
+
+$novoHorario['situacao'] = $situacao;
+
+$this->reserva->horarios()->create($novoHorario);
+```
+
+**Mesma semântica do `recurring`:** o proprietário de referência é o **dono da reserva** (`$this->reserva->user_id`), nunca quem edita. A regra só se aplica a horários **novos** (sem `id` no payload) — o ramo `single` não regrava horários existentes, só apaga os removidos da semana editada e cria os novos.
+
+**Correção histórica (Fase 07, 2026-09-29, commit `1f145cd`):** até então, o ramo `single` **não** chamava `AutoAprovacaoService` — horários novos nasciam sempre com o valor default da coluna `horarios.situacao` (`em_analise`), independentemente de quem administrava a agenda. Era uma inconsistência entre escopos, não uma regra intencional: o ramo `recurring` já fazia a chamada corretamente desde que `AutoAprovacaoService` foi extraído. Corrigido para replicar a mesma regra do `recurring`, com fallback defensivo para `em_analise` se a agenda não for encontrada no mapa (não deveria ocorrer em produção, já que `UpdateReservaRequest` exige `exists:agendas,id` para todo `horarios_solicitados.*.agenda_id`).
+
+---
+
 ## Condição Requerida: "TODAS" as Agendas
 
 A auto-aprovação exige que:
@@ -240,3 +269,4 @@ Se a lógica de aprovação for modificada no futuro:
 - ✓ `resolveDataAncora()` retorna data válida mesmo com todos os horários deferidos
 - ✓ `parcialmente_deferida` dispara email para gestores não-aprovadores
 - ✓ Gestor como solicitante recebe apenas notificação de banco de dados (broadcast, sem mail)
+- ✓ Horário novo adicionado em edição de escopo `single`, numa agenda administrada pelo dono da reserva, nasce `deferida` (`UpdateReservaJobTest::test_single_scope_novo_horario_do_proprio_gestor_nasce_deferido`)

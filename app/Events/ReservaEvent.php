@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Events;
 
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -20,9 +22,17 @@ class ReservaEvent implements ShouldBroadcastNow
         public int $horariosCount,
     ) {}
 
-    public function broadcastOn()
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, Channel|PrivateChannel>
+     */
+    public function broadcastOn(): array
     {
-        return ['reserva-channel', "App.Models.Espaco.{$this->espacoId}"];
+        return [
+            new Channel('reserva-channel'),
+            new PrivateChannel("App.Models.Espaco.{$this->espacoId}"),
+        ];
     }
 
     public function broadcastAs()

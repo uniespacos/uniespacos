@@ -27,9 +27,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '09:10:00',
                 situacao: 'em_analise',
                 is_conflicted: false,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
             {
@@ -39,9 +36,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '10:00:00',
                 situacao: 'deferida',
                 is_conflicted: true,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
         ];
@@ -68,9 +62,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '09:10:00',
                 situacao: 'em_analise',
                 is_conflicted: false,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
             {
@@ -80,9 +71,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '10:00:00',
                 situacao: 'em_analise',
                 is_conflicted: true,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
         ];
@@ -124,9 +112,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '09:10:00',
                 situacao: 'em_analise',
                 is_conflicted: false,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
             {
@@ -136,9 +121,6 @@ describe('useReservationSlots', () => {
                 horario_fim: '10:00:00',
                 situacao: 'em_analise',
                 is_conflicted: true,
-                validation_status: 'completed',
-                conflict_cache: null,
-                cache_validated_at: null,
                 agenda: { id: 2, turno: 'manha' },
             },
         ];

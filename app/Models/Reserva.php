@@ -35,7 +35,6 @@ class Reserva extends Model
         'user_id',
         'validation_status',
         'conflict_cache',
-        'cache_validated_at',
     ];
 
     /**
@@ -43,7 +42,6 @@ class Reserva extends Model
      */
     protected $casts = [
         'conflict_cache' => 'array',
-        'cache_validated_at' => 'datetime',
     ];
 
     /**
@@ -167,31 +165,5 @@ class Reserva extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Adiciona contadores de horários por status à query.
-     * Útil para exibição na lista do gestor.
-     */
-    public function scopeWithHorariosStats(Builder $query, ?array $agendaIds = null): Builder
-    {
-        return $query
-            ->addSelect([
-                'horarios_deferida' => Horario::query()
-                    ->whereColumn('reserva_id', 'reservas.id')
-                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
-                    ->where('situacao', 'deferida')
-                    ->selectRaw('count(*)'),
-                'horarios_indeferida' => Horario::query()
-                    ->whereColumn('reserva_id', 'reservas.id')
-                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
-                    ->where('situacao', 'indeferida')
-                    ->selectRaw('count(*)'),
-                'horarios_em_analise' => Horario::query()
-                    ->whereColumn('reserva_id', 'reservas.id')
-                    ->when($agendaIds, fn ($q) => $q->whereIn('agenda_id', $agendaIds))
-                    ->where('situacao', 'em_analise')
-                    ->selectRaw('count(*)'),
-            ]);
     }
 }

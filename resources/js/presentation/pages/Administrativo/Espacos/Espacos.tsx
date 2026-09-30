@@ -18,7 +18,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Edit, MoreHorizontal, PlusCircle, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-export default function GerenciarEspacos() {
+export default function Espacos() {
     const { t } = useTranslation();
     const { unidades, modulos, andares, espacos, users, filters, capacidadeEspacos } = usePage<{
         espacos: {

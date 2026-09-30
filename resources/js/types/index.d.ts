@@ -142,6 +142,17 @@ export interface BreadcrumbItem {
     href: string;
 }
 
+/**
+ * Informação de conflito de horário.
+ *
+ * Pode vir de duas fontes:
+ * 1. `todosOsConflitos` (prop vinda de ConflictDetectionService::findConflictsFor())
+ *    — Recálculo ao vivo a cada carregamento de página, fonte de verdade atual.
+ * 2. `conflict_cache` (snapshot gravado por ValidateReservationConflictsJob no banco)
+ *    — Snapshot histórico do momento em que o job processou a reserva, pode estar desatualizado.
+ *
+ * Em caso de discrepância, confie em `todosOsConflitos`.
+ */
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
@@ -248,12 +259,6 @@ export interface Horario {
     avaliador?: User; // Gestor que avaliou este horário (null enquanto em_analise)
     is_conflicted?: boolean;
     conflict_details?: string;
-
-    // --- NOVOS CAMPOS VINDOS DO BACKEND ---
-    validation_status: ValidationStatus;
-    // O cache é um objeto onde a chave é o ID do horário (string) e o valor são os detalhes do conflito
-    conflict_cache: Record<string, ConflictInfo> | null;
-    cache_validated_at: string | null;
 }
 
 /**
@@ -275,6 +280,8 @@ export interface Reserva {
     horarios: Horario[]; // O array de horários pertencentes a esta reserva
     can_update?: boolean; // Permissão de edição dinâmica
     validation_status?: ValidationStatus; // Validação de conflitos em segundo plano
+    /** Snapshot do cache de conflitos gravado por ValidateReservationConflictsJob no momento em que a reserva foi processada. Pode estar desatualizado; não é fonte de verdade (a verdade é `todosOsConflitos` recalculado ao vivo). Apenas informativo/auditoria. */
+    conflict_cache?: Record<string, ConflictInfo> | null;
 }
 
 // =============================================================================

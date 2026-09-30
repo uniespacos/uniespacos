@@ -33,7 +33,7 @@ class StoreReservaRequest extends FormRequest
             'horarios_solicitados' => ['required', 'array', 'min:1', new HorariosMesmoEspaco],
             'horarios_solicitados.*.data' => ['required', 'date', 'after_or_equal:today'],
             'horarios_solicitados.*.horario_inicio' => ['required', 'date_format:H:i:s'],
-            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s'],
+            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s', 'after:horarios_solicitados.*.horario_inicio'],
             'horarios_solicitados.*.agenda_id' => [
                 'required',
                 'integer',
@@ -45,6 +45,8 @@ class StoreReservaRequest extends FormRequest
 
     /**
      * Get custom validation messages.
+     *
+     * @return array<string, string>
      */
     public function messages(): array
     {
@@ -58,6 +60,7 @@ class StoreReservaRequest extends FormRequest
             'horarios_solicitados.*.data.required' => 'A data de cada horário é obrigatória.',
             'horarios_solicitados.*.data.date' => 'A data de cada horário deve ser uma data válida.',
             'horarios_solicitados.*.data.after_or_equal' => 'A data do horário deve ser hoje ou uma data futura.',
+            'horarios_solicitados.*.horario_fim.after' => 'O horário de término deve ser posterior ao horário de início.',
         ];
     }
 }

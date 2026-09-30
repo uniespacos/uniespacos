@@ -53,8 +53,11 @@ class AutoAprovacaoService
      */
     public function calcularSituacaoReserva(Collection $gestoresUnicos, int $solicitanteId): ?string
     {
-        if ($gestoresUnicos->count() === 1 && $gestoresUnicos->first()->id === $solicitanteId) {
-            return SituacaoReservaEnum::DEFERIDA->value;
+        if ($gestoresUnicos->count() === 1) {
+            $gestor = $gestoresUnicos->first();
+            if ($gestor && $gestor->id === $solicitanteId) {
+                return SituacaoReservaEnum::DEFERIDA->value;
+            }
         }
 
         if ($gestoresUnicos->contains(fn ($g) => $g->id === $solicitanteId)) {

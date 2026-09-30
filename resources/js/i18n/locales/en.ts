@@ -250,6 +250,8 @@ export const en = {
             conflicts_detected: 'Warning: {{count}} time slot(s) of this reservation overlap(s) with another reservation(s).',
             conflict_with_user: 'Requester: {{user}}',
             conflicts_note: 'You may choose to defer even with conflicts. Consider analyzing conflicting reservations before proceeding.',
+            conflict_cache_snapshot_title: 'Conflict Snapshot ({{count}} detected)',
+            conflict_cache_snapshot_note: 'This is a historical snapshot from the moment the reservation was processed by the system. It may be outdated. Current conflicts are shown above.',
         },
         stepper: {
             step1_title: 'Times and Recurrence',

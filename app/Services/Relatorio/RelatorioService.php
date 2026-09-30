@@ -12,6 +12,7 @@ use App\Policies\RelatorioPolicy;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
 use App\Services\Relatorio\Exporters\ExporterFactory;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +52,8 @@ final class RelatorioService
         $filtros = $this->aplicarEscopo($usuario, $filtros);
 
         $cacheKey = $this->gerarCacheKey($tipo, $usuario->id, $filtros);
-        $cacheTtl = (int) config('relatorios.cache_ttl', 1800);
+        $cacheTtlRaw = config('relatorios.cache_ttl', 1800);
+        $cacheTtl = is_int($cacheTtlRaw) ? $cacheTtlRaw : 1800;
 
         return Cache::remember($cacheKey, $cacheTtl, function () use ($usuario, $tipo, $filtros) {
             Log::info('Agregando relatório (cache miss)', [
@@ -74,7 +76,8 @@ final class RelatorioService
     {
         if ($usuarioId !== null) {
             $versionKey = "relatorio_version:{$tipo->value}:{$usuarioId}";
-            $novaVersao = ((int) (Cache::get($versionKey) ?? 1)) + 1;
+            $versaoAnterior = Cache::get($versionKey) ?? 1;
+            $novaVersao = (is_int($versaoAnterior) ? $versaoAnterior : 1) + 1;
             Cache::forever($versionKey, $novaVersao);
 
             Log::info('Cache de relatório invalidado (usuário específico)', [
@@ -84,7 +87,8 @@ final class RelatorioService
             ]);
         } else {
             $versionKey = "relatorio_version:{$tipo->value}";
-            $novaVersao = ((int) (Cache::get($versionKey) ?? 1)) + 1;
+            $versaoAnterior = Cache::get($versionKey) ?? 1;
+            $novaVersao = (is_int($versaoAnterior) ? $versaoAnterior : 1) + 1;
             Cache::forever($versionKey, $novaVersao);
 
             Log::info('Cache de relatório invalidado (global)', [
@@ -121,22 +125,22 @@ final class RelatorioService
     {
         $espacosQuery = Espaco::query()->with('andar.modulo.unidade');
 
-        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
-            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
-
-        if (empty($escopo)) {
-            abort(403, 'Sem permissão para acessar relatórios.');
-        }
+        $escopo = $this->obterEscopo($usuario);
 
         if (($escopo['tipo'] ?? null) === 'institucional') {
-            $instituicaoId = $escopo['instituicaoId'] ?? null;
-            $espacosQuery->whereHas(
-                'andar.modulo.unidade',
-                fn ($u) => $u->where('instituicao_id', $instituicaoId)
-            );
+            $instituicaoIdRaw = $escopo['instituicaoId'] ?? 0;
+            $instituicaoId = is_int($instituicaoIdRaw) ? $instituicaoIdRaw : 0;
+            if ($instituicaoId > 0) {
+                $espacosQuery->whereHas(
+                    'andar.modulo.unidade',
+                    fn ($u) => $u->where('instituicao_id', $instituicaoId)
+                );
+            }
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
             $agendaIds = $escopo['agendaIds'] ?? [];
-            $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+            if (is_array($agendaIds) && ! empty($agendaIds)) {
+                $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+            }
         } else {
             abort(403, 'Sem permissão para acessar relatórios.');
         }
@@ -152,8 +156,19 @@ final class RelatorioService
 
         foreach ($espacos as $espaco) {
             $andar = $espaco->andar;
+            if (! $andar) {
+                continue;
+            }
+
             $modulo = $andar->modulo;
+            if (! $modulo) {
+                continue;
+            }
+
             $unidade = $modulo->unidade;
+            if (! $unidade) {
+                continue;
+            }
 
             $unidades[$unidade->id] = ['id' => $unidade->id, 'nome' => $unidade->nome];
             $modulos[$modulo->id] = [
@@ -189,12 +204,7 @@ final class RelatorioService
 
     private function aplicarEscopo(User $usuario, FiltrosRelatorio $filtros): FiltrosRelatorio
     {
-        $escopo = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
-            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
-
-        if (empty($escopo)) {
-            abort(403, 'Sem permissão para acessar relatórios.');
-        }
+        $escopo = $this->obterEscopo($usuario);
 
         if (($escopo['tipo'] ?? null) === 'institucional') {
             return new FiltrosRelatorio(
@@ -202,7 +212,7 @@ final class RelatorioService
                 dataFim: $filtros->dataFim,
                 situacoes: $filtros->situacoes,
                 turnos: $filtros->turnos,
-                instituicaoId: $escopo['instituicaoId'] ?? null,
+                instituicaoId: isset($escopo['instituicaoId']) && is_int($escopo['instituicaoId']) ? $escopo['instituicaoId'] : null,
                 unidadeId: $filtros->unidadeId,
                 moduloId: $filtros->moduloId,
                 andarId: $filtros->andarId,
@@ -213,6 +223,11 @@ final class RelatorioService
         }
 
         if (($escopo['tipo'] ?? null) === 'gestor') {
+            $agendaIds = $escopo['agendaIds'] ?? [];
+            if (! is_array($agendaIds)) {
+                $agendaIds = [];
+            }
+
             return new FiltrosRelatorio(
                 dataInicio: $filtros->dataInicio,
                 dataFim: $filtros->dataFim,
@@ -224,11 +239,29 @@ final class RelatorioService
                 andarId: null,
                 espacoId: $filtros->espacoId,
                 setorId: null,
-                agendaIds: $escopo['agendaIds'] ?? [],
+                agendaIds: $agendaIds,
             );
         }
 
         abort(403, 'Sem permissão para acessar relatórios.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws AuthorizationException
+     */
+    private function obterEscopo(User $usuario): array
+    {
+        $escopoRaw = Gate::forUser($usuario)->raw('aplicarEscopoParaUsuario')
+            ?? app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($usuario);
+
+        if (! is_array($escopoRaw) || empty($escopoRaw)) {
+            throw new AuthorizationException('Sem permissão para acessar relatórios.');
+        }
+
+        /** @var array<string, mixed> $escopoRaw */
+        return $escopoRaw;
     }
 
     private function validarLimites(DadosRelatorio $dados, FormatoRelatorioEnum $formato): void
@@ -240,7 +273,8 @@ final class RelatorioService
         }
 
         $totalLinhas = $dados->totalLinhas();
-        $limite = (int) config('relatorios.limites.max_linhas_csv_xlsx', 10_000);
+        $limiteRaw = config('relatorios.limites.max_linhas_csv_xlsx', 10_000);
+        $limite = is_int($limiteRaw) ? $limiteRaw : 10_000;
 
         if ($totalLinhas > $limite) {
             abort(422, "Relatório excede o limite de {$limite} linhas para este formato. Refine os filtros.");
@@ -252,8 +286,10 @@ final class RelatorioService
      */
     private function gerarCacheKey(TipoRelatorioEnum $tipo, int $usuarioId, FiltrosRelatorio $filtros): string
     {
-        $versaoGlobal = (int) (Cache::get("relatorio_version:{$tipo->value}") ?? 1);
-        $versaoUsuario = (int) (Cache::get("relatorio_version:{$tipo->value}:{$usuarioId}") ?? 1);
+        $versaoGlobalRaw = Cache::get("relatorio_version:{$tipo->value}") ?? 1;
+        $versaoGlobal = is_int($versaoGlobalRaw) ? $versaoGlobalRaw : 1;
+        $versaoUsuarioRaw = Cache::get("relatorio_version:{$tipo->value}:{$usuarioId}") ?? 1;
+        $versaoUsuario = is_int($versaoUsuarioRaw) ? $versaoUsuarioRaw : 1;
 
         $situacoes = $filtros->situacoes;
         if (is_array($situacoes)) {

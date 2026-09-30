@@ -191,7 +191,7 @@
       "count": 2
     }
   },
-  "resources/js/presentation/pages/Administrativo/Espacos/CadastroEspaco.tsx": {
+  "resources/js/presentation/pages/Administrativo/Espacos/CadastrarEspaco.tsx": {
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
     },

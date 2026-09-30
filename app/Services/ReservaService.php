@@ -13,6 +13,7 @@ use App\Jobs\ProcessarCriacaoReserva;
 use App\Jobs\UpdateReservaJob;
 use App\Jobs\ValidateReservationConflictsJob;
 use App\Models\Espaco;
+use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Notifications\ReservationCanceledNotification;
@@ -47,7 +48,7 @@ class ReservaService
         $filters = $this->normalizarFiltros($filters);
 
         /** @var LengthAwarePaginator<Reserva> $reservas */
-        $reservas = $this->repoReserva->getPaginatedForUser($user->id, $weekStart, $weekEnd, $filters, $perPage)
+        $reservas = $this->repoReserva->getPaginatedForUser($user->id, $filters, $perPage)
             ->withQueryString();
 
         $reservas->getCollection()->transform(function (Reserva $reserva) use ($user) {
@@ -145,6 +146,7 @@ class ReservaService
      */
     public function create(array $data, User $user): void
     {
+        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, horarios_solicitados: array<int, array<string, mixed>>} $data */
         ProcessarCriacaoReserva::dispatch($data, $user);
     }
 
@@ -155,6 +157,7 @@ class ReservaService
      */
     public function update(Reserva $reserva, array $data, User $user): void
     {
+        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface} $data */
         UpdateReservaJob::dispatch($reserva, $data, $user);
     }
 
@@ -193,6 +196,24 @@ class ReservaService
 
         $filters['arquivo'] = ModoArquivoEnum::fromFiltro($filters['arquivo'] ?? null)->value;
         $filters['ordenar'] = OrdenacaoReservaEnum::fromFiltro($filters['ordenar'] ?? null)->value;
+
+        // Normalizar filtros de data (Opção A: dia único, ambos campos iguais)
+        $dataInicio = $filters['data_inicio'] ?? null;
+
+        $filters['data_inicio'] = null;
+        $filters['data_fim'] = null;
+
+        if ($dataInicio && \is_string($dataInicio)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $dataInicio);
+                if ($parsed && $parsed->toDateString() === $dataInicio) {
+                    $filters['data_inicio'] = $dataInicio;
+                    $filters['data_fim'] = $dataInicio;  // Ambos iguais (dia único)
+                }
+            } catch (\Exception) {
+                // valor inválido é ignorado silenciosamente
+            }
+        }
 
         return $filters;
     }
@@ -245,12 +266,21 @@ class ReservaService
     /**
      * Dispara revalidação para reservas que possuem horários nos slots liberados.
      *
-     * @param  Collection<int, mixed>  $horariosLiberados
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Horario>  $horariosLiberados
      */
     private function revalidateConflictedReservations(Collection $horariosLiberados): void
     {
         $slotsLiberados = $horariosLiberados
-            ->map(fn ($h) => ['data' => $h->data, 'agenda_id' => $h->agenda_id])
+            ->map(function ($h) {
+                $data = $h->data ?? null;
+                $agendaId = $h->agenda_id ?? null;
+                if (! is_string($data) || ! is_int($agendaId)) {
+                    return null;
+                }
+
+                return ['data' => $data, 'agenda_id' => $agendaId];
+            })
+            ->filter()
             ->unique(fn ($item) => $item['data'].$item['agenda_id']);
 
         if ($slotsLiberados->isEmpty()) {
@@ -259,7 +289,10 @@ class ReservaService
 
         $reservasParaRevalidar = Reserva::query()
             ->where('validation_status', 'completed')
-            ->where('situacao', SituacaoReservaEnum::INDEFERIDA->value)
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::INDEFERIDA->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
             ->whereHas('horarios', function ($query) use ($slotsLiberados) {
                 $query->where(function ($q) use ($slotsLiberados) {
                     foreach ($slotsLiberados as $slot) {
@@ -353,6 +386,7 @@ class ReservaService
             'reserva' => $reserva,
             'semana' => ['referencia' => $reference],
             'todosOsConflitos' => $conflitosMap,
+            'conflictCacheSnapshot' => $reserva->conflict_cache,
         ];
     }
 

@@ -22,9 +22,14 @@ class RelatorioPolicy
     {
         // Institucional: acesso a todas as agendas de sua instituição
         if ($user->can('relatorios.escopo-instituicao') || $user->can('secao.dashboard-institucional')) {
+            $instituicaoId = $user->setor?->unidade?->instituicao_id;
+            if (! is_int($instituicaoId)) {
+                $instituicaoId = null;
+            }
+
             return [
                 'tipo' => 'institucional',
-                'instituicaoId' => $user->setor?->unidade?->instituicao_id,
+                'instituicaoId' => $instituicaoId,
                 'unidadeId' => null,
                 'agendaIds' => [],
             ];
@@ -32,11 +37,14 @@ class RelatorioPolicy
 
         // Gestor: acesso apenas a suas agendas gerenciadas
         if ($user->can('relatorios.escopo-agendas') || $user->can('secao.dashboard-gestor') || $user->can('reservas.avaliar')) {
+            /** @var array<int> $agendaIds */
+            $agendaIds = $user->agendas()->pluck('id')->all();
+
             return [
                 'tipo' => 'gestor',
                 'instituicaoId' => null,
                 'unidadeId' => null,
-                'agendaIds' => $user->agendas()->pluck('id')->all(),
+                'agendaIds' => $agendaIds,
             ];
         }
 
