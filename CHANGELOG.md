@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/uniespacos/uniespacos/compare/v1.4.0...v1.4.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* desabilita HTTP/3 no Caddy de produção, mantendo apenas h1 e h2 ([#434](https://github.com/uniespacos/uniespacos/issues/434)) ([b3d29db](https://github.com/uniespacos/uniespacos/commit/b3d29db20de8db096cbcd4c7f4d8dea453789576))
+
 ## [1.4.0](https://github.com/uniespacos/uniespacos/compare/v1.3.0...v1.4.0) (2026-09-28)
 
 
