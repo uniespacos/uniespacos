@@ -2,6 +2,9 @@
 {
     # We are providing our own certificates
     auto_https disable_certs
+    servers {
+        protocols h1 h2
+    }
 }
 
 :80 {
