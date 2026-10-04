@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.85](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.84...v1.5.0-rc.85) (2026-10-04)
+
+
+### Bug Fixes
+
+* **tests:** linha de base verde no backend (E0-01..E0-04) ([#439](https://github.com/uniespacos/uniespacos/issues/439)) ([c7b5f46](https://github.com/uniespacos/uniespacos/commit/c7b5f46b65ab24c35edd0ebc497ca7acba5b522c))
+
 ## [1.5.0-rc.84](https://github.com/uniespacos/uniespacos/compare/v1.4.1-rc.84...v1.5.0-rc.84) (2026-10-04)
 
 
