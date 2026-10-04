@@ -35,6 +35,13 @@
              caia no driver `database`; e QUEUE_CONNECTION enfileirava os jobs na
              tabela `jobs` em vez de executa-los, entao testes que dependem do
              efeito de um job passavam sem o job ter rodado. -->
+        <!-- Broadcaster fixo em `null`: o container exporta BROADCAST_CONNECTION=reverb,
+             e com ele ReservaEvent (ShouldBroadcastNow) faz POST real no Reverb — a suite
+             passava a depender de o container `reverb` estar de pe. No CI o valor era
+             indefinido (default `null` de config/broadcasting.php), o que mudava o
+             comportamento de /broadcasting/auth entre ambientes. BroadcastChannelAuthorizationTest
+             configura um broadcaster compativel em runtime. -->
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="DB_CONNECTION" value="pgsql" force="true"/>
         <env name="DB_DATABASE" value="uniespacos_test" force="true"/>
