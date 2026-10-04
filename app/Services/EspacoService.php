@@ -109,11 +109,17 @@ class EspacoService
             'andar.modulo.unidade.instituicao',
             'agendas' => function ($query) use ($weekStart, $weekEnd) {
                 $query->with([
-                    'user.setor',
+                    'user:id,name,email,setor_id',
+                    'user.setor:id,nome,sigla',
                     'horarios' => function ($q) use ($weekStart, $weekEnd) {
                         $q->where('situacao', 'deferida')
                             ->whereBetween('data', [$weekStart, $weekEnd])
-                            ->with(['reserva.user', 'avaliador']);
+                            ->with([
+                                'reserva:id,titulo,situacao,observacao,user_id',
+                                'reserva.user:id,name,setor_id',
+                                'reserva.user.setor:id,nome,sigla',
+                                'avaliador',
+                            ]);
                     },
                 ]);
             },
