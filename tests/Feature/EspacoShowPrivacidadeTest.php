@@ -115,8 +115,10 @@ class EspacoShowPrivacidadeTest extends TestCase
     }
 
     #[Test]
-    public function espaco_show_nao_expoe_email_nem_telefone_de_terceiros(): void
+    public function espaco_show_nao_expoe_dados_pessoais_alem_do_email_do_gestor(): void
     {
+        // B31: O e-mail do gestor da agenda deve ser visível para agendamento (AgendaHeader.tsx).
+        // Solicitantes não devem ter email/telefone expostos.
         $dados = $this->criarEspacoComAgendaEReserva();
         $espaco = $dados['espaco'];
         $gestor = $dados['gestor'];
@@ -129,40 +131,30 @@ class EspacoShowPrivacidadeTest extends TestCase
 
         $response->assertOk();
 
-        $response->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('espaco')
-            ->has('semana')
-        );
-
-        // Extrair os dados da resposta Inertia para validação de strings
         $content = $response->getContent();
 
-        // Verificar que os emails e telefones não estão vazados na resposta
-        $this->assertStringNotContainsString(
-            $gestor->email,
-            $content,
-            'Email do gestor não deveria estar exposto na resposta'
-        );
-
-        $this->assertStringNotContainsString(
-            $gestor->telefone,
-            $content,
-            'Telefone do gestor não deveria estar exposto na resposta'
-        );
-
+        // E-mail do solicitante NÃO deveria estar exposto
         $this->assertStringNotContainsString(
             $solicitante->email,
             $content,
             'Email do solicitante não deveria estar exposto na resposta'
         );
 
+        // Telefone do solicitante NÃO deveria estar exposto
         $this->assertStringNotContainsString(
             $solicitante->telefone,
             $content,
             'Telefone do solicitante não deveria estar exposto na resposta'
         );
 
-        // Verificar que two_factor_* não estão presentes
+        // Telefone do gestor NÃO deveria estar exposto (apenas email é permitido)
+        $this->assertStringNotContainsString(
+            $gestor->telefone,
+            $content,
+            'Telefone do gestor não deveria estar exposto na resposta'
+        );
+
+        // two_factor_* não deveriam estar presentes
         $this->assertStringNotContainsString(
             'two_factor_secret',
             $content,
@@ -175,44 +167,82 @@ class EspacoShowPrivacidadeTest extends TestCase
             'two_factor_recovery_codes não deveria estar exposto'
         );
 
-        // Asserção estrutural recursiva: validar que todo array sob chave 'user'
-        // não contém atributos privados
+        // Validação estrutural exata
         $spacoProp = $response->viewData('page')['props']['espaco'] ?? null;
         $this->assertNotNull($spacoProp, 'Prop espaco deveria estar presente');
 
-        $usersEncontrados = [];
-        $this->assertUserStructurePrivacy($spacoProp, $usersEncontrados);
+        // Validar estrutura exata de agendas[].user (gestor)
+        $this->assertArrayHasKey('agendas', $spacoProp);
+        $agendas = $spacoProp['agendas'];
+        $this->assertIsArray($agendas);
+        $this->assertGreaterThan(0, count($agendas), 'Deveria ter pelo menos uma agenda');
 
-        $this->assertGreaterThanOrEqual(2, count($usersEncontrados),
-            'Deveria ter encontrado pelo menos 2 arrays user (gestor e solicitante)'
+        $gestorUser = $agendas[0]['user'] ?? null;
+        $this->assertNotNull($gestorUser, 'User do gestor da agenda deveria estar presente');
+        $this->assertEquals(['id', 'name', 'email', 'setor_id', 'setor'], array_keys($gestorUser),
+            'agendas[].user deveria ter apenas {id, name, email, setor_id, setor}'
+        );
+
+        $gestorSetor = $gestorUser['setor'] ?? null;
+        $this->assertNotNull($gestorSetor, 'Setor do gestor deveria estar presente');
+        $this->assertEquals(['id', 'nome', 'sigla'], array_keys($gestorSetor),
+            'agendas[].user.setor deveria ter apenas {id, nome, sigla}'
+        );
+
+        // Validar estrutura exata de horarios[].reserva.user (solicitante).
+        // Sem condicionais: o cenário garante o horário deferido; se ele sumir do payload, o teste deve falhar.
+        $this->assertNotEmpty($agendas[0]['horarios'] ?? [], 'O horário deferido do solicitante deveria estar presente');
+        $horario = $agendas[0]['horarios'][0];
+        $this->assertArrayHasKey('reserva', $horario);
+        $reserva = $horario['reserva'];
+        $this->assertEquals(
+            ['id', 'titulo', 'situacao', 'observacao', 'user_id', 'user'],
+            array_keys($reserva),
+            'horarios[].reserva deveria ter apenas {id, titulo, situacao, observacao, user_id, user}'
+        );
+
+        $userSolicitante = $reserva['user'] ?? null;
+        $this->assertNotNull($userSolicitante, 'User da reserva deveria estar presente');
+        $this->assertEquals(['id', 'name', 'setor_id', 'setor'], array_keys($userSolicitante),
+            'horarios[].reserva.user deveria ter apenas {id, name, setor_id, setor}'
+        );
+
+        $setorSolicitante = $userSolicitante['setor'] ?? null;
+        $this->assertNotNull($setorSolicitante, 'Setor do solicitante deveria estar presente');
+        $this->assertEquals(['id', 'nome', 'sigla'], array_keys($setorSolicitante),
+            'horarios[].reserva.user.setor deveria ter apenas {id, nome, sigla}'
         );
     }
 
-    private function assertUserStructurePrivacy(mixed $data, array &$usersEncontrados): void
+    #[Test]
+    public function espaco_show_exibe_email_do_gestor_na_agenda(): void
     {
-        $chavesForbidden = ['email', 'telefone', 'two_factor_secret', 'two_factor_recovery_codes',
-            'two_factor_confirmed_at', 'email_verified_at', 'profile_pic'];
+        // B31: Confirma que o e-mail do gestor da agenda está visível
+        $dados = $this->criarEspacoComAgendaEReserva();
+        $espaco = $dados['espaco'];
+        $gestor = $dados['gestor'];
+        $usuarioLogado = $dados['usuarioLogado'];
+        $semana = $dados['semana'];
 
-        if (is_array($data)) {
-            // Se esta é uma chave 'user', validar sua estrutura
-            foreach ($data as $key => $value) {
-                if ($key === 'user' && is_array($value)) {
-                    $usersEncontrados[] = $value;
-                    foreach ($chavesForbidden as $forbiddenKey) {
-                        $this->assertArrayNotHasKey($forbiddenKey, $value,
-                            "Chave '$forbiddenKey' não deveria estar em user"
-                        );
-                    }
-                }
+        $response = $this->actingAs($usuarioLogado)
+            ->get(route('espacos.show', ['espaco' => $espaco, 'semana' => $semana]));
 
-                // Continuar recursão
-                if (is_array($value) || is_object($value)) {
-                    $this->assertUserStructurePrivacy($value, $usersEncontrados);
-                }
-            }
-        } elseif (is_object($data)) {
-            $this->assertUserStructurePrivacy((array) $data, $usersEncontrados);
-        }
+        $response->assertOk();
+
+        // E-mail do gestor DEVE aparecer na resposta
+        $this->assertStringContainsString(
+            $gestor->email,
+            $response->getContent(),
+            'Email do gestor deveria estar exposto na resposta (B31)'
+        );
+
+        // Verificar estrutura Inertia
+        $response->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('espaco.agendas.0.user.email', $gestor->email)
+            ->where('espaco.agendas.0.user.name', $gestor->name)
+            ->where('espaco.agendas.0.user.setor.nome', $gestor->setor->nome)
+            ->where('espaco.agendas.0.user.setor.sigla', $gestor->setor->sigla)
+        );
     }
 
     #[Test]
