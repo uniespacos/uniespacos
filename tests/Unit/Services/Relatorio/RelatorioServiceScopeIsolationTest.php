@@ -23,6 +23,15 @@ use Tests\TestCase;
 
 final class RelatorioServiceScopeIsolationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Meio do mês, meio-dia: as reservas criadas em now()->addDay() e o filtro
+        // mensal nunca cruzam a virada do mês, independente da data real do CI.
+        $this->travelTo(CarbonImmutable::parse('2026-06-15 12:00:00'));
+    }
+
     /**
      * Testa que dois gestores com agendas diferentes só enxergam dados de suas próprias agendas.
      * Este é o teste de baseline de isolamento de escopo.
@@ -81,8 +90,8 @@ final class RelatorioServiceScopeIsolationTest extends TestCase
 
         $service = app(RelatorioService::class);
         $filtros = new FiltrosRelatorio(
-            dataInicio: CarbonImmutable::now()->startOfMonth(),
-            dataFim: CarbonImmutable::now()->endOfMonth(),
+            dataInicio: CarbonImmutable::now()->addDay()->startOfMonth(),
+            dataFim: CarbonImmutable::now()->addDay()->endOfMonth(),
         );
 
         // Gestor A consulta
@@ -187,8 +196,8 @@ final class RelatorioServiceScopeIsolationTest extends TestCase
 
         $service = app(RelatorioService::class);
         $filtros = new FiltrosRelatorio(
-            dataInicio: CarbonImmutable::now()->startOfMonth(),
-            dataFim: CarbonImmutable::now()->endOfMonth(),
+            dataInicio: CarbonImmutable::now()->addDay()->startOfMonth(),
+            dataFim: CarbonImmutable::now()->addDay()->endOfMonth(),
         );
 
         // Institucional 1 consulta
