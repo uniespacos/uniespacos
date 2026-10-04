@@ -51,3 +51,5 @@ docker/development/mailpit/*
 # Documentação de auditorias internas
 /docs/auditoria*
 /docs/plano-*
+# Saidas soltas do phpstan na raiz (ex.: redirecionamento de `composer analyse > ...phpstan.txt`)
+/*phpstan*.txt
