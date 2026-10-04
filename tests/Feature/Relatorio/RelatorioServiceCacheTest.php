@@ -20,7 +20,9 @@ use App\Services\Relatorio\Data\FiltrosRelatorio;
 use App\Services\Relatorio\RelatorioService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -31,6 +33,11 @@ final class RelatorioServiceCacheTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Meio do mês, meio-dia: reservas em now()->addDay() e o filtro mensal
+        // nunca cruzam a virada do mês, independente da data real do CI.
+        $this->travelTo(CarbonImmutable::parse('2026-06-15 12:00:00'));
+
         $this->service = app(RelatorioService::class);
     }
 
@@ -72,26 +79,33 @@ final class RelatorioServiceCacheTest extends TestCase
         ]);
 
         $filtros = new FiltrosRelatorio(
-            dataInicio: CarbonImmutable::now()->startOfMonth(),
-            dataFim: CarbonImmutable::now()->endOfMonth(),
+            dataInicio: CarbonImmutable::now()->addDay()->startOfMonth(),
+            dataFim: CarbonImmutable::now()->addDay()->endOfMonth(),
         );
 
-        // Act 1: primeira chamada (cache miss)
-        $inicioMiss = microtime(true);
+        // Act 1: primeira chamada (cache miss) — executa a agregação sobre reservas/horários
+        DB::flushQueryLog();
+        DB::enableQueryLog();
         $dados1 = $this->service->agregarComCache($gestor, TipoRelatorioEnum::RESERVAS_PERIODO, $filtros);
-        $duracaoMiss = microtime(true) - $inicioMiss;
+        $sqlMiss = array_column(DB::getQueryLog(), 'query');
 
         // Act 2: segunda chamada com mesmos parâmetros (cache hit)
-        $inicioHit = microtime(true);
+        DB::flushQueryLog();
         $dados2 = $this->service->agregarComCache($gestor, TipoRelatorioEnum::RESERVAS_PERIODO, $filtros);
-        $duracaoHit = microtime(true) - $inicioHit;
+        $sqlHit = array_column(DB::getQueryLog(), 'query');
+        DB::disableQueryLog();
 
-        // Assert
+        // Assert: o escopo do usuário (agendas) é resolvido antes da chave de cache, então o hit
+        // pode consultar `agendas`; o que ele não pode é reexecutar a agregação.
+        $consultaAgregacao = static fn (string $sql): bool => preg_match('/\b(from|join)\s+"(reservas|horarios)"/i', $sql) === 1;
+        $this->assertSame(1, $dados1->totalLinhas(), 'O cenário precisa produzir linhas para o teste provar algo.');
+        $this->assertNotEmpty(array_filter($sqlMiss, $consultaAgregacao), 'O cache miss deve executar a agregação no banco.');
+        $this->assertSame([], array_values(array_filter($sqlHit, $consultaAgregacao)), 'O cache hit não deve executar a agregação no banco.');
+        $this->assertLessThan(count($sqlMiss), count($sqlHit));
         $this->assertSame($dados1->totalLinhas(), $dados2->totalLinhas());
         $this->assertEquals($dados1->linhas, $dados2->linhas);
         $this->assertEquals($dados1->sumario, $dados2->sumario);
         $this->assertEquals($dados1->filtrosAplicados, $dados2->filtrosAplicados);
-        $this->assertLessThanOrEqual($duracaoMiss + 0.05, $duracaoHit);
     }
 
     public function test_isolamento_entre_usuarios_gestores_nao_compartilham_cache(): void
@@ -129,8 +143,8 @@ final class RelatorioServiceCacheTest extends TestCase
 
         // Ambos solicitam relatório com o mesmo objeto de filtros (sem agendaIds definidos)
         $filtros = new FiltrosRelatorio(
-            dataInicio: CarbonImmutable::now()->startOfMonth(),
-            dataFim: CarbonImmutable::now()->endOfMonth(),
+            dataInicio: CarbonImmutable::now()->addDay()->startOfMonth(),
+            dataFim: CarbonImmutable::now()->addDay()->endOfMonth(),
         );
 
         // Act
@@ -175,8 +189,8 @@ final class RelatorioServiceCacheTest extends TestCase
         $usuarioComum->assignRole('comum');
 
         $filtros = new FiltrosRelatorio(
-            dataInicio: CarbonImmutable::now()->startOfMonth(),
-            dataFim: CarbonImmutable::now()->endOfMonth(),
+            dataInicio: CarbonImmutable::now()->addDay()->startOfMonth(),
+            dataFim: CarbonImmutable::now()->addDay()->endOfMonth(),
         );
 
         // Primeira agregação: sem reservas no período
@@ -312,5 +326,58 @@ final class RelatorioServiceCacheTest extends TestCase
         $this->assertNotNull($response);
         $this->assertTrue(method_exists($response, 'getStatusCode'));
         $this->assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Relógios em que a reserva de "amanhã" cai no mês seguinte (virada de mês/ano)
+     * ou no dia 1: o período do relatório deve ser derivado da data da reserva.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function relogiosDeViradaDeMes(): array
+    {
+        return [
+            '2026-10-31 23:30 UTC' => ['2026-10-31 23:30:00'],
+            '2026-01-31 23:30 UTC' => ['2026-01-31 23:30:00'],
+            '2026-02-28 12:00 UTC (fim de fev. não bissexto)' => ['2026-02-28 12:00:00'],
+            '2026-04-29 12:00 UTC' => ['2026-04-29 12:00:00'],
+            '2026-04-30 12:00 UTC' => ['2026-04-30 12:00:00'],
+            '2026-12-31 23:30 UTC (virada de ano)' => ['2026-12-31 23:30:00'],
+            '2026-11-01 00:30 UTC (dia 1)' => ['2026-11-01 00:30:00'],
+        ];
+    }
+
+    #[DataProvider('relogiosDeViradaDeMes')]
+    public function test_periodo_derivado_da_data_da_reserva_no_ultimo_dia_do_mes(string $agora): void
+    {
+        $this->travelTo(CarbonImmutable::parse($agora, 'UTC'));
+
+        [$gestor, $agenda] = $this->criarGestorComAgenda();
+        $usuarioComum = User::factory()->create();
+        $usuarioComum->assignRole('comum');
+
+        $dataReserva = CarbonImmutable::now()->addDay();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $usuarioComum->id,
+            'data_inicial' => $dataReserva->setHour(9)->setMinute(0),
+            'data_final' => $dataReserva->setHour(10)->setMinute(0),
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => $dataReserva->toDateString(),
+            'situacao' => 'em_analise',
+        ]);
+
+        $filtros = new FiltrosRelatorio(
+            dataInicio: $dataReserva->startOfMonth(),
+            dataFim: $dataReserva->endOfMonth(),
+        );
+
+        $dados = $this->service->agregarComCache($gestor, TipoRelatorioEnum::RESERVAS_PERIODO, $filtros);
+
+        $this->assertGreaterThan(0, $dados->totalLinhas());
+        $this->assertContains($reserva->id, collect($dados->linhas)->pluck('id')->all());
     }
 }

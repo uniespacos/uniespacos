@@ -10,11 +10,22 @@ use App\Models\Espaco;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ReservaValidationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Meio-dia de um dia no meio do mês: `today()`, `now()` e a regra
+        // `after_or_equal:today` não variam com a hora/data de execução da suíte
+        // (virada de dia em UTC vs. America/Bahia, último dia do mês).
+        $this->travelTo(CarbonImmutable::parse('2026-06-15 12:00:00'));
+    }
+
     public function test_horarios_mesmo_espaco_validation_passes_with_single_espaco(): void
     {
         $usuario = User::factory()->create();
