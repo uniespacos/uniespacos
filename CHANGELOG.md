@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.92](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.91...v1.5.0-rc.92) (2026-10-05)
+
+
+### Miscellaneous Chores
+
+* sincronizar main em develop após release 1.4.1 ([#455](https://github.com/uniespacos/uniespacos/issues/455)) ([2d04f4f](https://github.com/uniespacos/uniespacos/commit/2d04f4ff34f27ce27cca189ba851b0efcc8716fe))
+
 ## [1.5.0-rc.91](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.90...v1.5.0-rc.91) (2026-10-05)
 
 
