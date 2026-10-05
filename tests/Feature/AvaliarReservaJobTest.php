@@ -11,6 +11,7 @@ use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Services\ConflictDetectionService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
@@ -18,6 +19,13 @@ use Tests\TestCase;
 class AvaliarReservaJobTest extends TestCase
 {
     // use DatabaseTransactions; // Removed as it is now in TestCase
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
 
     public function test_avaliar_reserva_job_handles_solicitado_status()
     {
@@ -404,5 +412,145 @@ class AvaliarReservaJobTest extends TestCase
         Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {
             return $job->reserva->id === $reservaB->id;
         });
+    }
+
+    /**
+     * B1 (E1-01): no escopo recurring, um conflito em horario de agenda de OUTRO gestor
+     * nao pode ser indeferido pelo gestor que avalia (ConflictDetectionService e global).
+     */
+    public function test_recurring_nao_indefere_horario_de_agenda_de_outro_gestor_em_conflito(): void
+    {
+        Carbon::setTestNow('2026-06-15 12:00:00');
+        Bus::fake();
+
+        $gestor = User::factory()->create();
+        $outroGestor = User::factory()->create();
+        $agendaDoGestor = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $agendaAlheia = Agenda::factory()->create(['user_id' => $outroGestor->id]);
+        $dia = now()->addDay()->toDateString();
+
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+        $horarioProprio = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agendaDoGestor->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+        $horarioAlheio = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agendaAlheia->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $outraReserva = Reserva::factory()->create(['situacao' => 'deferida']);
+        Horario::factory()->create([
+            'reserva_id' => $outraReserva->id,
+            'agenda_id' => $agendaAlheia->id,
+            'situacao' => 'deferida',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $job = new AvaliarReservaJob($reserva, [
+            'evaluation_scope' => 'recurring',
+            'motivo' => null,
+            'horarios_avaliados' => [['id' => $horarioProprio->id, 'status' => 'deferida']],
+            'observacao' => null,
+        ], $gestor);
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertDatabaseHas('horarios', [
+            'id' => $horarioAlheio->id,
+            'situacao' => 'em_analise',
+            'user_id' => null,
+            'justificativa' => null,
+        ]);
+        $this->assertDatabaseHas('horarios', [
+            'id' => $horarioProprio->id,
+            'situacao' => 'deferida',
+            'user_id' => $gestor->id,
+        ]);
+    }
+
+    public function test_recurring_indefere_conflitos_da_propria_agenda_do_gestor(): void
+    {
+        Carbon::setTestNow('2026-06-15 12:00:00');
+        Bus::fake();
+
+        $gestor = User::factory()->create();
+        $outroGestor = User::factory()->create();
+        $agendaDoGestor = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $agendaAlheia = Agenda::factory()->create(['user_id' => $outroGestor->id]);
+        $dia = now()->addDay()->toDateString();
+
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+        $horarioEmConflito = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agendaDoGestor->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+        $horarioLivre = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agendaDoGestor->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '14:00:00',
+            'horario_fim' => '15:00:00',
+        ]);
+        $horarioAlheio = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agendaAlheia->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $outraReserva = Reserva::factory()->create(['situacao' => 'deferida', 'titulo' => 'Reserva Concorrente']);
+        Horario::factory()->create([
+            'reserva_id' => $outraReserva->id,
+            'agenda_id' => $agendaDoGestor->id,
+            'situacao' => 'deferida',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $job = new AvaliarReservaJob($reserva, [
+            'evaluation_scope' => 'recurring',
+            'motivo' => null,
+            'horarios_avaliados' => [['id' => $horarioLivre->id, 'status' => 'deferida']],
+            'observacao' => null,
+        ], $gestor);
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertDatabaseHas('horarios', [
+            'id' => $horarioEmConflito->id,
+            'situacao' => 'indeferida',
+            'user_id' => $gestor->id,
+        ]);
+        $this->assertStringContainsString(
+            'Reserva Concorrente',
+            (string) Horario::findOrFail($horarioEmConflito->id)->justificativa
+        );
+        $this->assertDatabaseHas('horarios', [
+            'id' => $horarioLivre->id,
+            'situacao' => 'deferida',
+            'user_id' => $gestor->id,
+        ]);
+        $this->assertDatabaseHas('horarios', [
+            'id' => $horarioAlheio->id,
+            'situacao' => 'em_analise',
+            'user_id' => null,
+        ]);
     }
 }
