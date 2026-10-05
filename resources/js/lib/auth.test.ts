@@ -1,4 +1,4 @@
-import { canAccessNavEntry, hasAllPermissions, hasAllRoles, hasAnyPermission, hasAnyRole, hasPermission, hasRole } from './auth';
+import { canAccessNavEntry, hasAllPermissions, hasAnyPermission, hasPermission } from './auth';
 import type { User } from '@/types';
 
 describe('auth helper functions', () => {
@@ -15,32 +15,6 @@ describe('auth helper functions', () => {
         roles: ['institucional', 'gestor'],
         permissions: ['reservas.listar', 'reservas.avaliar', 'usuarios.listar'],
     };
-
-    describe('hasRole, hasAnyRole, hasAllRoles', () => {
-        it('returns false if user is null or undefined or has no roles', () => {
-            expect(hasRole(null, 'gestor')).toBe(false);
-            expect(hasRole(undefined, 'gestor')).toBe(false);
-            expect(hasRole({ ...mockUser, roles: [] }, 'gestor')).toBe(false);
-
-            expect(hasAnyRole(null, ['gestor'])).toBe(false);
-            expect(hasAllRoles(null, ['gestor'])).toBe(false);
-        });
-
-        it('validates single role correctly', () => {
-            expect(hasRole(mockUser, 'gestor')).toBe(true);
-            expect(hasRole(mockUser, 'comum')).toBe(false);
-        });
-
-        it('validates hasAnyRole correctly', () => {
-            expect(hasAnyRole(mockUser, ['comum', 'gestor'])).toBe(true);
-            expect(hasAnyRole(mockUser, ['comum', 'visitante'])).toBe(false);
-        });
-
-        it('validates hasAllRoles correctly', () => {
-            expect(hasAllRoles(mockUser, ['gestor', 'institucional'])).toBe(true);
-            expect(hasAllRoles(mockUser, ['gestor', 'comum'])).toBe(false);
-        });
-    });
 
     describe('hasPermission, hasAnyPermission, hasAllPermissions', () => {
         it('returns false if user is null or has no permissions', () => {

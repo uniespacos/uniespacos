@@ -87,4 +87,44 @@ class AutoAprovacaoServiceTest extends TestCase
 
         $this->assertNull($situacao);
     }
+
+    public function test_resolvedor_situacao_e_avaliador_dono_proprietario(): void
+    {
+        $proprietarioId = 123;
+        $agenda = (new Agenda)->forceFill(['id' => 1, 'user_id' => $proprietarioId]);
+
+        $resultado = $this->service->resolverSituacaoEAvaliador($agenda, $proprietarioId);
+
+        $this->assertSame([
+            'situacao' => 'deferida',
+            'user_id' => $proprietarioId,
+        ], $resultado);
+    }
+
+    public function test_resolvedor_situacao_e_avaliador_usuario_diferente(): void
+    {
+        $proprietarioId = 123;
+        $gestorId = 456;
+        $agenda = (new Agenda)->forceFill(['id' => 1, 'user_id' => $gestorId]);
+
+        $resultado = $this->service->resolverSituacaoEAvaliador($agenda, $proprietarioId);
+
+        $this->assertSame([
+            'situacao' => 'em_analise',
+            'user_id' => null,
+        ], $resultado);
+    }
+
+    public function test_resolvedor_situacao_e_avaliador_agenda_sem_gestor(): void
+    {
+        $proprietarioId = 123;
+        $agenda = (new Agenda)->forceFill(['id' => 1, 'user_id' => null]);
+
+        $resultado = $this->service->resolverSituacaoEAvaliador($agenda, $proprietarioId);
+
+        $this->assertSame([
+            'situacao' => 'em_analise',
+            'user_id' => null,
+        ], $resultado);
+    }
 }

@@ -46,7 +46,7 @@ class HomeService
         $estatisticasPainel = [
             'total_espacos' => Espaco::count(),
             'total_gestores' => User::permission('secao.gestao-reservas')->count(),
-            'reservas_mes' => Reserva::whereMonth('created_at', now()->month)->count(),
+            'reservas_mes' => Reserva::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
         ];
 
         return compact('reservas', 'espacosFavoritos', 'user', 'users', 'gestores', 'espacos', 'unidades', 'estatisticasPainel');

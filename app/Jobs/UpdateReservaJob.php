@@ -155,11 +155,14 @@ class UpdateReservaJob implements ShouldQueue
                         }
 
                         $agenda = $agendasMapSingle->get($agendaId);
-                        $situacao = $agenda !== null
-                            ? $autoAprovacao->resolverSituacaoHorario($agenda, (int) $this->reserva->user_id)
-                            : SituacaoReservaEnum::EM_ANALISE->value;
-
-                        $novoHorario['situacao'] = $situacao;
+                        if ($agenda !== null) {
+                            $resultado = $autoAprovacao->resolverSituacaoEAvaliador($agenda, (int) $this->reserva->user_id);
+                            $novoHorario['situacao'] = $resultado['situacao'];
+                            $novoHorario['user_id'] = $resultado['user_id'];
+                        } else {
+                            $novoHorario['situacao'] = SituacaoReservaEnum::EM_ANALISE->value;
+                            $novoHorario['user_id'] = null;
+                        }
 
                         $this->reserva->horarios()->create($novoHorario);
                     }
@@ -222,7 +225,7 @@ class UpdateReservaJob implements ShouldQueue
                         // a agenda, o horario ja nasce deferido. Vale o dono, e
                         // nao quem edita — senao um gestor editando a reserva de
                         // outra pessoa a deferiria sem querer.
-                        fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoHorario($agenda, (int) $this->reserva->user_id),
+                        fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoEAvaliador($agenda, (int) $this->reserva->user_id),
                     );
 
                     // Revalidar conflitos sob lock, antes de inserir

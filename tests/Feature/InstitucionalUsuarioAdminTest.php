@@ -6,8 +6,8 @@ namespace Tests\Feature;
 
 use App\Models\Setor;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\Auth\ResetPasswordQueued;
+use App\Notifications\Auth\VerifyEmailQueued;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -163,7 +163,7 @@ class InstitucionalUsuarioAdminTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-        Notification::assertSentTo($usuario, VerifyEmail::class);
+        Notification::assertSentTo($usuario, VerifyEmailQueued::class);
     }
 
     public function test_nao_reenvia_verificacao_para_usuario_ja_verificado(): void
@@ -193,6 +193,6 @@ class InstitucionalUsuarioAdminTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-        Notification::assertSentTo($usuario, ResetPassword::class);
+        Notification::assertSentTo($usuario, ResetPasswordQueued::class);
     }
 }

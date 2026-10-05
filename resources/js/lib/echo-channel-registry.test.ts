@@ -246,16 +246,15 @@ describe('echo-channel-registry', () => {
         });
     });
     describe('handleEchoVisibilityChange and visibilitychange listener', () => {
-        it('should call pusher.connect when document is visible and connection is closed', () => {
+        it('should not call pusher.connect when document is visible and connection state is connected', () => {
             const mockConnect = jest.fn();
-            const mockIsOpen = jest.fn().mockReturnValue(false);
 
             Object.defineProperty(window, 'Echo', {
                 value: {
                     connector: {
                         pusher: {
                             connection: {
-                                isOpen: mockIsOpen,
+                                state: 'connected',
                             },
                             connect: mockConnect,
                         },
@@ -273,51 +272,105 @@ describe('echo-channel-registry', () => {
 
             handleEchoVisibilityChange();
 
-            expect(mockIsOpen).toHaveBeenCalled();
-            expect(mockConnect).toHaveBeenCalledTimes(1);
-        });
-
-        it('should not call pusher.connect when document is visible but connection is already open', () => {
-            const mockConnect = jest.fn();
-            const mockIsOpen = jest.fn().mockReturnValue(true);
-
-            Object.defineProperty(window, 'Echo', {
-                value: {
-                    connector: {
-                        pusher: {
-                            connection: {
-                                isOpen: mockIsOpen,
-                            },
-                            connect: mockConnect,
-                        },
-                    },
-                },
-                writable: true,
-                configurable: true,
-            });
-
-            Object.defineProperty(document, 'visibilityState', {
-                value: 'visible',
-                writable: true,
-                configurable: true,
-            });
-
-            handleEchoVisibilityChange();
-
-            expect(mockIsOpen).toHaveBeenCalled();
             expect(mockConnect).not.toHaveBeenCalled();
         });
 
-        it('should not call pusher.connect when document is hidden', () => {
+        it('should call pusher.connect when document is visible and connection state is disconnected', () => {
             const mockConnect = jest.fn();
-            const mockIsOpen = jest.fn().mockReturnValue(false);
 
             Object.defineProperty(window, 'Echo', {
                 value: {
                     connector: {
                         pusher: {
                             connection: {
-                                isOpen: mockIsOpen,
+                                state: 'disconnected',
+                            },
+                            connect: mockConnect,
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            Object.defineProperty(document, 'visibilityState', {
+                value: 'visible',
+                writable: true,
+                configurable: true,
+            });
+
+            handleEchoVisibilityChange();
+
+            expect(mockConnect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call pusher.connect when document is visible and connection state is unavailable', () => {
+            const mockConnect = jest.fn();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'unavailable',
+                            },
+                            connect: mockConnect,
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            Object.defineProperty(document, 'visibilityState', {
+                value: 'visible',
+                writable: true,
+                configurable: true,
+            });
+
+            handleEchoVisibilityChange();
+
+            expect(mockConnect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should call pusher.connect when document is visible and connection state is failed', () => {
+            const mockConnect = jest.fn();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'failed',
+                            },
+                            connect: mockConnect,
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            Object.defineProperty(document, 'visibilityState', {
+                value: 'visible',
+                writable: true,
+                configurable: true,
+            });
+
+            handleEchoVisibilityChange();
+
+            expect(mockConnect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not call pusher.connect when document is hidden regardless of connection state', () => {
+            const mockConnect = jest.fn();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'disconnected',
                             },
                             connect: mockConnect,
                         },
@@ -338,16 +391,15 @@ describe('echo-channel-registry', () => {
             expect(mockConnect).not.toHaveBeenCalled();
         });
 
-        it('should trigger reconnection when visibilitychange event is fired on document', () => {
+        it('should trigger reconnection when visibilitychange event is fired on document with disconnected state', () => {
             const mockConnect = jest.fn();
-            const mockIsOpen = jest.fn().mockReturnValue(false);
 
             Object.defineProperty(window, 'Echo', {
                 value: {
                     connector: {
                         pusher: {
                             connection: {
-                                isOpen: mockIsOpen,
+                                state: 'disconnected',
                             },
                             connect: mockConnect,
                         },
@@ -364,6 +416,37 @@ describe('echo-channel-registry', () => {
             });
 
             document.dispatchEvent(new Event('visibilitychange'));
+
+            expect(mockConnect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not throw exception when connection state is accessed', () => {
+            const mockConnect = jest.fn();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'connecting',
+                            },
+                            connect: mockConnect,
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            Object.defineProperty(document, 'visibilityState', {
+                value: 'visible',
+                writable: true,
+                configurable: true,
+            });
+
+            expect(() => {
+                handleEchoVisibilityChange();
+            }).not.toThrow();
 
             expect(mockConnect).toHaveBeenCalledTimes(1);
         });
