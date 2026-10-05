@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.90](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.89...v1.5.0-rc.90) (2026-10-05)
+
+
+### Bug Fixes
+
+* adiciona retry com backoff crescente nas notificações enfileiradas ([#451](https://github.com/uniespacos/uniespacos/issues/451)) ([dd6beee](https://github.com/uniespacos/uniespacos/commit/dd6beee981f75b464a94d0fe85b0ec931bd871d5))
+
 ## [1.5.0-rc.89](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.88...v1.5.0-rc.89) (2026-10-05)
 
 
