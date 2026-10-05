@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.88](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.87...v1.5.0-rc.88) (2026-10-05)
+
+
+### Bug Fixes
+
+* corrige FK de Horario::avaliador e restringe colunas do avaliador nos eager loads ([#446](https://github.com/uniespacos/uniespacos/issues/446)) ([e1a2798](https://github.com/uniespacos/uniespacos/commit/e1a27982c6f1bfa5000aa012347dfe2667422fb5))
+
 ## [1.5.0-rc.87](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.86...v1.5.0-rc.87) (2026-10-05)
 
 
