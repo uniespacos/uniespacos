@@ -256,7 +256,7 @@ export interface Horario {
     situacao: SituacaoHorario;
     justificativa?: string | null; // Justificativa opcional para indeferimento
     user?: User;
-    avaliador?: User; // Gestor que avaliou este horário (null enquanto em_analise)
+    avaliador?: Pick<User, 'id' | 'name'> | null; // Gestor que avaliou este horário (null enquanto em_analise); só id e name por privacidade
     is_conflicted?: boolean;
     conflict_details?: string;
 }

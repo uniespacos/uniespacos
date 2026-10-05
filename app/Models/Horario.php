@@ -50,6 +50,6 @@ class Horario extends Model
      */
     public function avaliador(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
