@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Database\Factories\HorarioFactory;
 use Database\Seeders\Production\PermissionSeeder;
 use Database\Seeders\Production\RoleSeeder;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -28,5 +29,7 @@ abstract class TestCase extends BaseTestCase
             PermissionSeeder::class,
             RoleSeeder::class,
         ]);
+
+        HorarioFactory::resetSequence();
     }
 }
