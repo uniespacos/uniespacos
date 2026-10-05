@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.93](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.92...v1.5.0-rc.93) (2026-10-05)
+
+
+### Miscellaneous Chores
+
+* sincroniza main em develop (merge commit, releases 1.4.0 e 1.4.1) ([c1f12f7](https://github.com/uniespacos/uniespacos/commit/c1f12f7eac47155fdceeaf3576dd103cdb2a6d1a))
+* sincronizar main em develop (merge commit) ([427fe2c](https://github.com/uniespacos/uniespacos/commit/427fe2cb02710342798a42b2d7ece0e390c11791))
+
 ## [1.5.0-rc.92](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.91...v1.5.0-rc.92) (2026-10-05)
 
 
