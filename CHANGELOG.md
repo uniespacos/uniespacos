@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0-rc.94](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.93...v1.5.0-rc.94) (2026-10-05)
+
+
+### Bug Fixes
+
+* contagem mensal do dashboard considera o ano corrente (E1-21) ([c29723d](https://github.com/uniespacos/uniespacos/commit/c29723d647977da621c5b736c76ba1fc091bf80a))
+* e-mails de verificação e redefinição de senha em fila, com timeout SMTP (E1-23) ([645a135](https://github.com/uniespacos/uniespacos/commit/645a1357414bca020dc9f62c0abe53a3cbf29a0c))
+* estabilização da Onda 1 (avaliador na auto-aprovação, dashboard, e-mails de auth em fila, Echo, testes e código morto) ([b3f5c68](https://github.com/uniespacos/uniespacos/commit/b3f5c686fa6b8b3fbb1bb9efad1dfa914f692fda))
+* grava o avaliador nos horários auto-aprovados (E1-40) ([5c849e3](https://github.com/uniespacos/uniespacos/commit/5c849e351046ffbb94d84883cdfcfca51d1ab48a))
+* reconexão do Echo usa connection.state do pusher-js (B46) ([5bdc3f0](https://github.com/uniespacos/uniespacos/commit/5bdc3f0ba9cc8e984986da8ef3a29cfadafd3de3))
+
+
+### Miscellaneous Chores
+
+* remove código morto do backend e do frontend (E1-13, E1-14) ([2bf2098](https://github.com/uniespacos/uniespacos/commit/2bf2098023f13244455562cc11f3118b4d8f4571))
+
 ## [1.5.0-rc.93](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.92...v1.5.0-rc.93) (2026-10-05)
 
 
