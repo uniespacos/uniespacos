@@ -25,7 +25,7 @@ Have an idea? Open an issue tagged as `enhancement` or discuss it in the existin
     - `npx jest` (Frontend test suite)
     - `docker exec uniespacos-workspace-1 vendor/bin/pint --test` (PHP style check)
     - `docker exec -e APP_ENV=testing uniespacos-workspace-1 php artisan test` (Backend test suite)
-4.  **Push** to your feature branch.
+4.  **Push** to your feature branch. Every PR runs the required checks **`🔍 Lint & Static Analysis`** and **`✅ Tests`** (backend + frontend suites, `tests.yml`); both must be green before merge. The test suite also runs daily on `develop`.
 5.  **Open a Pull Request** targeting the **`develop`** branch (NEVER target `main`).
 
 ## 💻 Development Guidelines
@@ -40,14 +40,16 @@ We enforce code standards to keep the codebase clean.
 - **JavaScript / TypeScript / React:** We use ESLint 9 Flat Config (`strict-type-checked`) and Prettier.
     - Run check: `npx tsc --noEmit`
     - Format: `npx prettier --write <file>`
-    - **Zero-suppression policy:** `eslint-suppressions.json` is fully purged. New files or edits must never introduce ESLint suppressions.
+    - **Zero-suppression policy:** `eslint-suppressions.json` holds only legacy debt (check with `npm run lint:debt`). New files or edits must never introduce ESLint suppressions.
 
 ### Testing
 
 **All new features and fixes must include tests.**
 
 - **Backend:** PHPUnit via Docker (`docker exec -e APP_ENV=testing uniespacos-workspace-1 php artisan test`). Never use `RefreshDatabase`; always use `DatabaseTransactions`.
-- **Frontend:** Jest / React Testing Library (`npx jest`)
+- **Frontend:** Jest / React Testing Library (`npx jest`). Jest runs with a fixed timezone (`America/Bahia`, via `jest.global-setup.js`).
+- **Clock rule:** never use `now()` / `today()` / `Carbon::now()` (PHP) or `new Date()` / `Date.now()` (Jest) in a test without freezing the clock (`Carbon::setTestNow()` / `jest.useFakeTimers({ now })`, restoring real timers in `afterEach`). Tests that only pass on some days of the month are time bombs.
+- **Broadcasting:** `phpunit.xml` forces `BROADCAST_CONNECTION=null`; the suite does not need the Reverb container.
 
 ### Commit Messages
 
