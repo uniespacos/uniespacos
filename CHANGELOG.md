@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.86](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.85...v1.5.0-rc.86) (2026-10-05)
+
+
+### Bug Fixes
+
+* **tests:** fixa fuso e congela relógio nos testes de frontend ([#441](https://github.com/uniespacos/uniespacos/issues/441)) ([c07f28d](https://github.com/uniespacos/uniespacos/commit/c07f28d611a8ac84c05edf208bb3cf8a22c9bd09))
+
 ## [1.5.0-rc.85](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.84...v1.5.0-rc.85) (2026-10-04)
 
 
