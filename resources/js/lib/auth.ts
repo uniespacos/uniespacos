@@ -2,51 +2,6 @@ import type { NavEntry } from '@/config/nav-registry';
 import { User } from '@/types';
 
 /**
- * Verifies if a user has a specific role.
- *
- * @param user - The user object
- * @param role - The role name to check
- * @returns true if the user has the role, false otherwise
- */
-export function hasRole(user: User | null | undefined, role: string): boolean {
-    if (!user?.roles) {
-        return false;
-    }
-
-    return user.roles.includes(role);
-}
-
-/**
- * Verifies if a user has any of the specified roles.
- *
- * @param user - The user object
- * @param roles - Array of role names to check
- * @returns true if the user has at least one of the roles, false otherwise
- */
-export function hasAnyRole(user: User | null | undefined, roles: string[]): boolean {
-    if (!user?.roles) {
-        return false;
-    }
-
-    return roles.some((role) => user.roles.includes(role));
-}
-
-/**
- * Verifies if a user has all of the specified roles.
- *
- * @param user - The user object
- * @param roles - Array of role names to check
- * @returns true if the user has all of the roles, false otherwise
- */
-export function hasAllRoles(user: User | null | undefined, roles: string[]): boolean {
-    if (!user?.roles) {
-        return false;
-    }
-
-    return roles.every((role) => user.roles.includes(role));
-}
-
-/**
  * Verifies if a user has a specific permission.
  *
  * @param user - The user object
