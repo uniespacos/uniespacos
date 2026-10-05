@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.91](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.90...v1.5.0-rc.91) (2026-10-05)
+
+
+### Bug Fixes
+
+* breadcrumbs via route(), rótulo de gestor via i18n e paginação sem HTML bruto ([#453](https://github.com/uniespacos/uniespacos/issues/453)) ([ab9598a](https://github.com/uniespacos/uniespacos/commit/ab9598a47f9c03622a76b719ce7defbc2ce6b2ea))
+
 ## [1.5.0-rc.90](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.89...v1.5.0-rc.90) (2026-10-05)
 
 
