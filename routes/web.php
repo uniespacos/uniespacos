@@ -101,18 +101,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Gestão de Unidades
     Route::middleware(['permission:secao.gestao-unidades'])->prefix('institucional')->name('institucional.')->group(function () {
-        Route::resource('unidades', InstitucionalUnidadeController::class);
+        Route::resource('unidades', InstitucionalUnidadeController::class)->except(['show']);
     });
 
     // Gestão de Módulos
     Route::middleware(['permission:secao.gestao-modulos'])->prefix('institucional')->name('institucional.')->group(function () {
-        Route::resource('modulos', InstitucionalModuloController::class);
+        Route::resource('modulos', InstitucionalModuloController::class)->except(['show']);
     });
 
     // Gestão de Setores
     Route::middleware(['permission:secao.gestao-setores'])->prefix('institucional')->name('institucional.')->group(function () {
         Route::get('setors/{setor}/usuarios', [InstitucionalSetorController::class, 'usuarios'])->name('setors.usuarios');
-        Route::resource('setors', InstitucionalSetorController::class);
+        Route::resource('setors', InstitucionalSetorController::class)->except(['show']);
     });
 
     // Gestão de Espaços
