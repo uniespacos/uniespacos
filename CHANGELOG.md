@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.87](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.86...v1.5.0-rc.87) (2026-10-05)
+
+
+### Bug Fixes
+
+* restringe indeferimento por conflito às agendas do gestor no escopo recurring ([#444](https://github.com/uniespacos/uniespacos/issues/444)) ([52413b2](https://github.com/uniespacos/uniespacos/commit/52413b2e5f169604fd69f477d2d606d7a37356d6))
+
 ## [1.5.0-rc.86](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.85...v1.5.0-rc.86) (2026-10-05)
 
 
