@@ -131,7 +131,7 @@ class ReservaService
                                 'reserva:id,titulo,situacao,observacao,user_id',
                                 'reserva.user:id,name,setor_id',
                                 'reserva.user.setor:id,nome,sigla',
-                                'avaliador',
+                                'avaliador:id,name',
                             ]);
                     },
                 ]);
