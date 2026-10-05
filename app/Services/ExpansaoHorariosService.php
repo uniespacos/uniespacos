@@ -20,22 +20,9 @@ use Illuminate\Support\Collection;
 class ExpansaoHorariosService
 {
     /**
-     * Colunas fixas de toda linha gerada.
-     *
-     * `Horario::insert()` em lote monta a lista de colunas a partir da PRIMEIRA
-     * linha do array. Se as linhas tiverem conjuntos de chaves diferentes, os
-     * valores entram em coluna trocada — por isso `justificativa` e `user_id`
-     * aparecem sempre, mesmo que nulos.
-     */
-    private const COLUNAS_OPCIONAIS = [
-        'justificativa' => null,
-        'user_id' => null,
-    ];
-
-    /**
      * @param  array<int, array<string, mixed>>  $slots  Itens de `horarios_solicitados`.
      * @param  Collection<int, Agenda>  $agendasMap  Agendas pre-carregadas, chaveadas por id.
-     * @param  callable(Agenda): string  $resolverSituacao  Decide a situacao inicial de cada linha.
+     * @param  callable(Agenda): (string|array{situacao: string, user_id: ?int})  $resolverSituacao  Decide a situacao inicial de cada linha. Pode retornar string (legado) ou array com situacao e user_id.
      * @return array{0: array<int, array<string, mixed>>, 1: Collection<int, Agenda>}
      *                                                                                Linhas prontas para insert em lote e as agendas efetivamente usadas.
      */
@@ -59,7 +46,7 @@ class ExpansaoHorariosService
      *
      * @param  array<int, array<string, mixed>>  $slots
      * @param  Collection<int, Agenda>  $agendasMap
-     * @param  callable(Agenda): string  $resolverSituacao
+     * @param  callable(Agenda): (string|array{situacao: string, user_id: ?int})  $resolverSituacao
      * @return array{0: array<int, array<string, mixed>>, 1: Collection<int, Agenda>}
      */
     private function semExpansao(array $slots, Collection $agendasMap, int $reservaId, callable $resolverSituacao): array
@@ -78,7 +65,9 @@ class ExpansaoHorariosService
             }
 
             $agendasUsadas->push($agenda);
-            $linhas[] = $this->linha($slot, (string) $slot['data'], $reservaId, $resolverSituacao($agenda));
+            $resultado = $resolverSituacao($agenda);
+            [$situacao, $userId] = $this->normalizarResultado($resultado);
+            $linhas[] = $this->linha($slot, (string) $slot['data'], $reservaId, $situacao, $userId);
         }
 
         return [$linhas, $agendasUsadas->unique('id')->values()];
@@ -94,7 +83,7 @@ class ExpansaoHorariosService
      *
      * @param  array<int, array<string, mixed>>  $slots
      * @param  Collection<int, Agenda>  $agendasMap
-     * @param  callable(Agenda): string  $resolverSituacao
+     * @param  callable(Agenda): (string|array{situacao: string, user_id: ?int})  $resolverSituacao
      * @return array{0: array<int, array<string, mixed>>, 1: Collection<int, Agenda>}
      */
     private function expandindoSemanalmente(
@@ -121,7 +110,8 @@ class ExpansaoHorariosService
             }
 
             $agendasUsadas->push($agenda);
-            $situacao = $resolverSituacao($agenda);
+            $resultado = $resolverSituacao($agenda);
+            [$situacao, $userId] = $this->normalizarResultado($resultado);
 
             $cursor = $grupo
                 ->map(fn (array $slot) => Carbon::parse($slot['data'])->startOfDay())
@@ -129,7 +119,7 @@ class ExpansaoHorariosService
                 ->first();
 
             while ($cursor->lte($dataFinal)) {
-                $linhas[] = $this->linha($base, $cursor->toDateString(), $reservaId, $situacao);
+                $linhas[] = $this->linha($base, $cursor->toDateString(), $reservaId, $situacao, $userId);
                 $cursor = $cursor->copy()->addWeek();
             }
         }
@@ -138,10 +128,18 @@ class ExpansaoHorariosService
     }
 
     /**
+     * Monta uma linha pronta para insert em lote da tabela horarios.
+     *
+     * ARMADILHA: `Horario::insert()` em lote monta a lista de colunas a partir
+     * da PRIMEIRA linha; se as linhas tiverem conjuntos de chaves diferentes, os
+     * valores entram em coluna trocada — por isso `justificativa` e `user_id`
+     * aparecem sempre, mesmo que nulos. Todas as linhas do lote precisam ter
+     * exatamente as mesmas chaves, na mesma ordem.
+     *
      * @param  array<string, mixed>  $slot
      * @return array<string, mixed>
      */
-    private function linha(array $slot, string $data, int $reservaId, string $situacao): array
+    private function linha(array $slot, string $data, int $reservaId, string $situacao, ?int $userId = null): array
     {
         $agora = Carbon::now();
 
@@ -152,7 +150,8 @@ class ExpansaoHorariosService
             'agenda_id' => $slot['agenda_id'],
             'reserva_id' => $reservaId,
             'situacao' => $situacao,
-            ...self::COLUNAS_OPCIONAIS,
+            'justificativa' => null,
+            'user_id' => $userId,
             'created_at' => $agora,
             'updated_at' => $agora,
         ];
@@ -184,5 +183,21 @@ class ExpansaoHorariosService
             $slot['horario_inicio'],
             $slot['horario_fim'],
         ]);
+    }
+
+    /**
+     * Normaliza o resultado do callback resolverSituacao para suportar tanto
+     * string legada (situacao) quanto array novo (situacao + user_id).
+     *
+     * @param  string|array{situacao: string, user_id: ?int}  $resultado
+     * @return array{0: string, 1: ?int}
+     */
+    private function normalizarResultado(string|array $resultado): array
+    {
+        if (\is_string($resultado)) {
+            return [$resultado, null];
+        }
+
+        return [$resultado['situacao'], $resultado['user_id']];
     }
 }

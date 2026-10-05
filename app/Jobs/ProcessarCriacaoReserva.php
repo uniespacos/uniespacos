@@ -112,7 +112,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     (string) $reserva->recorrencia,
                     Carbon::parse($reserva->data_final),
                     (int) $reserva->id,
-                    fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoHorario($agenda, $this->solicitante->id),
+                    fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoEAvaliador($agenda, $this->solicitante->id),
                 );
 
                 // Revalidar conflitos sob lock, antes de inserir
