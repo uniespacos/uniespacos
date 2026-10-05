@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Horario;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -24,13 +25,18 @@ class AvaliarReservaRequest extends FormRequest
      */
     public function rules(): array
     {
+        $validStatusValues = array_merge(
+            ['solicitado'],
+            SituacaoReservaEnum::valoresDeAvaliacao()
+        );
+
         return [
             'situacao' => ['required', Rule::in(['parcialmente_deferida', 'deferida', 'indeferida', 'em_analise'])],
             'motivo' => ['required_if:situacao,indeferida', 'nullable'],
             'observacao' => ['nullable', 'string', 'max:500'],
             'horarios_avaliados' => ['required', 'array'],
-            'horarios_avaliados.*.status' => ['required'],
-            'horarios_avaliados.*.id' => ['required'],
+            'horarios_avaliados.*.status' => ['required', Rule::in($validStatusValues)],
+            'horarios_avaliados.*.id' => ['required', 'integer'],
             'evaluation_scope' => ['required', 'string', Rule::in(['recurring', 'single'])],
         ];
     }
@@ -42,6 +48,10 @@ class AvaliarReservaRequest extends FormRequest
     {
         return [
             function ($validator) {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
                 $gestor = Auth::user();
                 if (! $gestor) {
                     return;
