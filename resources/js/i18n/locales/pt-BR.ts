@@ -580,7 +580,7 @@ export const ptBR = {
         sem_setor_vinculado: 'Sem setor vinculado',
         roles: {
             institucional: 'Institucional / Administrador',
-            gestor: 'Gestor de Espaço',
+            gestor: 'Gestor de Reserva',
             comum: 'Usuário Comum',
         },
         colunas: {
@@ -617,6 +617,8 @@ export const ptBR = {
             desc: 'Configure os pavilhões e prédios de cada unidade',
             novo: 'Novo Módulo',
             nenhum: 'Nenhum módulo encontrado',
+            cadastrar: 'Cadastrar Módulo',
+            editar: 'Editar Módulo',
         },
         setores: {
             titulo: 'Gerenciar Setores / Departamentos',
@@ -635,6 +637,7 @@ export const ptBR = {
             desc: 'Cadastre, edite e configure espaços físicos e recursos',
             novo: 'Novo Espaço',
             nenhum: 'Nenhum espaço encontrado',
+            cadastrar: 'Cadastrar Espaço',
         },
     },
     errors: {

@@ -1,22 +1,13 @@
 import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
+import { useTranslation } from '@/i18n';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
 import ModuloForm from '@/presentation/organisms/ModuloForm';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao, Unidade } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
-
-const breadcrumbs = [
-    {
-        title: 'Gerenciar Modulos',
-        href: '/institucional/modulo',
-    },
-    {
-        title: 'Cadastrar Modulo',
-        href: `/institucional/modulos/create`,
-    },
-];
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
 export type CadastrarModuloForm = {
@@ -26,7 +17,22 @@ export type CadastrarModuloForm = {
 };
 
 export default function CadastrarModuloPage() {
+    const { t } = useTranslation();
     const { instituicao, unidades } = usePage<{ instituicao: Instituicao; unidades: Unidade[] }>().props;
+
+    const breadcrumbs = useMemo(
+        () => [
+            {
+                title: t('admin.modulos.titulo'),
+                href: route('institucional.modulos.index'),
+            },
+            {
+                title: t('admin.modulos.cadastrar'),
+                href: route('institucional.modulos.create'),
+            },
+        ],
+        [t],
+    );
 
     const { data, setData, post, processing, errors } = useForm<CadastrarModuloForm>({
         nome: '',
