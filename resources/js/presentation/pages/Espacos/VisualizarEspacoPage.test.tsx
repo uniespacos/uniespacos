@@ -29,6 +29,9 @@ jest.mock('@/hooks/use-espaco-live-updates', () => ({
     useEspacoLiveUpdates: jest.fn(),
 }));
 
+// Relógio congelado em 15/08/2024 12:00 (horário local), anterior à semana de teste (2024-08-19..25).
+const AGORA_CONGELADO = new Date(2024, 7, 15, 12, 0, 0);
+
 describe('VisualizarEspacoPage', () => {
     const mockEspaco: Espaco = {
         id: 1,
@@ -51,6 +54,7 @@ describe('VisualizarEspacoPage', () => {
     });
 
     afterEach(() => {
+        jest.useRealTimers();
         jest.restoreAllMocks();
     });
 
@@ -87,7 +91,7 @@ describe('VisualizarEspacoPage', () => {
     });
 
     it('should reload page when reserva:updated event is dispatched', () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers({ now: AGORA_CONGELADO });
 
         render(<VisualizarEspaço espaco={mockEspaco} semana={mockSemana} />);
 
@@ -102,11 +106,10 @@ describe('VisualizarEspacoPage', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(router.reload).toHaveBeenCalledWith({ only: ['espaco'] });
 
-        jest.useRealTimers();
     });
 
     it('should debounce multiple reserva:updated events', () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers({ now: AGORA_CONGELADO });
 
         render(<VisualizarEspaço espaco={mockEspaco} semana={mockSemana} />);
 
@@ -126,7 +129,6 @@ describe('VisualizarEspacoPage', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(router.reload).toHaveBeenCalledWith({ only: ['espaco'] });
 
-        jest.useRealTimers();
     });
 
     it('should render with isEditMode and reserva props', () => {

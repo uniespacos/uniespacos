@@ -51,7 +51,7 @@ export default typescript.config(
     },
     prettier, // Turn off all rules that might conflict with Prettier
     {
-        files: ['jest.setup.js', '__mocks__/**/*.js'],
+        files: ['jest.setup.js', 'jest.global-setup.js', '__mocks__/**/*.js'],
         languageOptions: {
             globals: {
                 ...globals.jest,

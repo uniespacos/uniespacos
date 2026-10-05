@@ -78,7 +78,8 @@ jest.mock('@/hooks/use-avaliar-reserva', () => ({
 
 jest.mock('@/hooks/use-agenda-navigation', () => ({
     useAgendaNavigation: jest.fn(() => ({
-        semanaVisivel: new Date(),
+        // Data fixa (semana da reserva de teste): `new Date()` faria o resultado depender do dia da execução.
+        semanaVisivel: new Date(2024, 7, 19),
         isLoading: false,
         podeVoltar: true,
         podeAvancar: true,
