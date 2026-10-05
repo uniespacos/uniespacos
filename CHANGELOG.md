@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.89](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.88...v1.5.0-rc.89) (2026-10-05)
+
+
+### Bug Fixes
+
+* valida status da avaliação com lista fechada e remove rotas show que davam 500 ([#448](https://github.com/uniespacos/uniespacos/issues/448)) ([a0b12aa](https://github.com/uniespacos/uniespacos/commit/a0b12aa868c9910d37388aed3964769ca87eb502))
+
 ## [1.5.0-rc.88](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.87...v1.5.0-rc.88) (2026-10-05)
 
 
