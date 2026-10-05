@@ -1,0 +1,146 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  # Execução diária em dias úteis (06:00 em Salvador / 09:00 UTC). Detecta "bomba-relógio" de data
+  # no dia em que explode, não no dia do release. Workflows agendados só rodam a partir do arquivo
+  # presente na branch padrão do repositório (main); por isso o checkout abaixo força `develop`.
+  schedule:
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Em `schedule` o GITHUB_REF é a branch padrão; testamos sempre o develop.
+  CHECKOUT_REF: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+
+jobs:
+  test-backend:
+    name: 🐘 Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: uniespacos_test
+          POSTGRES_USER: uniespacos
+          POSTGRES_PASSWORD: uniespacossecretkey
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 5
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Setup Environment
+        run: |
+          cp .env.testing .env
+          sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/g' .env
+          sed -i 's/DB_DATABASE=uniespacos/DB_DATABASE=uniespacos_test/g' .env
+          composer install --no-interaction --no-progress --prefer-dist
+          php artisan key:generate
+
+      - name: Run Migrations
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: uniespacos_test
+          DB_USERNAME: uniespacos
+          DB_PASSWORD: uniespacossecretkey
+        run: php artisan migrate --seed --force
+
+      - name: Run Tests
+        env:
+          APP_ENV: testing
+          BROADCAST_CONNECTION: 'null'
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: uniespacos_test
+          DB_USERNAME: uniespacos
+          DB_PASSWORD: uniespacossecretkey
+        run: php artisan test
+
+  test-frontend:
+    name: ⚛️ Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: Run Tests
+        run: npm test -- --ci --maxWorkers=2
+
+  # Job agregador: é ele que se marca como check obrigatório na proteção de branch ("✅ Tests"),
+  # independente de como os jobs de teste são divididos. `if: always()` é essencial: sem ele,
+  # uma falha em test-backend/test-frontend deixaria este job como "skipped", e o GitHub trata
+  # check obrigatório pulado como aprovado.
+  tests:
+    name: ✅ Tests
+    if: always()
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verificar resultado dos jobs de teste
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados dos jobs de teste: $RESULTADOS"
+          for resultado in $RESULTADOS; do
+            if [ "$resultado" != "success" ]; then
+              echo "::error::Job de teste não concluiu com sucesso (resultados: $RESULTADOS)"
+              exit 1
+            fi
+          done
