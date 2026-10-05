@@ -7,20 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getGroupLabel, getPermissionLabel } from '@/constants/permission-labels';
 import { PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS, ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL } from '@/constants/permissions';
+import { roleLabel } from '@/constants/role-labels';
+import { useTranslation } from '@/i18n';
 import { hasPermission } from '@/lib/auth';
 import { Modal } from '@/presentation/molecules/Modal';
 import FiltroBuscaPermission from '@/presentation/organisms/FiltroBuscaPermission';
 import { Instituicao, Permission, SelectedAgenda, User } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-const ROLE_OPTIONS = [
-    { value: ROLE_INSTITUCIONAL, label: 'Institucional' },
-    { value: ROLE_GESTOR, label: 'Gestor' },
-    { value: ROLE_COMUM, label: 'Comum' },
-];
 
 interface PermissionModalProps {
     user: User | undefined;
@@ -37,9 +33,19 @@ interface PermissionContext {
 }
 
 export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = false }: PermissionModalProps) {
+    const { t } = useTranslation();
     const { props } = usePage<{ auth: { user: User } }>();
     const currentUser = props.auth.user;
     const canManageDirectPermissions = hasPermission(currentUser, PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS);
+
+    const roleOptions = useMemo(
+        () => [
+            { value: ROLE_INSTITUCIONAL, label: roleLabel(t, ROLE_INSTITUCIONAL) },
+            { value: ROLE_GESTOR, label: roleLabel(t, ROLE_GESTOR) },
+            { value: ROLE_COMUM, label: roleLabel(t, ROLE_COMUM) },
+        ],
+        [t],
+    );
 
     const [context, setContext] = useState<PermissionContext | null>(null);
     const [loading, setLoading] = useState(false);
@@ -143,7 +149,7 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
                                     <SelectValue placeholder="Selecione o papel" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {ROLE_OPTIONS.map((option) => (
+                                    {roleOptions.map((option) => (
                                         <SelectItem key={option.value} value={option.value}>
                                             {option.label}
                                         </SelectItem>

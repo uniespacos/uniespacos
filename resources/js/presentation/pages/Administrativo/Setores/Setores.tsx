@@ -41,7 +41,7 @@ export default function SetoresPage() {
         () => [
             {
                 title: t('admin.setores.titulo'),
-                href: '/institucional/setores',
+                href: route('institucional.setors.index'),
             },
         ],
         [t],

@@ -581,7 +581,7 @@ export const en = {
         sem_setor_vinculado: 'No department assigned',
         roles: {
             institucional: 'Institutional / Admin',
-            gestor: 'Space Manager',
+            gestor: 'Reservation Manager',
             comum: 'Standard User',
         },
         colunas: {
@@ -618,6 +618,8 @@ export const en = {
             desc: 'Configure pavilions and buildings for each campus',
             novo: 'New Building',
             nenhum: 'No buildings found',
+            cadastrar: 'Create Module',
+            editar: 'Edit Module',
         },
         setores: {
             titulo: 'Manage Sectors',
@@ -636,6 +638,7 @@ export const en = {
             desc: 'Register, edit, and configure physical spaces and resources',
             novo: 'New Space',
             nenhum: 'No spaces found',
+            cadastrar: 'Create Space',
         },
     },
     errors: {

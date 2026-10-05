@@ -22,6 +22,19 @@ jest.mock('@inertiajs/react', () => ({
                         created_at: '2026-01-01T00:00:00Z',
                         updated_at: '2026-01-01T00:00:00Z',
                     },
+                    {
+                        id: 2,
+                        name: 'Maria Souza',
+                        email: 'maria@uesb.br',
+                        email_verified_at: '2026-01-01T00:00:00Z',
+                        telefone: '71-8888-8888',
+                        roles: ['gestor'],
+                        permissions: [],
+                        setor_id: null,
+                        unread_notifications: [],
+                        created_at: '2026-01-01T00:00:00Z',
+                        updated_at: '2026-01-01T00:00:00Z',
+                    },
                 ],
                 links: [
                     { url: null, label: '&laquo; Anterior', active: false },
@@ -124,5 +137,12 @@ describe('UsuariosPage', () => {
 
         const actionButtons = screen.getAllByRole('button');
         expect(actionButtons.length).toBeGreaterThan(0);
+    });
+
+    it('usuarios_mostra_gestor_de_reserva', () => {
+        render(<UsuariosPage />);
+
+        expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+        expect(screen.getByText('Gestor de Reserva')).toBeInTheDocument();
     });
 });

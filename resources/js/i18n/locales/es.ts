@@ -582,7 +582,7 @@ export const es = {
         sem_setor_vinculado: 'Sin sector vinculado',
         roles: {
             institucional: 'Institucional / Administrador',
-            gestor: 'Gestor de Espacio',
+            gestor: 'Gestor de Reserva',
             comum: 'Usuario Estándar',
         },
         colunas: {
@@ -619,6 +619,8 @@ export const es = {
             desc: 'Configure los pabellones y edificios de cada unidad',
             novo: 'Nuevo Módulo',
             nenhum: 'Ningún módulo encontrado',
+            cadastrar: 'Registrar Módulo',
+            editar: 'Editar Módulo',
         },
         setores: {
             titulo: 'Gestionar Sectores',
@@ -637,6 +639,7 @@ export const es = {
             desc: 'Registre, edite y configure espacios físicos y recursos',
             novo: 'Nuevo Espacio',
             nenhum: 'Ningún espacio encontrado',
+            cadastrar: 'Registrar Espacio',
         },
     },
     errors: {

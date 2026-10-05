@@ -1,24 +1,31 @@
 import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
+import { useTranslation } from '@/i18n';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import ModuloForm from '@/presentation/organisms/ModuloForm';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao, Modulo, Unidade } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { CadastrarModuloForm } from './CadastrarModulo';
 
 export default function EditarModulo() {
+    const { t } = useTranslation();
     const { instituicao, unidades, modulo } = usePage<{ instituicao: Instituicao; unidades: Unidade[]; modulo: Modulo }>().props;
-    const breadcrumbs = [
-        {
-            title: 'Gerenciar Modulos',
-            href: '/institucional/modulo',
-        },
-        {
-            title: 'Editar Modulo',
-            href: `/institucional/modulos/${modulo.id.toString()}/edit`,
-        },
-    ];
+
+    const breadcrumbs = useMemo(
+        () => [
+            {
+                title: t('admin.modulos.titulo'),
+                href: route('institucional.modulos.index'),
+            },
+            {
+                title: t('admin.modulos.editar'),
+                href: route('institucional.modulos.edit', modulo.id),
+            },
+        ],
+        [t, modulo.id],
+    );
     const { data, setData, patch, processing, errors } = useForm<CadastrarModuloForm>({
         nome: '',
         unidade_id: '',
