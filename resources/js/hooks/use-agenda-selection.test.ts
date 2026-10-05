@@ -29,11 +29,16 @@ jest.mock('sonner', () => ({
     },
 }));
 
+// Relógio congelado em 25/05/2026 12:00 (horário local), anterior a todas as datas de junho usadas abaixo.
+// O hook calcula `hoje` com `new Date()`; sem isso o resultado mudaria conforme o dia em que a suíte roda.
+const AGORA_CONGELADO = new Date(2026, 4, 25, 12, 0, 0);
+
 describe('useAgendaSelection', () => {
     let mockEspaco: Espaco;
     let mockReserva: Reserva;
 
     beforeEach(() => {
+        jest.useFakeTimers({ now: AGORA_CONGELADO });
         jest.clearAllMocks();
         (globalThis as unknown as { route: (name: string) => string }).route = jest.fn((name: string) => name);
 
@@ -75,6 +80,7 @@ describe('useAgendaSelection', () => {
     });
 
     afterEach(() => {
+        jest.useRealTimers();
         delete (globalThis as unknown as { route?: unknown }).route;
     });
 
@@ -131,7 +137,7 @@ describe('useAgendaSelection', () => {
         const slot: SlotCalendario = {
             id: '2026-06-03|08:20:00',
             status: 'solicitado',
-            data: new Date('2026-06-03'),
+            data: new Date(2026, 5, 3),
             horario_inicio: '08:20:00',
             horario_fim: '09:10:00',
             agenda_id: 2,
@@ -159,5 +165,76 @@ describe('useAgendaSelection', () => {
         });
 
         expect(mockPost).toHaveBeenCalledWith('reservas.store', expect.any(Object));
+    });
+
+    it('deriva "hoje" do relogio congelado ao iniciar uma nova reserva', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 4, 25),
+            }),
+        );
+
+        expect(result.current.formData.data_inicial).toEqual(new Date(2026, 4, 25, 0, 0, 0, 0));
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 25, 0, 0, 0, 0));
+    });
+
+    it('slot no passado nao e selecionavel na data original e e movido para a semana seguinte', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 4, 18),
+            }),
+        );
+
+        const slotPassado: SlotCalendario = {
+            id: '2026-05-20|08:20:00',
+            status: 'solicitado',
+            data: new Date(2026, 4, 20),
+            horario_inicio: '08:20:00',
+            horario_fim: '09:10:00',
+            agenda_id: 2,
+            isPast: true,
+        };
+
+        act(() => {
+            result.current.alternarSelecaoSlot(slotPassado);
+        });
+
+        expect(result.current.isSlotSelecionado(slotPassado)).toBe(false);
+        expect(result.current.slotsSelecao).toHaveLength(1);
+        expect(result.current.slotsSelecao[0]?.id).toBe('2026-05-27|08:20:00');
+        expect(result.current.slotsSelecao[0]?.data).toEqual(new Date(2026, 4, 27));
+        expect(toast.info).toHaveBeenCalledWith('O horário de quarta-feira foi movido para o dia 27/05/2026.');
+    });
+
+    it('slot de hoje e selecionavel sem ser movido', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 4, 25),
+            }),
+        );
+
+        const slotHoje: SlotCalendario = {
+            id: '2026-05-25|08:20:00',
+            status: 'solicitado',
+            data: new Date(2026, 4, 25),
+            horario_inicio: '08:20:00',
+            horario_fim: '09:10:00',
+            agenda_id: 2,
+            isPast: false,
+        };
+
+        act(() => {
+            result.current.alternarSelecaoSlot(slotHoje);
+        });
+
+        expect(result.current.isSlotSelecionado(slotHoje)).toBe(true);
+        expect(result.current.slotsSelecao[0]?.id).toBe('2026-05-25|08:20:00');
+        expect(toast.info).not.toHaveBeenCalled();
     });
 });
