@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { useTranslation } from '@/i18n';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { ImageUpload, ImageWithPreview } from '@/presentation/molecules/ImageUpload';
 import { LocationSelector } from '@/presentation/molecules/LocationSelector';
@@ -8,13 +9,8 @@ import AppLayout from '@/presentation/templates/AppLayout';
 import { Andar, Espaco, Modulo, Unidade } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-const breadcrumbs = [
-    { title: 'Espaço', href: '/institucional/espacos' },
-    { title: 'Cadastrar', href: '/espacos/criar' },
-];
 
 export interface FormCadastroValues {
     nome: string;
@@ -29,7 +25,8 @@ export interface FormCadastroValues {
     [key: string]: string | number | File[] | string[] | undefined;
 }
 
-export default function CadastroEspacoPage() {
+export default function CadastrarEspacoPage() {
+    const { t } = useTranslation();
     const { unidades, modulos, andares, espaco } = usePage<{
         unidades: Unidade[];
         modulos: Modulo[];
@@ -39,6 +36,14 @@ export default function CadastroEspacoPage() {
         };
     }>().props;
     const isEditMode = !!espaco;
+
+    const breadcrumbs = useMemo(
+        () => [
+            { title: t('admin.espacos.titulo'), href: route('institucional.espacos.index') },
+            { title: t('admin.espacos.cadastrar'), href: route('institucional.espacos.create') },
+        ],
+        [t],
+    );
 
     const [imagesWithPreviews, setImagesWithPreviews] = useState<ImageWithPreview[]>(() => {
         if (!isEditMode || !espaco.imagens) return [];

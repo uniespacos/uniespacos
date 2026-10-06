@@ -149,7 +149,7 @@ Atualizado a cada entrega.
 
 - [x] **GAP-01 — AvaliarReservaPage não auto-reload após ValidateJob terminar** `P0` · `effort: medium`
       **Status:** Descontinuado em 2026-08-22 — O fluxo mudou.
-      **Motivo:** A página `AvaliarReservaPage` redireciona **imediatamente** após submit para `gestor.reservas.index`. O hook `useReservationValidation` que deveria escutar o evento `ReservationValidated` nunca executa porque o usuário já saiu da página. O cenário descrito (gestor vendo loader + auto-reload) não ocorre mais. O hook causava erro `channel.leave is not a function` sem propósito. Removido do código e do backlog.
+      **Motivo:** A página `AvaliarReservaPage` redireciona **imediatamente** após submit para `gestor.reservas.index`. O hook `useReservationValidation` que deveria escutar o evento `ReservationValidated` nunca executa porque o usuário já saiu da página. O cenário descrito (gestor vendo loader + auto-reload) não ocorre mais. O hook causava erro `channel.leave is not a function` sem propósito. Hook removido da codebase na Fase 07 de 2026-09 (até então era código morto).
       **Ações tomadas:**
     - Removido import de `useReservationValidation` de `AvaliarReservaPage.tsx`
     - Removido hook call (linha 56)

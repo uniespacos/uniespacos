@@ -1,6 +1,7 @@
 import { ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL } from '@/constants/permissions';
 import { SystemRole, type SystemRoleType } from '@/contracts/roles.contract';
 import { assertNever, isEnumValue } from '@/lib/utils/exhaustive';
+import type { TranslationKey } from '@/i18n/schema';
 
 export * from '@/contracts/roles.contract';
 
@@ -48,4 +49,40 @@ export function getRoleBadgeClass(roleName: string): string {
     const normalizada = roleName.toLowerCase();
 
     return isEnumValue(SystemRole, normalizada) ? classeDaRoleCanonica(normalizada) : 'bg-muted text-muted-foreground border-border';
+}
+
+/**
+ * Converte uma role em sua chave de i18n correspondente. Retorna null se a role não for canônica.
+ * Aceita qualquer case (uppercase, lowercase, mixed) e normaliza para lowercase.
+ */
+export function getRoleLabelKey(roleName: string): TranslationKey | null {
+    const normalizada = roleName.toLowerCase();
+
+    if (!isEnumValue(SystemRole, normalizada)) {
+        return null;
+    }
+
+    switch (normalizada) {
+        case ROLE_INSTITUCIONAL:
+            return 'usuarios.roles.institucional';
+        case ROLE_GESTOR:
+            return 'usuarios.roles.gestor';
+        case ROLE_COMUM:
+            return 'usuarios.roles.comum';
+        default:
+            return assertNever(normalizada);
+    }
+}
+
+/**
+ * Helper compartilhado para renderizar rótulo traduzido de uma role.
+ * Usa getRoleLabelKey para buscar a chave de i18n e a traduz.
+ * Se a role não for canônica, retorna getRoleLabel como fallback textual.
+ */
+export function roleLabel(t: (key: TranslationKey) => string, roleName: string): string {
+    const labelKey = getRoleLabelKey(roleName);
+    if (labelKey) {
+        return t(labelKey);
+    }
+    return getRoleLabel(roleName);
 }

@@ -21,11 +21,14 @@ final class PdfExporter implements ExporterInterface
         ini_set('memory_limit', '512M');
         set_time_limit(120);
 
-        $maxLinhasPdf = (int) config('relatorios.pdf.max_linhas_amostra', 30);
+        $maxLinhasPdfRaw = config('relatorios.pdf.max_linhas_amostra', 30);
+        $maxLinhasPdf = is_int($maxLinhasPdfRaw) ? $maxLinhasPdfRaw : 30;
         $linhasAmostra = array_slice($dados->linhas, 0, $maxLinhasPdf);
         $totalOmitidas = max(0, count($dados->linhas) - $maxLinhasPdf);
 
-        $orientacao = count($dados->colunas) > 6 ? 'landscape' : config('relatorios.pdf.orientacao_padrao', 'portrait');
+        $orientacaoPadraoRaw = config('relatorios.pdf.orientacao_padrao', 'portrait');
+        $orientacaoPadrao = is_string($orientacaoPadraoRaw) ? $orientacaoPadraoRaw : 'portrait';
+        $orientacao = count($dados->colunas) > 6 ? 'landscape' : $orientacaoPadrao;
 
         $pdf = Pdf::loadView('relatorios.pdf.tabela', [
             'dados' => $dados,
@@ -33,7 +36,9 @@ final class PdfExporter implements ExporterInterface
             'totalOmitidas' => $totalOmitidas,
             'maxLinhasPdf' => $maxLinhasPdf,
         ]);
-        $pdf->setPaper(config('relatorios.pdf.tamanho', 'A4'), $orientacao);
+        $tamanhoRaw = config('relatorios.pdf.tamanho', 'A4');
+        $tamanhoPdf = is_string($tamanhoRaw) ? $tamanhoRaw : 'A4';
+        $pdf->setPaper($tamanhoPdf, $orientacao);
 
         return response()->streamDownload(
             function () use ($pdf) {

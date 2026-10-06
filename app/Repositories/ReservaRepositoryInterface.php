@@ -26,11 +26,11 @@ interface ReservaRepositoryInterface
     public function getList(array $columns = ['*'], ?array $filters = null): Collection;
 
     /**
-     * Returns a paginated list of Reserva for a specific user, filtered by week and optional criteria
+     * Returns a paginated list of Reserva for a specific user, with optional filters
      *
      * @param  array<string, mixed>  $filters
      */
-    public function getPaginatedForUser(int $userId, string $weekStart, string $weekEnd, array $filters = [], int $perPage = 10): LengthAwarePaginator;
+    public function getPaginatedForUser(int $userId, array $filters = [], int $perPage = 10): LengthAwarePaginator;
 
     /**
      * Returns a Reserva with its week-filtered horarios for the detail modal

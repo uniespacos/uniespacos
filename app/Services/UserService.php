@@ -107,7 +107,13 @@ class UserService
      */
     public function sendPasswordResetLink(User $user): bool
     {
-        return Password::sendResetLink(['email' => $user->email]) === Password::RESET_LINK_SENT;
+        try {
+            return Password::sendResetLink(['email' => $user->email]) === Password::RESET_LINK_SENT;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Jobs\ProcessarCriacaoReserva;
 use App\Models\Agenda;
 use App\Models\Reserva;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -243,5 +244,120 @@ class ProcessarCriacaoReservaTest extends TestCase
 
         $this->assertCount(1, $reserva->horarios);
         $this->assertSame('em_analise', $reserva->situacao);
+    }
+
+    public function test_criacao_auto_aprovada_grava_user_id_do_avaliador(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $solicitante = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $solicitante->id]);
+
+            $dados = $this->dados(
+                [$this->slot($agenda->id, '2026-09-01')],
+                'unica',
+                '2026-09-01',
+                '2026-09-01'
+            );
+
+            $reserva = $this->executar($dados, $solicitante);
+
+            $this->assertSame('deferida', $reserva->situacao);
+            $horario = $reserva->horarios->first();
+            $this->assertNotNull($horario);
+            $this->assertSame('deferida', $horario->situacao);
+            $this->assertSame($solicitante->id, $horario->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_criacao_nao_auto_aprovada_deixa_user_id_nulo(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $solicitante = User::factory()->create();
+            $gestor = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+
+            $dados = $this->dados(
+                [$this->slot($agenda->id, '2026-09-01')],
+                'unica',
+                '2026-09-01',
+                '2026-09-01'
+            );
+
+            $reserva = $this->executar($dados, $solicitante);
+
+            $this->assertSame('em_analise', $reserva->situacao);
+            $horario = $reserva->horarios->first();
+            $this->assertNotNull($horario);
+            $this->assertSame('em_analise', $horario->situacao);
+            $this->assertNull($horario->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_criacao_mista_grava_user_id_apenas_para_agendas_proprias(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $solicitante = User::factory()->create();
+            $outroGestor = User::factory()->create();
+
+            $agendaPropria = Agenda::factory()->create(['user_id' => $solicitante->id]);
+            $agendaDeTerceiro = Agenda::factory()->create(['user_id' => $outroGestor->id]);
+
+            $dados = $this->dados([
+                $this->slot($agendaPropria->id, '2026-09-01'),
+                $this->slot($agendaDeTerceiro->id, '2026-09-01', '14:00:00', '16:00:00'),
+            ], 'unica', '2026-09-01', '2026-09-01');
+
+            $reserva = $this->executar($dados, $solicitante);
+
+            $this->assertSame('parcialmente_deferida', $reserva->situacao);
+
+            $horarioProprio = $reserva->horarios->firstWhere('agenda_id', $agendaPropria->id);
+            $this->assertNotNull($horarioProprio);
+            $this->assertSame('deferida', $horarioProprio->situacao);
+            $this->assertSame($solicitante->id, $horarioProprio->user_id);
+
+            $horarioDeTerceiro = $reserva->horarios->firstWhere('agenda_id', $agendaDeTerceiro->id);
+            $this->assertNotNull($horarioDeTerceiro);
+            $this->assertSame('em_analise', $horarioDeTerceiro->situacao);
+            $this->assertNull($horarioDeTerceiro->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_criacao_periodica_auto_aprovada_grava_user_id_para_todos_horarios(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $solicitante = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $solicitante->id]);
+
+            $dados = $this->dados([
+                $this->slot($agenda->id, '2026-09-01'),
+                $this->slot($agenda->id, '2026-09-08'),
+                $this->slot($agenda->id, '2026-09-15'),
+            ], '1mes', '2026-09-01', '2026-09-15');
+
+            $reserva = $this->executar($dados, $solicitante);
+
+            $this->assertSame('deferida', $reserva->situacao);
+            foreach ($reserva->horarios as $horario) {
+                $this->assertSame('deferida', $horario->situacao);
+                $this->assertSame($solicitante->id, $horario->user_id);
+            }
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

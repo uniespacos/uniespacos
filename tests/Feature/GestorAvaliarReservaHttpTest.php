@@ -90,4 +90,136 @@ class GestorAvaliarReservaHttpTest extends TestCase
         $response->assertRedirect(route('gestor.reservas.index'));
         $response->assertSessionHas('success');
     }
+
+    public function test_status_arbitrario_retorna_422()
+    {
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+
+        $horario = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+        ]);
+
+        $gestor->givePermissionTo('reservas.avaliar');
+        $gestor->givePermissionTo('secao.gestao-reservas');
+
+        $response = $this->actingAs($gestor)
+            ->patch(route('gestor.reservas.update', $reserva), [
+                'situacao' => 'deferida',
+                'motivo' => null,
+                'observacao' => null,
+                'evaluation_scope' => 'single',
+                'horarios_avaliados' => [
+                    [
+                        'id' => $horario->id,
+                        'status' => 'qualquer_coisa',
+                    ],
+                ],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('horarios_avaliados.0.status');
+    }
+
+    public function test_status_inativa_retorna_422()
+    {
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+
+        $horario = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+        ]);
+
+        $gestor->givePermissionTo('reservas.avaliar');
+        $gestor->givePermissionTo('secao.gestao-reservas');
+
+        $response = $this->actingAs($gestor)
+            ->patch(route('gestor.reservas.update', $reserva), [
+                'situacao' => 'deferida',
+                'motivo' => null,
+                'observacao' => null,
+                'evaluation_scope' => 'single',
+                'horarios_avaliados' => [
+                    [
+                        'id' => $horario->id,
+                        'status' => 'inativa',
+                    ],
+                ],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('horarios_avaliados.0.status');
+    }
+
+    public function test_id_nao_inteiro_retorna_422()
+    {
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+
+        $horario = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+        ]);
+
+        $gestor->givePermissionTo('reservas.avaliar');
+        $gestor->givePermissionTo('secao.gestao-reservas');
+
+        $response = $this->actingAs($gestor)
+            ->patch(route('gestor.reservas.update', $reserva), [
+                'situacao' => 'deferida',
+                'motivo' => null,
+                'observacao' => null,
+                'evaluation_scope' => 'single',
+                'horarios_avaliados' => [
+                    [
+                        'id' => 'abc',
+                        'status' => 'deferida',
+                    ],
+                ],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('horarios_avaliados.0.id');
+    }
+
+    public function test_status_solicitado_e_aceito()
+    {
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+
+        $horario = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+        ]);
+
+        $gestor->givePermissionTo('reservas.avaliar');
+        $gestor->givePermissionTo('secao.gestao-reservas');
+
+        $response = $this->actingAs($gestor)
+            ->patch(route('gestor.reservas.update', $reserva), [
+                'situacao' => 'deferida',
+                'motivo' => null,
+                'observacao' => null,
+                'evaluation_scope' => 'single',
+                'horarios_avaliados' => [
+                    [
+                        'id' => $horario->id,
+                        'status' => 'solicitado',
+                    ],
+                ],
+            ]);
+
+        $response->assertRedirect(route('gestor.reservas.index'));
+        $response->assertSessionHas('success');
+    }
 }

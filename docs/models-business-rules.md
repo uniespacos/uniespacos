@@ -30,7 +30,8 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 | `user_id` | int | FK para solicitante |
 | `validation_status` | string | `pending`, `completed`, etc. (estado do job de validação de conflitos) |
 | `conflict_cache` | array (JSON) | Cache dos conflitos detectados |
-| `cache_validated_at` | datetime \| null | Timestamp da última validação de conflitos |
+
+**Nota sobre `conflict_cache`:** Este é um snapshot histórico gravado por `ValidateReservationConflictsJob` no momento do processamento, exposto na interface do gestor como informação secundária de auditoria — não é fonte de verdade. Veja [`docs/conflict-cache-contract.md`](./conflict-cache-contract.md) para contrato completo, incluso divergência esperada com conflitos recalculados ao vivo.
 
 ### Atributos Dinâmicos (Computados em Runtime)
 

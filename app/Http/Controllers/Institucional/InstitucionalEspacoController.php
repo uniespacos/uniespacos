@@ -36,7 +36,7 @@ class InstitucionalEspacoController extends Controller
         $filters = $request->validated();
         $filterOptions = $this->service->getFilterOptions($instituicaoId);
 
-        return Inertia::render('Administrativo/Espacos/GerenciarEspacos', [
+        return Inertia::render('Administrativo/Espacos/Espacos', [
             'espacos' => $this->service->getPaginatedForAdmin($instituicaoId, $filters)->withQueryString(),
             'andares' => $filterOptions['andares'],
             'modulos' => $filterOptions['modulos'],
@@ -52,7 +52,7 @@ class InstitucionalEspacoController extends Controller
         $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
         $formData = $this->service->getFormData($instituicaoId);
 
-        return Inertia::render('Administrativo/Espacos/CadastroEspaco', $formData);
+        return Inertia::render('Administrativo/Espacos/CadastrarEspaco', $formData);
     }
 
     public function store(StoreEspacoRequest $request): RedirectResponse
@@ -94,7 +94,7 @@ class InstitucionalEspacoController extends Controller
         $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
         $formData = $this->service->getFormData($instituicaoId);
 
-        return Inertia::render('Administrativo/Espacos/CadastroEspaco', array_merge(
+        return Inertia::render('Administrativo/Espacos/CadastrarEspaco', array_merge(
             $formData,
             ['espaco' => $espaco]
         ));

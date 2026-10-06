@@ -17,6 +17,8 @@ abstract class BaseNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
     public string $titulo;
 
     public string $descricao;
@@ -28,6 +30,16 @@ abstract class BaseNotification extends Notification implements ShouldQueue
         $this->titulo = $titulo;
         $this->descricao = $descricao;
         $this->url = str_replace('http://localhost', config('app.url'), $url);
+    }
+
+    /**
+     * Get the backoff strategy in seconds for failed notification attempts.
+     *
+     * @return array<int>
+     */
+    public function backoff(): array
+    {
+        return [30, 60, 120, 300];
     }
 
     /**

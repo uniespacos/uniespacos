@@ -74,7 +74,6 @@ erDiagram
         int user_id "solicitante"
         string validation_status "pending | processing | completed | failed"
         json conflict_cache
-        timestamp cache_validated_at
     }
 
     Horario {
@@ -104,7 +103,6 @@ erDiagram
 |-------|------|-----------|
 | `validation_status` | ENUM (pending\|processing\|completed\|failed) | Estado da validação assíncrona de conflitos. Começa em `pending`, passa por `processing` enquanto o job roda, termina em `completed` (sucesso) ou `failed`. |
 | `conflict_cache` | JSON | Mapa de conflitos detectados pelo `ValidateReservationConflictsJob`. Armazena pares `horario_id → dados do conflito`. Atualizado pela cascata de revalidação. |
-| `cache_validated_at` | TIMESTAMP | Timestamp da última validação bem-sucedida. Usado para detectar quando o cache ficou obsoleto (ex.: após update da reserva). |
 
 ---
 
@@ -219,7 +217,7 @@ sequenceDiagram
     Queue->>ValidateJob: handle()
     ValidateJob->>DB: UPDATE reservas SET validation_status='processing'
     ValidateJob->>DB: SQL JOIN horarios para detectar conflitos (mesma agenda, data, sobreposição de horário)
-    ValidateJob->>DB: UPDATE reservas SET conflict_cache=JSON, validation_status='completed', cache_validated_at=NOW()
+    ValidateJob->>DB: UPDATE reservas SET conflict_cache=JSON, validation_status='completed'
 ```
 
 ### 4.2.1 Defesa Contra Race Condition: Lock Pessimista e Revalidação
@@ -376,7 +374,6 @@ Quando o gestor aprova horários (`deferida`), o sistema automaticamente revalid
 3. **Revalidação:** Para cada reserva afetada, dispara `ValidateReservationConflictsJob` para:
    - Re-detectar conflitos contra os novos horários aprovados
    - Atualizar `conflict_cache` com conflitos atualizados
-   - Atualizar `cache_validated_at`
 
 ### 7.2 Diagrama
 
@@ -385,7 +382,7 @@ graph TD
     A["AvaliarReservaJob aprova Horários\nda Reserva A"] -->|Identifica aprovações| B["Lista de slots aprovados:\ndata, agenda_id, horario_inicio/fim"]
     B -->|Busca afetadas| C["Query: Reservas em_analise,\nvalidation_status=completed,\nque compartilham slots"]
     C -->|Para cada reserva| D["ValidateReservationConflictsJob\ndispatchado"]
-    D -->|Atualiza| E["conflict_cache da reserva\ne cache_validated_at"]
+    D -->|Atualiza| E["conflict_cache da reserva"]
     
     style A fill:#e1f5ff
     style E fill:#c8e6c9

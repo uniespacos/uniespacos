@@ -126,6 +126,16 @@ export function __resetEchoChannelRegistryForTests(): void {
 
 /**
  * Reconecta a conexão Pusher/Reverb se a aba voltar a ficar visível e a conexão estiver inativa/fechada.
+ *
+ * Estados possíveis da conexão Pusher:
+ * - 'initialized' — estado inicial (nunca transiciona para cá depois)
+ * - 'connecting' — tentando conectar
+ * - 'connected' — conectado com sucesso
+ * - 'disconnected' — desconectado por requisição
+ * - 'unavailable' — timeout de conexão ou sem rede
+ * - 'failed' — estratégia de conexão não suportada
+ *
+ * Reconecta se a aba voltou a ficar visível E a conexão não está conectada.
  */
 export function handleEchoVisibilityChange(): void {
     if (typeof document === 'undefined') {
@@ -139,7 +149,7 @@ export function handleEchoVisibilityChange(): void {
                     connector?: {
                         pusher?: {
                             connection?: {
-                                isOpen: () => boolean;
+                                state: string;
                             };
                             connect: () => void;
                         };
@@ -148,7 +158,7 @@ export function handleEchoVisibilityChange(): void {
             }
         ).Echo?.connector;
 
-        if (echoConnector?.pusher?.connection && !echoConnector.pusher.connection.isOpen()) {
+        if (echoConnector?.pusher?.connection && echoConnector.pusher.connection.state !== 'connected') {
             echoConnector.pusher.connect();
         }
     }

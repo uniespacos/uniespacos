@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ROLE_COMUM } from '@/constants/permissions';
-import { getRoleBadgeClass, getRoleLabel } from '@/constants/role-labels';
+import { getRoleBadgeClass, roleLabel } from '@/constants/role-labels';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -163,7 +163,7 @@ export default function UsuariosPage() {
             {
                 id: 'papel',
                 header: t('usuarios.colunas.perfil'),
-                cell: (user) => <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{getRoleLabel(user.roles[0] ?? ROLE_COMUM)}</Badge>,
+                cell: (user) => <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{roleLabel(t, user.roles[0] ?? ROLE_COMUM)}</Badge>,
             },
             {
                 id: 'status',
@@ -202,7 +202,7 @@ export default function UsuariosPage() {
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
                     <div className="flex items-center gap-2">
-                        <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{getRoleLabel(user.roles[0] ?? ROLE_COMUM)}</Badge>
+                        <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{roleLabel(t, user.roles[0] ?? ROLE_COMUM)}</Badge>
                         <div className="flex items-center space-x-1.5">
                             <div className={cn('h-2 w-2 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
                             <span className="text-muted-foreground text-xs">{user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}</span>

@@ -24,7 +24,6 @@ class Espaco extends Model
         'imagens',
         'main_image_index',
         'andar_id',
-        'user_id',
     ];
 
     /**
@@ -53,14 +52,6 @@ class Espaco extends Model
     public function andar(): BelongsTo
     {
         return $this->belongsTo(Andar::class);
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /**

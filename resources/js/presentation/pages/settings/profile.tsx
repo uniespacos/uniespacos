@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getRoleLabel } from '@/constants/role-labels';
+import { roleLabel } from '@/constants/role-labels';
 import { useTranslation } from '@/i18n';
 import HeadingSmall from '@/presentation/atoms/HeadingSmall';
 import InputError from '@/presentation/atoms/InputError';
@@ -147,7 +147,7 @@ export default function Profile({
                         <div className="mt-1 flex flex-wrap gap-1">
                             {auth.user.roles.map((role) => (
                                 <Badge key={role} variant="secondary">
-                                    {getRoleLabel(role)}
+                                    {roleLabel(t, role)}
                                 </Badge>
                             ))}
                         </div>

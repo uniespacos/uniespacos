@@ -61,7 +61,14 @@ class AvaliarReservaJob implements ShouldQueue
                 $horariosDaAvaliacao = collect($this->validatedData['horarios_avaliados']);
 
                 $conflitosMap = $conflictService->findConflictsFor($this->reserva->id);
-                $horariosConflitantesIds = $conflitosMap->keys();
+                // ConflictDetectionService e global de proposito; o gestor so age nas proprias agendas.
+                $horariosDoGestorIds = Horario::query()
+                    ->where('reserva_id', $this->reserva->id)
+                    ->whereIn('agenda_id', $agendasDoGestorIds)
+                    ->pluck('id');
+                $horariosConflitantesIds = $conflitosMap
+                    ->filter(fn ($conflito, $horarioId) => $horariosDoGestorIds->contains($horarioId))
+                    ->keys();
 
                 if ($scope === 'single') {
                     foreach ($horariosDaAvaliacao as $avaliacao) {
@@ -91,7 +98,7 @@ class AvaliarReservaJob implements ShouldQueue
                                 ? "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}."
                                 : 'Conflito com outra reserva.';
 
-                            Horario::where('id', $id)->update([
+                            Horario::where('id', $id)->whereIn('agenda_id', $agendasDoGestorIds)->update([
                                 'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
                                 'justificativa' => $justificativa,
                                 'user_id' => $this->gestor->id,

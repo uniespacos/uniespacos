@@ -248,6 +248,8 @@ export const ptBR = {
             conflicts_detected: 'Atenção: {{count}} horário(s) desta reserva possui(em) sobreposição com outra(s) reserva(s).',
             conflict_with_user: 'Solicitante: {{user}}',
             conflicts_note: 'Você pode optar por deferir mesmo com conflitos. Considere analisar as reservas conflitantes antes de prosseguir.',
+            conflict_cache_snapshot_title: 'Snapshot de Conflitos ({{count}} detectados)',
+            conflict_cache_snapshot_note: 'Este é um snapshot histórico do momento em que a reserva foi processada pelo sistema. Pode estar desatualizado. Os conflitos atualizados são mostrados acima.',
         },
         stepper: {
             step1_title: 'Horários e Recorrência',
@@ -578,7 +580,7 @@ export const ptBR = {
         sem_setor_vinculado: 'Sem setor vinculado',
         roles: {
             institucional: 'Institucional / Administrador',
-            gestor: 'Gestor de Espaço',
+            gestor: 'Gestor de Reserva',
             comum: 'Usuário Comum',
         },
         colunas: {
@@ -615,6 +617,8 @@ export const ptBR = {
             desc: 'Configure os pavilhões e prédios de cada unidade',
             novo: 'Novo Módulo',
             nenhum: 'Nenhum módulo encontrado',
+            cadastrar: 'Cadastrar Módulo',
+            editar: 'Editar Módulo',
         },
         setores: {
             titulo: 'Gerenciar Setores / Departamentos',
@@ -633,6 +637,7 @@ export const ptBR = {
             desc: 'Cadastre, edite e configure espaços físicos e recursos',
             novo: 'Novo Espaço',
             nenhum: 'Nenhum espaço encontrado',
+            cadastrar: 'Cadastrar Espaço',
         },
     },
     errors: {

@@ -1,4 +1,4 @@
-import GerenciarEspacos from './GerenciarEspacos';
+import Espacos from './Espacos';
 import type { Espaco, User } from '@/types';
 import { fireEvent, render, screen } from '@testing-library/react';
 
@@ -113,7 +113,7 @@ jest.mock('@/presentation/templates/AppLayout', () => ({
     default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-describe('GerenciarEspacos', () => {
+describe('Espacos', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string) => `https://localhost/${name.replaceAll('.', '/')}`);
@@ -124,20 +124,20 @@ describe('GerenciarEspacos', () => {
     });
 
     it('renderiza header com título e botão de novo espaço', () => {
-        render(<GerenciarEspacos />);
+        render(<Espacos />);
 
         expect(screen.getByText('Gerenciar Espaços')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Novo Espaço/i })).toBeInTheDocument();
     });
 
     it('renderiza filtros de busca compartilhados EspacoFiltroBusca', () => {
-        render(<GerenciarEspacos />);
+        render(<Espacos />);
 
         expect(screen.getByPlaceholderText('Buscar por nome do espaço, andar ou módulo...')).toBeInTheDocument();
     });
 
     it('renderiza DataTable com nome, descrição, localização e capacidade do espaço', () => {
-        render(<GerenciarEspacos />);
+        render(<Espacos />);
 
         expect(screen.getByText('Auditório Principal')).toBeInTheDocument();
         expect(screen.getByText('Auditório para palestras')).toBeInTheDocument();
@@ -147,14 +147,14 @@ describe('GerenciarEspacos', () => {
     });
 
     it('renderiza botão de ações para o espaço', () => {
-        render(<GerenciarEspacos />);
+        render(<Espacos />);
 
         const actionButton = screen.getByRole('button', { name: 'Ações para o espaço Auditório Principal' });
         expect(actionButton).toBeInTheDocument();
     });
 
     it('redireciona para tela de cadastro ao clicar no botão Novo Espaço', () => {
-        render(<GerenciarEspacos />);
+        render(<Espacos />);
 
         const novoBtn = screen.getByRole('button', { name: /Novo Espaço/i });
         fireEvent.click(novoBtn);

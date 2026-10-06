@@ -28,13 +28,25 @@ export default function PaginacaoListas({ links, only }: PaginacaoListasProps) {
 
         return (
             <nav aria-label="Paginação" className="mt-6 flex items-center justify-between gap-2">
-                <PaginacaoLink url={anterior.url} active={false} label={anterior.label} only={only} />
+                <PaginacaoLink
+                    url={anterior.url}
+                    active={false}
+                    label={anterior.label}
+                    only={only}
+                    variant="prev"
+                />
                 {atual && totalPaginas && (
                     <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">
                         Página {atual.label} de {totalPaginas}
                     </span>
                 )}
-                <PaginacaoLink url={proximo.url} active={false} label={proximo.label} only={only} />
+                <PaginacaoLink
+                    url={proximo.url}
+                    active={false}
+                    label={proximo.label}
+                    only={only}
+                    variant="next"
+                />
             </nav>
         );
     }
@@ -42,9 +54,25 @@ export default function PaginacaoListas({ links, only }: PaginacaoListasProps) {
     return (
         <nav aria-label="Paginação" className="mt-6 flex justify-center">
             <div className="flex flex-wrap justify-center gap-1.5">
-                {links.map((link, index) => (
-                    <PaginacaoLink key={index} url={link.url} active={link.active} label={link.label} only={only} />
-                ))}
+                {links.map((link, index) => {
+                    let variant: 'prev' | 'next' | 'page' = 'page';
+                    if (index === 0) {
+                        variant = 'prev';
+                    } else if (index === links.length - 1) {
+                        variant = 'next';
+                    }
+
+                    return (
+                        <PaginacaoLink
+                            key={index}
+                            url={link.url}
+                            active={link.active}
+                            label={link.label}
+                            only={only}
+                            variant={variant}
+                        />
+                    );
+                })}
             </div>
         </nav>
     );

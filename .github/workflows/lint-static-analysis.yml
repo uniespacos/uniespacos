@@ -81,6 +81,46 @@ jobs:
           npx eslint resources/js --suppressions-location eslint-suppressions.empty.json 2>&1 | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
+  static-analysis:
+    name: 🔬 PHP Static Analysis (PHPStan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=2G
+
+      - name: Report PHPStan Results
+        if: always()
+        run: |
+          echo "## 🔬 PHP Static Analysis (PHPStan)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          vendor/bin/phpstan analyse --no-progress --memory-limit=2G 2>&1 | tail -20 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
   # Job agregador: mantém o nome do check obrigatório na proteção da branch develop
   # ("🔍 Lint & Static Analysis"), independente de como os jobs de lint são divididos.
   # `if: always()` é essencial: sem ele, uma falha em lint-backend/lint-frontend deixaria
@@ -88,7 +128,7 @@ jobs:
   lint:
     name: 🔍 Lint & Static Analysis
     if: always()
-    needs: [lint-backend, lint-frontend]
+    needs: [lint-backend, lint-frontend, static-analysis]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

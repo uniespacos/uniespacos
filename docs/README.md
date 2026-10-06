@@ -66,7 +66,9 @@ Abaixo está o registro histórico das modernizações executadas:
 3. **Ambiente de Execução:**
     - Comandos de backend (`php artisan`, `composer`, `pint`) rodam dentro do container Docker: `docker exec -e APP_ENV=testing uniespacos-workspace-1 php artisan test`.
     - Comandos de frontend (`npx tsc --noEmit`, `npx jest`, `npm run dev`) rodam no **host**.
-4. **Tolerância Zero a Suppressions:** O ESLint opera em modo estrito (`strict-type-checked`). É terminantemente proibido reintroduzir supressões no `eslint-suppressions.json` ou usar comentários `@ts-ignore` / `eslint-disable`.
+4. **Checks obrigatórios de PR:** `🔍 Lint & Static Analysis` e `✅ Tests` (workflow `.github/workflows/tests.yml`: backend com Postgres 16 e frontend com Jest; roda também diariamente em `develop`). A suíte backend fixa `BROADCAST_CONNECTION=null` e não depende do container Reverb.
+5. **Relógio em testes:** nunca use `now()`/`today()`/`new Date()` em teste sem congelar o relógio (`Carbon::setTestNow` / `jest.useFakeTimers({ now })`).
+6. **Tolerância Zero a Suppressions:** O ESLint opera em modo estrito (`strict-type-checked`). É terminantemente proibido reintroduzir supressões no `eslint-suppressions.json` ou usar comentários `@ts-ignore` / `eslint-disable`.
 
 ---
 

@@ -37,6 +37,27 @@ class AutoAprovacaoService
     }
 
     /**
+     * Resolve a situacao e o avaliador de um horario individual.
+     *
+     * Deriva a situacao de `resolverSituacaoHorario()` — fonte unica da regra.
+     * Quando a situacao e deferida (auto-aprovacao), o avaliador e o proprietario
+     * da agenda (gestor). Caso contrario, nao ha avaliador (fica nulo).
+     *
+     * @return array{situacao: string, user_id: ?int}
+     */
+    public function resolverSituacaoEAvaliador(Agenda $agenda, int $proprietarioReservaId): array
+    {
+        $situacao = $this->resolverSituacaoHorario($agenda, $proprietarioReservaId);
+
+        return [
+            'situacao' => $situacao,
+            'user_id' => $situacao === SituacaoReservaEnum::DEFERIDA->value
+                ? $agenda->user_id
+                : null,
+        ];
+    }
+
+    /**
      * Calcula a situacao agregada da reserva baseado nos gestores unicos envolvidos.
      *
      * Regra: se ha apenas 1 gestor E esse gestor e o solicitante, a reserva toda
@@ -53,8 +74,11 @@ class AutoAprovacaoService
      */
     public function calcularSituacaoReserva(Collection $gestoresUnicos, int $solicitanteId): ?string
     {
-        if ($gestoresUnicos->count() === 1 && $gestoresUnicos->first()->id === $solicitanteId) {
-            return SituacaoReservaEnum::DEFERIDA->value;
+        if ($gestoresUnicos->count() === 1) {
+            $gestor = $gestoresUnicos->first();
+            if ($gestor && $gestor->id === $solicitanteId) {
+                return SituacaoReservaEnum::DEFERIDA->value;
+            }
         }
 
         if ($gestoresUnicos->contains(fn ($g) => $g->id === $solicitanteId)) {

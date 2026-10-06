@@ -36,7 +36,6 @@ describe('useReservasFilters', () => {
                     arquivo: ModoArquivo.ARQUIVADAS,
                     ordenar: OrdenacaoReserva.SITUACAO,
                 },
-                initialSemana: { referencia: '2026-06-02' },
             }),
         );
 
@@ -44,7 +43,7 @@ describe('useReservasFilters', () => {
         expect(result.current.selectedSituacao).toBe(SituacaoReserva.EM_ANALISE);
         expect(result.current.selectedArquivo).toBe(ModoArquivo.ARQUIVADAS);
         expect(result.current.selectedOrdenar).toBe(OrdenacaoReserva.SITUACAO);
-        expect(result.current.selectedDate).toBeInstanceOf(Date);
+        expect(result.current.selectedDate).toBeUndefined();
         expect(mockGet).not.toHaveBeenCalled();
     });
 
@@ -53,7 +52,6 @@ describe('useReservasFilters', () => {
             useReservasFilters({
                 routeName: 'reservas.index',
                 initialFilters: {},
-                initialSemana: { referencia: '2026-06-02' },
             }),
         );
 
@@ -82,7 +80,6 @@ describe('useReservasFilters', () => {
                     arquivo: ModoArquivo.ATIVAS,
                     ordenar: OrdenacaoReserva.DATA_SOLICITACAO,
                 },
-                initialSemana: { referencia: '2026-06-02' },
             }),
         );
 
@@ -96,6 +93,44 @@ describe('useReservasFilters', () => {
                 situacao: SituacaoReserva.DEFERIDA,
                 arquivo: undefined,
                 ordenar: undefined,
+            }),
+            expect.anything(),
+        );
+    });
+
+    it('should initialize selectedDate as undefined when data_inicio is not provided', () => {
+        const { result } = renderHook(() =>
+            useReservasFilters({
+                routeName: 'reservas.index',
+                initialFilters: {},
+            }),
+        );
+
+        expect(result.current.selectedDate).toBeUndefined();
+        expect(mockGet).not.toHaveBeenCalled();
+    });
+
+    it('should send data_inicio and data_fim when date is selected', async () => {
+        const { result } = renderHook(() =>
+            useReservasFilters({
+                routeName: 'reservas.index',
+                initialFilters: {},
+            }),
+        );
+
+        expect(result.current.selectedDate).toBeUndefined();
+
+        act(() => {
+            result.current.setSelectedDate(new Date('2026-09-25T12:00:00'));
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        expect(mockGet).toHaveBeenCalledWith(
+            'reservas.index',
+            expect.objectContaining({
+                data_inicio: '2026-09-25',
+                data_fim: '2026-09-25',
             }),
             expect.anything(),
         );

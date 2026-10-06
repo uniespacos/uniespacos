@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Reserva;
 use App\Rules\HorarioDisponivel;
 use App\Rules\HorariosMesmoEspaco;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,9 +30,14 @@ class UpdateReservaRequest extends FormRequest
      * trás será manual (autorizada pelo gestor/admin).
      *
      * Vide: docs/plano-execucao-regras-reserva/fase-03-validacao-datas/INSTRUCOES.md (T3.2)
+     *
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
+        $route = $this->route('reserva');
+        $reservaId = $route instanceof Reserva ? $route->id : null;
+
         return [
             'titulo' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string'],
@@ -43,18 +49,20 @@ class UpdateReservaRequest extends FormRequest
             'horarios_solicitados' => ['present', 'array', new HorariosMesmoEspaco],
             'horarios_solicitados.*.data' => ['required', 'date'],
             'horarios_solicitados.*.horario_inicio' => ['required', 'date_format:H:i:s'],
-            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s'],
+            'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s', 'after:horarios_solicitados.*.horario_inicio'],
             'horarios_solicitados.*.agenda_id' => [
                 'required',
                 'integer',
                 'exists:agendas,id',
-                new HorarioDisponivel($this->route('reserva')?->id),
+                new HorarioDisponivel($reservaId),
             ],
         ];
     }
 
     /**
      * Get custom validation messages.
+     *
+     * @return array<string, string>
      */
     public function messages(): array
     {
@@ -69,6 +77,7 @@ class UpdateReservaRequest extends FormRequest
             'data_final.after_or_equal' => 'A data final deve ser igual ou posterior à data inicial.',
             'horarios_solicitados.*.data.required' => 'A data de cada horário é obrigatória.',
             'horarios_solicitados.*.data.date' => 'A data de cada horário deve ser uma data válida.',
+            'horarios_solicitados.*.horario_fim.after' => 'O horário de término deve ser posterior ao horário de início.',
         ];
     }
 }

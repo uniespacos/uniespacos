@@ -11,11 +11,13 @@ use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Notifications\ReservationUpdatedNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UpdateReservaJobTest extends TestCase
@@ -247,6 +249,37 @@ class UpdateReservaJobTest extends TestCase
         );
 
         $this->assertSame('deferida', $reserva->fresh()->horarios->first()->situacao);
+    }
+
+    public function test_single_scope_novo_horario_do_proprio_gestor_nasce_deferido(): void
+    {
+        Notification::fake();
+
+        $donoEGestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $donoEGestor->id]);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $donoEGestor->id,
+            'data_inicial' => '2026-09-01',
+            'data_final' => '2026-09-01',
+            'recorrencia' => 'unica',
+        ]);
+
+        $slots = [
+            $this->slot($agenda->id, '2026-09-01'),
+        ];
+
+        $this->executar(
+            $reserva,
+            $this->dados($slots, 'unica', '2026-09-01', '2026-09-01', 'single')
+                + ['edited_week_date' => '2026-09-01'],
+            $donoEGestor
+        );
+
+        $reserva->refresh();
+
+        $this->assertCount(1, $reserva->horarios);
+        $this->assertSame('deferida', $reserva->horarios->first()->situacao);
     }
 
     public function test_single_scope_preserves_period_for_other_weeks(): void
@@ -534,5 +567,219 @@ class UpdateReservaJobTest extends TestCase
         Event::assertDispatched(ReservaEvent::class, function ($event) use ($reserva) {
             return $event->action === 'updated' && $event->reservaId === $reserva->id;
         });
+    }
+
+    #[Test]
+    public function it_notifies_reservation_owner_not_editor_on_update(): void
+    {
+        Notification::fake();
+
+        $dono = User::factory()->create();
+        $editor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $dono->id]);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $dono->id,
+            'data_inicial' => '2026-09-01',
+            'data_final' => '2026-09-01',
+            'recorrencia' => 'unica',
+        ]);
+
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'data' => '2026-09-01',
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $slots = [
+            $this->slot($agenda->id, '2026-09-01', '10:00:00', '11:00:00'),
+        ];
+
+        $this->executar($reserva, $this->dados($slots, 'unica', '2026-09-01', '2026-09-01'), $editor);
+
+        Notification::assertSentTo($dono, ReservationUpdatedNotification::class);
+        Notification::assertNotSentTo($editor, ReservationUpdatedNotification::class);
+    }
+
+    public function test_edicao_recurring_novo_horario_dono_gestor_grava_user_id(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $donoEGestor = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $donoEGestor->id]);
+
+            $reserva = Reserva::factory()->create([
+                'user_id' => $donoEGestor->id,
+                'data_inicial' => '2026-09-01',
+                'data_final' => '2026-09-08',
+                'recorrencia' => '1mes',
+            ]);
+
+            Horario::factory()->create([
+                'reserva_id' => $reserva->id,
+                'agenda_id' => $agenda->id,
+                'data' => '2026-09-01',
+                'horario_inicio' => '08:00:00',
+                'horario_fim' => '10:00:00',
+                'situacao' => 'deferida',
+                'user_id' => $donoEGestor->id,
+            ]);
+
+            $slots = [
+                $this->slot($agenda->id, '2026-09-01', '08:00:00', '10:00:00'),
+                $this->slot($agenda->id, '2026-09-08', '14:00:00', '16:00:00'),
+            ];
+
+            $this->executar($reserva, $this->dados($slots, '1mes', '2026-09-01', '2026-09-08'), $donoEGestor);
+
+            $reserva->refresh();
+
+            $novo = $reserva->horarios->firstWhere('data', '2026-09-08');
+            $this->assertNotNull($novo);
+            $this->assertSame('deferida', $novo->situacao);
+            $this->assertSame($donoEGestor->id, $novo->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_edicao_single_novo_horario_dono_gestor_grava_user_id(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $donoEGestor = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $donoEGestor->id]);
+
+            $reserva = Reserva::factory()->create([
+                'user_id' => $donoEGestor->id,
+                'data_inicial' => '2026-09-01',
+                'data_final' => '2026-09-08',
+                'recorrencia' => 'unica',
+            ]);
+
+            Horario::factory()->create([
+                'reserva_id' => $reserva->id,
+                'agenda_id' => $agenda->id,
+                'data' => '2026-09-01',
+                'horario_inicio' => '08:00:00',
+                'horario_fim' => '10:00:00',
+                'situacao' => 'deferida',
+                'user_id' => $donoEGestor->id,
+            ]);
+
+            $slots = [
+                $this->slot($agenda->id, '2026-09-01', '08:00:00', '10:00:00'),
+                $this->slot($agenda->id, '2026-09-08', '14:00:00', '16:00:00'),
+            ];
+
+            $this->executar($reserva, $this->dados($slots, 'unica', '2026-09-01', '2026-09-08', 'single'), $donoEGestor);
+
+            $reserva->refresh();
+
+            $novo = $reserva->horarios->firstWhere('data', '2026-09-08');
+            $this->assertNotNull($novo);
+            $this->assertSame('deferida', $novo->situacao);
+            $this->assertSame($donoEGestor->id, $novo->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_edicao_horario_preservado_mantém_user_id_anterior(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $dono = User::factory()->create();
+            $gestor = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+
+            $reserva = Reserva::factory()->create([
+                'user_id' => $dono->id,
+                'data_inicial' => '2026-09-01',
+                'data_final' => '2026-09-08',
+                'recorrencia' => 'unica',
+            ]);
+
+            $horarioAntigo = Horario::factory()->create([
+                'reserva_id' => $reserva->id,
+                'agenda_id' => $agenda->id,
+                'data' => '2026-09-01',
+                'horario_inicio' => '08:00:00',
+                'horario_fim' => '10:00:00',
+                'situacao' => 'indeferida',
+                'justificativa' => 'Sala em manutencao',
+                'user_id' => $gestor->id,
+            ]);
+
+            $slots = [
+                ['id' => $horarioAntigo->id, ...array_merge(
+                    $this->slot($agenda->id, '2026-09-01', '08:00:00', '10:00:00'),
+                    ['id' => $horarioAntigo->id]
+                )],
+            ];
+
+            $this->executar($reserva, $this->dados($slots, 'unica', '2026-09-01', '2026-09-01', 'single'), $dono);
+
+            $horarioAntigo->refresh();
+
+            $this->assertSame('indeferida', $horarioAntigo->situacao);
+            $this->assertSame('Sala em manutencao', $horarioAntigo->justificativa);
+            $this->assertSame($gestor->id, $horarioAntigo->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_edicao_gestor_editando_reserva_terceiro_novo_horario_nao_auto_aprova(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(Carbon::parse('2026-09-01 10:00:00'));
+
+        try {
+            $dono = User::factory()->create();
+            $gestor = User::factory()->create();
+            $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+
+            $reserva = Reserva::factory()->create([
+                'user_id' => $dono->id,
+                'data_inicial' => '2026-09-01',
+                'data_final' => '2026-09-08',
+                'recorrencia' => 'unica',
+            ]);
+
+            Horario::factory()->create([
+                'reserva_id' => $reserva->id,
+                'agenda_id' => $agenda->id,
+                'data' => '2026-09-01',
+                'horario_inicio' => '08:00:00',
+                'horario_fim' => '10:00:00',
+                'situacao' => 'em_analise',
+                'user_id' => null,
+            ]);
+
+            $slots = [
+                $this->slot($agenda->id, '2026-09-01', '08:00:00', '10:00:00'),
+                $this->slot($agenda->id, '2026-09-08', '14:00:00', '16:00:00'),
+            ];
+
+            $this->executar($reserva, $this->dados($slots, 'unica', '2026-09-01', '2026-09-08', 'single'), $gestor);
+
+            $reserva->refresh();
+
+            $novo = $reserva->horarios->firstWhere('data', '2026-09-08');
+            $this->assertNotNull($novo);
+            $this->assertSame('em_analise', $novo->situacao);
+            $this->assertNull($novo->user_id);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

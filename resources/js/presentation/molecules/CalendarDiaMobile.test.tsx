@@ -21,9 +21,6 @@ describe('CalendarDiaMobile', () => {
             horario_inicio: inicio,
             horario_fim: '08:20:00',
             situacao: 'deferida',
-            validation_status: 'completed',
-            conflict_cache: null,
-            cache_validated_at: null,
             reserva: { id: 99, titulo: 'Aula de Cálculo', user: { id: 5, name: 'Maria' } } as never,
         };
     }

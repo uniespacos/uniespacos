@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { SituacaoReserva, ValidationStatus, type SituacaoReservaType } from '@/contracts';
 import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
 import { useAvaliarReserva } from '@/hooks/use-avaliar-reserva';
+import { useReservaRefreshOnEvent } from '@/hooks/use-reserva-refresh-on-event';
 import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import { useReservationSlots } from '@/hooks/use-reservation-slots';
 import { useTranslation } from '@/i18n';
@@ -12,6 +13,7 @@ import { SituacaoIcon } from '@/presentation/atoms/SituacaoIcon';
 import AgendaNavegacao from '@/presentation/molecules/AgendaNavegacao';
 import CalendarReservationDetails from '@/presentation/molecules/CalendarReservationDetails';
 import { ConflictAlertBox } from '@/presentation/organisms/ConflictAlertBox';
+import { ConflictCacheSnapshotPanel } from '@/presentation/organisms/ConflictCacheSnapshotPanel';
 import EvaluationForm from '@/presentation/organisms/EvaluationForm';
 import { ReservaInfoCard } from '@/presentation/organisms/ReservaInfoCard';
 import AppLayout from '@/presentation/templates/AppLayout';
@@ -41,11 +43,18 @@ interface AvaliarReservaPageProps {
         referencia: string;
     };
     todosOsConflitos?: Record<string, ConflictInfo>;
+    conflictCacheSnapshot?: Record<string, ConflictInfo> | null;
 }
 
-export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos = {} }: AvaliarReservaPageProps) {
+export default function AvaliarReservaPage({
+    reserva,
+    semana,
+    todosOsConflitos = {},
+    conflictCacheSnapshot = null,
+}: AvaliarReservaPageProps) {
     const { t } = useTranslation();
     useReservationLiveUpdates();
+    useReservaRefreshOnEvent({ only: ['reserva'] });
 
     const isReavaliacao = reserva.situacao !== SituacaoReserva.EM_ANALISE;
 
@@ -212,6 +221,8 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                 </ReservaInfoCard>
 
                 <ConflictAlertBox conflictCache={todosOsConflitos} />
+
+                <ConflictCacheSnapshotPanel snapshot={conflictCacheSnapshot} />
 
                 <EvaluationForm
                     isReavaliacao={isReavaliacao}

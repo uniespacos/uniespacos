@@ -69,7 +69,12 @@ jest.mock('@inertiajs/react', () => ({
 
 jest.mock('@/presentation/templates/AppLayout', () => ({
     __esModule: true,
-    default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    default: ({ children, breadcrumbs }: { children: React.ReactNode; breadcrumbs?: { href: string; title: string }[] }) => (
+        <div>
+            {breadcrumbs?.map((bc: { href: string; title: string }) => <a key={bc.href} data-testid="bc" href={bc.href}>{bc.title}</a>)}
+            {children}
+        </div>
+    ),
 }));
 
 jest.mock('@/presentation/organisms/ModaisSetor', () => ({
@@ -89,7 +94,7 @@ describe('SetoresPage', () => {
     it('renderiza header com título e botão de novo setor', () => {
         render(<SetoresPage />);
 
-        expect(screen.getByText('Gerenciar Setores / Departamentos')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Gerenciar Setores \/ Departamentos/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Novo Setor/i })).toBeInTheDocument();
     });
 
@@ -129,5 +134,26 @@ describe('SetoresPage', () => {
             {},
             expect.objectContaining({ preserveState: true, preserveScroll: true }),
         );
+    });
+
+    it('breadcrumbs_setores_usa_route', () => {
+        (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string) => {
+            const routes: Record<string, string> = {
+                'institucional.setors.index': '/institucional/setors',
+            };
+            if (routes[name]) {
+                return routes[name];
+            }
+            throw new Error(`Route "${name}" not found in mock`);
+        });
+
+        render(<SetoresPage />);
+
+        const breadcrumbs = screen.getAllByTestId('bc');
+        expect(breadcrumbs).toHaveLength(1);
+
+        const firstBreadcrumb = breadcrumbs[0];
+        expect(firstBreadcrumb).toHaveAttribute('href', '/institucional/setors');
+        expect(firstBreadcrumb).toHaveTextContent('Setores');
     });
 });

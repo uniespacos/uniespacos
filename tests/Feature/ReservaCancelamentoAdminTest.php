@@ -149,4 +149,66 @@ class ReservaCancelamentoAdminTest extends TestCase
             return $job->reserva->id === $reservaB->id;
         });
     }
+
+    public function test_cancelamento_revalida_reservas_parcialmente_deferidas_que_compartilham_slot(): void
+    {
+        Bus::fake();
+
+        // Arrange
+        $dono_a = User::factory()->create();
+        $dono_a->assignRole('comum');
+        $dono_b = User::factory()->create();
+        $gestor = User::factory()->create();
+
+        $espaco = Espaco::factory()->create();
+        $agenda = Agenda::factory()->create([
+            'espaco_id' => $espaco->id,
+            'user_id' => $gestor->id,
+        ]);
+
+        // Reserva A (será cancelada, deferida)
+        $reservaA = Reserva::factory()->create([
+            'user_id' => $dono_a->id,
+            'situacao' => 'deferida',
+        ]);
+        $horarioA = Horario::factory()->create([
+            'reserva_id' => $reservaA->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'deferida',
+            'data' => now()->toDateString(),
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        // Reserva B (parcialmente deferida por conflito parcial com A)
+        $reservaB = Reserva::factory()->create([
+            'user_id' => $dono_b->id,
+            'situacao' => 'parcialmente_deferida',
+            'validation_status' => 'completed',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reservaB->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'indeferida',
+            'data' => $horarioA->data,
+            'horario_inicio' => $horarioA->horario_inicio,
+            'horario_fim' => $horarioA->horario_fim,
+            'justificativa' => 'Conflito com a reserva A',
+        ]);
+
+        // Act: Cancelar A como dono
+        $this->actingAs($dono_a)
+            ->delete(route('reservas.destroy', $reservaA), ['password' => 'password']);
+
+        // Assert: Reserva A inativada
+        $this->assertDatabaseHas('reservas', [
+            'id' => $reservaA->id,
+            'situacao' => 'inativa',
+        ]);
+
+        // ValidateReservationConflictsJob deve ter sido despachado para B
+        Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {
+            return $job->reserva->id === $reservaB->id;
+        });
+    }
 }

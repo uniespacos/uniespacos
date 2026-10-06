@@ -26,18 +26,14 @@ use Illuminate\Support\Facades\Storage;
 
 class EspacoService
 {
-    protected RelatorioService $relatorioService;
-
     public function __construct(
         protected EspacoRepositoryInterface $repoEspaco,
         protected AndarRepositoryInterface $repoAndar,
         protected ModuloRepositoryInterface $repoModulo,
         protected UnidadeRepositoryInterface $repoUnidade,
         protected UserRepositoryInterface $repoUser,
-        ?RelatorioService $relatorioService = null,
-    ) {
-        $this->relatorioService = $relatorioService ?? app(RelatorioService::class);
-    }
+        protected RelatorioService $relatorioService,
+    ) {}
 
     /**
      * Returns a paginated list of spaces for the public listing with optional filters.
@@ -113,11 +109,17 @@ class EspacoService
             'andar.modulo.unidade.instituicao',
             'agendas' => function ($query) use ($weekStart, $weekEnd) {
                 $query->with([
-                    'user.setor',
+                    'user:id,name,email,setor_id',
+                    'user.setor:id,nome,sigla',
                     'horarios' => function ($q) use ($weekStart, $weekEnd) {
                         $q->where('situacao', 'deferida')
                             ->whereBetween('data', [$weekStart, $weekEnd])
-                            ->with(['reserva.user', 'avaliador']);
+                            ->with([
+                                'reserva:id,titulo,situacao,observacao,user_id',
+                                'reserva.user:id,name,setor_id',
+                                'reserva.user.setor:id,nome,sigla',
+                                'avaliador:id,name',
+                            ]);
                     },
                 ]);
             },

@@ -90,6 +90,30 @@ describe('i18n Engine & Dictionaries', () => {
             expect(jsonEs).not.toContain('UESB');
             expect(allStrings.length).toBeGreaterThan(0);
         });
+
+        it('usuarios.roles.gestor deve ter valor "Gestor de Reserva" em pt-BR', () => {
+            expect(translate('usuarios.roles.gestor', undefined, 'pt-BR')).toBe('Gestor de Reserva');
+        });
+
+        it('usuarios.roles.gestor deve ter valor "Reservation Manager" em en', () => {
+            expect(translate('usuarios.roles.gestor', undefined, 'en')).toBe('Reservation Manager');
+        });
+
+        it('usuarios.roles.gestor deve ter valor "Gestor de Reserva" em es', () => {
+            expect(translate('usuarios.roles.gestor', undefined, 'es')).toBe('Gestor de Reserva');
+        });
+
+        it('en e es devem ter todas as chaves de pt-BR incluindo chaves novas', () => {
+            const ptKeys = getKeysRecursively(ptBR).sort();
+            const enKeys = getKeysRecursively(en).sort();
+            const esKeys = getKeysRecursively(es).sort();
+
+            const missingInEn = ptKeys.filter((k) => !enKeys.includes(k));
+            const missingInEs = ptKeys.filter((k) => !esKeys.includes(k));
+
+            expect(missingInEn).toEqual([]);
+            expect(missingInEs).toEqual([]);
+        });
     });
 
     describe('translate() pure function', () => {

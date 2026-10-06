@@ -23,7 +23,6 @@ const mockReserva: Reserva = {
             situacao: 'deferida',
             validation_status: 'completed',
             conflict_cache: null,
-            cache_validated_at: null,
             agenda: {
                 id: 1,
                 turno: 'manha',

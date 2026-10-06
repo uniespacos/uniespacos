@@ -44,6 +44,10 @@ npx prettier --write <arquivo>
 - **Nunca criar a PR sozinho ao terminar uma tarefa.** Deixe branch e commit prontos, rode as
   verificações, e pare — só abra a PR quando o usuário validar o trabalho e autorizar explicitamente
   a criação. Commitar/pushar a branch de trabalho é ok; `gh pr create` não.
+- **Checks obrigatórios de PR** (para `develop` e `main`): `🔍 Lint & Static Analysis` (Pint, tsc, ESLint,
+  PHPStan) e `✅ Tests` (backend com Postgres 16 + frontend com Jest, workflow `tests.yml`). Também roda
+  todo dia útil em `develop` (`schedule`), para pegar teste dependente de data. Marcar `✅ Tests` como
+  obrigatório na proteção de branch é ação do responsável.
 - **A PR do `release-please` é aprovada e mergeada manualmente pelo usuário.** Não aprove, não
   aprove-e-mergeie, não faça squash/merge nela por conta própria.
 
@@ -101,12 +105,14 @@ tail -f storage/logs/laravel.log | grep telescope_entries`; fix ao vivo: `docker
   restart: 8s → 6s → 3s → 0.25s conforme OPcache aquece; não é regressão. (5) **Regra prática no
   frontend:** `prefetch={['mount', 'hover']}` em `<Link>` dentro de `.map()` dispara visita
   completa de página em background pra cada item da lista; use `prefetch="hover"` nesses casos.
-- **Container Reverb parado causa falhas intermitentes na suíte backend.** O conjunto de testes que
-  falha **muda entre execuções**, e o nome do teste nunca menciona Reverb — parece bug de regra de
-  negócio. Sintomas vistos: `ReservaArquivamentoTest > cancelar reserva ativa continua notificando`
-  e `ValidateReservationConflictsJobTest` esperando `'completed'` e recebendo `'failed'`. Raiz:
-  `uniespacos-reverb-1` fora do ar faz o broadcast lançar `BroadcastException: Pusher error: cURL
-  error 6: Could not resolve host: reverb`, o que derruba o job. Diagnóstico:
-  `docker ps -a --format '{{.Names}}\t{{.Status}}' | grep uniespacos` (procure `Exited`). Resolução:
-  `docker start uniespacos-reverb-1` e confirme a resolução de nome — não só o container de pé —
-  com `docker exec uniespacos-workspace-1 getent hosts reverb`.
+- **Reverb parado não derruba mais a suíte backend.** O `phpunit.xml` fixa
+  `BROADCAST_CONNECTION=null` (`force="true"`), então os testes não dependem do container
+  `uniespacos-reverb-1`. Só `BroadcastChannelAuthorizationTest` configura um broadcaster `reverb` com
+  credenciais fake, em memória. Se um teste falhar com `Could not resolve host: reverb`, ele está
+  furando o `phpunit.xml` (ou o `APP_ENV=testing` foi esquecido): corrija o teste, não suba o container.
+  Para exercitar o broadcast de verdade (E2E manual), aí sim o Reverb precisa estar de pé
+  (`docker exec uniespacos-workspace-1 getent hosts reverb`).
+- **Relógio em testes:** nunca use `now()`/`today()`/`Carbon::now()` (PHP) nem `new Date()`/`Date.now()` (Jest)
+  em teste sem congelar o relógio (`Carbon::setTestNow(...)` / `jest.useFakeTimers({ now })`, com
+  `useRealTimers` no `afterEach`). Teste que passa só em certos dias do mês é bomba-relógio. O Jest já
+  roda em `America/Bahia` (`jest.global-setup.js`); no Windows, `TZ=... npx jest` não muda o fuso.
