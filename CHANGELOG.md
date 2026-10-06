@@ -1,5 +1,48 @@
 # Changelog
 
+## [1.4.2](https://github.com/uniespacos/uniespacos/compare/v1.4.1...v1.4.2) (2026-10-06)
+
+
+### Bug Fixes
+
+* adiciona retry com backoff crescente nas notificações enfileiradas ([#451](https://github.com/uniespacos/uniespacos/issues/451)) ([dd6beee](https://github.com/uniespacos/uniespacos/commit/dd6beee981f75b464a94d0fe85b0ec931bd871d5))
+* breadcrumbs via route(), rótulo de gestor via i18n e paginação sem HTML bruto ([#453](https://github.com/uniespacos/uniespacos/issues/453)) ([ab9598a](https://github.com/uniespacos/uniespacos/commit/ab9598a47f9c03622a76b719ce7defbc2ce6b2ea))
+* contagem mensal do dashboard considera o ano corrente (E1-21) ([c29723d](https://github.com/uniespacos/uniespacos/commit/c29723d647977da621c5b736c76ba1fc091bf80a))
+* corrige FK de Horario::avaliador e restringe colunas do avaliador nos eager loads ([#446](https://github.com/uniespacos/uniespacos/issues/446)) ([e1a2798](https://github.com/uniespacos/uniespacos/commit/e1a27982c6f1bfa5000aa012347dfe2667422fb5))
+* e-mails de verificação e redefinição de senha em fila, com timeout SMTP (E1-23) ([645a135](https://github.com/uniespacos/uniespacos/commit/645a1357414bca020dc9f62c0abe53a3cbf29a0c))
+* estabilização da Onda 1 (avaliador na auto-aprovação, dashboard, e-mails de auth em fila, Echo, testes e código morto) ([b3f5c68](https://github.com/uniespacos/uniespacos/commit/b3f5c686fa6b8b3fbb1bb9efad1dfa914f692fda))
+* grava o avaliador nos horários auto-aprovados (E1-40) ([5c849e3](https://github.com/uniespacos/uniespacos/commit/5c849e351046ffbb94d84883cdfcfca51d1ab48a))
+* reconexão do Echo usa connection.state do pusher-js (B46) ([5bdc3f0](https://github.com/uniespacos/uniespacos/commit/5bdc3f0ba9cc8e984986da8ef3a29cfadafd3de3))
+* restringe dados pessoais de terceiros na agenda do espaço ([#438](https://github.com/uniespacos/uniespacos/issues/438)) ([9b8f11c](https://github.com/uniespacos/uniespacos/commit/9b8f11ca923cd5df9679251b30abfada7064119c))
+* restringe indeferimento por conflito às agendas do gestor no escopo recurring ([#444](https://github.com/uniespacos/uniespacos/issues/444)) ([52413b2](https://github.com/uniespacos/uniespacos/commit/52413b2e5f169604fd69f477d2d606d7a37356d6))
+* **tests:** fixa fuso e congela relógio nos testes de frontend ([#441](https://github.com/uniespacos/uniespacos/issues/441)) ([c07f28d](https://github.com/uniespacos/uniespacos/commit/c07f28d611a8ac84c05edf208bb3cf8a22c9bd09))
+* **tests:** linha de base verde no backend (E0-01..E0-04) ([#439](https://github.com/uniespacos/uniespacos/issues/439)) ([c7b5f46](https://github.com/uniespacos/uniespacos/commit/c7b5f46b65ab24c35edd0ebc497ca7acba5b522c))
+* valida status da avaliação com lista fechada e remove rotas show que davam 500 ([#448](https://github.com/uniespacos/uniespacos/issues/448)) ([a0b12aa](https://github.com/uniespacos/uniespacos/commit/a0b12aa868c9910d37388aed3964769ca87eb502))
+
+
+### Miscellaneous Chores
+
+* **develop:** release 1.5.0-rc.84 ([#437](https://github.com/uniespacos/uniespacos/issues/437)) ([7c68770](https://github.com/uniespacos/uniespacos/commit/7c68770e29422307e48aa1a31b4a8468546ddeea))
+* **develop:** release 1.5.0-rc.85 ([#440](https://github.com/uniespacos/uniespacos/issues/440)) ([6d32ce7](https://github.com/uniespacos/uniespacos/commit/6d32ce73ca7e0e811eaf5a24ee19026ccedb9514))
+* **develop:** release 1.5.0-rc.86 ([#442](https://github.com/uniespacos/uniespacos/issues/442)) ([11a3edd](https://github.com/uniespacos/uniespacos/commit/11a3edd2c3a26ee8f924e7fb1819434254e7743f))
+* **develop:** release 1.5.0-rc.87 ([#445](https://github.com/uniespacos/uniespacos/issues/445)) ([779d1e2](https://github.com/uniespacos/uniespacos/commit/779d1e22e42b392a0c72121b516aee8c7d588926))
+* **develop:** release 1.5.0-rc.88 ([#447](https://github.com/uniespacos/uniespacos/issues/447)) ([5999fee](https://github.com/uniespacos/uniespacos/commit/5999fee7381114b41d781fcb18ab60f2e24a49c0))
+* **develop:** release 1.5.0-rc.89 ([#449](https://github.com/uniespacos/uniespacos/issues/449)) ([8b01806](https://github.com/uniespacos/uniespacos/commit/8b01806afea1fa5625bbe0b24f5c84c7dc97fd7b))
+* **develop:** release 1.5.0-rc.90 ([#452](https://github.com/uniespacos/uniespacos/issues/452)) ([b602a68](https://github.com/uniespacos/uniespacos/commit/b602a68f343aa45a6640275d2389cf3fa7cdffcc))
+* **develop:** release 1.5.0-rc.91 ([#454](https://github.com/uniespacos/uniespacos/issues/454)) ([5ef9e79](https://github.com/uniespacos/uniespacos/commit/5ef9e79a2a35fdb7ed6ccd504e1f57dd78c572f6))
+* **develop:** release 1.5.0-rc.92 ([db6b5fc](https://github.com/uniespacos/uniespacos/commit/db6b5fcdd439a63f8552bfb276cec333e2ee6aa1))
+* **develop:** release 1.5.0-rc.92 ([#456](https://github.com/uniespacos/uniespacos/issues/456)) ([75da1a7](https://github.com/uniespacos/uniespacos/commit/75da1a76ebc32f5cdff142a6ec746723341dc6fd))
+* **develop:** release 1.5.0-rc.93 ([e03df6f](https://github.com/uniespacos/uniespacos/commit/e03df6fb8d671962356a0faf58e013edc1b8a329))
+* **develop:** release 1.5.0-rc.93 ([2dadc22](https://github.com/uniespacos/uniespacos/commit/2dadc22b227593e3a20d08249585d0cd87840e40))
+* **develop:** release 1.5.0-rc.94 ([a7942fb](https://github.com/uniespacos/uniespacos/commit/a7942fbb09ee724af45debbfc38ce5a205e1c54d))
+* **develop:** release 1.5.0-rc.94 ([2647ebf](https://github.com/uniespacos/uniespacos/commit/2647ebfb5e0192e03f9b08adbb79935e1d340aec))
+* release de produção com correção de privacidade (B29) e estabilização da v1 ([7fe924c](https://github.com/uniespacos/uniespacos/commit/7fe924cacd37575e7e17b65cfcc190e67c8400bf))
+* remove código morto do backend e do frontend (E1-13, E1-14) ([2bf2098](https://github.com/uniespacos/uniespacos/commit/2bf2098023f13244455562cc11f3118b4d8f4571))
+* sincroniza main em develop (merge commit, releases 1.4.0 e 1.4.1) ([c1f12f7](https://github.com/uniespacos/uniespacos/commit/c1f12f7eac47155fdceeaf3576dd103cdb2a6d1a))
+* sincronizar main em develop (merge commit) ([427fe2c](https://github.com/uniespacos/uniespacos/commit/427fe2cb02710342798a42b2d7ece0e390c11791))
+* sincronizar main em develop após release 1.4.1 ([#436](https://github.com/uniespacos/uniespacos/issues/436)) ([df99829](https://github.com/uniespacos/uniespacos/commit/df998294cda1d265061d19b0e0c8d0c18ba580bd))
+* sincronizar main em develop após release 1.4.1 ([#455](https://github.com/uniespacos/uniespacos/issues/455)) ([2d04f4f](https://github.com/uniespacos/uniespacos/commit/2d04f4ff34f27ce27cca189ba851b0efcc8716fe))
+
 ## [1.5.0-rc.94](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.93...v1.5.0-rc.94) (2026-10-05)
 
 
