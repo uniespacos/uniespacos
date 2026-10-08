@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.95](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.94...v1.5.0-rc.95) (2026-10-08)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.4.2 ([3d4fbbe](https://github.com/uniespacos/uniespacos/commit/3d4fbbea7d02b26c2b515f2f6451d79c3aedffd4))
+* **main:** release 1.4.2 ([13fb874](https://github.com/uniespacos/uniespacos/commit/13fb874c447f875e4b2a17da855afc4f09b1235b))
+* release de produção com correção de privacidade (B29) e estabilização da v1 ([7fe924c](https://github.com/uniespacos/uniespacos/commit/7fe924cacd37575e7e17b65cfcc190e67c8400bf))
+* sincronizar main em develop após release 1.4.2 ([5b357ed](https://github.com/uniespacos/uniespacos/commit/5b357ed22629f6c1c2bd827b2786b1ff011d3df2))
+
 ## [1.4.2](https://github.com/uniespacos/uniespacos/compare/v1.4.1...v1.4.2) (2026-10-06)
 
 
