@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.99](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.98...v1.5.0-rc.99) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **docker:** ocultar versão do PHP e fixar postgres em 16.15 ([f867048](https://github.com/uniespacos/uniespacos/commit/f867048f966d3c0a89085f1fbd1e6627c5ba1a41))
+
 ## [1.5.0-rc.98](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.97...v1.5.0-rc.98) (2026-10-24)
 
 
