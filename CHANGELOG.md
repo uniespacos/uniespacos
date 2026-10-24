@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0-rc.97](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.96...v1.5.0-rc.97) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **deps:** atualizar pacotes composer com advisories (dompdf, excel, commonmark, guzzle) ([686880c](https://github.com/uniespacos/uniespacos/commit/686880c8675322051821afdc6d1a9ba00ddcf666))
+* **deps:** corrigir advisories npm (axios, qs, zod 4, vite 6.4.5 e tooling de build) ([4a58d18](https://github.com/uniespacos/uniespacos/commit/4a58d1868a4c49fc6f5106018c42f18d3f9a460b))
+* **deps:** patches de segurança das dependências Composer e npm (S25) ([5cad973](https://github.com/uniespacos/uniespacos/commit/5cad973780f59c62dda94a506c36323f63499617))
+
 ## [1.5.0-rc.96](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.95...v1.5.0-rc.96) (2026-10-24)
 
 
