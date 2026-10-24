@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.98](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.97...v1.5.0-rc.98) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **deps:** atualizar laravel/framework de 12.10.1 para ^12.70 (S40) ([6405767](https://github.com/uniespacos/uniespacos/commit/6405767bffd57932d1685073036beeebae6e33f9))
+
 ## [1.5.0-rc.97](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.96...v1.5.0-rc.97) (2026-10-24)
 
 
