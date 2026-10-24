@@ -1,4 +1,7 @@
-FROM php:8.4-fpm
+# Versão mínima do PHP com correção dos CVE-2026-109618/109619.
+# Não voltar para tag flutuante sem garantir >= 8.4.27.
+ARG PHP_VERSION=8.4.27
+FROM php:${PHP_VERSION}-fpm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     iputils-ping \
@@ -32,6 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install pcntl \
     && docker-php-ext-enable redis pcntl \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Mitigação CVE-2026-109619 (session.upload_progress). Fonte única compartilhada com produção.
+COPY ./docker/production/php-fpm/conf.d/zz-security.ini /usr/local/etc/php/conf.d/zz-security.ini
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED=true

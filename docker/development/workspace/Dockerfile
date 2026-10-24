@@ -1,6 +1,9 @@
 # docker/development/workspace/Dockerfile
 # Use the official PHP CLI image as the base
-FROM php:8.4-cli
+# Versão mínima do PHP com correção dos CVE-2026-109618/109619.
+# Não voltar para tag flutuante sem garantir >= 8.4.27.
+ARG PHP_VERSION=8.4.27
+FROM php:${PHP_VERSION}-cli
 
 # Set environment variables for user and group ID
 ARG UID=1000

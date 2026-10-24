@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.3](https://github.com/uniespacos/uniespacos/compare/v1.4.2...v1.4.3) (2026-10-24)
+
+
+### Bug Fixes
+
+* **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([9820b0c](https://github.com/uniespacos/uniespacos/commit/9820b0c398865b96225aec3b52e127b131a04307))
+* **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([b583aa1](https://github.com/uniespacos/uniespacos/commit/b583aa1da375ae1151fdcccce6699f7d3a3dd6c8))
+
 ## [1.5.0-rc.95](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.94...v1.5.0-rc.95) (2026-10-08)
 
 
