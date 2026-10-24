@@ -58,7 +58,7 @@ class ExpansaoHorariosService
         );
 
         foreach ($unicos as $slot) {
-            $agenda = $agendasMap->get($slot['agenda_id']);
+            $agenda = $agendasMap->get($this->chaveAgenda($slot));
 
             if (! $agenda instanceof Agenda) {
                 continue;
@@ -103,7 +103,7 @@ class ExpansaoHorariosService
         foreach ($padroes as $grupo) {
             /** @var array<string, mixed> $base */
             $base = $grupo->first();
-            $agenda = $agendasMap->get($base['agenda_id']);
+            $agenda = $agendasMap->get($this->chaveAgenda($base));
 
             if (! $agenda instanceof Agenda) {
                 continue;
@@ -155,6 +155,19 @@ class ExpansaoHorariosService
             'created_at' => $agora,
             'updated_at' => $agora,
         ];
+    }
+
+    /**
+     * Chave do agendasMap (keyBy('id')). A regra `integer` aceita int, string
+     * numérica e float de valor inteiro; todos são normalizados para int.
+     *
+     * @param  array<string, mixed>  $slot
+     */
+    private function chaveAgenda(array $slot): ?int
+    {
+        $agendaId = $slot['agenda_id'];
+
+        return is_numeric($agendaId) ? (int) $agendaId : null;
     }
 
     /**

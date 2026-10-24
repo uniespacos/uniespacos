@@ -47,7 +47,7 @@ class ReservaService
 
         $filters = $this->normalizarFiltros($filters);
 
-        /** @var LengthAwarePaginator<Reserva> $reservas */
+        /** @var LengthAwarePaginator<int, Reserva> $reservas */
         $reservas = $this->repoReserva->getPaginatedForUser($user->id, $filters, $perPage)
             ->withQueryString();
 
