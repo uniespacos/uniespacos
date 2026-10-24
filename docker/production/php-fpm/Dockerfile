@@ -1,3 +1,7 @@
+# Versão mínima do PHP com correção dos CVE-2026-109618/109619.
+# Não voltar para tag flutuante sem garantir >= 8.4.27.
+ARG PHP_VERSION=8.4.27
+
 # Stage 1: Build frontend assets
 FROM node:20-alpine AS frontend-builder
 
@@ -30,7 +34,7 @@ COPY resources/ ./resources
 RUN npm run build
 
 # Stage 2: Build environment and Composer dependencies
-FROM php:8.4-fpm AS builder
+FROM php:${PHP_VERSION}-fpm AS builder
 
 # Install system dependencies and PHP extensions required for Laravel + MySQL/PostgreSQL support
 # Some dependencies are required for PHP extensions only in the build stage
@@ -82,7 +86,7 @@ RUN composer dump-autoload --optimize
 
 
 # Stage 3: Production environment
-FROM php:8.4-fpm as production
+FROM php:${PHP_VERSION}-fpm AS production
 
 # Install only runtime libraries needed in production
 # libfcgi-bin and procps are required for the php-fpm-healthcheck script
@@ -114,6 +118,8 @@ COPY ./storage /var/www/storage-init
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY --from=builder /usr/local/bin/docker-php-ext-* /usr/local/bin/
+
+COPY ./docker/production/php-fpm/conf.d/zz-security.ini /usr/local/etc/php/conf.d/zz-security.ini
 
 # Use the recommended production PHP configuration
 # -----------------------------------------------------------
