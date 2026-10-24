@@ -62,7 +62,7 @@ services:
 
     postgres:
         container_name: postgres-production
-        image: postgres:16
+        image: postgres:16.15
         restart: unless-stopped
         user: postgres
         env_file:
