@@ -13,6 +13,7 @@ use App\Notifications\UserRemovedAsManagerNotification;
 use App\Repositories\PermissionRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -44,6 +45,7 @@ class UserService
     {
         $instituicaoId = $authUser->setor->unidade->instituicao_id;
 
+        /** @var LengthAwarePaginator<int, User> $users */
         $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId);
         $users->through(fn (User $user) => array_merge($user->toArray(), [
             'roles' => $user->getRoleNames(),

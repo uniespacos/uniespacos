@@ -164,6 +164,23 @@ class ExpansaoHorariosServiceTest extends TestCase
         $this->assertCount(1, $agendasUsadas);
     }
 
+    public function test_agenda_id_aceito_pela_regra_integer_encontra_a_agenda_em_qualquer_formato(): void
+    {
+        // A regra `integer` do FormRequest aceita int, string numérica e float de valor inteiro.
+        foreach (['unica', 'periodica'] as $recorrencia) {
+            foreach ([1, '1', 1.0] as $agendaId) {
+                $slot = $this->slot('2026-09-01');
+                $slot['agenda_id'] = $agendaId;
+
+                [$linhas] = $this->service->montar(
+                    [$slot], $this->agendas([1]), $recorrencia, Carbon::parse('2026-09-07'), 7, fn () => 'em_analise'
+                );
+
+                $this->assertCount(1, $linhas, sprintf('%s com agenda_id %s', $recorrencia, var_export($agendaId, true)));
+            }
+        }
+    }
+
     public function test_todas_as_linhas_tem_o_mesmo_conjunto_de_chaves(): void
     {
         // Requisito do insert em lote: as colunas saem da primeira linha.
