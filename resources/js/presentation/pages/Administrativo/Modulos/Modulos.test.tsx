@@ -1,5 +1,5 @@
-import Modulos from './Modulos';
 import { fireEvent, render, screen } from '@testing-library/react';
+import Modulos from './Modulos';
 
 const mockGet = jest.fn();
 
@@ -50,7 +50,11 @@ jest.mock('@inertiajs/react', () => ({
         delete safeProps.preserveScroll;
         delete safeProps.only;
         delete safeProps.as;
-        return <a href={href} {...safeProps}>{children}</a>;
+        return (
+            <a href={href} {...safeProps}>
+                {children}
+            </a>
+        );
     },
     router: {
         get: (...args: unknown[]) => {
@@ -79,7 +83,7 @@ describe('Modulos', () => {
 
         expect(screen.getByRole('heading', { name: /Gerenciar Módulos/i })).toBeInTheDocument();
         const buttons = screen.getAllByRole('button');
-        expect(buttons.some((btn) => btn.textContent?.includes('Novo'))).toBe(true);
+        expect(buttons.some((btn) => btn.textContent.includes('Novo'))).toBe(true);
     });
 
     it('renderiza dados de módulos', () => {

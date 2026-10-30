@@ -1,5 +1,5 @@
-import UnidadesPage from './Unidades';
 import { fireEvent, render, screen } from '@testing-library/react';
+import UnidadesPage from './Unidades';
 
 const mockGet = jest.fn();
 
@@ -45,7 +45,11 @@ jest.mock('@inertiajs/react', () => ({
         delete safeProps.preserveScroll;
         delete safeProps.only;
         delete safeProps.as;
-        return <a href={href} {...safeProps}>{children}</a>;
+        return (
+            <a href={href} {...safeProps}>
+                {children}
+            </a>
+        );
     },
     router: {
         get: (...args: unknown[]) => {
@@ -74,7 +78,7 @@ describe('UnidadesPage', () => {
 
         expect(screen.getByRole('heading', { name: /Gerenciar Unidades/i })).toBeInTheDocument();
         const buttons = screen.getAllByRole('button');
-        expect(buttons.some((btn) => btn.textContent?.includes('Nova'))).toBe(true);
+        expect(buttons.some((btn) => btn.textContent.includes('Nova'))).toBe(true);
     });
 
     it('renderiza DataTable com dados de unidades', () => {
@@ -107,7 +111,7 @@ describe('UnidadesPage', () => {
         render(<UnidadesPage />);
 
         const buttons = screen.getAllByRole('button');
-        const createButton = buttons.find((btn) => btn.textContent?.includes('Nova'));
+        const createButton = buttons.find((btn) => btn.textContent.includes('Nova'));
         expect(createButton).toBeDefined();
     });
 });

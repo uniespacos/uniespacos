@@ -247,12 +247,6 @@ parameters:
 			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\Institucional\\InstitucionalRoleController\:\:index\(\) should return Inertia\\Response but returns Inertia\\Response\|Inertia\\ResponseFactory\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalRoleController.php
-
-		-
 			message: '#^Parameter \#2 \$permissionNames of method App\\Services\\RoleService\:\:syncPermissions\(\) expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1

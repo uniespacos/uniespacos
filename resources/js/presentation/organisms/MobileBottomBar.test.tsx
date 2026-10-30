@@ -1,9 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MobileBottomBar } from './MobileBottomBar';
 import { useSidebar } from '@/components/ui/sidebar';
-import { usePage } from '@inertiajs/react';
 import type { Page } from '@inertiajs/core';
+import { usePage } from '@inertiajs/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type React from 'react';
+import { MobileBottomBar } from './MobileBottomBar';
 
 jest.mock('@/components/ui/sidebar', () => ({
     useSidebar: jest.fn(),
@@ -31,6 +31,7 @@ const createMockPage = (url: string): Page => ({
     clearHistory: false,
     encryptHistory: false,
     rememberedState: {},
+    flash: {},
 });
 
 describe('MobileBottomBar', () => {
