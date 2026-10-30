@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.4.4](https://github.com/uniespacos/uniespacos/compare/v1.4.3...v1.4.4) (2026-10-30)
+
+
+### Miscellaneous Chores
+
+* **ci:** atualizar actions do GitHub e padronizar Node 24 e Caddy 2.11.7 no Docker ([936f164](https://github.com/uniespacos/uniespacos/commit/936f1641f4ce6613025aa70df11bf903c9994f31))
+* **deps:** atualizar dependências de frontend, backend, Docker e CI/CD ([f2d935e](https://github.com/uniespacos/uniespacos/commit/f2d935e1c93e0848f69b05fb1c7406caccc4d5b9))
+* **deps:** atualizar dependências do Composer dentro das majors atuais ([07e0016](https://github.com/uniespacos/uniespacos/commit/07e001685f63f4ea6c09a7b685a2fba182340119))
+* **deps:** atualizar dependências npm de frontend e Vite 7 ([e5ac8f3](https://github.com/uniespacos/uniespacos/commit/e5ac8f3a8745c91f202fb3dcc5b00270ed879df9))
+* **deps:** atualizar laravel/framework de 12.10.1 para ^12.70 ([fecc5ba](https://github.com/uniespacos/uniespacos/commit/fecc5bae024a19f3ef372edf19c94e10457d0b92))
+* **deps:** atualizar laravel/framework de 12.10.1 para ^12.70 (S40) ([6405767](https://github.com/uniespacos/uniespacos/commit/6405767bffd57932d1685073036beeebae6e33f9))
+* **deps:** atualizar pacotes composer com advisories (dompdf, excel, commonmark, guzzle) ([686880c](https://github.com/uniespacos/uniespacos/commit/686880c8675322051821afdc6d1a9ba00ddcf666))
+* **deps:** atualizar psy/psysh para 0.12.24 (CVE-2026-25129) ([d4e3dd8](https://github.com/uniespacos/uniespacos/commit/d4e3dd89bbc0961c8b1f4e6b57dc647df1721b7d))
+* **deps:** corrigir advisories npm (axios, qs, zod 4, vite 6.4.5 e tooling de build) ([4a58d18](https://github.com/uniespacos/uniespacos/commit/4a58d1868a4c49fc6f5106018c42f18d3f9a460b))
+* **deps:** patches de segurança das dependências Composer e npm (S25) ([5cad973](https://github.com/uniespacos/uniespacos/commit/5cad973780f59c62dda94a506c36323f63499617))
+* **develop:** release 1.5.0-rc.100 ([3f6e7aa](https://github.com/uniespacos/uniespacos/commit/3f6e7aa6cf290b25f638490e03aba0a025dc8c67))
+* **develop:** release 1.5.0-rc.100 ([a1fb9c7](https://github.com/uniespacos/uniespacos/commit/a1fb9c79173865ce6651fe456ee3a84055ccd7ed))
+* **develop:** release 1.5.0-rc.96 ([b3bc903](https://github.com/uniespacos/uniespacos/commit/b3bc9032c790977f70d799a2a31ad5917b8676ed))
+* **develop:** release 1.5.0-rc.96 ([28bacbd](https://github.com/uniespacos/uniespacos/commit/28bacbd7b65d87e4096300bb69b7a372db73aa3f))
+* **develop:** release 1.5.0-rc.97 ([068768c](https://github.com/uniespacos/uniespacos/commit/068768cb97e7bdbb81e2995bb63d929d1ce68867))
+* **develop:** release 1.5.0-rc.97 ([af86474](https://github.com/uniespacos/uniespacos/commit/af86474defebe6452a928745b42a10997461a8f8))
+* **develop:** release 1.5.0-rc.98 ([054be30](https://github.com/uniespacos/uniespacos/commit/054be30fbd08dcedaa589295bb1410a6ad44f096))
+* **develop:** release 1.5.0-rc.98 ([870eca4](https://github.com/uniespacos/uniespacos/commit/870eca4c19230a06ae8eaeba1dde307501db6dab))
+* **develop:** release 1.5.0-rc.99 ([d47186e](https://github.com/uniespacos/uniespacos/commit/d47186ebf6003f29c922223b03f215407e92e05a))
+* **develop:** release 1.5.0-rc.99 ([6b36dd8](https://github.com/uniespacos/uniespacos/commit/6b36dd83a296d59550714740c6ba2f0daa425931))
+* **docker:** ocultar versão do PHP (expose_php=Off) e fixar postgres em 16.15 ([3fdc421](https://github.com/uniespacos/uniespacos/commit/3fdc42169d57cf553545de4077f3cf0a8a96741c))
+* **docker:** ocultar versão do PHP e fixar postgres em 16.15 ([f867048](https://github.com/uniespacos/uniespacos/commit/f867048f966d3c0a89085f1fbd1e6627c5ba1a41))
+* release de produção com patches de segurança (Laravel 12.70 e dependências) ([3ef15a1](https://github.com/uniespacos/uniespacos/commit/3ef15a13984e8271de90f282473ae32e06104df9))
+* sincronizar main em develop após release 1.4.3 ([d1e0adc](https://github.com/uniespacos/uniespacos/commit/d1e0adc12543eb70a728d33610801013909f5107))
+* sincronizar main em develop após release 1.4.3 ([b699eda](https://github.com/uniespacos/uniespacos/commit/b699eda22e3ddd79cd51589402e135a6463792b5))
+
 ## [1.5.0-rc.100](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.99...v1.5.0-rc.100) (2026-10-30)
 
 
