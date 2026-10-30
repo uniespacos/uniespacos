@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.100](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.99...v1.5.0-rc.100) (2026-10-30)
+
+
+### Miscellaneous Chores
+
+* **ci:** atualizar actions do GitHub e padronizar Node 24 e Caddy 2.11.7 no Docker ([936f164](https://github.com/uniespacos/uniespacos/commit/936f1641f4ce6613025aa70df11bf903c9994f31))
+* **deps:** atualizar dependências de frontend, backend, Docker e CI/CD ([f2d935e](https://github.com/uniespacos/uniespacos/commit/f2d935e1c93e0848f69b05fb1c7406caccc4d5b9))
+* **deps:** atualizar dependências do Composer dentro das majors atuais ([07e0016](https://github.com/uniespacos/uniespacos/commit/07e001685f63f4ea6c09a7b685a2fba182340119))
+* **deps:** atualizar dependências npm de frontend e Vite 7 ([e5ac8f3](https://github.com/uniespacos/uniespacos/commit/e5ac8f3a8745c91f202fb3dcc5b00270ed879df9))
+
 ## [1.5.0-rc.99](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.98...v1.5.0-rc.99) (2026-10-24)
 
 
