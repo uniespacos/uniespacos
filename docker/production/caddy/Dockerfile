@@ -1,7 +1,7 @@
 ARG APP_IMAGE
 FROM ${APP_IMAGE} AS app-source
 
-FROM caddy:alpine
+FROM caddy:2.11.7-alpine
 
 # Set the working directory
 WORKDIR /var/www
