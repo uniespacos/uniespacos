@@ -247,12 +247,6 @@ parameters:
 			path: app/Http/Controllers/Institucional/InstitucionalRelatorioController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\Institucional\\InstitucionalRoleController\:\:index\(\) should return Inertia\\Response but returns Inertia\\Response\|Inertia\\ResponseFactory\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalRoleController.php
-
-		-
 			message: '#^Parameter \#2 \$permissionNames of method App\\Services\\RoleService\:\:syncPermissions\(\) expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -481,12 +475,6 @@ parameters:
 			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\AlterarGestoresEspacoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/AlterarGestoresEspacoRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\AlterarGestoresEspacoRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -553,12 +541,6 @@ parameters:
 			path: app/Http/Requests/ConfirmPasswordRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\ConfirmPasswordRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/ConfirmPasswordRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\ConfirmPasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -607,32 +589,14 @@ parameters:
 			path: app/Http/Requests/StoreEspacoRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\StoreEspacoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/StoreEspacoRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\StoreEspacoRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Http/Requests/StoreEspacoRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/StoreInstituicaoRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Http/Requests/StoreInstituicaoRequest.php
-
-		-
-			message: '#^Method App\\Http\\Requests\\StoreInstituicaoRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Http/Requests/StoreInstituicaoRequest.php
 
@@ -667,20 +631,8 @@ parameters:
 			path: app/Http/Requests/StoreModuloRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/StoreModuloRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Http/Requests/StoreModuloRequest.php
-
-		-
-			message: '#^Method App\\Http\\Requests\\StoreModuloRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Http/Requests/StoreModuloRequest.php
 
@@ -757,20 +709,8 @@ parameters:
 			path: app/Http/Requests/StoreRoleRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/StoreSetorRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Http/Requests/StoreSetorRequest.php
-
-		-
-			message: '#^Method App\\Http\\Requests\\StoreSetorRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Http/Requests/StoreSetorRequest.php
 
@@ -781,20 +721,8 @@ parameters:
 			path: app/Http/Requests/StoreSetorRequest.php
 
 		-
-			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:attributes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Http/Requests/StoreUnidadeRequest.php
-
-		-
 			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:authorize\(\) should return bool but returns bool\|null\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Http/Requests/StoreUnidadeRequest.php
-
-		-
-			message: '#^Method App\\Http\\Requests\\StoreUnidadeRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Http/Requests/StoreUnidadeRequest.php
 
@@ -1855,12 +1783,6 @@ parameters:
 			path: app/Services/ExpansaoHorariosService.php
 
 		-
-			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<int,App\\Models\\Agenda\>\:\:get\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
 			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 2
@@ -2143,19 +2065,7 @@ parameters:
 			path: app/Services/ReservaService.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$reservas contains generic class Illuminate\\Pagination\\LengthAwarePaginator but does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReservaService.php
-
-		-
 			message: '#^Parameter \#1 \$agendaIds of method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForGestor\(\) expects array\<int\>, array\<mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/ReservaService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:transform\(\) expects callable\(mixed, int\|string\)\: mixed, Closure\(App\\Models\\Reserva\)\: App\\Models\\Reserva given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Services/ReservaService.php

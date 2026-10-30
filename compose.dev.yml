@@ -98,7 +98,7 @@ services:
       app:
         condition: service_started
   postgres:
-    image: postgres:16
+    image: postgres:16.15
     environment:
       - POSTGRES_DB=${DB_DATABASE}
       - POSTGRES_USER=${DB_USERNAME}

@@ -1,5 +1,5 @@
-import InstituicoesPage from './Instituicoes';
 import { render, screen } from '@testing-library/react';
+import InstituicoesPage from './Instituicoes';
 
 const mockGet = jest.fn();
 
@@ -32,7 +32,11 @@ jest.mock('@inertiajs/react', () => ({
         delete safeProps.preserveScroll;
         delete safeProps.only;
         delete safeProps.as;
-        return <a href={href} {...safeProps}>{children}</a>;
+        return (
+            <a href={href} {...safeProps}>
+                {children}
+            </a>
+        );
     },
     router: {
         get: (...args: unknown[]) => {
@@ -89,7 +93,7 @@ describe('InstituicoesPage', () => {
         render(<InstituicoesPage />);
 
         const buttons = screen.getAllByRole('button');
-        const createButton = buttons.find((btn) => btn.textContent?.includes('Nova'));
+        const createButton = buttons.find((btn) => btn.textContent.includes('Nova'));
         expect(createButton).toBeDefined();
     });
 });

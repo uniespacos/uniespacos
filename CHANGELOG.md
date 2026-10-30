@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.5.0-rc.100](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.99...v1.5.0-rc.100) (2026-10-30)
+
+
+### Miscellaneous Chores
+
+* **ci:** atualizar actions do GitHub e padronizar Node 24 e Caddy 2.11.7 no Docker ([936f164](https://github.com/uniespacos/uniespacos/commit/936f1641f4ce6613025aa70df11bf903c9994f31))
+* **deps:** atualizar dependências de frontend, backend, Docker e CI/CD ([f2d935e](https://github.com/uniespacos/uniespacos/commit/f2d935e1c93e0848f69b05fb1c7406caccc4d5b9))
+* **deps:** atualizar dependências do Composer dentro das majors atuais ([07e0016](https://github.com/uniespacos/uniespacos/commit/07e001685f63f4ea6c09a7b685a2fba182340119))
+* **deps:** atualizar dependências npm de frontend e Vite 7 ([e5ac8f3](https://github.com/uniespacos/uniespacos/commit/e5ac8f3a8745c91f202fb3dcc5b00270ed879df9))
+
+## [1.5.0-rc.99](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.98...v1.5.0-rc.99) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **docker:** ocultar versão do PHP e fixar postgres em 16.15 ([f867048](https://github.com/uniespacos/uniespacos/commit/f867048f966d3c0a89085f1fbd1e6627c5ba1a41))
+
+## [1.5.0-rc.98](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.97...v1.5.0-rc.98) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **deps:** atualizar laravel/framework de 12.10.1 para ^12.70 (S40) ([6405767](https://github.com/uniespacos/uniespacos/commit/6405767bffd57932d1685073036beeebae6e33f9))
+
+## [1.5.0-rc.97](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.96...v1.5.0-rc.97) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **deps:** atualizar pacotes composer com advisories (dompdf, excel, commonmark, guzzle) ([686880c](https://github.com/uniespacos/uniespacos/commit/686880c8675322051821afdc6d1a9ba00ddcf666))
+* **deps:** corrigir advisories npm (axios, qs, zod 4, vite 6.4.5 e tooling de build) ([4a58d18](https://github.com/uniespacos/uniespacos/commit/4a58d1868a4c49fc6f5106018c42f18d3f9a460b))
+* **deps:** patches de segurança das dependências Composer e npm (S25) ([5cad973](https://github.com/uniespacos/uniespacos/commit/5cad973780f59c62dda94a506c36323f63499617))
+
+## [1.5.0-rc.96](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.95...v1.5.0-rc.96) (2026-10-24)
+
+
+### Bug Fixes
+
+* **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([9820b0c](https://github.com/uniespacos/uniespacos/commit/9820b0c398865b96225aec3b52e127b131a04307))
+* **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([b583aa1](https://github.com/uniespacos/uniespacos/commit/b583aa1da375ae1151fdcccce6699f7d3a3dd6c8))
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.4.3 ([fd532c0](https://github.com/uniespacos/uniespacos/commit/fd532c0eebc6e70d5b2429378ae3cf6947755466))
+* **main:** release 1.4.3 ([fcedbbf](https://github.com/uniespacos/uniespacos/commit/fcedbbf5d2e20361c3df72c6dff697bae1d6920d))
+* sincronizar main em develop após release 1.4.3 ([d1e0adc](https://github.com/uniespacos/uniespacos/commit/d1e0adc12543eb70a728d33610801013909f5107))
+* sincronizar main em develop após release 1.4.3 ([b699eda](https://github.com/uniespacos/uniespacos/commit/b699eda22e3ddd79cd51589402e135a6463792b5))
+
 ## [1.4.3](https://github.com/uniespacos/uniespacos/compare/v1.4.2...v1.4.3) (2026-10-24)
 
 
@@ -7,6 +56,16 @@
 
 * **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([9820b0c](https://github.com/uniespacos/uniespacos/commit/9820b0c398865b96225aec3b52e127b131a04307))
 * **docker:** fixar PHP 8.4.27 e desativar session.upload_progress (CVEs críticos de RCE) ([b583aa1](https://github.com/uniespacos/uniespacos/commit/b583aa1da375ae1151fdcccce6699f7d3a3dd6c8))
+
+## [1.5.0-rc.95](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.94...v1.5.0-rc.95) (2026-10-08)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.4.2 ([3d4fbbe](https://github.com/uniespacos/uniespacos/commit/3d4fbbea7d02b26c2b515f2f6451d79c3aedffd4))
+* **main:** release 1.4.2 ([13fb874](https://github.com/uniespacos/uniespacos/commit/13fb874c447f875e4b2a17da855afc4f09b1235b))
+* release de produção com correção de privacidade (B29) e estabilização da v1 ([7fe924c](https://github.com/uniespacos/uniespacos/commit/7fe924cacd37575e7e17b65cfcc190e67c8400bf))
+* sincronizar main em develop após release 1.4.2 ([5b357ed](https://github.com/uniespacos/uniespacos/commit/5b357ed22629f6c1c2bd827b2786b1ff011d3df2))
 
 ## [1.4.2](https://github.com/uniespacos/uniespacos/compare/v1.4.1...v1.4.2) (2026-10-06)
 
