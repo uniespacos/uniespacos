@@ -8,7 +8,7 @@ const agenda = (id: number, turno: Agenda['turno'], nomeGestor?: string): Agenda
     ...(nomeGestor ? { user: { id, name: nomeGestor, email: `${nomeGestor}@uesb.edu.br` } as Agenda['user'] } : {}),
 });
 
-const turnosRenderizados = (): string[] => screen.getAllByTestId('turno-label').map((el) => el.textContent ?? '');
+const turnosRenderizados = (): string[] => screen.getAllByTestId('turno-label').map((el) => el.textContent);
 
 describe('GestoresEspaco', () => {
     it('renders shifts as Manhã, Tarde, Noite regardless of the order received', () => {
@@ -40,7 +40,7 @@ describe('GestoresEspaco', () => {
     it('pairs each manager with their own shift', () => {
         render(<GestoresEspaco agendas={[agenda(3, 'noite', 'Carlos'), agenda(1, 'manha', 'Ana'), agenda(2, 'tarde', 'Bruno')]} />);
 
-        const linhas = screen.getAllByTestId('turno-linha').map((el) => el.textContent ?? '');
+        const linhas = screen.getAllByTestId('turno-linha').map((el) => el.textContent);
 
         expect(linhas[0]).toContain('Manhã');
         expect(linhas[0]).toContain('Ana');
