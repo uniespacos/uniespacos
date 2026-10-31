@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/presentation/molecules/FormField';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import type { User } from '@/types';
 import { router, useForm } from '@inertiajs/react';
 import { SyntheticEvent, useEffect, useState } from 'react';
@@ -70,9 +70,13 @@ export function EditUserModal({ user, isOpen, onClose }: EditUserModalProps) {
     };
 
     return (
-        <Modal
+        <ResponsiveModal
             open={isOpen}
-            onOpenChange={onClose}
+            onOpenChange={(open) => {
+                if (!open) {
+                    onClose();
+                }
+            }}
             title={`Editar Usuário - ${user.name}`}
             description="Atualize os dados cadastrais, reenvie a verificação de e-mail ou solicite a redefinição de senha."
         >
@@ -152,6 +156,6 @@ export function EditUserModal({ user, isOpen, onClose }: EditUserModalProps) {
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </ResponsiveModal>
     );
 }

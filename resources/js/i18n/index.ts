@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react';
+import { useCallback, useMemo } from 'react';
+import { formatDate, formatDateTime, formatNumber } from './formatters';
 import { en } from './locales/en';
 import { es } from './locales/es';
 import { ptBR } from './locales/pt-BR';
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from './types';
-import type { SupportedLocale, TranslationParams } from './types';
 import type { TranslationKey, TranslationSchema } from './schema';
-import { formatDate, formatDateTime, formatNumber } from './formatters';
+import type { SupportedLocale, TranslationParams } from './types';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from './types';
 
 export const DICTIONARIES: Record<SupportedLocale, TranslationSchema> = {
     'pt-BR': ptBR,
@@ -17,11 +18,7 @@ export function isSupportedLocale(locale: unknown): locale is SupportedLocale {
     return typeof locale === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(locale);
 }
 
-export function translate(
-    key: TranslationKey,
-    params?: TranslationParams,
-    locale: SupportedLocale = DEFAULT_LOCALE
-): string {
+export function translate(key: TranslationKey, params?: TranslationParams, locale: SupportedLocale = DEFAULT_LOCALE): string {
     const activeLocale = isSupportedLocale(locale) ? locale : DEFAULT_LOCALE;
     const dictionary = DICTIONARIES[activeLocale];
 
@@ -62,22 +59,34 @@ export function useTranslation() {
         locale = DEFAULT_LOCALE;
     }
 
-    const t = (key: TranslationKey, params?: TranslationParams): string => {
-        return translate(key, params, locale);
-    };
+    const t = useCallback(
+        (key: TranslationKey, params?: TranslationParams): string => {
+            return translate(key, params, locale);
+        },
+        [locale],
+    );
 
-    return {
-        t,
-        locale,
-        formatDate: (date: string | Date | null | undefined, pattern?: string) =>
-            formatDate(date, pattern, locale),
-        formatDateTime: (date: string | Date | null | undefined) =>
-            formatDateTime(date, locale),
-        formatNumber: (value: number | null | undefined, options?: Intl.NumberFormatOptions) =>
-            formatNumber(value, locale, options),
-    };
+    const boundFormatDate = useCallback((date: string | Date | null | undefined, pattern?: string) => formatDate(date, pattern, locale), [locale]);
+
+    const boundFormatDateTime = useCallback((date: string | Date | null | undefined) => formatDateTime(date, locale), [locale]);
+
+    const boundFormatNumber = useCallback(
+        (value: number | null | undefined, options?: Intl.NumberFormatOptions) => formatNumber(value, locale, options),
+        [locale],
+    );
+
+    return useMemo(
+        () => ({
+            t,
+            locale,
+            formatDate: boundFormatDate,
+            formatDateTime: boundFormatDateTime,
+            formatNumber: boundFormatNumber,
+        }),
+        [t, locale, boundFormatDate, boundFormatDateTime, boundFormatNumber],
+    );
 }
 
-export * from './types';
-export * from './schema';
 export * from './formatters';
+export * from './schema';
+export * from './types';

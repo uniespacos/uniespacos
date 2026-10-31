@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { TURNO_LABEL, TURNOS_ORDENADOS } from '@/constants/turnos';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { UserSearchCombobox } from '@/presentation/molecules/UserSearchComboBox';
 import type { Espaco, User } from '@/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -64,7 +64,7 @@ export function GerenciarGestoresModal({ espaco, usuarios, isOpen, onClose, onSa
     if (!espaco) return null;
 
     return (
-        <Modal
+        <ResponsiveModal
             open={isOpen}
             onOpenChange={(open) => {
                 if (!open) {
@@ -101,6 +101,6 @@ export function GerenciarGestoresModal({ espaco, usuarios, isOpen, onClose, onSa
                     </Button>
                 </div>
             </div>
-        </Modal>
+        </ResponsiveModal>
     );
 }

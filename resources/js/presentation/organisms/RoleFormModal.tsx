@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getGroupLabel, getPermissionLabel } from '@/constants/permission-labels';
 import { FormField } from '@/presentation/molecules/FormField';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import type { Permission, Role } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
@@ -126,11 +126,14 @@ export function RoleFormModal({ isOpen, role, permissions, onClose }: RoleFormMo
     const slugSuggestion = nameValue && !/^[a-z][a-z0-9-]*$/.test(nameValue) ? slugify(nameValue) : null;
 
     return (
-        <Modal
+        <ResponsiveModal
             open={isOpen}
-            onOpenChange={onClose}
-            size="xl"
-            className="max-h-[90vh] max-w-5xl overflow-y-auto"
+            onOpenChange={(open) => {
+                if (!open) {
+                    onClose();
+                }
+            }}
+            size="5xl"
             title={role ? 'Editar Papel' : 'Criar Novo Papel'}
             description={role ? 'Atualize os detalhes do papel' : 'Crie um novo papel customizado'}
         >
@@ -244,6 +247,6 @@ export function RoleFormModal({ isOpen, role, permissions, onClose }: RoleFormMo
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </ResponsiveModal>
     );
 }

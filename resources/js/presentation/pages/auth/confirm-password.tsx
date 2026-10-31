@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
 import InputError from '@/presentation/atoms/InputError';
 import { PasswordInput } from '@/presentation/atoms/PasswordInput';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
 export default function ConfirmPassword() {
     const { t } = useTranslation();
@@ -25,7 +25,7 @@ export default function ConfirmPassword() {
     };
 
     return (
-        <AuthLayout title={t('auth.confirmPassword.title')} description={t('auth.confirmPassword.subtitle')} maxWidth="md">
+        <AuthSplitLayout title={t('auth.confirmPassword.title')} description={t('auth.confirmPassword.subtitle')} maxWidth="md">
             <Head title={t('auth.confirmPassword.head_title')} />
 
             <div className="flex justify-center sm:justify-start">
@@ -66,6 +66,6 @@ export default function ConfirmPassword() {
                     )}
                 </Button>
             </form>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

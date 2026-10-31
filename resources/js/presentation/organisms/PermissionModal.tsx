@@ -10,7 +10,7 @@ import { PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS, ROLE_COMUM, ROLE_GEST
 import { roleLabel } from '@/constants/role-labels';
 import { useTranslation } from '@/i18n';
 import { hasPermission } from '@/lib/auth';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import FiltroBuscaPermission from '@/presentation/organisms/FiltroBuscaPermission';
 import { Instituicao, Permission, SelectedAgenda, User } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -121,11 +121,14 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
     const instituicoes = context?.instituicoes ?? [];
 
     return (
-        <Modal
+        <ResponsiveModal
             open={isOpen}
-            onOpenChange={onClose}
-            size="xl"
-            className="max-h-[90vh] max-w-5xl overflow-y-auto"
+            onOpenChange={(open) => {
+                if (!open) {
+                    onClose();
+                }
+            }}
+            size="5xl"
             title={`Gerenciar Permissões - ${user.name}`}
             description="Defina o papel do usuário e, se necessário, conceda permissões diretas adicionais."
         >
@@ -266,6 +269,6 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
                     )}
                 </Tabs>
             )}
-        </Modal>
+        </ResponsiveModal>
     );
 }

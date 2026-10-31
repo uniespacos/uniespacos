@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
-import TabsItemEspacosFavoritos from '@/presentation/molecules/TabsItemEspacosFavoritos';
 import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
+import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, Reserva, User, type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -76,7 +76,9 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                                     UniEspaços
                                 </Badge>
                             </div>
-                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">{t('dashboard.welcome', { name: user.name })}</h1>
+                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                                {t('dashboard.welcome', { name: user.name })}
+                            </h1>
                             <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
                                 {user.setor
                                     ? `${user.setor.nome} (${user.setor.sigla}) • ${t('dashboard.welcome_sub')}`
@@ -114,7 +116,7 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                                     router.get(href);
                                 }
                             }}
-                            className="border-border/70 group min-w-0 hover:border-primary/50 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                            className="border-border/70 group hover:border-primary/50 min-w-0 cursor-pointer transition-all duration-200 hover:shadow-sm"
                         >
                             <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
                                 <div className="flex min-w-0 flex-1 items-center gap-3">

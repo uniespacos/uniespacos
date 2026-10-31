@@ -1,4 +1,4 @@
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { SetorForm } from '@/presentation/organisms/SetorForm';
 import { UsuariosSetor } from '@/presentation/organisms/UsuariosSetor';
 import { Instituicao, Setor, Unidade, User } from '@/types';
@@ -32,7 +32,7 @@ export function ModaisSetor({
 
     return (
         <>
-            <Modal
+            <ResponsiveModal
                 open={isCreateModalOpen}
                 onOpenChange={setIsCreateModalOpen}
                 title="Novo Setor"
@@ -49,12 +49,14 @@ export function ModaisSetor({
                         setIsCreateModalOpen(false);
                     }}
                 />
-            </Modal>
+            </ResponsiveModal>
 
-            <Modal
+            <ResponsiveModal
                 open={!!editingSetor}
-                onOpenChange={() => {
-                    setEditingSetor(null);
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditingSetor(null);
+                    }
                 }}
                 title="Editar Setor"
                 description="Altere as informações do setor"
@@ -73,20 +75,21 @@ export function ModaisSetor({
                         }}
                     />
                 )}
-            </Modal>
+            </ResponsiveModal>
 
-            <Modal
+            <ResponsiveModal
                 open={!!viewingUsuarios}
-                onOpenChange={() => {
-                    setViewingUsuarios(null);
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setViewingUsuarios(null);
+                    }
                 }}
                 title="Usuários do Setor"
                 description={`${viewingUsuarios?.nome ?? ''} - ${viewingUsuarios?.unidade?.nome ?? ''}`}
-                size="xl"
-                className="max-h-[90vh] w-full overflow-y-auto sm:max-w-[800px] md:max-w-[900px] lg:max-w-[1000px] xl:max-w-[1200px]"
+                size="5xl"
             >
                 {viewingUsuarios && <UsuariosSetor setor={viewingUsuarios} usuarios={getUsuariosDoSetor(viewingUsuarios.id)} />}
-            </Modal>
+            </ResponsiveModal>
         </>
     );
 }

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/presentation/molecules/FormField';
-import { CadastrarInstituicaoForm } from '@/presentation/pages/Administrativo/Instituicoes/CadastrarInstituicao';
+import { type CadastrarInstituicaoForm } from '@/types/admin-forms';
 import type React from 'react';
 
 interface InstituicaoFormProps {

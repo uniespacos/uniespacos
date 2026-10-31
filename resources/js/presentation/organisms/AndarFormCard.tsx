@@ -5,15 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getMensagemBloqueioRemocao, nivelParaLabel, podeRemoverAndar } from '@/lib/utils/andars/AndarHelpers';
 import { FormField } from '@/presentation/molecules/FormField';
+import { type AndarFormData } from '@/types/admin-forms';
 import { AlertTriangle, Lock, Trash2 } from 'lucide-react';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
-export type AndarFormData = {
-    id: string;
-    nome: string;
-    nivel: number;
-    tipo_acesso: string[];
-};
+export type { AndarFormData };
 
 interface AndarCardProps {
     andar: AndarFormData;
@@ -82,7 +77,9 @@ export default function AndarFormCard({ andar, onUpdate, onRemove, todosAndares,
                                             onRemove(andar.id);
                                         }}
                                         disabled={!podeRemover}
-                                        className={!podeRemover ? 'cursor-not-allowed opacity-50' : 'text-destructive-accent hover:text-destructive-accent'}
+                                        className={
+                                            !podeRemover ? 'cursor-not-allowed opacity-50' : 'text-destructive-accent hover:text-destructive-accent'
+                                        }
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>

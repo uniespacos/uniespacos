@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import Echo from 'laravel-echo';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import Pusher from 'pusher-js';
@@ -7,20 +7,42 @@ import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'UniEspaços';
+let echoInstance: Echo<'reverb'> | undefined;
 
-window.Pusher = Pusher as unknown as typeof window.Pusher; // Certifique-se de que o Pusher está disponível globalmente
+function syncEchoWithAuthState(pageProps: Record<string, unknown> | undefined): void {
+    const auth = pageProps?.auth as { user?: unknown } | undefined;
+    const isAuthenticated = Boolean(auth?.user);
 
-// Configure Echo using Vite environment variables directly from .env.dev
-window.Echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST, // Use host from .env.dev
-    wssHost: import.meta.env.VITE_REVERB_HOST, // Use host from .env.dev
-    wsPort: import.meta.env.VITE_REVERB_SCHEME === 'https' ? 443 : parseInt(import.meta.env.VITE_REVERB_PORT ?? '80', 10) || 80,
-    wssPort: parseInt(import.meta.env.VITE_REVERB_PORT ?? '443', 10) || 443,
-    forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
-    enabledTransports: ['ws', 'wss'],
-    disableStats: true,
+    if (!isAuthenticated) {
+        if (echoInstance) {
+            echoInstance.disconnect();
+            echoInstance = undefined;
+            delete (window as Partial<Window>).Echo;
+        }
+        return;
+    }
+
+    if (echoInstance || !import.meta.env.VITE_REVERB_APP_KEY) {
+        return;
+    }
+
+    window.Pusher = Pusher as unknown as typeof window.Pusher;
+    echoInstance = new Echo({
+        broadcaster: 'reverb',
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost: import.meta.env.VITE_REVERB_HOST,
+        wssHost: import.meta.env.VITE_REVERB_HOST,
+        wsPort: import.meta.env.VITE_REVERB_SCHEME === 'https' ? 443 : parseInt(import.meta.env.VITE_REVERB_PORT ?? '80', 10) || 80,
+        wssPort: parseInt(import.meta.env.VITE_REVERB_PORT ?? '443', 10) || 443,
+        forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
+        enabledTransports: ['ws', 'wss'],
+        disableStats: true,
+    });
+    window.Echo = echoInstance;
+}
+
+router.on('navigate', (event) => {
+    syncEchoWithAuthState(event.detail.page.props);
 });
 
 void createInertiaApp({
@@ -31,6 +53,8 @@ void createInertiaApp({
             import.meta.glob(['./presentation/pages/**/*.tsx', '!./presentation/pages/**/*.test.tsx', '!./presentation/pages/**/*.spec.tsx']),
         ),
     setup({ el, App, props }) {
+        syncEchoWithAuthState(props.initialPage.props);
+
         const root = createRoot(el);
 
         root.render(<App {...props} />);
@@ -40,5 +64,4 @@ void createInertiaApp({
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();

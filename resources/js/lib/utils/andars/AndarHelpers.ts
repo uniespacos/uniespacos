@@ -1,4 +1,4 @@
-import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
+import { type AndarFormData } from '@/types/admin-forms';
 
 // Função para gerar ID único
 function generateId(): string {

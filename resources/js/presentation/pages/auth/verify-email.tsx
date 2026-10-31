@@ -5,7 +5,7 @@ import { SyntheticEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import TextLink from '@/presentation/atoms/TextLink';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     const { t } = useTranslation();
@@ -32,7 +32,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
     };
 
     return (
-        <AuthLayout title={t('auth.verifyEmail.title')} description={t('auth.verifyEmail.subtitle')} maxWidth="md">
+        <AuthSplitLayout title={t('auth.verifyEmail.title')} description={t('auth.verifyEmail.subtitle')} maxWidth="md">
             <Head title={t('auth.verifyEmail.head_title')} />
 
             <div className="flex justify-center sm:justify-start">
@@ -70,6 +70,6 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     </TextLink>
                 </div>
             </form>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

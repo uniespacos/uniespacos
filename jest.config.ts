@@ -18,7 +18,7 @@ const config: Config.InitialOptions = {
             },
         ],
     },
-    testMatch: ['<rootDir>/resources/js/**/*.test.(ts|tsx)'],
+    testMatch: ['**/resources/js/**/*.test.(ts|tsx)'],
 };
 
 export default config;
