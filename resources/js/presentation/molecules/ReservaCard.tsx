@@ -7,8 +7,18 @@ import { useCan } from '@/lib/auth-can';
 import { cn } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
-import { Reserva } from '@/types';
+import { Horario, Reserva } from '@/types';
 import { Calendar, Clock, Edit, FileText, MapPin, User, XCircle } from 'lucide-react';
+
+type HorarioComIntervalo = Partial<Pick<Horario, 'horario_inicio' | 'horario_fim'>>;
+
+function extrairIntervalo(horario: HorarioComIntervalo | undefined): { inicio: string; fim: string } | null {
+    if (typeof horario?.horario_inicio !== 'string' || typeof horario.horario_fim !== 'string') {
+        return null;
+    }
+
+    return { inicio: horario.horario_inicio.slice(0, 5), fim: horario.horario_fim.slice(0, 5) };
+}
 
 interface ReservaCardProps {
     reserva: Reserva;
@@ -29,16 +39,12 @@ export function ReservaCard({ reserva, isGestor, onDetalhes, onAvaliar, onEditar
     const hasEvalPermission = useCan({ permission: PERMISSION_RESERVAS_AVALIAR });
     const isModoGestor = isGestor ?? hasEvalPermission;
 
-    const primeiroHorario = reserva.horarios[0];
-    const resumoHorarios =
-        reserva.horarios.length === 1
-            ? t('reservas.card.horario_unico', {
-                  inicio: primeiroHorario.horario_inicio.slice(0, 5),
-                  fim: primeiroHorario.horario_fim.slice(0, 5),
-              })
-            : reserva.horarios.length > 1
-              ? t('reservas.card.horarios_count', { count: reserva.horarios.length })
-              : null;
+    const intervaloUnico = reserva.horarios.length === 1 ? extrairIntervalo(reserva.horarios[0]) : null;
+    const resumoHorarios = intervaloUnico
+        ? t('reservas.card.horario_unico', intervaloUnico)
+        : reserva.horarios.length > 1
+          ? t('reservas.card.horarios_count', { count: reserva.horarios.length })
+          : null;
 
     return (
         <div className="bg-card border-border/80 relative flex w-full min-w-0 overflow-hidden rounded-xl border shadow-xs transition-all duration-200 active:scale-[0.99]">
