@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0-rc.104](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.103...v1.5.0-rc.104) (2026-10-31)
+
+
+### Features
+
+* **frontend:** padronizar telas de cadastro e edição de instituição, unidade e espaço ([12a511f](https://github.com/uniespacos/uniespacos/commit/12a511ffda9ce73fd4d96a0ae1567d4208848a6f))
+
+
+### Bug Fixes
+
+* corrigir tela de espaço institucional e barra dupla em URL de storage ([8e6bb54](https://github.com/uniespacos/uniespacos/commit/8e6bb54fa3fedf55e669be6c01734e8748558942))
+* **frontend:** corrigir títulos e layout de cadastro/edição de módulo ([5a7a7b8](https://github.com/uniespacos/uniespacos/commit/5a7a7b8f3a0045c4dc1d5e7a0d938fcf7acc4e7f))
+* **frontend:** garantir título de aba e h1 coerentes em todas as telas ([cbf0ba3](https://github.com/uniespacos/uniespacos/commit/cbf0ba3aee4f43fdff4528b7f70be94eaee36eb8))
+* **frontend:** impedir overflow horizontal do conteúdo com sidebar recolhida ([8d7b577](https://github.com/uniespacos/uniespacos/commit/8d7b577be6afd83922f4c6f724709ce0064f81e0))
+* **frontend:** unificar montagem de URL de imagens de storage ([195cd55](https://github.com/uniespacos/uniespacos/commit/195cd55599a9739c810bcc7624e8a6f71db7dbfd))
+
 ## [1.5.0-rc.103](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.102...v1.5.0-rc.103) (2026-10-31)
 
 
