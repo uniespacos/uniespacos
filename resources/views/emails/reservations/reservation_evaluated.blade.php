@@ -1,11 +1,11 @@
 @extends('emails.layout')
 
 @section('content')
-    <p>Prezado(a) {{ $reserva->user->name }},</p>
+    <p>Prezado(a) {{ $reserva->user?->name ?? 'Solicitante não identificado' }},</p>
     <p>Sua reserva para <strong>'{{ $reserva->titulo }}'</strong> foi avaliada.</p>
 
     <ul>
-        <li><strong>Solicitante:</strong> {{ $reserva->user->name }}</li>
+        <li><strong>Solicitante:</strong> {{ $reserva->user?->name ?? 'Solicitante não identificado' }}</li>
         <li><strong>Avaliador:</strong> {{ $evaluator->name }}</li>
         <li><strong>Status da Avaliação:</strong> {{ ucfirst($statusAvaliacao) }}</li>
         @php

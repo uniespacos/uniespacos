@@ -403,12 +403,6 @@ parameters:
 			path: app/Http/Controllers/Settings/ProfileController.php
 
 		-
-			message: '#^Cannot call method delete\(\) on App\\Models\\User\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/Settings/ProfileController.php
-
-		-
 			message: '#^Cannot call method fill\(\) on App\\Models\\User\|null\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -814,12 +808,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$horario_inicio\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Cannot call method notify\(\) on App\\Models\\User\|null\.$#'
-			identifier: method.nonObject
-			count: 1
 			path: app/Jobs/AvaliarReservaJob.php
 
 		-

@@ -367,6 +367,41 @@ Agora, ambos os eixos são **independentes**:
 
 ---
 
+## Exclusão de Conta Não Usa Soft-Delete
+
+Este documento trata de reservas. Conta de usuário segue outro caminho: a `User` não usa SoftDeletes, e `$user->delete()` era uma exclusão física, com `onDelete set null` apagando o vínculo de reservas, horários e agendas. Esse caminho foi removido (T-25, decisão P-05 de 2026-10-31: anonimizar preservando a rastreabilidade).
+
+| Aspecto | Cancelamento de reserva | Exclusão de conta |
+|---------|------------------------|-------------------|
+| Mecanismo | `situacao = 'inativa'` (eixo de arquivo) | Anonimização da linha de `users` |
+| Linha | Permanece | Permanece |
+| Vínculo com histórico | `reservas.user_id` intacto | `reservas.user_id` e `horarios.user_id` intactos |
+| Dados pessoais | Não há o que apagar | Nome, e-mail, telefone, foto, senha, sessões, notificações e favoritos saem |
+| Ponto de entrada | `ReservaService::cancel()` | `ExclusaoDeContaService::anonimizar()`, usado pela autoexclusão e pelo institucional |
+| Reversível | Não (estado final) | Não |
+
+### Fluxo da Anonimização
+
+Tudo acontece em `DB::transaction` no `ExclusaoDeContaService`. Se qualquer passo falhar, nada é aplicado:
+
+1. Notificações do titular, favoritos e papéis/permissões Spatie são removidos.
+2. A linha de `users` recebe `name = 'Usuário anonimizado'`, `email = anonimizado-{id}@invalid`, senha aleatória, telefone e foto vazios, e `remember_token`, `email_verified_at` e 2FA nulos.
+3. Sessões do titular e token de redefinição de senha (pelo e-mail original) são removidos.
+
+Depois do commit, a foto em `avatars/` é apagada do disco `public`. Nada é apagado antes do commit, para que um rollback não deixe o usuário sem foto.
+
+### Trava para Gestor de Agenda
+
+Usuário que ainda gere alguma agenda não é anonimizado. Enquanto `agendas.user_id` apontar para ele, a agenda ficaria sem quem avalie as reservas, e o titular, que não consegue mais entrar, não poderia ser substituído. A exceção `ContaNaoPodeSerAnonimizadaException` é lançada antes de qualquer alteração. Para liberar a conta, o institucional remove a gestão das agendas pelo cadastro de usuários (`UserService::updatePermissions()` desvincula as agendas) e a exclusão é repetida.
+
+### Efeito nas Reservas do Titular Anonimizado
+
+- Listagem, detalhe, avaliação, cancelamento e conflitos continuam funcionando, porque a linha de `users` existe.
+- A detecção de conflito não depende mais do titular da reserva concorrente. Antes, o `JOIN users` descartava conflitos de reservas sem titular.
+- E-mails de reserva mostram `Solicitante não identificado` quando `reservas.user_id` é nulo (registros anteriores a esta mudança, que tiveram o titular removido fisicamente).
+
+Consulte [`docs/models-business-rules.md`](./models-business-rules.md#user) para as regras completas da `User`.
+
 ## Resumo Executivo
 
 | Aspecto | Antes (#108) | Depois (#108) |

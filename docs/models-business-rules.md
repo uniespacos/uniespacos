@@ -334,6 +334,28 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
 4. **Notificações broadcast:** Via `receivesBroadcastNotificationsOn()` e `Notifiable`, o sistema pode enviar notificações em tempo real (ex: quando uma reserva é avaliada).
 
+5. **Exclusão de conta é anonimização, não remoção da linha (T-25, decisão P-05):** a linha de `users` nunca é apagada. `ExclusaoDeContaService::anonimizar()` é o único caminho, usado pela autoexclusão (`ProfileController::destroy`) e pela exclusão pelo institucional (`UserService::anonimizar()`). A `User` não usa SoftDeletes; ver [`docs/archive-soft-delete-flow.md`](./archive-soft-delete-flow.md#exclusão-de-conta-não-usa-soft-delete).
+
+   Na mesma `DB::transaction`:
+   - remove as notificações do titular, os favoritos (`espaco_user`) e os papéis e permissões Spatie;
+   - troca o nome por `Usuário anonimizado`, o e-mail por `anonimizado-{id}@invalid`, zera `telefone` e `profile_pic` (string vazia, pois as colunas são NOT NULL), gera senha aleatória de 64 caracteres (a senha antiga deixa de valer) e limpa `remember_token`, `email_verified_at` e os campos de 2FA;
+   - remove as sessões (`sessions.user_id`) e o token de redefinição de senha, localizado pelo e-mail original.
+
+   Depois do commit, apaga o arquivo da foto se `profile_pic` for caminho local `avatars/...`. URL externa não é tocada. Falha ao apagar o arquivo é logada e não desfaz a anonimização.
+
+   **Marcador de conta anonimizada:** `User::estaAnonimizado()` compara o padrão do e-mail (`anonimizado-*@invalid`). Não há coluna nova. `User::notify()` não envia nada a conta anonimizada, nem grava linha em `notifications`, porque o e-mail não existe e o titular pediu eliminação.
+
+   **Preservado de propósito:**
+   - `reservas.user_id` e `horarios.user_id` (avaliador): rastreabilidade. O `onDelete set null` não dispara mais na exclusão de conta.
+   - `users.setor_id`: mantido para os relatórios agregados por instituição (`IndicadoresConsolidadosRelatorio`). Pendência de decisão do encarregado (ver abaixo).
+   - `users.permission_type_id`: NOT NULL, sem uso de domínio.
+
+   **Trava de gestor:** usuário que ainda gere alguma agenda (`agendas.user_id`) não é anonimizado. `ContaNaoPodeSerAnonimizadaException` é lançada antes de qualquer alteração. Na autoexclusão a mensagem volta ao perfil no campo `password`. Na exclusão pelo institucional volta como flash `error`. Para liberar, remover a gestão pelo cadastro de usuários (`UserService::updatePermissions()` desvincula as agendas) e repetir a ação.
+
+   **Efeito nos fluxos de reserva:** o titular anonimizado continua existindo, então listagem, detalhe, avaliação (`AvaliarReservaJob`), cancelamento e conflitos seguem sem nulo. A detecção de conflito (`ConflictDetectionService::findConflictsFor()`) não junta mais com `users`; antes, uma reserva sem titular sumia da detecção. Os e-mails de reserva usam `$reserva->user?->name` com o rótulo `Solicitante não identificado` quando a reserva não tem titular (registros anteriores à anonimização).
+
+   **Fora do alcance desta regra:** `failed_jobs.payload`, backups e dumps (retenção, T-19/T-23); notificações anteriores à T-24, que podem conter o nome de terceiros; fotos já gravadas com metadados (A-19, T-31).
+
 ---
 
 ## Fluxo Integrado: Da Solicitação à Avaliação

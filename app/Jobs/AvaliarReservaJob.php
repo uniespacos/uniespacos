@@ -170,17 +170,21 @@ class AvaliarReservaJob implements ShouldQueue
                 $this->triggerConflictRevalidation($horariosRecemAprovados);
             }
 
-            try {
-                $this->reserva->user->notify(new ReservationEvaluatedNotification(
-                    $this->reserva,
-                    $this->reserva->situacao_formatada,
-                    $this->gestor
-                ));
-            } catch (Exception $e) {
-                Log::warning('Falha ao enviar notificação de avaliação da reserva', [
-                    'reserva_id' => $this->reserva->id,
-                    'exception' => $e,
-                ]);
+            $solicitante = $this->reserva->user;
+
+            if ($solicitante !== null) {
+                try {
+                    $solicitante->notify(new ReservationEvaluatedNotification(
+                        $this->reserva,
+                        $this->reserva->situacao_formatada,
+                        $this->gestor
+                    ));
+                } catch (Exception $e) {
+                    Log::warning('Falha ao enviar notificação de avaliação da reserva', [
+                        'reserva_id' => $this->reserva->id,
+                        'exception' => $e,
+                    ]);
+                }
             }
 
         } catch (Exception $e) {

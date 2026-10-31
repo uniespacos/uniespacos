@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Models\Espaco;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserRepositoryEloquent implements UserRepositoryInterface
 {
@@ -121,11 +124,44 @@ class UserRepositoryEloquent implements UserRepositoryInterface
         return $user;
     }
 
-    /**
-     * Removes an instance of User from the database
-     */
-    public function destroy(int|string $id): bool
+    public function temAgendaGerida(User $user): bool
     {
-        return (bool) $this->user->findOrFail($id)->delete();
+        return $user->agendas()->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $atributos
+     */
+    public function anonimizar(User $user, array $atributos): void
+    {
+        $user->forceFill($atributos)->save();
+    }
+
+    public function removerNotificacoes(User $user): void
+    {
+        $user->notifications()->delete();
+    }
+
+    public function removerFavoritos(User $user): void
+    {
+        $user->favoritos()->detach();
+        Espaco::forgetFavoritosCache($user->id);
+    }
+
+    public function removerPapeisEPermissoes(User $user): void
+    {
+        $user->syncRoles([]);
+        $user->syncPermissions([]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function removerSessoes(User $user): void
+    {
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+    }
+
+    public function removerTokenDeRedefinicaoDeSenha(string $email): void
+    {
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
     }
 }

@@ -60,8 +60,20 @@ interface UserRepositoryInterface
      */
     public function update(array $data, int|string $id): User;
 
+    public function temAgendaGerida(User $user): bool;
+
     /**
-     * Removes an instance of User from the database
+     * @param  array<string, mixed>  $atributos
      */
-    public function destroy(int|string $id): bool;
+    public function anonimizar(User $user, array $atributos): void;
+
+    public function removerNotificacoes(User $user): void;
+
+    public function removerFavoritos(User $user): void;
+
+    public function removerPapeisEPermissoes(User $user): void;
+
+    public function removerSessoes(User $user): void;
+
+    public function removerTokenDeRedefinicaoDeSenha(string $email): void;
 }

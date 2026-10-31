@@ -24,6 +24,7 @@ class UserService
     public function __construct(
         protected UserRepositoryInterface $repoUser,
         protected PermissionRepositoryInterface $repoPermission,
+        protected ExclusaoDeContaService $exclusaoDeConta,
     ) {}
 
     /**
@@ -196,11 +197,8 @@ class UserService
         return $this->repoUser->update($data, $user->id);
     }
 
-    /**
-     * Deletes the given user from the database.
-     */
-    public function delete(User $user): bool
+    public function anonimizar(User $user): void
     {
-        return $this->repoUser->destroy($user->id);
+        $this->exclusaoDeConta->anonimizar($user);
     }
 }

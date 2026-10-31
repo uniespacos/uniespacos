@@ -26,8 +26,14 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
+    public const PREFIXO_EMAIL_ANONIMIZADO = 'anonimizado-';
+
+    public const DOMINIO_EMAIL_ANONIMIZADO = '@invalid';
+
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable;
+    use HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable {
+        notify as protected notificarTitular;
+    }
 
     /**
      * @var list<string>
@@ -102,6 +108,26 @@ class User extends Authenticatable implements MustVerifyEmail
     public function horariosAvaliados(): HasMany
     {
         return $this->hasMany(Horario::class, 'user_id');
+    }
+
+    public static function emailAnonimizado(int $id): string
+    {
+        return self::PREFIXO_EMAIL_ANONIMIZADO.$id.self::DOMINIO_EMAIL_ANONIMIZADO;
+    }
+
+    public function estaAnonimizado(): bool
+    {
+        return str_starts_with($this->email, self::PREFIXO_EMAIL_ANONIMIZADO)
+            && str_ends_with($this->email, self::DOMINIO_EMAIL_ANONIMIZADO);
+    }
+
+    public function notify(mixed $instance): void
+    {
+        if ($this->estaAnonimizado()) {
+            return;
+        }
+
+        $this->notificarTitular($instance);
     }
 
     public function sendEmailVerificationNotification(): void
