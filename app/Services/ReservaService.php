@@ -377,7 +377,7 @@ class ReservaService
             $horario->is_conflicted = false;
             if ($conflitosMap->has($horario->id)) {
                 $horario->is_conflicted = true;
-                $horario->conflict_details = 'Conflito com outra reserva deferida neste horário.';
+                $horario->conflict_details = (string) __('Conflict with another approved reservation at this time.');
             }
         }
 

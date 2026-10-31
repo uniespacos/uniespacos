@@ -27,15 +27,17 @@ class AvaliarReservaJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private const JUSTIFICATIVA_CONFLITO = 'Conflito com outra reserva deferida neste horário.';
-
     public int $tries = 3;
+
+    protected string $locale = 'pt';
 
     public function __construct(
         protected Reserva $reserva,
         protected array $validatedData,
         protected User $gestor,
-    ) {}
+    ) {
+        $this->locale = app()->getLocale();
+    }
 
     /**
      * Execute the job — evaluates each horario based on the gestor's decisions and conflict state.
@@ -80,7 +82,7 @@ class AvaliarReservaJob implements ShouldQueue
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
                             $statusFinal = SituacaoReservaEnum::INDEFERIDA->value;
-                            $justificativaFinal = self::JUSTIFICATIVA_CONFLITO;
+                            $justificativaFinal = $this->justificativaDeConflito();
                         }
 
                         Horario::where('id', $horarioId)
@@ -96,7 +98,7 @@ class AvaliarReservaJob implements ShouldQueue
                         foreach ($horariosConflitantesIds as $id) {
                             Horario::where('id', $id)->whereIn('agenda_id', $agendasDoGestorIds)->update([
                                 'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
-                                'justificativa' => self::JUSTIFICATIVA_CONFLITO,
+                                'justificativa' => $this->justificativaDeConflito(),
                                 'user_id' => $this->gestor->id,
                             ]);
                         }
@@ -189,6 +191,11 @@ class AvaliarReservaJob implements ShouldQueue
             ]);
             $this->fail($e);
         }
+    }
+
+    private function justificativaDeConflito(): string
+    {
+        return (string) __('Conflict with another approved reservation at this time.', [], $this->locale);
     }
 
     /**

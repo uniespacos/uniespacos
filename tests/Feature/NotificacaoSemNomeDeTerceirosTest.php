@@ -94,6 +94,58 @@ class NotificacaoSemNomeDeTerceirosTest extends TestCase
         $this->assertSame($cancelador->id, $data['cancelador_id']);
     }
 
+    public function test_notificacao_nova_reserva_grava_chave_e_parametros_sem_nome_do_solicitante(): void
+    {
+        $this->gestor->notify(new NewReservationNotification($this->reserva));
+
+        $raw = $this->dadosBrutosNoBanco($this->gestor->id, NewReservationNotification::class);
+        $this->assertStringNotContainsString(self::NOME_SOLICITANTE, $raw);
+
+        $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('reservas.nova_solicitacao', $data['chave']);
+        $this->assertSame(['titulo_reserva' => 'Reunião Semestral'], $data['parametros']);
+    }
+
+    public function test_notificacao_cancelamento_grava_chave_e_parametros_sem_nome_do_cancelador(): void
+    {
+        $cancelador = User::factory()->create(['name' => self::NOME_CANCELADOR]);
+
+        $this->gestor->notify(new ReservationCanceledNotification($this->reserva, $cancelador));
+
+        $raw = $this->dadosBrutosNoBanco($this->gestor->id, ReservationCanceledNotification::class);
+        $this->assertStringNotContainsString(self::NOME_CANCELADOR, $raw);
+
+        $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('reservas.cancelada', $data['chave']);
+        $this->assertSame(['titulo_reserva' => 'Reunião Semestral'], $data['parametros']);
+    }
+
+    public function test_descricao_da_nova_reserva_segue_o_locale_em_vigor(): void
+    {
+        app()->setLocale('en');
+        $descricaoEn = (new NewReservationNotification($this->reserva))->toArray($this->gestor)['descricao'];
+
+        app()->setLocale('pt_BR');
+        $descricaoPt = (new NewReservationNotification($this->reserva))->toArray($this->gestor)['descricao'];
+
+        $this->assertSame("A new reservation request for 'Reunião Semestral' was submitted.", $descricaoEn);
+        $this->assertSame("Uma nova solicitação de reserva para 'Reunião Semestral' foi enviada.", $descricaoPt);
+    }
+
+    public function test_descricao_do_cancelamento_segue_o_locale_em_vigor(): void
+    {
+        $cancelador = User::factory()->create();
+
+        app()->setLocale('en');
+        $descricaoEn = (new ReservationCanceledNotification($this->reserva, $cancelador))->toArray($this->gestor)['descricao'];
+
+        app()->setLocale('pt_BR');
+        $descricaoPt = (new ReservationCanceledNotification($this->reserva, $cancelador))->toArray($this->gestor)['descricao'];
+
+        $this->assertSame('The reservation "Reunião Semestral" was canceled.', $descricaoEn);
+        $this->assertSame('A reserva "Reunião Semestral" foi cancelada.', $descricaoPt);
+    }
+
     private function dadosBrutosNoBanco(int $notifiableId, string $type): string
     {
         $raw = DB::table('notifications')

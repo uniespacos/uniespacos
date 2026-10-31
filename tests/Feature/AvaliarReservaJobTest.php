@@ -610,4 +610,89 @@ class AvaliarReservaJobTest extends TestCase
         $this->assertStringNotContainsString('Maria Concorrente Exclusiva', (string) $horarioAvaliado->justificativa);
         $this->assertStringNotContainsString('Reserva Concorrente Exclusiva', (string) $horarioAvaliado->justificativa);
     }
+
+    public function test_justificativa_de_conflito_usa_o_locale_capturado_na_construcao_do_job_em_ingles(): void
+    {
+        Carbon::setTestNow('2026-06-15 12:00:00');
+        Bus::fake();
+
+        [$gestor, $reserva, $horarioEmConflito] = $this->cenarioDeConflito();
+
+        app()->setLocale('en');
+        $job = new AvaliarReservaJob($reserva, $this->avaliacaoDeConflito($horarioEmConflito), $gestor);
+
+        app()->setLocale('pt_BR');
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertSame(
+            'Conflict with another approved reservation at this time.',
+            (string) Horario::findOrFail($horarioEmConflito->id)->justificativa
+        );
+        $this->assertSame('pt_BR', app()->getLocale());
+    }
+
+    public function test_justificativa_de_conflito_usa_o_locale_capturado_na_construcao_do_job_em_portugues(): void
+    {
+        Carbon::setTestNow('2026-06-15 12:00:00');
+        Bus::fake();
+
+        [$gestor, $reserva, $horarioEmConflito] = $this->cenarioDeConflito();
+
+        app()->setLocale('pt_BR');
+        $job = new AvaliarReservaJob($reserva, $this->avaliacaoDeConflito($horarioEmConflito), $gestor);
+
+        app()->setLocale('en');
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertSame(
+            'Conflito com outra reserva deferida neste horário.',
+            (string) Horario::findOrFail($horarioEmConflito->id)->justificativa
+        );
+        $this->assertSame('en', app()->getLocale());
+    }
+
+    /**
+     * @return array{0: User, 1: Reserva, 2: Horario}
+     */
+    private function cenarioDeConflito(): array
+    {
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $dia = now()->addDay()->toDateString();
+
+        $reserva = Reserva::factory()->create(['situacao' => 'em_analise']);
+        $horarioEmConflito = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        $outraReserva = Reserva::factory()->create(['situacao' => 'deferida']);
+        Horario::factory()->create([
+            'reserva_id' => $outraReserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'deferida',
+            'data' => $dia,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '11:00:00',
+        ]);
+
+        return [$gestor, $reserva, $horarioEmConflito];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function avaliacaoDeConflito(Horario $horarioEmConflito): array
+    {
+        return [
+            'evaluation_scope' => 'single',
+            'motivo' => null,
+            'horarios_avaliados' => [['id' => $horarioEmConflito->id, 'status' => 'deferida']],
+            'observacao' => null,
+        ];
+    }
 }

@@ -173,6 +173,17 @@ export const es = {
         },
     },
     reservas: {
+        conflito_outra_reserva_deferida: 'Conflicto con otra reserva aprobada en este horario.',
+        notificacoes: {
+            nova_solicitacao: {
+                titulo: 'Nueva solicitud de reserva',
+                descricao: "Se envió una nueva solicitud de reserva para '{{titulo_reserva}}'.",
+            },
+            cancelada: {
+                titulo: 'Reserva cancelada',
+                descricao: 'La reserva "{{titulo_reserva}}" fue cancelada.',
+            },
+        },
         titulo: 'Mis Reservas',
         subtitulo: 'Siga el estado e historial de todas sus solicitudes',
         gestor_titulo: 'Gestionar Reservas',

@@ -1,0 +1,7 @@
+{
+    "Conflict with another approved reservation at this time.": "Conflicto con otra reserva aprobada en este horario.",
+    "New Reservation Request": "Nueva solicitud de reserva",
+    "A new reservation request for ':titulo_reserva' was submitted.": "Se envió una nueva solicitud de reserva para ':titulo_reserva'.",
+    "Reservation Canceled": "Reserva cancelada",
+    "The reservation \":titulo_reserva\" was canceled.": "La reserva \":titulo_reserva\" fue cancelada."
+}

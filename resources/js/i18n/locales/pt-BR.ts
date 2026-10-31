@@ -171,6 +171,17 @@ export const ptBR = {
         },
     },
     reservas: {
+        conflito_outra_reserva_deferida: 'Conflito com outra reserva deferida neste horário.',
+        notificacoes: {
+            nova_solicitacao: {
+                titulo: 'Nova Solicitação de Reserva',
+                descricao: "Uma nova solicitação de reserva para '{{titulo_reserva}}' foi enviada.",
+            },
+            cancelada: {
+                titulo: 'Reserva Cancelada',
+                descricao: 'A reserva "{{titulo_reserva}}" foi cancelada.',
+            },
+        },
         titulo: 'Minhas Reservas',
         subtitulo: 'Acompanhe o status e histórico de todas as suas solicitações',
         gestor_titulo: 'Gerenciar Reservas',

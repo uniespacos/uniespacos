@@ -113,7 +113,17 @@ abstract class BaseNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * @return array<string, int|string|null>
+     * Chave de tradução do front (`chave`) e seus parâmetros; o front monta o texto no idioma de quem lê.
+     *
+     * @return array{chave?: string, parametros?: array<string, string>}
+     */
+    protected function traducaoNoFront(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string, mixed>
      */
     private function payload(): array
     {
@@ -121,6 +131,6 @@ abstract class BaseNotification extends Notification implements ShouldQueue
             'titulo' => $this->titulo,
             'descricao' => $this->descricao,
             'url' => $this->url,
-        ], $this->identificadores());
+        ], $this->identificadores(), $this->traducaoNoFront());
     }
 }

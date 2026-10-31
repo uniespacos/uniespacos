@@ -95,7 +95,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
 
                     const horarioFormatado = horarioOriginal.horario_inicio.substring(0, 5);
                     const dataFormatada = format(parse(horarioOriginal.data, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy');
-                    const detalheDoConflito = 'Conflito com outra reserva deferida neste horário.';
+                    const detalheDoConflito = t('reservas.conflito_outra_reserva_deferida');
 
                     return `- Horário das ${horarioFormatado} do dia ${dataFormatada}: Indeferido. ${detalheDoConflito}`;
                 })
@@ -104,7 +104,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
 
             setData('motivo', motivoConflitos);
         }
-    }, [setData, reserva.horarios, todosOsConflitos]);
+    }, [setData, reserva.horarios, todosOsConflitos, t]);
 
     useEffect(() => {
         const horariosParaEnviar = slotsSelecao

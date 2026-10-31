@@ -563,6 +563,14 @@ As duas últimas (3 e 4) existem porque, sem elas, o teste passaria verde mesmo 
 
 Esse teste previne que esse bug ressurja em futuras refatorações.
 
+## Mensagens Traduzíveis no Backend (`__()`)
+
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos; `tests/Unit/LangJsonChavesTest.php` cobre os textos da T-24.
+
+- Locale da request vem de `HandleLocale` (sessão). Em job da fila não há sessão: capture `app()->getLocale()` no construtor e passe `$this->locale` como terceiro argumento de `__()` no `handle()`, sem alterar o locale global do worker.
+- Textos que o front monta com `t()` (dicionários em `resources/js/i18n/locales/`) não passam pelo `lang/`. Notificações usam os dois: `titulo`/`descricao` via `__()` e `chave`/`parametros` para o front (ver `notifications-and-channels.md`).
+- Limitação: o que é persistido já traduzido (ex.: `horarios.justificativa`) fica no idioma de quem gravou.
+
 ## Diferença: Erros Esperados vs Inesperados
 
 | Tipo | Exemplos | Logging | Stack Trace |

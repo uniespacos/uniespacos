@@ -14,8 +14,8 @@ class NewReservationNotification extends BaseNotification
     public function __construct(Reserva $reserva)
     {
         parent::__construct(
-            'Nova Solicitação de Reserva',
-            "Uma nova solicitação de reserva para '{$reserva->titulo}' foi enviada.",
+            (string) __('New Reservation Request'),
+            (string) __("A new reservation request for ':titulo_reserva' was submitted.", ['titulo_reserva' => $reserva->titulo]),
             route('gestor.reservas.show', $reserva->id)
         );
         $this->reserva = $reserva;
@@ -29,6 +29,17 @@ class NewReservationNotification extends BaseNotification
         return [
             'reserva_id' => $this->reserva->id,
             'solicitante_id' => $this->reserva->user_id,
+        ];
+    }
+
+    /**
+     * @return array{chave: string, parametros: array<string, string>}
+     */
+    protected function traducaoNoFront(): array
+    {
+        return [
+            'chave' => 'reservas.nova_solicitacao',
+            'parametros' => ['titulo_reserva' => $this->reserva->titulo],
         ];
     }
 
