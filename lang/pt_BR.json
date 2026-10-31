@@ -11,5 +11,9 @@
     "All rights reserved.": "Todos os direitos reservados.",
     "Hello!": "Olá!",
     "Regards,": "Atenciosamente,",
-    "Whoops!": "Ops!"
+    "Whoops!": "Ops!",
+    "an internal error occurred. Please try again.": "ocorreu uma falha interna. Tente novamente.",
+    "The reason must be a valid text.": "O motivo deve ser um texto válido.",
+    "The reason may not have more than :max characters.": "O motivo não pode ter mais de :max caracteres.",
+    "The description may not have more than :max characters.": "A descrição não pode ter mais de :max caracteres."
 }

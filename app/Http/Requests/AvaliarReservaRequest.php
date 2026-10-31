@@ -32,12 +32,23 @@ class AvaliarReservaRequest extends FormRequest
 
         return [
             'situacao' => ['required', Rule::in(['parcialmente_deferida', 'deferida', 'indeferida', 'em_analise'])],
-            'motivo' => ['required_if:situacao,indeferida', 'nullable'],
+            'motivo' => ['required_if:situacao,indeferida', 'nullable', 'string', 'max:2000'],
             'observacao' => ['nullable', 'string', 'max:500'],
             'horarios_avaliados' => ['required', 'array'],
             'horarios_avaliados.*.status' => ['required', Rule::in($validStatusValues)],
             'horarios_avaliados.*.id' => ['required', 'integer'],
             'evaluation_scope' => ['required', 'string', Rule::in(['recurring', 'single'])],
+        ];
+    }
+
+    /**
+     * Get custom validation messages.
+     */
+    public function messages(): array
+    {
+        return [
+            'motivo.string' => __('The reason must be a valid text.'),
+            'motivo.max' => __('The reason may not have more than :max characters.', ['max' => 2000]),
         ];
     }
 

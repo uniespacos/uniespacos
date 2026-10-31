@@ -146,4 +146,47 @@ class ExceptionContextTest extends TestCase
         $this->assertArrayHasKey('url', $contexto);
         $this->assertArrayHasKey('ip', $contexto);
     }
+
+    /**
+     * Canário de query string: e-mail, token de redefinição, assinatura de URL
+     * e termo de busca costumam viajar na query. Nenhum deles pode chegar ao
+     * contexto do log, nem na URL nem em outro campo.
+     */
+    public function test_context_never_carries_query_string_values(): void
+    {
+        $canarioEmail = 'canario-'.bin2hex(random_bytes(6)).'@test.local';
+        $canarioToken = 'canario-token-'.bin2hex(random_bytes(8));
+        $canarioAssinatura = 'canario-assinatura-'.bin2hex(random_bytes(8));
+        $canarioBusca = 'canario-busca-'.bin2hex(random_bytes(6));
+
+        Route::middleware('web')->get('/__erro-de-teste', function () {
+            throw new RuntimeException('falha proposital com query');
+        });
+
+        $capturado = new TestHandler;
+        Log::swap(new Logger(new MonologLogger('teste', [$capturado])));
+
+        $this->get('/__erro-de-teste?'.http_build_query([
+            'email' => $canarioEmail,
+            'token' => $canarioToken,
+            'signature' => $canarioAssinatura,
+            'search' => $canarioBusca,
+        ]))->assertStatus(500);
+
+        $registro = collect($capturado->getRecords())
+            ->first(fn ($r) => $r['message'] === 'falha proposital com query');
+
+        $this->assertNotNull($registro, 'A exceção deveria ter sido registrada em log.');
+
+        $serializado = json_encode(
+            array_diff_key($registro['context'], ['exception' => true]),
+            JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertStringNotContainsString($canarioEmail, $serializado);
+        $this->assertStringNotContainsString($canarioToken, $serializado);
+        $this->assertStringNotContainsString($canarioAssinatura, $serializado);
+        $this->assertStringNotContainsString($canarioBusca, $serializado);
+        $this->assertStringNotContainsString('?', $registro['context']['url']);
+    }
 }

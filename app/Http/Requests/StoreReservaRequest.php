@@ -26,7 +26,7 @@ class StoreReservaRequest extends FormRequest
     {
         return [
             'titulo' => ['required', 'string', 'max:255'],
-            'descricao' => ['nullable', 'string'],
+            'descricao' => ['nullable', 'string', 'max:2000'],
             'data_inicial' => ['required', 'date', 'after_or_equal:today'],
             'data_final' => ['required', 'date', 'after_or_equal:data_inicial'],
             'recorrencia' => ['required', 'in:unica,15dias,1mes,personalizado'],
@@ -51,6 +51,7 @@ class StoreReservaRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
             'data_inicial.required' => 'A data inicial é obrigatória.',
             'data_inicial.date' => 'A data inicial deve ser uma data válida.',
             'data_inicial.after_or_equal' => 'A data inicial deve ser hoje ou uma data futura.',

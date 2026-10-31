@@ -11,6 +11,7 @@ use App\Http\Requests\StoreInstituicaoRequest;
 use App\Http\Requests\UpdateInstituicaoRequest;
 use App\Models\Instituicao;
 use App\Services\InstituicaoService;
+use App\Support\MensagemDeErro;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -71,7 +72,7 @@ class InstitucionalInstituicaoController extends Controller
             return redirect()->route('institucional.instituicoes.index')
                 ->with('success', 'Instituição atualizada com sucesso.');
         } catch (\Throwable $th) {
-            return back()->withInput()->with('error', 'Erro ao atualizar a instituição: '.$th->getMessage());
+            return back()->withInput()->with('error', 'Erro ao atualizar a instituição: '.MensagemDeErro::paraUsuario($th));
         }
     }
 

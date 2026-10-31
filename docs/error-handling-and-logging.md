@@ -116,6 +116,29 @@ Log::info('Atualização de perfil', [
 ]);
 ```
 
+## Mensagem de Erro ao Usuário
+
+**Arquivo:** `app/Support/MensagemDeErro.php`
+
+`MensagemDeErro::paraUsuario($e)` monta o texto que vai para flash ou resposta ao usuário:
+
+| Tipo de exceção | Texto devolvido | Log |
+|-----------------|-----------------|-----|
+| Exceção de domínio (regra de negócio) | A própria mensagem da exceção | Nenhum |
+| `QueryException` ou `PDOException` | Texto genérico traduzido via `__()`. A chave é `MensagemDeErro::GENERICA` ("an internal error occurred. Please try again."); em pt-BR sai "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
+
+`QueryException` e `PDOException` carregam SQL e valores. Por isso o detalhe vai só para o log.
+
+O parâmetro `registrar` (padrão `true`) evita log duplicado. Passe `registrar: false` quando o chamador já registrou a exceção:
+
+```php
+Log::error('Falha ao criar unidade', ['exception' => $th]);
+
+return back()->with('error', 'Erro ao criar a unidade: '.MensagemDeErro::paraUsuario($th, registrar: false));
+```
+
+**Regra:** nunca concatenar `$e->getMessage()` direto em flash ou resposta. Use sempre `MensagemDeErro::paraUsuario()`.
+
 ## Logging Estruturado
 
 Padrão uniforme de logging em todos os layers da aplicação.
@@ -151,6 +174,18 @@ Log::error('Descrição breve do que falhou', [
 | `Log::info()` | Evento importante (job iniciado, reserva criada, decisão de negócio) |
 | `Log::debug()` | Detalhes de depuração (valor de variável intermediária) |
 
+### Log de Consultas SQL
+
+Flag `DB_LOG_QUERIES` (config `logging.log_queries`, em `config/logging.php`). Registra cada SQL com seus valores (bindings).
+
+| Item | Valor |
+|------|-------|
+| Padrão | `false` |
+| Ambientes | Só `local` e `development` (`App\Support\LogDeConsulta`) |
+| Produção | Nunca ligar |
+
+A flag é aplicada em `AppServiceProvider::boot()`. Fora de `local` e `development`, ela é ignorada. Valores de consulta são dado pessoal, por isso a flag não deve ser ligada em produção.
+
 ### Exemplos Reais do Codebase
 
 #### Em Job — Logging com Try-Catch em Notificações
@@ -162,7 +197,6 @@ public function handle(ExpansaoHorariosService $expansao): void
 {
     Log::info('ProcessarCriacaoReserva started', [
         'solicitante_id' => $this->solicitante->id,
-        'titulo' => $this->dadosRequisicao['titulo'],
     ]);
 
     try {
@@ -193,7 +227,6 @@ public function handle(ExpansaoHorariosService $expansao): void
     } catch (Exception $e) {
         Log::error('ProcessarCriacaoReserva failed', [
             'solicitante_id' => $this->solicitante->id,
-            'titulo' => $this->dadosRequisicao['titulo'],
             'exception' => $e,
         ]);
         $this->fail($e);
@@ -266,10 +299,12 @@ Toda exceção não capturada (ou passada a `report()`) recebe contexto automát
     'user_id' => auth()->id(),           // Null se não autenticado
     'route' => 'reservas.show',          // Nome da rota
     'method' => 'GET',                   // Método HTTP
-    'url' => 'https://app.test/...',     // URL completa
+    'url' => 'https://app.test/reservas/123', // URL SEM query string
     'ip' => '192.168.1.100',             // IP do cliente
 ]
 ```
+
+**Sobre `url`:** é `$request->url()`, sem a query string. A query pode trazer e-mail, token, assinatura de URL ou termo de busca, por isso fica de fora do log.
 
 ### Âmbito de Aplicação
 
@@ -563,6 +598,10 @@ As duas últimas (3 e 4) existem porque, sem elas, o teste passaria verde mesmo 
 
 Esse teste previne que esse bug ressurja em futuras refatorações.
 
+## Mensagens Traduzíveis no Backend (`__()`)
+
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('The reason may not have more than :max characters.', ['max' => 2000])`). Toda chave nova precisa existir nos três arquivos.
+
 ## Diferença: Erros Esperados vs Inesperados
 
 | Tipo | Exemplos | Logging | Stack Trace |
@@ -588,47 +627,54 @@ try {
 
 ### Campos PII (Identificação Pessoal)
 
-Tratados como seguros para log:
+Permitidos em log, porque identificam sem expor a pessoa:
 
-- `user_id`, `email`, `nome`, `cpf`
+- Identificadores numéricos: `user_id`, `reserva_id`, `gestor_id`, `solicitante_id` e similares
+
+Dado pessoal direto não vai para log, porque o arquivo de log não tem controle de acesso por titular nem prazo de eliminação:
+
+- `email`, `nome`, `telefone`, `cpf`
 
 Tratados como sensíveis (nunca logar):
 
 - `password`, `password_confirmation`, `current_password`
 - `_token`, `token` (CSRF/auth tokens)
+- Cabeçalhos de requisição (cookie, token XSRF)
+- URL assinada de verificação de e-mail
+- Query string de qualquer URL
+- Valores de consulta SQL (`DB_LOG_QUERIES`, só em local/development)
+- Textos livres digitados por usuários (título e descrição de reserva, motivo de avaliação)
 - Conteúdo de requisição (`request()->all()`)
 
 ### Limpeza de Logs Antigos
 
-Laravel produz logs diários por padrão (config `config/logging.php`):
+Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/console.php`:
+
+- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**.
+- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
+- **Limpeza agendada:** não existe. `routes/console.php` não agenda nenhum comando de limpeza de logs.
 
 ```php
-'channels' => [
-    'stack' => [
-        'driver' => 'stack',
-        'channels' => ['single', 'daily'],
-    ],
-    'daily' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/laravel.log'),
-        'days' => 14,  // Retém últimos 14 dias
-    ],
-]
+// config/logging.php (trecho)
+'stack' => [
+    'driver' => 'stack',
+    'channels' => explode(',', env('LOG_STACK', 'single')),
+],
+'daily' => [
+    'driver' => 'daily',
+    'path' => storage_path('logs/laravel.log'),
+    'days' => env('LOG_DAILY_DAYS', 14),
+],
 ```
 
-**Em produção:** Cron job ou scheduler remove logs com mais de 30 dias (conforme política de retenção).
-
-```php
-// routes/console.php
-Schedule::command('logs:clear')->weekly();
-```
+**Planejado:** rotação diária com retenção de 14 dias em produção, e limpeza periódica de logs com mais de 30 dias, conforme a política de retenção. Nada disso existe no código hoje.
 
 ### Requisitos de Conformidade
 
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** Mínimo 14 dias (estendível via config)
+4. **Retenção:** Planejado (mínimo 14 dias). Hoje o arquivo padrão (`single`) não rotaciona; ver "Limpeza de Logs Antigos"
 
 **Campos recomendados para auditoria:**
 

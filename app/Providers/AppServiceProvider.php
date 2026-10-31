@@ -47,10 +47,10 @@ use App\Repositories\UnidadeRepositoryEloquent;
 use App\Repositories\UnidadeRepositoryInterface;
 use App\Repositories\UserRepositoryEloquent;
 use App\Repositories\UserRepositoryInterface;
+use App\Support\LogDeConsulta;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -105,9 +105,11 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        if ($this->app->environment('development')) {
-            DB::listen(fn ($query) => Log::info($query->sql, $query->bindings));
-        }
+        LogDeConsulta::configurar(
+            $this->app->environment(),
+            (bool) config('logging.log_queries'),
+            DB::connection(),
+        );
 
         if ($this->app->environment('testing')) {
             Vite::macro('shouldBeIgnored', fn () => true);
