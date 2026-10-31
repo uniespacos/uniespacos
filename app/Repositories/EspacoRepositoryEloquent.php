@@ -72,7 +72,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
         return $this->applyFilters($query, $filters)
-            ->with(['andar.modulo.unidade.instituicao', 'agendas.user'])
+            ->with(['andar.modulo.unidade.instituicao', 'agendas:id,espaco_id,turno,user_id', 'agendas.user:id,name,profile_pic'])
             ->latest()
             ->paginate($perPage);
     }
