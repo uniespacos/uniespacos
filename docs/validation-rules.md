@@ -239,7 +239,7 @@ public static function normalizarNome(string $nome): string
 | Campo | Rules | Propósito |
 |-------|-------|----------|
 | `titulo` | `required`, `string`, `max:255` | Título descritivo da reserva |
-| `descricao` | `nullable`, `string` | Justificativa (opcional) |
+| `descricao` | `nullable`, `string`, `max:2000` | Justificativa (opcional) |
 | `data_inicial` | `required`, `date`, `after_or_equal:today` | Início do período (hoje ou futura) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
 | `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
@@ -266,7 +266,7 @@ public static function normalizarNome(string $nome): string
 | Campo | Rules | Propósito |
 |-------|-------|----------|
 | `titulo` | `required`, `string`, `max:255` | Título descritivo da reserva |
-| `descricao` | `nullable`, `string` | Justificativa (opcional) |
+| `descricao` | `nullable`, `string`, `max:2000` | Justificativa (opcional) |
 | `data_inicial` | `required`, `date` | Início do período (sem validação de data passada) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
 | `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
@@ -287,6 +287,27 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 **Validação HorariosMesmoEspaco:** Mesmo comportamento que em `StoreReservaRequest` — valida que todos os horários estão no mesmo espaço
 
 **Validação HorarioDisponivel:** Mesmo comportamento, mesma regra aplicada aos horários solicitados
+
+---
+
+### AvaliarReservaRequest
+
+**Localização:** `app/Http/Requests/AvaliarReservaRequest.php`
+
+**Context:** Avaliação de horários de uma reserva pelo gestor da agenda
+
+| Campo | Rules | Propósito |
+|-------|-------|----------|
+| `situacao` | `required`, `Rule::in(['parcialmente_deferida', 'deferida', 'indeferida', 'em_analise'])` | Decisão da avaliação |
+| `motivo` | `required_if:situacao,indeferida`, `nullable`, `string`, `max:2000` | Justificativa. Obrigatório quando a situação é `indeferida` |
+
+**Mensagens personalizadas:**
+
+- `motivo.string`: "O motivo deve ser um texto válido."
+- `motivo.max`: "O motivo não pode ter mais de 2000 caracteres."
+- `motivo.required_if` não tem mensagem própria. Usa a tradução padrão de `lang/pt/validation.php`: "O campo :attribute é obrigatório quando :other for :value."
+
+**Regra em `after()`:** cada horário avaliado deve pertencer a uma agenda gerenciada pelo gestor. Caso contrário: "Um ou mais horários pertencem a agendas que você não gerencia."
 
 ---
 
