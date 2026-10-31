@@ -15,14 +15,17 @@ final class MensagemDeErro
 
     /**
      * @param  array<string, mixed>  $contexto
+     * @param  bool  $registrar  Passe false quando o chamador já registra a exceção, para não duplicar o log.
      */
-    public static function paraUsuario(Throwable $e, array $contexto = []): string
+    public static function paraUsuario(Throwable $e, array $contexto = [], bool $registrar = true): string
     {
         if (! self::ehFalhaDeInfraestrutura($e)) {
             return $e->getMessage();
         }
 
-        Log::error('Falha de infraestrutura ao processar ação do usuário', $contexto + ['exception' => $e]);
+        if ($registrar) {
+            Log::error('Falha de infraestrutura ao processar ação do usuário', $contexto + ['exception' => $e]);
+        }
 
         return self::GENERICA;
     }

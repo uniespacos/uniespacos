@@ -103,7 +103,12 @@ class InstitucionalUsuarioController extends Controller
 
             return back()->with('success', 'Permissões atualizadas com sucesso.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Erro ao atualizar permissões: '.MensagemDeErro::paraUsuario($e, ['usuario_alvo_id' => $user->id]));
+            Log::error('Erro ao atualizar permissões do usuário', [
+                'usuario_alvo_id' => $user->id,
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', 'Erro ao atualizar permissões: '.MensagemDeErro::paraUsuario($e, registrar: false));
         }
     }
 

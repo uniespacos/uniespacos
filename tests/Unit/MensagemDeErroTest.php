@@ -59,6 +59,17 @@ class MensagemDeErroTest extends TestCase
     }
 
     #[Test]
+    public function registrar_false_nao_duplica_o_log_de_quem_ja_registra(): void
+    {
+        $excecao = new QueryException('pgsql', 'update "users" set "email" = ?', ['x@test.local'], new PDOException('falha'));
+
+        $mensagem = MensagemDeErro::paraUsuario($excecao, [], registrar: false);
+
+        $this->assertSame(MensagemDeErro::GENERICA, $mensagem);
+        $this->assertCount(0, $this->registrosDeErro());
+    }
+
+    #[Test]
     public function pdo_exception_devolve_texto_generico_sem_o_detalhe_tecnico(): void
     {
         $mensagem = MensagemDeErro::paraUsuario(new PDOException('SQLSTATE[08006] could not translate host name "postgres"'));
