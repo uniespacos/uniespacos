@@ -499,6 +499,18 @@ A intersecção garante que:
 
 ---
 
+## UserPolicy — Contas Anonimizadas
+
+Conta anonimizada (`User::estaAnonimizado()`, e-mail `anonimizado-*@invalid`) não pode mais ser alterada nem recebe papel. Três métodos de `UserPolicy` negam a ação com a mensagem `__('This account is anonymized and can no longer be changed.')` (`Response::deny()`):
+
+- `update()`: editar dados, redefinir senha e reenviar verificação (todas passam por `authorize('update', $usuario)`);
+- `updatePermissions()`: trocar papel e permissões direto, e abrir o contexto de permissões;
+- `delete()`: excluir de novo. A anonimização já é idempotente no serviço, então a negativa só afasta a ação da UI.
+
+Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAnonimizadosTest`.
+
+---
+
 ## Mapeamento de Routes → Policies
 
 | Rota | Método HTTP | Controller | Policy | Requer Permissão | Nota |

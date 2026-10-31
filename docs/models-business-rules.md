@@ -334,6 +334,44 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
 4. **Notificações broadcast:** Via `receivesBroadcastNotificationsOn()` e `Notifiable`, o sistema pode enviar notificações em tempo real (ex: quando uma reserva é avaliada).
 
+5. **Exclusão de conta é anonimização, não remoção da linha (T-25, decisão P-05):** a linha de `users` nunca é apagada. `ExclusaoDeContaService::anonimizar()` é o único caminho, usado pela autoexclusão (`ProfileController::destroy`) e pela exclusão pelo institucional (`UserService::anonimizar()`). A `User` não usa SoftDeletes; ver [`docs/archive-soft-delete-flow.md`](./archive-soft-delete-flow.md#exclusão-de-conta-não-usa-soft-delete).
+
+   Na mesma `DB::transaction`:
+   - remove as notificações do titular, os favoritos (`espaco_user`) e os papéis e permissões Spatie;
+   - grava o nome como marcador `ExclusaoDeContaService::NOME_ANONIMIZADO` (`Usuário anonimizado`), o e-mail por `anonimizado-{id}@invalid`, zera `telefone` e `profile_pic` (string vazia, pois as colunas são NOT NULL), gera senha aleatória de 64 caracteres (a senha antiga deixa de valer) e limpa `remember_token`, `email_verified_at` e os campos de 2FA;
+   - remove as sessões (`sessions.user_id`) e o token de redefinição de senha, localizado pelo e-mail original.
+
+   Depois do commit, apaga o arquivo da foto se `profile_pic` for caminho local `avatars/...`. URL externa não é tocada. Falha ao apagar o arquivo é logada e não desfaz a anonimização.
+
+   **Marcador de conta anonimizada:** `User::estaAnonimizado()` compara o padrão do e-mail (`anonimizado-*@invalid`). Não há coluna nova. `User::notify()` não envia nada a conta anonimizada, nem grava linha em `notifications`, porque o e-mail não existe e o titular pediu eliminação.
+
+   **Nome exibido traduzido na leitura:** o banco guarda o marcador `NOME_ANONIMIZADO` (não traduzido). O accessor `User::name()` (`Attribute::get`) devolve `__('Anonymized user')` quando o valor bruto é esse marcador, no idioma da request (ou do worker, em job) de quem lê; qualquer outro valor volta como está. O accessor não depende da coluna `email`, então funciona nos selects explícitos sem `email`. Consequências:
+   - `getRawOriginal('name')` continua sendo o marcador; `ExclusaoDeContaService::anonimizar()` grava o valor bruto e não é afetado.
+   - Atualização de perfil, factories e `fill()` operam sobre o valor bruto. Ordenação e busca por nome (`UserRepositoryEloquent`) continuam no banco, sobre a coluna bruta.
+   - Serialização Inertia e relatórios leem pelo accessor, então exibem o rótulo traduzido. Consulta crua (`DB::table`/SQL) continua devolvendo o marcador.
+   - Um usuário ativo cujo nome real seja exatamente `Usuário anonimizado` seria exibido traduzido; o caso é improvável e aceito.
+
+   **Preservado de propósito:**
+   - `reservas.user_id` e `horarios.user_id` (avaliador): rastreabilidade. O `onDelete set null` não dispara mais na exclusão de conta.
+   - `users.setor_id`: mantido para os relatórios agregados por instituição (`IndicadoresConsolidadosRelatorio`). Pendência de decisão do encarregado (ver abaixo).
+   - `users.permission_type_id`: NOT NULL, sem uso de domínio.
+
+   **Trava de gestor:** usuário que ainda gere alguma agenda (`agendas.user_id`) não é anonimizado. `ContaNaoPodeSerAnonimizadaException` é lançada antes de qualquer alteração. Na autoexclusão a mensagem volta ao perfil no campo `password`. Na exclusão pelo institucional volta como flash `error`. Para liberar, remover a gestão pelo cadastro de usuários (`UserService::updatePermissions()` desvincula as agendas) e repetir a ação.
+
+   **Efeito nos fluxos de reserva:** o titular anonimizado continua existindo, então listagem, detalhe, avaliação (`AvaliarReservaJob`), cancelamento e conflitos seguem sem nulo. A detecção de conflito (`ConflictDetectionService::findConflictsFor()`) não junta mais com `users`; antes, uma reserva sem titular sumia da detecção. Os e-mails de reserva usam `$reserva->user?->name` com o rótulo `__('Unidentified requester')` quando a reserva não tem titular (registros anteriores à anonimização).
+
+   **Reservas pendentes do titular são canceladas na anonimização (T-25, revisão do responsável):** dentro da mesma `DB::transaction`, toda reserva do titular (`reservas.user_id`) com `situacao = em_analise` é inativada pelo mesmo caminho do cancelamento: `ReservaService::inativar()` marca a reserva e os horários como `inativa`. A seleção trava as linhas (`lockForUpdate`), então uma avaliação concorrente não cruza a anonimização. "Pendente" é só `em_analise` na reserva. Não há filtro por data: como o cancelamento é da reserva inteira, uma reserva em análise com data já passada também é cancelada, para não deixar pendência sem solicitante na fila do gestor. Reservas `deferida`, `indeferida`, `parcialmente_deferida` e `inativa` não são alteradas, e reservas de outros solicitantes também não.
+
+   Os efeitos externos do cancelamento (aviso aos gestores por `ReservationCanceledNotification`, sem nome do titular; revalidação de conflitos; `ReservaEvent` `canceled`, que invalida o cache de relatórios) rodam só depois do commit, em `ExclusaoDeContaService::notificarCancelamentos()`, que chama `ReservaService::notificarCancelamento()`. O pós-commit é explícito, e não via `afterCommit`, porque sob `DatabaseTransactions` nos testes esse callback nunca dispara. Falha de um desses efeitos é logada e não desfaz a anonimização. Se qualquer etapa da transação falhar, a reserva continua em análise e nenhum aviso é enviado. A conta anonimizada não recebe aviso (`User::notify()`).
+
+   **Decisões do responsável registradas:**
+   - Gestor de agenda continua bloqueado de ser anonimizado enquanto gerir alguma agenda (decisão 1). Nenhuma mudança.
+   - `users.setor_id` do titular anonimizado fica preservado (decisão 2), para os relatórios agregados por setor. Nenhuma mudança.
+
+   **Contas anonimizadas na lista administrativa:** `UserRepositoryEloquent::getPaginatedForAdminByInstituicao()` esconde contas anonimizadas por padrão, pelo mesmo padrão do e-mail (`anonimizado-%@invalid`, com os curingas escapados). Com o parâmetro `anonimizados=1` (validado em `ListarUsuariosRequest`), a listagem mostra somente essas contas. Busca por nome e e-mail, ordenação e paginação seguem o filtro, que volta em `filters.anonimizados`. A conta aparece com o nome traduzido e marcada como `anonimizado`, e não recebe editar, redefinir senha, reenviar verificação, alterar papel ou excluir (ver `UserPolicy`).
+
+   **Fora do alcance desta regra:** `failed_jobs.payload`, backups e dumps (retenção, T-19/T-23); notificações anteriores à T-24, que podem conter o nome de terceiros; fotos já gravadas com metadados (A-19, T-31).
+
 ---
 
 ## Fluxo Integrado: Da Solicitação à Avaliação

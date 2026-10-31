@@ -63,6 +63,13 @@ interface ReservaRepositoryInterface
     public function update(array $data, int|string $id): Reserva;
 
     /**
+     * Returns the reservas of the given requester still awaiting evaluation, locked for update
+     *
+     * @return Collection<int, Reserva>
+     */
+    public function getPendentesDoSolicitante(int $userId): Collection;
+
+    /**
      * Removes an instance of Reserva from the database
      */
     public function destroy(int|string $id): bool;

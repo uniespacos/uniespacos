@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Institucional;
 
+use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarUsuariosRequest;
@@ -38,6 +39,7 @@ class InstitucionalUsuarioController extends Controller
             Auth::user(),
             $validated['search'] ?? null,
             isset($validated['setor_id']) ? (int) $validated['setor_id'] : null,
+            (bool) ($validated['anonimizados'] ?? false),
         );
 
         return Inertia::render('Administrativo/Usuarios/Usuarios', $data);
@@ -121,9 +123,11 @@ class InstitucionalUsuarioController extends Controller
         }
 
         try {
-            $this->service->delete($usuario);
+            $this->service->anonimizar($usuario);
 
-            return back()->with('success', 'Usuário excluído com sucesso.');
+            return back()->with('success', __('User account anonymized successfully.'));
+        } catch (ContaNaoPodeSerAnonimizadaException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             Log::error('Erro ao excluir usuário', [
                 'usuario_alvo_id' => $usuario->id,

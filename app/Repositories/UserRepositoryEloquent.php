@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Models\Espaco;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserRepositoryEloquent implements UserRepositoryInterface
 {
@@ -73,9 +76,14 @@ class UserRepositoryEloquent implements UserRepositoryInterface
      * telefone, selo de verificação e o papel). Agendas, permissões e a cadeia
      * de localização NÃO entram aqui: são exclusivas do modal de permissões e
      * chegam sob demanda via getWithPermissionContext() para um único usuário.
+     *
+     * Por padrão, contas anonimizadas ficam fora da listagem. Com $apenasAnonimizados,
+     * a listagem mostra somente elas.
      */
-    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
     {
+        $padraoAnonimizado = $this->padraoLikeEmailAnonimizado();
+
         return $this->user
             ->select(['id', 'name', 'email', 'telefone', 'email_verified_at', 'setor_id'])
             ->whereHas('setor.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
@@ -83,9 +91,25 @@ class UserRepositoryEloquent implements UserRepositoryInterface
                 fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
             ))
             ->when($setorId, fn ($q) => $q->where('setor_id', $setorId))
+            ->when(
+                $apenasAnonimizados,
+                fn ($q) => $q->where('email', 'like', $padraoAnonimizado),
+                fn ($q) => $q->where('email', 'not like', $padraoAnonimizado),
+            )
             ->with('roles:id,name')
             ->orderBy('name')
             ->paginate($perPage);
+    }
+
+    /**
+     * Padrão LIKE do e-mail de conta anonimizada, com os curingas do próprio
+     * prefixo/domínio escapados para casarem literalmente.
+     */
+    private function padraoLikeEmailAnonimizado(): string
+    {
+        $escapar = static fn (string $texto): string => str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $texto);
+
+        return $escapar(User::PREFIXO_EMAIL_ANONIMIZADO).'%'.$escapar(User::DOMINIO_EMAIL_ANONIMIZADO);
     }
 
     /**
@@ -122,11 +146,44 @@ class UserRepositoryEloquent implements UserRepositoryInterface
         return $user;
     }
 
-    /**
-     * Removes an instance of User from the database
-     */
-    public function destroy(int|string $id): bool
+    public function temAgendaGerida(User $user): bool
     {
-        return (bool) $this->user->findOrFail($id)->delete();
+        return $user->agendas()->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $atributos
+     */
+    public function anonimizar(User $user, array $atributos): void
+    {
+        $user->forceFill($atributos)->save();
+    }
+
+    public function removerNotificacoes(User $user): void
+    {
+        $user->notifications()->delete();
+    }
+
+    public function removerFavoritos(User $user): void
+    {
+        $user->favoritos()->detach();
+        Espaco::forgetFavoritosCache($user->id);
+    }
+
+    public function removerPapeisEPermissoes(User $user): void
+    {
+        $user->syncRoles([]);
+        $user->syncPermissions([]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function removerSessoes(User $user): void
+    {
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+    }
+
+    public function removerTokenDeRedefinicaoDeSenha(string $email): void
+    {
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
     }
 }

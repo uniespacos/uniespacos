@@ -91,11 +91,7 @@ abstract class BaseNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'titulo' => $this->titulo,
-            'descricao' => $this->descricao,
-            'url' => $this->url,
-        ];
+        return $this->payload();
     }
 
     /**
@@ -103,10 +99,38 @@ abstract class BaseNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return new BroadcastMessage([
+        return new BroadcastMessage($this->payload());
+    }
+
+    /**
+     * Identificadores persistidos junto da descrição; nunca nomes de pessoas.
+     *
+     * @return array<string, int|null>
+     */
+    protected function identificadores(): array
+    {
+        return [];
+    }
+
+    /**
+     * Chave de tradução do front (`chave`) e seus parâmetros; o front monta o texto no idioma de quem lê.
+     *
+     * @return array{chave?: string, parametros?: array<string, string>}
+     */
+    protected function traducaoNoFront(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(): array
+    {
+        return array_merge([
             'titulo' => $this->titulo,
             'descricao' => $this->descricao,
             'url' => $this->url,
-        ]);
+        ], $this->identificadores(), $this->traducaoNoFront());
     }
 }

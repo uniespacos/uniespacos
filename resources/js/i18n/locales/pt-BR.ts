@@ -171,6 +171,17 @@ export const ptBR = {
         },
     },
     reservas: {
+        conflito_outra_reserva_deferida: 'Conflito com outra reserva deferida neste horário.',
+        notificacoes: {
+            nova_solicitacao: {
+                titulo: 'Nova Solicitação de Reserva',
+                descricao: "Uma nova solicitação de reserva para '{{titulo_reserva}}' foi enviada.",
+            },
+            cancelada: {
+                titulo: 'Reserva Cancelada',
+                descricao: 'A reserva "{{titulo_reserva}}" foi cancelada.',
+            },
+        },
         titulo: 'Minhas Reservas',
         subtitulo: 'Acompanhe o status e histórico de todas as suas solicitações',
         gestor_titulo: 'Gerenciar Reservas',
@@ -632,6 +643,8 @@ export const ptBR = {
         gerenciar_usuarios_desc: 'Visualize e gerencie os usuários cadastrados no sistema',
         buscar_placeholder: 'Buscar por nome, email ou telefone...',
         todos_setores: 'Todos os setores',
+        mostrar_apenas_anonimizadas: 'Mostrar apenas contas anonimizadas',
+        conta_anonimizada: 'Conta anonimizada',
         nenhum_usuario: 'Nenhum usuário encontrado',
         ajustar_busca: 'Tente ajustar sua busca ou filtros selecionados.',
         sem_setor_vinculado: 'Sem setor vinculado',

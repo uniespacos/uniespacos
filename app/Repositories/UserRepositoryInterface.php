@@ -43,7 +43,7 @@ interface UserRepositoryInterface
      * Returns a paginated list of User records for the admin index page,
      * carrying only the columns and the role relation the listing renders.
      */
-    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, int $perPage = 10): LengthAwarePaginator;
+    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator;
 
     /**
      * Returns a single User with the agendas and permission sets the permission modal needs.
@@ -60,8 +60,20 @@ interface UserRepositoryInterface
      */
     public function update(array $data, int|string $id): User;
 
+    public function temAgendaGerida(User $user): bool;
+
     /**
-     * Removes an instance of User from the database
+     * @param  array<string, mixed>  $atributos
      */
-    public function destroy(int|string $id): bool;
+    public function anonimizar(User $user, array $atributos): void;
+
+    public function removerNotificacoes(User $user): void;
+
+    public function removerFavoritos(User $user): void;
+
+    public function removerPapeisEPermissoes(User $user): void;
+
+    public function removerSessoes(User $user): void;
+
+    public function removerTokenDeRedefinicaoDeSenha(string $email): void;
 }

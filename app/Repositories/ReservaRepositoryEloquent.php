@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Reserva;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -150,6 +151,18 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
         $reserva->update($data);
 
         return $reserva;
+    }
+
+    /**
+     * @return Collection<int, Reserva>
+     */
+    public function getPendentesDoSolicitante(int $userId): Collection
+    {
+        return $this->reserva->newQuery()
+            ->where('user_id', $userId)
+            ->where('situacao', SituacaoReservaEnum::EM_ANALISE->value)
+            ->lockForUpdate()
+            ->get();
     }
 
     public function destroy(int|string $id): bool

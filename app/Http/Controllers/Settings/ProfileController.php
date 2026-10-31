@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Settings;
 
+use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteProfileRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\Instituicao;
+use App\Services\ExclusaoDeContaService;
 use App\Services\ProcessadorDeFotoDePerfil;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,13 +79,17 @@ class ProfileController extends Controller
         return to_route('settings.profile.edit');
     }
 
-    public function destroy(DeleteProfileRequest $request): RedirectResponse
+    public function destroy(DeleteProfileRequest $request, ExclusaoDeContaService $exclusaoDeConta): RedirectResponse
     {
-        $user = $request->user();
+        $user = $request->user() ?? throw new AuthenticationException;
+
+        try {
+            $exclusaoDeConta->anonimizar($user);
+        } catch (ContaNaoPodeSerAnonimizadaException $e) {
+            return back()->withErrors(['password' => $e->getMessage()]);
+        }
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

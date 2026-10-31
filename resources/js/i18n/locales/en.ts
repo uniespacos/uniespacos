@@ -173,6 +173,17 @@ export const en = {
         },
     },
     reservas: {
+        conflito_outra_reserva_deferida: 'Conflict with another approved reservation at this time.',
+        notificacoes: {
+            nova_solicitacao: {
+                titulo: 'New Reservation Request',
+                descricao: "A new reservation request for '{{titulo_reserva}}' was submitted.",
+            },
+            cancelada: {
+                titulo: 'Reservation Canceled',
+                descricao: 'The reservation "{{titulo_reserva}}" was canceled.',
+            },
+        },
         titulo: 'My Reservations',
         subtitulo: 'Track the status and history of all your requests',
         gestor_titulo: 'Manage Reservations',
@@ -633,6 +644,8 @@ export const en = {
         gerenciar_usuarios_desc: 'View and manage users registered in the system',
         buscar_placeholder: 'Search by name, email, or phone...',
         todos_setores: 'All sectors',
+        mostrar_apenas_anonimizadas: 'Show only anonymized accounts',
+        conta_anonimizada: 'Anonymized account',
         nenhum_usuario: 'No users found',
         ajustar_busca: 'Try adjusting your search or selected filters.',
         sem_setor_vinculado: 'No department assigned',

@@ -9,12 +9,31 @@ use PHPUnit\Framework\TestCase;
 
 class LangJsonChavesTest extends TestCase
 {
-    private const CHAVES_DE_TEXTO_NOVO = [
+    private const CHAVES_DE_MINIMIZACAO_VALIDACAO_E_FOTO = [
         'an internal error occurred. Please try again.',
         'The reason must be a valid text.',
         'The reason may not have more than :max characters.',
         'The description may not have more than :max characters.',
         'The uploaded image could not be processed. Please send another file.',
+    ];
+
+    private const CHAVES_DE_TEXTO_NOVO = [
+        'Conflict with another approved reservation at this time.',
+        'New Reservation Request',
+        "A new reservation request for ':titulo_reserva' was submitted.",
+        'Reservation Canceled',
+        'The reservation ":titulo_reserva" was canceled.',
+    ];
+
+    private const CHAVES_DE_TEXTO_DA_T25 = [
+        'This account cannot be deleted while it manages a schedule. Ask the institutional team to remove the schedule management first.',
+        'User account anonymized successfully.',
+        'Anonymized user',
+        'Unidentified requester',
+    ];
+
+    private const CHAVES_DE_TEXTO_DA_REVISAO_T25 = [
+        'This account is anonymized and can no longer be changed.',
     ];
 
     /**
@@ -30,12 +49,38 @@ class LangJsonChavesTest extends TestCase
     #[DataProvider('arquivosDeIdiomaProvider')]
     public function test_textos_novos_de_minimizacao_validacao_e_foto_existem_em_cada_arquivo_de_idioma(string $arquivo): void
     {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_MINIMIZACAO_VALIDACAO_E_FOTO);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_textos_novos_da_t24_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_TEXTO_NOVO);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_textos_novos_da_t25_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_TEXTO_DA_T25);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_textos_da_revisao_da_t25_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_TEXTO_DA_REVISAO_T25);
+    }
+
+    /**
+     * @param  list<string>  $chaves
+     */
+    private function assertChavesTraduzidas(string $arquivo, array $chaves): void
+    {
         $caminho = dirname(__DIR__, 2).'/lang/'.$arquivo;
         $traducoes = json_decode((string) file_get_contents($caminho), true, 512, JSON_THROW_ON_ERROR);
 
         $this->assertIsArray($traducoes);
 
-        foreach (self::CHAVES_DE_TEXTO_NOVO as $chave) {
+        foreach ($chaves as $chave) {
             $this->assertArrayHasKey($chave, $traducoes, "Chave ausente em {$arquivo}: {$chave}");
             $this->assertIsString($traducoes[$chave]);
             $this->assertNotSame('', $traducoes[$chave], "Tradução vazia em {$arquivo}: {$chave}");

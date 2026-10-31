@@ -6,7 +6,7 @@
 
     <ul>
         <li><strong>Título da Reserva:</strong> {{ $reserva->titulo }}</li>
-        <li><strong>Solicitante:</strong> {{ $reserva->user->name }}</li>
+        <li><strong>Solicitante:</strong> {{ $reserva->user?->name ?? __('Unidentified requester') }}</li>
         @php
             $primeiroHorario = $reserva->horarios->first();
             $espaco = $primeiroHorario ? $primeiroHorario->agenda->espaco : null;

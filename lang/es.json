@@ -3,5 +3,15 @@
     "The reason must be a valid text.": "El motivo debe ser un texto válido.",
     "The reason may not have more than :max characters.": "El motivo no puede tener más de :max caracteres.",
     "The description may not have more than :max characters.": "La descripción no puede tener más de :max caracteres.",
-    "The uploaded image could not be processed. Please send another file.": "La imagen enviada no se pudo procesar. Envíe otro archivo."
+    "The uploaded image could not be processed. Please send another file.": "La imagen enviada no se pudo procesar. Envíe otro archivo.",
+    "Conflict with another approved reservation at this time.": "Conflicto con otra reserva aprobada en este horario.",
+    "New Reservation Request": "Nueva solicitud de reserva",
+    "A new reservation request for ':titulo_reserva' was submitted.": "Se envió una nueva solicitud de reserva para ':titulo_reserva'.",
+    "Reservation Canceled": "Reserva cancelada",
+    "The reservation \":titulo_reserva\" was canceled.": "La reserva \":titulo_reserva\" fue cancelada.",
+    "This account cannot be deleted while it manages a schedule. Ask the institutional team to remove the schedule management first.": "No se puede eliminar esta cuenta mientras sea gestora de agenda. Pida al equipo institucional que primero quite la gestión de agendas.",
+    "User account anonymized successfully.": "La cuenta del usuario fue anonimizada correctamente.",
+    "Anonymized user": "Usuario anonimizado",
+    "This account is anonymized and can no longer be changed.": "Esta cuenta fue anonimizada y ya no puede modificarse.",
+    "Unidentified requester": "Solicitante no identificado"
 }

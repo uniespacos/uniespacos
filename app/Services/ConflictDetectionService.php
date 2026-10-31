@@ -21,8 +21,7 @@ class ConflictDetectionService
         $rows = DB::select('
             SELECT
                 h_checar.id AS horario_checado_id,
-                r_conflito.titulo AS conflito_reserva_titulo,
-                u_conflito.name AS conflito_user_name
+                r_conflito.titulo AS conflito_reserva_titulo
             FROM horarios AS h_checar
             JOIN horarios AS h_conflito
                 ON  h_checar.reserva_id = ?
@@ -33,7 +32,6 @@ class ConflictDetectionService
                 AND h_conflito.horario_inicio < h_checar.horario_fim
                 AND h_conflito.horario_fim > h_checar.horario_inicio
             JOIN reservas AS r_conflito ON r_conflito.id = h_conflito.reserva_id
-            JOIN users    AS u_conflito ON u_conflito.id = r_conflito.user_id
         ', [$reservaId]);
 
         return collect($rows)->keyBy('horario_checado_id');
