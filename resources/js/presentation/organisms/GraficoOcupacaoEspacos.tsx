@@ -1,7 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { TabelaDetalhamento } from '@/presentation/organisms/TabelaDetalhamento';
 import { DadosRelatorio } from '@/types';
+import { Gauge } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 interface Props {
@@ -16,6 +19,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function GraficoOcupacaoEspacos({ dados }: Props) {
+    const { t } = useTranslation();
+
     if (dados.linhas.length === 0) {
         return (
             <Card>
@@ -23,7 +28,7 @@ function GraficoOcupacaoEspacos({ dados }: Props) {
                     <CardTitle className="text-base">{dados.titulo}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-sm">Nenhum dado de ocupação para os filtros selecionados.</p>
+                    <EmptyState size="compact" icon={Gauge} title={t('relatorios.empty_chart.ocupacao')} />
                 </CardContent>
             </Card>
         );

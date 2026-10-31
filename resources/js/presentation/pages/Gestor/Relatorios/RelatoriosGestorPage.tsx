@@ -6,6 +6,7 @@ import { TipoRelatorio, type FormatoRelatorioType, type TipoRelatorioType } from
 import { useDadosRelatorio } from '@/hooks/use-dados-relatorio';
 import { useGerarRelatorio } from '@/hooks/use-gerar-relatorio';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { ExportarRelatorio } from '@/presentation/organisms/ExportarRelatorio';
 import { FiltrosInventarioEspacos } from '@/presentation/organisms/FiltrosInventarioEspacos';
@@ -74,17 +75,11 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
 
                 {/* Estado Inicial Vazio */}
                 {!tipoSelecionado && (
-                    <Card className="bg-muted/20 border-2 border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                            <div className="bg-primary/10 text-primary rounded-full p-3">
-                                <BarChart3 className="h-8 w-8" />
-                            </div>
-                            <div className="max-w-md">
-                                <h3 className="text-foreground text-base font-semibold">{t('relatorios.empty_institucional_title')}</h3>
-                                <p className="text-muted-foreground mt-1 text-xs">{t('relatorios.empty_institucional_desc')}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        icon={BarChart3}
+                        title={t('relatorios.empty_institucional_title')}
+                        description={t('relatorios.empty_institucional_desc')}
+                    />
                 )}
 
                 {/* Área de Filtros e Resultados */}
@@ -132,13 +127,11 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
                             )}
 
                             {status === 'empty' && (
-                                <Card className="bg-muted/10 border-2 border-dashed">
-                                    <CardContent className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-16 text-center text-sm">
-                                        <Filter className="text-muted-foreground/60 mb-1 h-6 w-6" />
-                                        <p className="text-foreground font-medium">{t('relatorios.empty_results_title')}</p>
-                                        <p className="max-w-sm text-xs">{t('relatorios.empty_results_desc')}</p>
-                                    </CardContent>
-                                </Card>
+                                <EmptyState
+                                    icon={Filter}
+                                    title={t('relatorios.empty_results_title')}
+                                    description={t('relatorios.empty_results_desc')}
+                                />
                             )}
 
                             {status === 'success' && dados && (

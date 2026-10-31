@@ -204,13 +204,9 @@ export default function Espacos() {
                     cardHeaderAction={<ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
                     pagination={{ links: espacos.links }}
                     emptyState={{
-                        title: 'Nenhum espaço encontrado',
-                        description: 'Tente ajustar os filtros ou cadastre um novo espaço para que ele apareça aqui.',
-                        action: (
-                            <Button onClick={handleCadastrarEspaco}>
-                                Cadastrar Primeiro Espaço
-                            </Button>
-                        ),
+                        title: t('admin.espacos.nenhum'),
+                        description: t('common.empty.adjustFilter'),
+                        action: <Button onClick={handleCadastrarEspaco}>{t('admin.espacos.cadastrar_primeiro')}</Button>,
                     }}
                     actions={renderEspacoActions}
                 />

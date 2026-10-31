@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import PaginacaoListas from '@/presentation/molecules/PaginacaoListas';
 import EspacoCard from '@/presentation/organisms/EspacoCard';
@@ -84,16 +84,12 @@ export default function EspacosPage() {
                         <PaginacaoListas links={links} only={['espacos', 'filters']} />
                     </>
                 ) : (
-                    <Card className="border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center gap-3 py-14 text-center">
-                            <div className="bg-muted text-muted-foreground rounded-full p-3.5">
-                                <SearchX className="h-6 w-6" />
-                            </div>
-                            <div className="max-w-md space-y-1">
-                                <h2 className="text-foreground text-base font-semibold">{t('espacos.empty.title')}</h2>
-                                <p className="text-muted-foreground text-sm">{t('espacos.empty.desc')}</p>
-                            </div>
-                            {hasActiveFilters && (
+                    <EmptyState
+                        icon={SearchX}
+                        title={t('espacos.empty.title')}
+                        description={t('espacos.empty.desc')}
+                        action={
+                            hasActiveFilters && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -101,14 +97,14 @@ export default function EspacosPage() {
                                     onClick={() => {
                                         router.get(route('espacos.index'));
                                     }}
-                                    className="mt-1 gap-1.5"
+                                    className="gap-1.5"
                                 >
                                     <RotateCcw className="h-3.5 w-3.5" />
                                     {t('espacos.limpar_filtros')}
                                 </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                            )
+                        }
+                    />
                 )}
             </div>
         </AppLayout>

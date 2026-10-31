@@ -70,6 +70,7 @@ export const en = {
             adjustFilter: 'Try adjusting your search or selected filters.',
             noData: 'No data currently available.',
             noRecords: 'No items registered.',
+            noNotifications: 'No notifications here yet.',
         },
         filters: {
             all: 'All',
@@ -347,6 +348,7 @@ export const en = {
         proxima: 'Next',
         hoje: 'Today',
         sem_gestor: 'No manager assigned',
+        sem_turnos: 'No shifts available in this space.',
     },
     auth: {
         layout: {
@@ -591,6 +593,12 @@ export const en = {
         filtros_card_desc: 'Adjust parameters to refine the consolidated report data.',
         empty_results_title: 'No records found',
         empty_results_desc: 'No consolidated data exists for the selected period and criteria. Try expanding dates or removing filters.',
+        empty_chart: {
+            indicadores: 'No indicators for the selected filters.',
+            inventario: 'No spaces for the selected filters.',
+            ocupacao: 'No occupancy data for the selected filters.',
+            reservas: 'No reservations for the selected filters.',
+        },
         tipos: {
             reservas_periodo: 'Reservations by Period',
             ocupacao_espacos: 'Space Occupancy Rate',
@@ -714,6 +722,7 @@ export const en = {
             desc: 'Structure academic and administrative departments',
             novo: 'New Sector',
             nenhum: 'No sectors found',
+            sem_usuarios: 'No users linked to this sector',
         },
         roles: {
             titulo: 'Manage Roles & Permissions',
@@ -726,6 +735,7 @@ export const en = {
             desc: 'Register, edit, and configure physical spaces and resources',
             novo: 'New Space',
             nenhum: 'No spaces found',
+            cadastrar_primeiro: 'Register First Space',
             cadastrar: 'Create Space',
             editar: 'Edit Space',
             cadastrarDesc: 'Fill in the details to register a new space.',

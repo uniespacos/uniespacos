@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import EspacoCard from '@/presentation/organisms/EspacoCard';
 import { type Espaco, type User } from '@/types';
 import { router } from '@inertiajs/react';
@@ -68,24 +69,27 @@ export default function TabsItemEspacosFavoritos({
                         ))}
                     </div>
                 ) : (
-                    <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
-                        <p>{t('common.empty.noResults')}</p>
-                        {searchTerm && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    setSearchTerm('');
-                                }}
-                            >
-                                {t('common.actions.clear')}
-                            </Button>
-                        )}
-                    </div>
+                    <EmptyState
+                        icon={Search}
+                        size="compact"
+                        title={t('common.empty.noResults')}
+                        action={
+                            searchTerm ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                    }}
+                                >
+                                    {t('common.actions.clear')}
+                                </Button>
+                            ) : undefined
+                        }
+                    />
                 )}
             </CardContent>
         </Card>
     );
 }
-

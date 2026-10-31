@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
 import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
@@ -155,12 +156,10 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                         {reservas.length > 0 ? (
                             <TabsItemReserva reservas={reservas} />
                         ) : (
-                            <Card className="border-dashed">
-                                <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-                                    <div className="bg-muted text-muted-foreground rounded-full p-3">
-                                        <ListChecks className="h-5 w-5" />
-                                    </div>
-                                    <p className="text-muted-foreground text-sm">{t('dashboard.empty.no_reservas')}</p>
+                            <EmptyState
+                                icon={ListChecks}
+                                title={t('dashboard.empty.no_reservas')}
+                                action={
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -171,8 +170,8 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                                     >
                                         {t('dashboard.actions.consultar_espacos')}
                                     </Button>
-                                </CardContent>
-                            </Card>
+                                }
+                            />
                         )}
                     </TabsContent>
 
@@ -185,12 +184,10 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                                 setSearchTerm={setSearchTermFavoritos}
                             />
                         ) : (
-                            <Card className="border-dashed">
-                                <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-                                    <div className="bg-muted text-muted-foreground rounded-full p-3">
-                                        <Star className="h-5 w-5" />
-                                    </div>
-                                    <p className="text-muted-foreground text-sm">{t('dashboard.empty.no_favoritos')}</p>
+                            <EmptyState
+                                icon={Star}
+                                title={t('dashboard.empty.no_favoritos')}
+                                action={
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -201,8 +198,8 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                                     >
                                         {t('dashboard.actions.consultar_espacos')}
                                     </Button>
-                                </CardContent>
-                            </Card>
+                                }
+                            />
                         )}
                     </TabsContent>
                 </Tabs>
