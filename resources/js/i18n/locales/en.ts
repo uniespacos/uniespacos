@@ -50,6 +50,9 @@ export const en = {
             noData: 'No data currently available.',
             noRecords: 'No items registered.',
         },
+        filters: {
+            all: 'All',
+        },
         dialogs: {
             confirmTitle: 'Confirmation',
             confirmDescription: 'Are you sure you want to proceed with this action?',
@@ -81,6 +84,7 @@ export const en = {
     nav: {
         dashboard: 'Dashboard',
         consultar_espacos: 'Browse Spaces',
+        espacos_favoritos: 'Favorite Spaces',
         minhas_reservas: 'My Reservations',
         gerir_reservas: 'Manage Reservations',
         gerir_espacos: 'Manage Spaces',
@@ -113,7 +117,9 @@ export const en = {
         gestor_title: 'Manager Dashboard',
         institucional_title: 'Institutional Dashboard',
         stats: {
+            total_espacos: 'Total Spaces',
             total_reservas: 'Total Reservations',
+            reservas_mes: 'Monthly Reservations',
             pendentes: 'Pending',
             em_analise: 'Under Review',
             parcialmente_deferida: 'Partially Approved',
@@ -126,6 +132,9 @@ export const en = {
             solicitar_reserva: 'Request Reservation',
             consultar_espacos: 'Browse Spaces',
             gerir_reservas: 'Manage Reservations',
+            meus_favoritos: 'Favorite Spaces',
+            meus_favoritos_desc: 'Quickly access your saved spaces',
+            minhas_reservas_desc: 'Track the status of your requests',
         },
         tabs: {
             solicitacoes: 'My Requests',
@@ -251,7 +260,8 @@ export const en = {
             conflict_with_user: 'Requester: {{user}}',
             conflicts_note: 'You may choose to defer even with conflicts. Consider analyzing conflicting reservations before proceeding.',
             conflict_cache_snapshot_title: 'Conflict Snapshot ({{count}} detected)',
-            conflict_cache_snapshot_note: 'This is a historical snapshot from the moment the reservation was processed by the system. It may be outdated. Current conflicts are shown above.',
+            conflict_cache_snapshot_note:
+                'This is a historical snapshot from the moment the reservation was processed by the system. It may be outdated. Current conflicts are shown above.',
         },
         stepper: {
             step1_title: 'Times and Recurrence',
@@ -302,6 +312,10 @@ export const en = {
             terms_description:
                 'I declare that I am aware of the rules governing the use of {{institution_name}} physical spaces and commit to their care and preservation.',
         },
+        card: {
+            horarios_count: '{{count}} time slots',
+            horario_unico: '{{inicio}} to {{fim}}',
+        },
     },
     agenda: {
         semana_anterior: 'Previous Week',
@@ -311,6 +325,7 @@ export const en = {
         anterior: 'Previous',
         proxima: 'Next',
         hoje: 'Today',
+        sem_gestor: 'No manager assigned',
     },
     auth: {
         layout: {
@@ -505,6 +520,8 @@ export const en = {
             filtros_ativos: 'Active filters:',
             busca_chip: 'Search: “{{query}}”',
             unidade_chip: 'Campus: {{sigla}}',
+            modulo_chip: 'Building: {{nome}}',
+            andar_chip: 'Floor: {{nome}}',
             limpar_tudo: 'Clear all',
             todas_unidades: 'All Campuses',
             todos_modulos: 'All Buildings',
@@ -512,6 +529,16 @@ export const en = {
             qualquer_capacidade: 'Any capacity',
             qualquer: 'Any',
             lugares: 'Seats',
+        },
+        empty: {
+            title: 'No spaces found',
+            desc: 'We found no spaces matching the selected filters. Try clearing or adjusting your search criteria.',
+        },
+        acessibilidade: {
+            terreo: 'Ground Access',
+            rampa: 'Ramp',
+            elevador: 'Elevator',
+            escada: 'Stairs',
         },
         card: {
             reservar: 'Request Reservation',

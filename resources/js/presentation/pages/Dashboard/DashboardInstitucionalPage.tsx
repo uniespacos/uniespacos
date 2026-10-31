@@ -59,7 +59,7 @@ export default function DashboardInstitucionalPage({
 
     const kpiCards = [
         {
-            title: t('dashboard.stats.total_reservas'),
+            title: t('dashboard.stats.total_espacos'),
             value: estatisticasPainel.total_espacos,
             description: t('espacos.titulo'),
             icon: Building2,
@@ -73,7 +73,7 @@ export default function DashboardInstitucionalPage({
             iconBg: 'bg-primary/10 text-primary',
         },
         {
-            title: t('nav.minhas_reservas'),
+            title: t('dashboard.stats.reservas_mes'),
             value: estatisticasPainel.reservas_mes,
             description: t('reservas.titulo'),
             icon: CalendarDays,

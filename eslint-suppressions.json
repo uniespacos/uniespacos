@@ -193,11 +193,6 @@
       "count": 1
     }
   },
-  "resources/js/presentation/pages/Espacos/VisualizarEspacoPage.tsx": {
-    "@typescript-eslint/restrict-template-expressions": {
-      "count": 1
-    }
-  },
   "resources/js/presentation/pages/Reservas/Gestor/AvaliarReservaPage.tsx": {
     "@typescript-eslint/no-non-null-assertion": {
       "count": 1
