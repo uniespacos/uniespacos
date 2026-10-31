@@ -11,6 +11,7 @@ use App\Http\Requests\StoreUnidadeRequest;
 use App\Http\Requests\UpdateUnidadeRequest;
 use App\Models\Unidade;
 use App\Services\UnidadeService;
+use App\Support\MensagemDeErro;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -62,7 +63,7 @@ class InstitucionalUnidadeController extends Controller
                 ->with('success', 'Unidade criada com sucesso.');
         } catch (\Throwable $th) {
             return redirect()->route('institucional.unidades.index')
-                ->with('error', 'Erro ao criar a unidade: '.$th->getMessage());
+                ->with('error', 'Erro ao criar a unidade: '.MensagemDeErro::paraUsuario($th));
         }
     }
 
@@ -86,7 +87,7 @@ class InstitucionalUnidadeController extends Controller
             return redirect()->route('institucional.unidades.index')
                 ->with('success', 'Unidade atualizada com sucesso.');
         } catch (\Throwable $th) {
-            return back()->withInput()->with('error', 'Erro ao atualizar a unidade: '.$th->getMessage());
+            return back()->withInput()->with('error', 'Erro ao atualizar a unidade: '.MensagemDeErro::paraUsuario($th));
         }
     }
 
@@ -103,7 +104,7 @@ class InstitucionalUnidadeController extends Controller
 
             return back()->with('success', 'Unidade excluída com sucesso.');
         } catch (\Throwable $th) {
-            return back()->with('error', 'Erro ao deletar a unidade: '.$th->getMessage());
+            return back()->with('error', 'Erro ao deletar a unidade: '.MensagemDeErro::paraUsuario($th));
         }
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateSetorRequest;
 use App\Models\Setor;
 use App\Services\SetorService;
 use App\Services\UnidadeService;
+use App\Support\MensagemDeErro;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -80,7 +81,7 @@ class InstitucionalSetorController extends Controller
             return redirect()->route('institucional.setors.index')
                 ->with('success', 'Setor cadastrado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao cadastrar setor: '.$e->getMessage()])->withInput();
+            return back()->with(['error' => 'Erro ao cadastrar setor: '.MensagemDeErro::paraUsuario($e)])->withInput();
         }
     }
 
@@ -99,7 +100,7 @@ class InstitucionalSetorController extends Controller
 
             return back()->with('success', 'Setor atualizado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao atualizar setor: '.$e->getMessage()])->withInput();
+            return back()->with(['error' => 'Erro ao atualizar setor: '.MensagemDeErro::paraUsuario($e)])->withInput();
         }
     }
 
@@ -116,7 +117,7 @@ class InstitucionalSetorController extends Controller
 
             return back()->with('success', 'Setor removido com sucesso!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Erro ao remover setor: '.$e->getMessage()]);
+            return back()->withErrors(['error' => 'Erro ao remover setor: '.MensagemDeErro::paraUsuario($e)]);
         }
     }
 }

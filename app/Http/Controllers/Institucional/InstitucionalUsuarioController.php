@@ -12,6 +12,7 @@ use App\Http\Requests\UpdatePermissionsRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\UserService;
+use App\Support\MensagemDeErro;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -70,7 +71,7 @@ class InstitucionalUsuarioController extends Controller
 
             return back()->with('success', 'E-mail de verificação reenviado.');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', MensagemDeErro::paraUsuario($e));
         }
     }
 
@@ -102,12 +103,7 @@ class InstitucionalUsuarioController extends Controller
 
             return back()->with('success', 'Permissões atualizadas com sucesso.');
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar permissões do usuário', [
-                'usuario_alvo_id' => $user->id,
-                'exception' => $e,
-            ]);
-
-            return back()->with('error', 'Erro ao atualizar permissões: '.$e->getMessage());
+            return back()->with('error', 'Erro ao atualizar permissões: '.MensagemDeErro::paraUsuario($e, ['usuario_alvo_id' => $user->id]));
         }
     }
 
