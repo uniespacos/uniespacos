@@ -24,6 +24,80 @@ Fora de `presentation/`, três diretórios canônicos que toda tela nova deve co
 - `resources/js/i18n/` — motor de i18n próprio (`useTranslation()`, dicionários em `locales/pt-BR.ts` e derivados). Zero string hardcoded em PT-BR num componente.
 - `resources/js/lib/auth-can.tsx` (PBAC: `<Can>`, `useCan()`) e `resources/js/lib/echo-channel-registry.ts` (registry de canais Reverb com reference-counting: `acquirePrivateChannel`/`releasePrivateChannel`).
 
+## Anatomia de página
+
+Toda tela renderizada pelo Inertia segue a mesma estrutura, para que título, cabeçalho, espaçamento e nomes acessíveis sejam iguais em todos os perfis. Referências: `pages/Administrativo/Modulos/CadastrarModulo.tsx` e `EditarModulo.tsx` (listas e formulários admin) e `pages/Gestor/Relatorios/RelatoriosGestorPage.tsx` (relatório com ações no cabeçalho).
+
+```tsx
+<AppLayout breadcrumbs={breadcrumbs}>
+    <Head title={t('admin.modulos.cadastrar')} />
+    <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+        <GenericHeader titulo={t('admin.modulos.cadastrar')} descricao={t('admin.modulos.cadastrarDesc')} />
+        {/* formulário, tabela ou cards */}
+    </div>
+</AppLayout>
+```
+
+| Elemento | Regra |
+|---|---|
+| `AppLayout` | Recebe `breadcrumbs` (lista de `title`/`href`, montada com `useMemo`). |
+| `<Head title>` | Usa a mesma chave de tradução do `h1`. Título da aba e título da página nunca divergem. |
+| Wrapper da página | Um único `div` com `flex h-full flex-1 flex-col p-4 md:p-6`. `gap-4` em listas e formulários administrativos; `gap-6` em dashboards, vitrines e relatórios. |
+| `GenericHeader` | Contém o único `h1` da página. |
+
+- **Nunca aninhar dois wrappers com padding.** O padding vem apenas do wrapper da página.
+
+### Cabeçalho: `GenericHeader`
+
+`resources/js/presentation/molecules/GenericHeader.tsx`:
+
+- `titulo` vira o `h1`; `descricao` é opcional e aparece abaixo, em `text-muted-foreground`.
+- Prop opcional `actions?: ReactNode` para ações extras à direita (ex.: `ExportarRelatorio`, badges). Renderiza após o botão padrão e, no mobile, fica alinhado à esquerda.
+
+### Configurações (`settings`)
+
+- O `h1` "Configurações" vem de `templates/settings/Layout.tsx`, via o atom `Heading` (`h1`). As páginas de configuração não criam outro `h1`.
+- As seções internas usam `HeadingSmall` (`h2`).
+
+### Formulários de recurso
+
+Aplica-se a `InstituicaoForm`, `UnidadesForm`, `ModuloForm` e `SetorForm` (este último ainda não segue o padrão; ver nota abaixo).
+
+- **Sem título duplicado.** O título da tela já está no `GenericHeader`; o formulário não repete.
+- **Rodapé** `flex justify-end gap-2` com:
+  - "Cancelar": `variant="outline"`, `type="button"`, volta à listagem.
+  - Submit: `common.actions.save` ao criar; `common.actions.update` ao editar (prop `editMode`); `common.actions.saving` enquanto `processing`.
+- **Campos nullable do banco** são normalizados para `''` no `useForm`, evitando `input` controlado com `value={null}`.
+- Mecanismo: `useForm` do Inertia, conforme a seção de formulário acima.
+
+> Nota: `SetorForm.tsx` ainda usa textos fixos ("Cancelar", "Criar Setor", "Atualizar") e `pt-4` no rodapé. Corrigir antes de usá-lo como referência.
+
+### Estado vazio
+
+- **Dentro de `DataTable`:** prop `emptyState={{ title: t('admin.<x>.nenhum'), description: t('common.empty.adjustFilter'), action }}`.
+- **Fora de `DataTable`:** molécula `EmptyState` (`resources/js/presentation/molecules/EmptyState.tsx`), com `icon`, `title`, `description`, `action` e `size` (`'default' | 'compact'`).
+- `ReservasEmpty` é específico do `ReservasWorkspace`; não reutilizar fora dele.
+
+### Imagens de storage
+
+Sempre `resolveStorageUrl` (`resources/js/lib/storage-url.ts`). Nunca montar `/storage/${x}` à mão.
+
+### Acessibilidade na página
+
+- Botão só com ícone exige `aria-label` via `t()`, usando as chaves `common.a11y.*`.
+- Toggles usam `aria-pressed`. Link da página atual na paginação usa `aria-current="page"`.
+- Inputs se associam ao `Label` por `useId` + `htmlFor`. Busca sem label visível recebe `aria-label`.
+- Alvo de toque mínimo de 44px no mobile. Padrão: `h-11 w-11 md:h-6 md:w-6` (ex.: `ImageUpload.tsx`). Ações de linha de tabela usam `h-11 w-11 md:h-8 md:w-8` (ex.: `Usuarios.tsx`).
+
+### Layout e overflow
+
+- `SidebarInset` (`resources/js/components/ui/sidebar.tsx`) já tem `min-w-0 w-full`.
+- Conteúdo largo, como tabelas, rola no próprio container com `overflow-x-auto`. Nunca `overflow-x-hidden` no `body`.
+
+### Verificação visual
+
+Prática recomendada antes de considerar uma tela pronta: varredura com Playwright (Edge headless) por perfil × desktop/mobile × claro/escuro, checando `title`/`h1`, erros de página, overflow horizontal e nomes acessíveis.
+
 ## Modais e Diálogos: Padrão Ergonômico `<ResponsiveModal>`
 
 Para diálogos com interação de usuário ou formulários, use obrigatoriamente a molécula híbrida **`<ResponsiveModal>`**:
