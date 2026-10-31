@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.103](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.102...v1.5.0-rc.103) (2026-10-31)
+
+
+### Bug Fixes
+
+* **frontend:** ReservaCard não quebra com horários parciais do dashboard ([72b5009](https://github.com/uniespacos/uniespacos/commit/72b50093e11d388eef6e6cc4151d2d5c8477df4b))
+* **frontend:** ReservaCard não quebra com horários parciais do dashboard ([4ba03ba](https://github.com/uniespacos/uniespacos/commit/4ba03bab8986c19d6145ae971cfa38530f0f8d31))
+
 ## [1.5.0-rc.102](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.101...v1.5.0-rc.102) (2026-10-31)
 
 
