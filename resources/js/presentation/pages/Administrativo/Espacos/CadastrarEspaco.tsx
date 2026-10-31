@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/i18n';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
@@ -9,7 +9,7 @@ import { EspacoFormFields } from '@/presentation/organisms/EspacoFormFields';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Andar, Espaco, Modulo, Unidade } from '@/types';
 import { type FormCadastroValues } from '@/types/admin-forms';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -69,87 +69,92 @@ export default function CadastrarEspacoPage() {
         if (isEditMode) {
             patch(route('institucional.espacos.update', espaco.id), {
                 onSuccess: () => {
-                    toast.success(`Espaço ${isEditMode ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                    toast.success(t('admin.espacos.toast.atualizado'));
                     if (!isEditMode) {
                         reset();
                         setImagesWithPreviews([]);
                     }
                 },
                 onError: (errs) => {
-                    toast.error(Object.values(errs)[0] || 'Ocorreu um erro de validação.');
+                    toast.error(Object.values(errs)[0] || t('admin.espacos.toast.erroValidacao'));
                 },
             });
         } else {
             post(route('institucional.espacos.store'), {
                 forceFormData: true,
                 onSuccess: () => {
-                    toast.success(`Espaço ${isEditMode ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                    toast.success(t('admin.espacos.toast.cadastrado'));
                     if (!isEditMode) {
                         reset();
                         setImagesWithPreviews([]);
                     }
                 },
                 onError: (errs) => {
-                    toast.error(Object.values(errs)[0] || 'Ocorreu um erro de validação.');
+                    toast.error(Object.values(errs)[0] || t('admin.espacos.toast.erroValidacao'));
                 },
             });
         }
     };
-    const pageTitulo = isEditMode ? 'Editar Espaço' : 'Cadastro de Espaço';
-    const pageDescricao = isEditMode ? 'Atualize os dados do espaço.' : 'Preencha os dados para cadastrar um novo espaço.';
+    const pageTitulo = isEditMode ? t('admin.espacos.editar') : t('admin.espacos.cadastrar');
+    const pageDescricao = isEditMode ? t('admin.espacos.editarDesc') : t('admin.espacos.cadastrarDesc');
 
-    const buttonLabel = isEditMode ? 'Salvar Alterações' : 'Cadastrar Espaço';
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={pageTitulo} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                    <GenericHeader titulo={pageTitulo} descricao={pageDescricao} />
-                    <>
-                        <Card className="mb-6">
-                            <CardContent className="pt-6">
-                                <form onSubmit={onSubmit} className="space-y-6">
-                                    <LocationSelector
-                                        unidades={unidades}
-                                        modulos={modulos}
-                                        andares={andares}
-                                        unidadeSelecionada={data.unidade_id}
-                                        setUnidadeSelecionada={(unidadeSelecionada) => {
-                                            setData((prevData) => ({ ...prevData, unidade_id: unidadeSelecionada }));
-                                        }}
-                                        moduloSelecionado={data.modulo_id}
-                                        handleModuloChange={(moduloSelecionado) => {
-                                            setData((prevData) => ({ ...prevData, modulo_id: moduloSelecionado }));
-                                        }}
-                                        andarSelecionado={data.andar_id}
-                                        handleAndarChange={(andarSelecionado) => {
-                                            setData((prevData) => ({ ...prevData, andar_id: parseInt(andarSelecionado!, 10) }));
-                                        }}
-                                        processing={processing}
-                                        errors={errors}
-                                    />
-                                    <EspacoFormFields data={data} setData={setData} errors={errors} processing={processing} />
-                                    <ImageUpload
-                                        imagesWithPreviews={imagesWithPreviews}
-                                        setImagesWithPreviews={setImagesWithPreviews}
-                                        mainImageIndex={data.main_image_index}
-                                        setMainImageIndex={handleSetMainImage}
-                                        setData={setData}
-                                        setImagesToDelete={handleImagesToDelete}
-                                        processing={processing}
-                                        errors={errors}
-                                    />
-                                    <CardFooter className="flex justify-end p-0">
-                                        <Button type="submit" disabled={processing}>
-                                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            {buttonLabel}
-                                        </Button>
-                                    </CardFooter>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </>
-                </div>
+                <GenericHeader titulo={pageTitulo} descricao={pageDescricao} />
+                <Card className="mb-6">
+                    <CardContent className="pt-6">
+                        <form onSubmit={onSubmit} className="space-y-6">
+                            <LocationSelector
+                                unidades={unidades}
+                                modulos={modulos}
+                                andares={andares}
+                                unidadeSelecionada={data.unidade_id}
+                                setUnidadeSelecionada={(unidadeSelecionada) => {
+                                    setData((prevData) => ({ ...prevData, unidade_id: unidadeSelecionada }));
+                                }}
+                                moduloSelecionado={data.modulo_id}
+                                handleModuloChange={(moduloSelecionado) => {
+                                    setData((prevData) => ({ ...prevData, modulo_id: moduloSelecionado }));
+                                }}
+                                andarSelecionado={data.andar_id}
+                                handleAndarChange={(andarSelecionado) => {
+                                    setData((prevData) => ({ ...prevData, andar_id: parseInt(andarSelecionado!, 10) }));
+                                }}
+                                processing={processing}
+                                errors={errors}
+                            />
+                            <EspacoFormFields data={data} setData={setData} errors={errors} processing={processing} />
+                            <ImageUpload
+                                imagesWithPreviews={imagesWithPreviews}
+                                setImagesWithPreviews={setImagesWithPreviews}
+                                mainImageIndex={data.main_image_index}
+                                setMainImageIndex={handleSetMainImage}
+                                setData={setData}
+                                setImagesToDelete={handleImagesToDelete}
+                                processing={processing}
+                                errors={errors}
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        router.get(route('institucional.espacos.index'));
+                                    }}
+                                    disabled={processing}
+                                >
+                                    {t('common.actions.cancel')}
+                                </Button>
+                                <Button type="submit" disabled={processing}>
+                                    {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {processing ? t('common.actions.saving') : isEditMode ? t('common.actions.update') : t('common.actions.save')}
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

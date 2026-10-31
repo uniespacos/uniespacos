@@ -97,12 +97,12 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
             <form onSubmit={submit} className="space-y-6 pb-20">
                 <Card>
                     <CardContent className="space-y-4">
-                        {editMode && <div className="text-muted-foreground text-sm">ID do Módulo: {modulo?.id}</div>}
-                        <FormField label="Instituição" htmlFor="instituicao">
+                        {editMode && <div className="text-muted-foreground text-sm">{t('admin.modulos.form.idLabel', { id: modulo?.id ?? '' })}</div>}
+                        <FormField label={t('admin.modulos.form.instituicao')} htmlFor="instituicao">
                             <Input id="instituicao" value={instituicao.nome} disabled />
                         </FormField>
 
-                        <FormField label="Unidade" htmlFor="unidade_id" error={errors.unidade_id} required>
+                        <FormField label={t('admin.modulos.form.unidade')} htmlFor="unidade_id" error={errors.unidade_id} required>
                             <SelectUI
                                 value={data.unidade_id}
                                 onValueChange={(value) => {
@@ -111,7 +111,7 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
                                 disabled={processing}
                             >
                                 <SelectTrigger id="unidade_id">
-                                    <SelectValue placeholder="Selecione uma unidade" />
+                                    <SelectValue placeholder={t('admin.modulos.form.selecioneUnidade')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {unidadesFiltradas.map((unidade) => (
@@ -123,14 +123,14 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
                             </SelectUI>
                         </FormField>
 
-                        <FormField label="Nome do módulo" htmlFor="nome" error={errors.nome} required>
+                        <FormField label={t('admin.modulos.form.nome')} htmlFor="nome" error={errors.nome} required>
                             <Input
                                 id="nome"
                                 value={data.nome}
                                 onChange={(e) => {
                                     setData((prev: CadastrarModuloForm) => ({ ...prev, nome: e.target.value }));
                                 }}
-                                placeholder="Ex: Bloco Administrativo"
+                                placeholder={t('admin.modulos.form.nomePlaceholder')}
                                 disabled={processing}
                             />
                         </FormField>
@@ -139,10 +139,8 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
 
                 <Card ref={andaresRef}>
                     <CardHeader>
-                        <CardTitle>Andares do Módulo</CardTitle>
-                        <CardDescription>
-                            Todo módulo possui térreo obrigatório. Adicione andares superiores ou subsolos conforme necessário.
-                        </CardDescription>
+                        <CardTitle>{t('admin.modulos.form.andaresTitulo')}</CardTitle>
+                        <CardDescription>{t('admin.modulos.form.andaresDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <AndaresManager

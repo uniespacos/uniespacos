@@ -170,7 +170,7 @@
       "count": 1
     },
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 5
+      "count": 3
     }
   },
   "resources/js/presentation/pages/Dashboard/DashboardInstitucionalPage.tsx": {

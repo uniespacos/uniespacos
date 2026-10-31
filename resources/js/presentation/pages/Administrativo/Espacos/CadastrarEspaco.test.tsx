@@ -1,36 +1,54 @@
-import CadastrarEspacoPage from './CadastrarEspaco';
-import { render, screen } from '@testing-library/react';
 import type { BreadcrumbItem } from '@/types';
+import { render, screen } from '@testing-library/react';
+import CadastrarEspacoPage from './CadastrarEspaco';
 
 const mockPost = jest.fn();
 
+const mockPageProps: Record<string, unknown> = {
+    unidades: [
+        {
+            id: 1,
+            nome: 'Campus Jequié',
+            sigla: 'JQ',
+        },
+    ],
+    modulos: [
+        {
+            id: 1,
+            nome: 'Módulo Central',
+            unidade_id: 1,
+            andares: [],
+        },
+    ],
+    andares: [
+        {
+            id: 1,
+            numero: 1,
+            modulo_id: 1,
+            tipos_acesso: [],
+        },
+    ],
+};
+
+const espacoExistente = {
+    id: 9,
+    nome: 'Laboratório de Informática',
+    capacidade_pessoas: 30,
+    descricao: 'Laboratório com 30 computadores',
+    imagens: [],
+    main_image_index: undefined,
+    andar: {
+        id: 1,
+        modulo: {
+            id: 1,
+            unidade: { id: 1 },
+        },
+    },
+};
+
 jest.mock('@inertiajs/react', () => ({
     usePage: () => ({
-        props: {
-            unidades: [
-                {
-                    id: 1,
-                    nome: 'Campus Jequié',
-                    sigla: 'JQ',
-                },
-            ],
-            modulos: [
-                {
-                    id: 1,
-                    nome: 'Módulo Central',
-                    unidade_id: 1,
-                    andares: [],
-                },
-            ],
-            andares: [
-                {
-                    id: 1,
-                    numero: 1,
-                    modulo_id: 1,
-                    tipos_acesso: [],
-                },
-            ],
-        },
+        props: mockPageProps,
     }),
     Head: ({ title }: { title: string }) => <title>{title}</title>,
     Link: ({ children, href, ...rest }: { children: React.ReactNode; href?: string; [key: string]: unknown }) => {
@@ -44,6 +62,9 @@ jest.mock('@inertiajs/react', () => ({
                 {children}
             </a>
         );
+    },
+    router: {
+        get: jest.fn(),
     },
     useForm: () => ({
         data: {
@@ -105,6 +126,7 @@ jest.mock('@/presentation/molecules/ImageUpload', () => ({
 describe('CadastrarEspacoPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        delete mockPageProps.espaco;
         (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string) => {
             const routes: Record<string, string> = {
                 'institucional.espacos.index': '/institucional/espacos',
@@ -115,12 +137,11 @@ describe('CadastrarEspacoPage', () => {
             }
             throw new Error(`Route "${name}" not found in mock`);
         });
-        jest.useFakeTimers({ now: new Date('2026-10-05T12:00:00-03:00') });
     });
 
     afterEach(() => {
         delete (globalThis as unknown as { route?: unknown }).route;
-        jest.useRealTimers();
+        delete mockPageProps.espaco;
     });
 
     it('breadcrumbs_cadastrar_espaco_usa_route', () => {
@@ -135,5 +156,32 @@ describe('CadastrarEspacoPage', () => {
 
         expect(createLink).toHaveAttribute('href', '/institucional/espacos/create');
         expect(createLink).toHaveTextContent('Cadastrar Espaço');
+    });
+
+    it('titulo_head_e_cabecalho_mostram_cadastro', () => {
+        render(<CadastrarEspacoPage />);
+
+        expect(document.title).toBe('Cadastrar Espaço');
+        expect(screen.getByText('Cadastrar Espaço - Preencha os dados para cadastrar um novo espaço.')).toBeInTheDocument();
+        expect(screen.queryByText(/Editar Espaço/)).not.toBeInTheDocument();
+    });
+
+    it('mostra os botões Cancelar e Salvar no cadastro', () => {
+        render(<CadastrarEspacoPage />);
+
+        expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveAttribute('type', 'button');
+        expect(screen.getByRole('button', { name: 'Salvar' })).toHaveAttribute('type', 'submit');
+        expect(screen.queryByRole('button', { name: 'Atualizar' })).not.toBeInTheDocument();
+    });
+
+    it('titulo_head_e_cabecalho_mostram_edicao_com_botao_atualizar', () => {
+        mockPageProps.espaco = espacoExistente;
+        render(<CadastrarEspacoPage />);
+
+        expect(document.title).toBe('Editar Espaço');
+        expect(screen.getByText('Editar Espaço - Atualize os dados do espaço.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Atualizar' })).toHaveAttribute('type', 'submit');
+        expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
     });
 });
