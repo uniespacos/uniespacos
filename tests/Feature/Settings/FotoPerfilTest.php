@@ -11,6 +11,7 @@ use GdImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -25,9 +26,15 @@ class FotoPerfilTest extends TestCase
         Storage::fake('public');
     }
 
-    private function atualizarFoto(User $user, UploadedFile $foto): TestResponse
+    private function atualizarFoto(User $user, UploadedFile $foto, ?string $locale = null): TestResponse
     {
-        return $this->actingAs($user)->patch('/settings/profile', [
+        $requisicao = $this->actingAs($user);
+
+        if ($locale !== null) {
+            $requisicao = $requisicao->withSession(['locale' => $locale]);
+        }
+
+        return $requisicao->patch('/settings/profile', [
             'name' => $user->name,
             'email' => $user->email,
             'phone' => '77999999999',
@@ -258,6 +265,28 @@ class FotoPerfilTest extends TestCase
         $this->assertSame($fotoAnterior, $usuario->refresh()->getRawOriginal('profile_pic'));
         Storage::disk('public')->assertExists($fotoAnterior);
         $this->assertSame([$fotoAnterior], Storage::disk('public')->allFiles());
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function mensagensDeFotoRecusada(): array
+    {
+        return [
+            'en' => ['en', 'The uploaded image could not be processed. Please send another file.'],
+            'pt-BR' => ['pt-BR', 'A imagem enviada não pôde ser processada. Envie outro arquivo.'],
+            'es' => ['es', 'La imagen enviada no se pudo procesar. Envíe otro archivo.'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('mensagensDeFotoRecusada')]
+    public function imagem_recusada_mostra_a_mensagem_no_idioma_da_sessao(string $locale, string $mensagem): void
+    {
+        $usuario = $this->usuario();
+
+        $this->atualizarFoto($usuario, UploadedFile::fake()->createWithContent('quebrada.jpg', "\xFF\xD8\xFF\xE0".str_repeat("\x00", 50)), $locale)
+            ->assertSessionHasErrors(['photo' => $mensagem]);
     }
 
     #[Test]

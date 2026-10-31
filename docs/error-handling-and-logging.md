@@ -563,6 +563,10 @@ As duas últimas (3 e 4) existem porque, sem elas, o teste passaria verde mesmo 
 
 Esse teste previne que esse bug ressurja em futuras refatorações.
 
+## Mensagens Traduzíveis no Backend (`__()`)
+
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Toda chave nova precisa existir nos três arquivos.
+
 ## Diferença: Erros Esperados vs Inesperados
 
 | Tipo | Exemplos | Logging | Stack Trace |

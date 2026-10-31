@@ -54,7 +54,7 @@ class ProfileController extends Controller
 
             if ($novaFotoPath === null) {
                 throw ValidationException::withMessages([
-                    'photo' => __('A imagem enviada não pôde ser processada. Envie outro arquivo.'),
+                    'photo' => __('The uploaded image could not be processed. Please send another file.'),
                 ]);
             }
 
