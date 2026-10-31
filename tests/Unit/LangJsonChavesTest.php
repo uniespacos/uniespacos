@@ -14,6 +14,7 @@ class LangJsonChavesTest extends TestCase
         'The reason must be a valid text.',
         'The reason may not have more than :max characters.',
         'The description may not have more than :max characters.',
+        'The uploaded image could not be processed. Please send another file.',
     ];
 
     /**
@@ -27,7 +28,7 @@ class LangJsonChavesTest extends TestCase
     }
 
     #[DataProvider('arquivosDeIdiomaProvider')]
-    public function test_textos_novos_de_minimizacao_e_validacao_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    public function test_textos_novos_de_minimizacao_validacao_e_foto_existem_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $caminho = dirname(__DIR__, 2).'/lang/'.$arquivo;
         $traducoes = json_decode((string) file_get_contents($caminho), true, 512, JSON_THROW_ON_ERROR);

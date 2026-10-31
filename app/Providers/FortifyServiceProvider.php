@@ -9,6 +9,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Http\Responses\CustomLoginResponse;
+use App\Http\Responses\CustomLogoutResponse;
 use App\Http\Responses\CustomVerifyEmailResponse;
 use App\Models\Instituicao;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,6 +21,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\VerifyEmailResponse as VerifyEmailResponseContract;
 use Laravel\Fortify\Fortify;
 
@@ -35,6 +37,8 @@ class FortifyServiceProvider extends ServiceProvider
 
         // Bind your custom LoginResponse
         $this->app->singleton(LoginResponseContract::class, CustomLoginResponse::class);
+
+        $this->app->singleton(LogoutResponseContract::class, CustomLogoutResponse::class);
     }
 
     /**

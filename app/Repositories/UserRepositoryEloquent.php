@@ -60,8 +60,9 @@ class UserRepositoryEloquent implements UserRepositoryInterface
     public function getAllWithAgendasByInstituicao(int $instituicaoId): Collection
     {
         return $this->user
+            ->select(['id', 'name', 'email', 'profile_pic', 'setor_id'])
             ->whereHas('setor.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
-            ->with(['agendas', 'setor'])
+            ->with(['agendas:id,espaco_id,turno,user_id', 'setor:id,nome,sigla'])
             ->get();
     }
 

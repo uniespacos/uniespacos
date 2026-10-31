@@ -21,6 +21,7 @@ use App\Http\Controllers\ReservaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Middleware\EncryptHistory;
 
 // Página inicial: redireciona para dashboard se autenticado, senão para login
 Route::get('/', function () {
@@ -32,7 +33,7 @@ Route::get('/', function () {
 // Troca de idioma da interface (acessível por autenticados e não autenticados)
 Route::post('/locale/{locale}', [LocaleController::class, 'update'])->name('locale.update');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
 
     // ---------------------------
     // Painel Geral
