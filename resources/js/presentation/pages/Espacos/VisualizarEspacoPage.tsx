@@ -48,8 +48,8 @@ export default function VisualizarEspaço({
             href: isEditMode ? '/reservas' : '/espacos',
         },
         {
-            title: isEditMode ? 'Editar' : 'Visualizar agenda',
-            href: isEditMode ? `reservas/${reserva?.id}/edit` : '/espaço/agenda',
+            title: isEditMode ? 'Editar' : espaco.nome,
+            href: isEditMode && reserva ? `/reservas/${String(reserva.id)}/edit` : `/espacos/${String(espaco.id)}`,
         },
     ];
 

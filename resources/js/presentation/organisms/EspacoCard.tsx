@@ -12,7 +12,7 @@ import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import type { Espaco, User } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { Building2, ChevronRight, Edit, Heart, Layers, MapPin, Trash2, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 declare function route(name: string, params?: unknown): string;
 
@@ -38,6 +38,10 @@ export default function EspacoCard({
     const { t } = useTranslation();
     const [isFavorited, setIsFavorited] = useState<boolean>(espaco.is_favorited_by_user ?? false);
     const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        setIsFavorited(espaco.is_favorited_by_user ?? false);
+    }, [espaco.is_favorited_by_user]);
 
     const modulo = espaco.andar?.modulo?.nome;
     const andarLabel = espaco.andar?.nome ? getAndarLabelByValue(espaco.andar.nome) : undefined;
@@ -107,7 +111,10 @@ export default function EspacoCard({
             tabIndex={isClicavel ? 0 : undefined}
             onClick={handleCardClick}
             onKeyDown={(e) => {
-                if (isClicavel && e.key === 'Enter') handleCardClick();
+                if (isClicavel && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handleCardClick();
+                }
             }}
             className={cn(
                 'group border-border/80 bg-card flex flex-col overflow-hidden rounded-2xl border transition-all duration-300',
@@ -187,14 +194,16 @@ export default function EspacoCard({
                 </div>
             </CardHeader>
 
-            {/* Metadados do Espaço */}
-            <CardContent className="flex-grow px-4 py-2">
+            <CardContent className="flex-grow space-y-2.5 px-4 py-2">
+                {espaco.descricao ? (
+                    <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed" title={espaco.descricao}>
+                        {espaco.descricao}
+                    </p>
+                ) : null}
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                     <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium">
                         <Users className="h-3.5 w-3.5 shrink-0" />
-                        {espaco.capacidade_pessoas === 1
-                            ? t('espacos.pessoa')
-                            : t('espacos.pessoas', { count: String(espaco.capacidade_pessoas) })}
+                        {espaco.capacidade_pessoas === 1 ? t('espacos.pessoa') : t('espacos.pessoas', { count: String(espaco.capacidade_pessoas) })}
                     </span>
                     {andarLabel && (
                         <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium">
@@ -215,8 +224,13 @@ export default function EspacoCard({
                         <Edit className="mr-1.5 h-3.5 w-3.5" />
                         {t('common.actions.edit')}
                     </Button>
-                    <Button variant="outline" size="sm" className="text-destructive-accent hover:text-destructive-accent" onClick={() => handleExcluirEspaco?.(String(espaco.id))}>
-                        <Trash2 className="mr-1.5 h-3.5 w-3.5 text-destructive-accent" />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive-accent hover:text-destructive-accent"
+                        onClick={() => handleExcluirEspaco?.(String(espaco.id))}
+                    >
+                        <Trash2 className="text-destructive-accent mr-1.5 h-3.5 w-3.5" />
                         {t('common.actions.delete')}
                     </Button>
                 </CardFooter>

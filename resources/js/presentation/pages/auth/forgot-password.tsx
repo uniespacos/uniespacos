@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
 import InputError from '@/presentation/atoms/InputError';
 import TextLink from '@/presentation/atoms/TextLink';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     const { t } = useTranslation();
@@ -22,7 +22,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
     };
 
     return (
-        <AuthLayout title={t('auth.forgotPassword.header_title')} description={t('auth.forgotPassword.header_desc')} maxWidth="md">
+        <AuthSplitLayout title={t('auth.forgotPassword.header_title')} description={t('auth.forgotPassword.header_desc')} maxWidth="md">
             <Head title={t('auth.forgotPassword.head_title')} />
 
             <div className="flex justify-center sm:justify-start">
@@ -80,6 +80,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     </TextLink>
                 </div>
             </form>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

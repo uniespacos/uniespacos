@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
 import { getTurnoText } from '@/lib/utils';
-import TabsItemEspacosFavoritos from '@/presentation/molecules/TabsItemEspacosFavoritos';
 import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
+import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, Reserva, Unidade, User, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -59,7 +59,7 @@ export default function DashboardInstitucionalPage({
 
     const kpiCards = [
         {
-            title: t('dashboard.stats.total_reservas'),
+            title: t('dashboard.stats.total_espacos'),
             value: estatisticasPainel.total_espacos,
             description: t('espacos.titulo'),
             icon: Building2,
@@ -73,7 +73,7 @@ export default function DashboardInstitucionalPage({
             iconBg: 'bg-primary/10 text-primary',
         },
         {
-            title: t('nav.minhas_reservas'),
+            title: t('dashboard.stats.reservas_mes'),
             value: estatisticasPainel.reservas_mes,
             description: t('reservas.titulo'),
             icon: CalendarDays,
@@ -102,7 +102,9 @@ export default function DashboardInstitucionalPage({
                                     {t('dashboard.institucional_title')}
                                 </Badge>
                             </div>
-                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">{t('dashboard.welcome', { name: user.name })}</h1>
+                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                                {t('dashboard.welcome', { name: user.name })}
+                            </h1>
                             <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
                                 {t('relatorios.institucional_subtitulo', { institution_name: 'UESB' })}
                             </p>
@@ -202,7 +204,9 @@ export default function DashboardInstitucionalPage({
                                                 <h4 className="text-foreground text-sm font-semibold">{espaco.nome}</h4>
                                                 <span className="text-muted-foreground text-xs">
                                                     {espaco.andar?.modulo?.unidade?.nome ?? 'UESB'} • {espaco.andar?.modulo?.nome} •{' '}
-                                                    {espaco.capacidade_pessoas ? t('espacos.capacidade', { count: String(espaco.capacidade_pessoas) }) : ''}
+                                                    {espaco.capacidade_pessoas
+                                                        ? t('espacos.capacidade', { count: String(espaco.capacidade_pessoas) })
+                                                        : ''}
                                                 </span>
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -216,7 +220,9 @@ export default function DashboardInstitucionalPage({
                                                             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                                                                 {getTurnoText(agenda.turno)}
                                                             </Badge>
-                                                            <span className="text-muted-foreground">{agenda.user?.name ?? t('reservas.detalhes.gestor_nao_definido')}</span>
+                                                            <span className="text-muted-foreground">
+                                                                {agenda.user?.name ?? t('reservas.detalhes.gestor_nao_definido')}
+                                                            </span>
                                                         </div>
                                                     ))
                                                 ) : (

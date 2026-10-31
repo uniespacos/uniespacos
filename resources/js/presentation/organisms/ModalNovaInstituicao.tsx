@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/presentation/molecules/FormField';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { useForm } from '@inertiajs/react';
 import type React from 'react';
 
@@ -30,7 +30,7 @@ export function ModalNovaInstituicao({ open, onOpenChange, onSuccess }: ModalNov
     };
 
     return (
-        <Modal
+        <ResponsiveModal
             open={open}
             onOpenChange={onOpenChange}
             title="Cadastrar Nova Instituição"
@@ -93,6 +93,6 @@ export function ModalNovaInstituicao({ open, onOpenChange, onSuccess }: ModalNov
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </ResponsiveModal>
     );
 }

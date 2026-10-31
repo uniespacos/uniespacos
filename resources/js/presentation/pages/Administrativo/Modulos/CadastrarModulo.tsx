@@ -1,20 +1,15 @@
-import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
 import { useTranslation } from '@/i18n';
+import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
-import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
 import ModuloForm from '@/presentation/organisms/ModuloForm';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao, Unidade } from '@/types';
+import { type AndarFormData, type CadastrarModuloForm } from '@/types/admin-forms';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
-export type CadastrarModuloForm = {
-    nome: string;
-    unidade_id: string;
-    andares: AndarFormData[];
-};
+export type { AndarFormData, CadastrarModuloForm };
 
 export default function CadastrarModuloPage() {
     const { t } = useTranslation();

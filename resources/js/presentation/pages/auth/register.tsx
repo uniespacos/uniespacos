@@ -1,9 +1,9 @@
+import { useTranslation } from '@/i18n';
 import { FormRegistroUsuario } from '@/presentation/organisms/FormRegistroUsuario';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 import { Instituicao } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type React from 'react';
-import { useTranslation } from '@/i18n';
 
 export default function Register() {
     const { t } = useTranslation();
@@ -35,7 +35,7 @@ export default function Register() {
     };
 
     return (
-        <AuthLayout title={t('auth.register.header_title')} description={t('auth.register.header_desc')} maxWidth="2xl">
+        <AuthSplitLayout title={t('auth.register.header_title')} description={t('auth.register.header_desc')} maxWidth="2xl">
             <Head title={t('auth.register.head_title')} />
 
             <FormRegistroUsuario
@@ -53,6 +53,6 @@ export default function Register() {
                     {t('auth.register.do_login')}
                 </Link>
             </div>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

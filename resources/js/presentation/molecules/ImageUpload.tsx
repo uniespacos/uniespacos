@@ -3,7 +3,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormCadastroValues } from '@/presentation/pages/Administrativo/Espacos/CadastrarEspaco';
+import { type FormCadastroValues } from '@/types/admin-forms';
 import { useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import React from 'react';
@@ -155,13 +155,13 @@ export function ImageUpload({
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        className="h-6 w-6 rounded-full opacity-90 shadow-md text-destructive-accent hover:text-destructive-accent"
+                                        className="text-destructive-accent hover:text-destructive-accent h-6 w-6 rounded-full opacity-90 shadow-md"
                                         onClick={() => {
                                             handleRemoveImage(index);
                                         }}
                                         disabled={processing}
                                     >
-                                        <X className="h-3 w-3 text-destructive-accent" />
+                                        <X className="text-destructive-accent h-3 w-3" />
                                     </Button>
                                 </div>
                             </div>

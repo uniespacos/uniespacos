@@ -7,23 +7,13 @@ import { LocationSelector } from '@/presentation/molecules/LocationSelector';
 import { EspacoFormFields } from '@/presentation/organisms/EspacoFormFields';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Andar, Espaco, Modulo, Unidade } from '@/types';
+import { type FormCadastroValues } from '@/types/admin-forms';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export interface FormCadastroValues {
-    nome: string;
-    capacidade_pessoas: number | undefined;
-    descricao: string;
-    imagens: File[];
-    main_image_index: number | undefined;
-    unidade_id: number | undefined;
-    modulo_id: number | undefined;
-    andar_id: number | undefined;
-    images_to_delete?: string[];
-    [key: string]: string | number | File[] | string[] | undefined;
-}
+export type { FormCadastroValues };
 
 export default function CadastrarEspacoPage() {
     const { t } = useTranslation();

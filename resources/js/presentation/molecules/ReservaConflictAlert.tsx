@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
 import { SlotReservaItem } from '@/types/reserva-stepper';
+import { format } from 'date-fns';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 export interface ReservaConflictAlertProps {
     espacoId: number;
@@ -29,7 +30,7 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
 
         const handleHorarioOcupado = (event: { data: string; horario_inicio: string }) => {
             const hasMatch = selectedSlots.some((slot) => {
-                const slotDataStr = slot.data instanceof Date ? slot.data.toISOString().slice(0, 10) : slot.data.slice(0, 10);
+                const slotDataStr = slot.data instanceof Date ? format(slot.data, 'yyyy-MM-dd') : slot.data.slice(0, 10);
                 const slotHoraStr = slot.horario_inicio.slice(0, 5);
                 const eventHoraStr = event.horario_inicio.slice(0, 5);
 
