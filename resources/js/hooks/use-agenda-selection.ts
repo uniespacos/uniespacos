@@ -1,30 +1,36 @@
 import { opcoesRecorrencia } from '@/constants/recorrencia';
 import { useSlotSelection } from '@/hooks/use-slot-selection';
-import { Espaco, Reserva, SlotCalendario, ValorOcorrenciaType } from '@/types';
-import { ReservaFormData } from '@/types/reserva-stepper';
+import { type Espaco, type Reserva, type SlotCalendario, type ValorOcorrenciaType } from '@/types';
+import { type ReservaFormData } from '@/types/reserva-stepper';
 import { useForm } from '@inertiajs/react';
 import { addMonths, format, parse } from 'date-fns';
-import { type SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { type SyntheticEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 declare function route(name: string, params?: unknown): string;
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
-type AgendaSelectionFormData = {
+interface AgendaHorarioPayload {
+    data: string;
+    horario_inicio: string;
+    horario_fim: string;
+    agenda_id?: number;
+    [key: string]: string | number | { id: number; turno: string } | undefined;
+}
+
+interface AgendaSelectionFormData {
     titulo: string;
     descricao: string;
     data_inicial: Date | null;
     data_final: Date | null;
     recorrencia: ValorOcorrenciaType;
-    horarios_solicitados: {
-        data: string;
-        horario_inicio: string;
-        horario_fim: string;
-        agenda_id?: number;
-    }[];
+    horarios_solicitados: AgendaHorarioPayload[];
     edit_scope?: 'single' | 'recurring';
     edited_week_date?: string;
-};
+    termo_responsabilidade?: boolean;
+    publico_estimado?: number | string;
+    categoria?: string;
+    [key: string]: string | number | boolean | Date | null | undefined | AgendaHorarioPayload[];
+}
 
 interface UseAgendaSelectionProps {
     espaco: Espaco;
@@ -35,6 +41,7 @@ interface UseAgendaSelectionProps {
 
 export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAgendaSelectionProps) {
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
+    const semanaVisivelIso = format(semanaVisivel, 'yyyy-MM-dd');
 
     const slotsIniciais = useMemo<SlotCalendario[]>(() => {
         if (!reserva?.horarios) {
@@ -67,11 +74,15 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         recorrencia: reserva?.recorrencia ?? 'unica',
         horarios_solicitados: [],
         edit_scope: 'recurring',
-        edited_week_date: format(semanaVisivel, 'yyyy-MM-dd'),
+        edited_week_date: semanaVisivelIso,
     });
 
     useEffect(() => {
-        const horariosParaEnviar = slotsSelecao.map((s) => ({
+        setData((prevData) => (prevData.edited_week_date === semanaVisivelIso ? prevData : { ...prevData, edited_week_date: semanaVisivelIso }));
+    }, [semanaVisivelIso, setData]);
+
+    useEffect(() => {
+        const horariosParaEnviar: AgendaHorarioPayload[] = slotsSelecao.map((s) => ({
             data: format(s.data, 'yyyy-MM-dd'),
             horario_inicio: s.horario_inicio,
             horario_fim: s.horario_fim,
@@ -100,25 +111,7 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
                 data_final: novaDataFinal,
             };
         });
-    }, [slotsSelecao, setData]);
-
-    useEffect(() => {
-        if (slotsSelecao.length === 0) return;
-
-        setData((prevData) => {
-            if (prevData.recorrencia === 'personalizado') return prevData;
-
-            const opcaoRecorrencia = opcoesRecorrencia.find((op) => op.valor === prevData.recorrencia);
-            if (!opcaoRecorrencia) return prevData;
-
-            const novaDataFinal =
-                prevData.recorrencia === 'unica'
-                    ? new Date(Math.max(...slotsSelecao.map((s) => s.data.getTime())))
-                    : opcaoRecorrencia.calcularDataFinal(prevData.data_inicial ?? new Date());
-
-            return { ...prevData, data_final: novaDataFinal };
-        });
-    }, [data.recorrencia, slotsSelecao, setData]);
+    }, [slotsSelecao, data.recorrencia, setData]);
 
     const handleFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
@@ -126,8 +119,6 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
             toast.error('Selecione pelo menos um horário para reservar.');
             return;
         }
-
-        setData((prevData) => ({ ...prevData, edited_week_date: format(semanaVisivel, 'yyyy-MM-dd') }));
 
         const options = {
             onSuccess: () => {
@@ -148,6 +139,18 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         }
     };
 
+    const setFormData = useCallback(
+        (key: keyof ReservaFormData, value: unknown) => {
+            setData((prevData) => ({
+                ...prevData,
+                [key]: value as AgendaSelectionFormData[keyof AgendaSelectionFormData],
+            }));
+        },
+        [setData],
+    );
+
+    const formData: ReservaFormData = data;
+
     return {
         slotsSelecao,
         alternarSelecaoSlot,
@@ -156,8 +159,8 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         setSlotsSelecao,
         dialogAberto,
         setDialogAberto,
-        formData: data as unknown as ReservaFormData,
-        setFormData: setData as unknown as (key: keyof ReservaFormData, value: unknown) => void,
+        formData,
+        setFormData,
         processing,
         handleFormSubmit,
     };

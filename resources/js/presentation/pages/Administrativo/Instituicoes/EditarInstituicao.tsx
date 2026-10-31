@@ -1,29 +1,26 @@
 import InstituicaoForm from '@/presentation/organisms/InstituicaoForm';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao } from '@/types';
+import { type CadastrarInstituicaoForm } from '@/types/admin-forms';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import type React from 'react';
 
-export interface EditarInstituicaoForm {
-    nome: string;
-    sigla: string;
-    endereco: string;
-}
+export type EditarInstituicaoForm = CadastrarInstituicaoForm;
 
 export default function EditarInstituicao() {
     const { instituicao } = usePage<{ instituicao: Instituicao }>().props;
     const breadcrumbs = [
         {
-            title: 'Gerenciar Instituicões',
+            title: 'Gerenciar Instituições',
             href: '/institucional/instituicoes',
         },
         {
-            title: 'Editar Instituicao',
-            href: `/institucional/instituicoes/${instituicao.id}/edit`,
+            title: 'Editar Instituição',
+            href: `/institucional/instituicoes/${String(instituicao.id)}/edit`,
         },
     ];
 
-    const form = useForm({
+    const form = useForm<EditarInstituicaoForm>({
         nome: instituicao.nome,
         sigla: instituicao.sigla,
         endereco: instituicao.endereco,

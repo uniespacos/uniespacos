@@ -1,21 +1,21 @@
-import { renderHook } from '@testing-library/react';
 import { usePage } from '@inertiajs/react';
+import { renderHook } from '@testing-library/react';
 import {
-    DICTIONARIES,
     DEFAULT_LOCALE,
+    DICTIONARIES,
     SUPPORTED_LOCALES,
-    isSupportedLocale,
-    translate,
-    useTranslation,
     formatDate,
     formatDateTime,
     formatNumber,
+    isSupportedLocale,
+    translate,
+    useTranslation,
 } from './index';
-import { ptBR } from './locales/pt-BR';
 import { en } from './locales/en';
 import { es } from './locales/es';
-import type { SupportedLocale } from './types';
+import { ptBR } from './locales/pt-BR';
 import type { TranslationKey } from './schema';
+import type { SupportedLocale } from './types';
 
 jest.mock('@inertiajs/react', () => ({
     usePage: jest.fn(),
@@ -76,9 +76,9 @@ describe('i18n Engine & Dictionaries', () => {
 
         it('dictionaries must be tenant-neutral without hardcoded UESB', () => {
             const allStrings = [
-                ...Object.values(ptBR).flatMap(v => getKeysRecursively(v as unknown as Record<string, unknown>)),
-                ...Object.values(en).flatMap(v => getKeysRecursively(v as unknown as Record<string, unknown>)),
-                ...Object.values(es).flatMap(v => getKeysRecursively(v as unknown as Record<string, unknown>)),
+                ...Object.values(ptBR).flatMap((v) => getKeysRecursively(v as unknown as Record<string, unknown>)),
+                ...Object.values(en).flatMap((v) => getKeysRecursively(v as unknown as Record<string, unknown>)),
+                ...Object.values(es).flatMap((v) => getKeysRecursively(v as unknown as Record<string, unknown>)),
             ];
 
             const jsonPt = JSON.stringify(ptBR);
@@ -136,17 +136,15 @@ describe('i18n Engine & Dictionaries', () => {
         });
 
         it('should interpolate single and multiple parameters with/without whitespace', () => {
-            expect(
-                translate('reservas.stepper.success_created', { institution_name: 'Campus Virtual' }, 'pt-BR')
-            ).toBe('Sua solicitação de reserva foi enviada com sucesso para Campus Virtual!');
+            expect(translate('reservas.stepper.success_created', { institution_name: 'Campus Virtual' }, 'pt-BR')).toBe(
+                'Sua solicitação de reserva foi enviada com sucesso para Campus Virtual!',
+            );
 
-            expect(
-                translate('espacos.capacidade', { count: 120 }, 'pt-BR')
-            ).toBe('Capacidade: 120 pessoas');
+            expect(translate('espacos.capacidade', { count: 120 }, 'pt-BR')).toBe('Capacidade: 120 pessoas');
 
-            expect(
-                translate('reservas.detalhes.avaliado_por', { name: 'Maria Silva', date: '25/08/2026' }, 'pt-BR')
-            ).toBe('Avaliado por Maria Silva em 25/08/2026');
+            expect(translate('reservas.detalhes.avaliado_por', { name: 'Maria Silva', date: '25/08/2026' }, 'pt-BR')).toBe(
+                'Avaliado por Maria Silva em 25/08/2026',
+            );
         });
 
         it('should return the raw key on missing or invalid translation paths', () => {
@@ -286,6 +284,22 @@ describe('i18n Engine & Dictionaries', () => {
             expect(result.current.formatDate(date, 'MM/dd/yyyy')).toBe('08/25/2026');
             expect(result.current.formatDateTime(date)).toContain('08/25/2026');
             expect(result.current.formatNumber(1000.5)).toContain('1,000.5');
+        });
+
+        it('should preserve referential identity of t and formatters across re-renders when locale is unchanged', () => {
+            mockedUsePage.mockReturnValue({
+                props: { locale: 'pt-BR' },
+            });
+
+            const { result, rerender } = renderHook(() => useTranslation());
+            const firstRender = result.current;
+
+            rerender();
+
+            expect(result.current.t).toBe(firstRender.t);
+            expect(result.current.formatDate).toBe(firstRender.formatDate);
+            expect(result.current.formatDateTime).toBe(firstRender.formatDateTime);
+            expect(result.current.formatNumber).toBe(firstRender.formatNumber);
         });
     });
 });

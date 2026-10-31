@@ -10,7 +10,7 @@ import { useTranslation } from '@/i18n';
 import InputError from '@/presentation/atoms/InputError';
 import { PasswordInput } from '@/presentation/atoms/PasswordInput';
 import TextLink from '@/presentation/atoms/TextLink';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
 interface LoginForm {
     email: string;
@@ -52,7 +52,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
     const emailError = errors.email ?? clientEmailError ?? undefined;
 
     return (
-        <AuthLayout title={t('auth.login.header_title')} description={t('auth.login.header_desc')} maxWidth="md">
+        <AuthSplitLayout title={t('auth.login.header_title')} description={t('auth.login.header_desc')} maxWidth="md">
             <Head title={t('auth.login.head_title')} />
 
             {status && (
@@ -146,6 +146,6 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                     </Link>
                 </div>
             </form>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

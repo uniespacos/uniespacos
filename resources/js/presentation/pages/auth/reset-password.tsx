@@ -9,7 +9,7 @@ import { useTranslation } from '@/i18n';
 import InputError from '@/presentation/atoms/InputError';
 import { PasswordInput } from '@/presentation/atoms/PasswordInput';
 import { PasswordStrengthMeter } from '@/presentation/molecules/PasswordStrengthMeter';
-import AuthLayout from '@/presentation/templates/AuthLayout';
+import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
 interface ResetPasswordProps {
     token: string;
@@ -42,7 +42,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     };
 
     return (
-        <AuthLayout title={t('auth.resetPassword.title')} description={t('auth.resetPassword.subtitle')} maxWidth="md">
+        <AuthSplitLayout title={t('auth.resetPassword.title')} description={t('auth.resetPassword.subtitle')} maxWidth="md">
             <Head title={t('auth.resetPassword.head_title')} />
 
             <div className="flex justify-center sm:justify-start">
@@ -125,6 +125,6 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     </Link>
                 </div>
             </form>
-        </AuthLayout>
+        </AuthSplitLayout>
     );
 }

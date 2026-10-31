@@ -2,14 +2,11 @@ import GenericHeader from '@/presentation/molecules/GenericHeader';
 import UnidadeForm from '@/presentation/organisms/UnidadesForm';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Instituicao, Unidade } from '@/types';
+import { type CadastrarUnidadeForm } from '@/types/admin-forms';
 import { Head, useForm, usePage } from '@inertiajs/react';
+import type React from 'react';
 
-export interface EditarUnidadeForm {
-    nome: string;
-    sigla: string;
-    instituicao_id: string;
-    [key: string]: string;
-}
+export type EditarUnidadeForm = CadastrarUnidadeForm;
 
 export default function EditarUnidade() {
     const { instituicao, unidade } = usePage<{ instituicao: Instituicao; unidade: Unidade }>().props;
@@ -20,13 +17,13 @@ export default function EditarUnidade() {
         },
         {
             title: 'Editar Unidade',
-            href: `/institucional/unidades/${unidade.id}/edit`,
+            href: `/institucional/unidades/${String(unidade.id)}/edit`,
         },
     ];
     const { data, setData, put, processing, errors } = useForm<EditarUnidadeForm>({
         nome: unidade.nome,
         sigla: unidade.sigla,
-        instituicao_id: unidade.instituicao?.id.toString() || '',
+        instituicao_id: unidade.instituicao?.id.toString() ?? '',
     });
 
     const submit = (e: React.SyntheticEvent) => {
@@ -38,19 +35,17 @@ export default function EditarUnidade() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Editar ${unidade.nome}`} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                    <GenericHeader titulo={`Editar Unidade:  ${unidade.nome}`} descricao="Aqui você consegue editar a unidade selecionada" />
-                    <UnidadeForm
-                        data={data}
-                        setData={setData}
-                        submit={submit}
-                        errors={errors}
-                        processing={processing}
-                        title="Editar Modulo"
-                        description="Altere os dados do modulo abaixo."
-                        instituicao={instituicao}
-                    />
-                </div>
+                <GenericHeader titulo={`Editar Unidade: ${unidade.nome}`} descricao="Aqui você consegue editar a unidade selecionada" />
+                <UnidadeForm
+                    data={data}
+                    setData={setData}
+                    submit={submit}
+                    errors={errors}
+                    processing={processing}
+                    title="Editar Unidade"
+                    description="Altere os dados da unidade abaixo."
+                    instituicao={instituicao}
+                />
             </div>
         </AppLayout>
     );

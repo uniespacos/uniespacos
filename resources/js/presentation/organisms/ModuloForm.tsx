@@ -5,14 +5,13 @@ import { SelectContent, SelectItem, SelectTrigger, Select as SelectUI, SelectVal
 import { criarTerreoInicial, garantirTerreo, nivelParaNome } from '@/lib/utils/andars/AndarHelpers';
 import { isEditMode, transformModuloToFormData } from '@/lib/utils/andars/ModuloDataFormTransformer';
 import { FormField } from '@/presentation/molecules/FormField';
-import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
 import AndaresManager from '@/presentation/organisms/AndarManager';
 import AndarStickFormActions from '@/presentation/organisms/AndarStickFormActions';
-import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
 import { Instituicao, Modulo, Unidade } from '@/types';
+import { type AndarFormData, type CadastrarModuloForm } from '@/types/admin-forms';
 import { useForm } from '@inertiajs/react';
 import type React from 'react';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 export interface ModuloFormProps {
     data: CadastrarModuloForm;
@@ -42,9 +41,6 @@ export default function ModuloForm({
     const topRef = useRef<HTMLDivElement>(null);
     const andaresRef = useRef<HTMLDivElement>(null);
 
-    const AndaresCard = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => <Card ref={ref}>{children}</Card>);
-    AndaresCard.displayName = 'AndaresCard';
-
     useEffect(() => {
         if (modulo && isEditMode(modulo)) {
             const formData = transformModuloToFormData(modulo);
@@ -54,9 +50,7 @@ export default function ModuloForm({
                 andares: andaresComTerreo.map((andar) => ({ ...andar, nome: nivelParaNome(andar.nivel) })),
             });
         } else {
-            setData((prev: CadastrarModuloForm) =>
-                prev.andares.length === 0 ? { ...prev, andares: [criarTerreoInicial()] } : prev,
-            );
+            setData((prev: CadastrarModuloForm) => (prev.andares.length === 0 ? { ...prev, andares: [criarTerreoInicial()] } : prev));
         }
     }, [modulo, setData]);
 
@@ -158,7 +152,7 @@ export default function ModuloForm({
                     </CardContent>
                 </Card>
 
-                <AndaresCard ref={andaresRef}>
+                <Card ref={andaresRef}>
                     <CardHeader>
                         <CardTitle>Andares do Módulo</CardTitle>
                         <CardDescription>
@@ -175,7 +169,7 @@ export default function ModuloForm({
                             processing={processing}
                         />
                     </CardContent>
-                </AndaresCard>
+                </Card>
 
                 <Card>
                     <CardFooter className="flex justify-end space-x-2">

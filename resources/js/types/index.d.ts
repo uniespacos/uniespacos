@@ -209,7 +209,7 @@ export interface Modulo {
 export interface Andar {
     id: number;
     nome: string;
-    tipo_acesso: [];
+    tipo_acesso: string[];
     modulo?: Modulo; // Relação aninhada
     modulo_id: number; // Adicionado para facilitar o filtro no frontend
     espacos?: Espaco[]; // Relação aninhada, array de espaços
@@ -292,15 +292,7 @@ export interface Reserva {
 /**
  * Tipo para o formulário de criação/edição de uma reserva.
  */
-export interface ReservaFormData {
-    titulo: string;
-    descricao: string;
-    data_inicial: Date | null;
-    data_final: Date | null;
-    recorrencia: ValorOcorrenciaType; // Tipo de recorrência selecionada
-    horarios_solicitados: Partial<Horario>[]; // Horários que o usuário seleciona
-    [key: string]: unknown;
-}
+export type { ReservaFormData } from './reserva-stepper';
 
 /**
  * Tipo para o painel de controle que mostra o resumo dos status.
@@ -347,7 +339,7 @@ export interface OpcoesRecorrencia {
 
 
 // Define a estrutura de um único link da paginação do Laravel
-interface PaginatorLink {
+export interface PaginatorLink {
     url: string | null;
     label: string;
     active: boolean;
@@ -355,7 +347,7 @@ interface PaginatorLink {
 
 // Define a estrutura completa do objeto paginador do Laravel
 // O <T> o torna genérico, para que possamos usá-lo para Reservas, Espaços, etc.
-interface Paginator<T> {
+export interface Paginator<T> {
     data: T[];
     links: PaginatorLink[];
     current_page: number;
@@ -403,7 +395,7 @@ export interface SelectedAgenda {
     instituicao: Instituicao;
 }
 
-interface ReservaAvaliadaNotificationPayload {
+export interface ReservaAvaliadaNotificationPayload {
     type: string; // 'App\\Notifications\\ReservaAvaliadaNotification'
     reserva_id: number;
     status_avaliacao: string;
