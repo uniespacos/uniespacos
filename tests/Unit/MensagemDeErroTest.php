@@ -18,14 +18,37 @@ use Tests\TestCase;
 
 class MensagemDeErroTest extends TestCase
 {
+    private const GENERICA_PT_BR = 'ocorreu uma falha interna. Tente novamente.';
+
     private TestHandler $capturado;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        app()->setLocale('pt');
         $this->capturado = new TestHandler;
         Log::swap(new Logger(new MonologLogger('teste', [$this->capturado])));
+    }
+
+    #[Test]
+    public function texto_generico_em_ingles_mostra_a_chave_original(): void
+    {
+        app()->setLocale('en');
+
+        $mensagem = MensagemDeErro::paraUsuario(new PDOException('falha'));
+
+        $this->assertSame('an internal error occurred. Please try again.', $mensagem);
+    }
+
+    #[Test]
+    public function texto_generico_em_pt_br_usa_a_traducao(): void
+    {
+        app()->setLocale('pt_BR');
+
+        $mensagem = MensagemDeErro::paraUsuario(new PDOException('falha'));
+
+        $this->assertSame(self::GENERICA_PT_BR, $mensagem);
     }
 
     #[Test]
@@ -41,7 +64,7 @@ class MensagemDeErroTest extends TestCase
 
         $mensagem = MensagemDeErro::paraUsuario($excecao);
 
-        $this->assertSame(MensagemDeErro::GENERICA, $mensagem);
+        $this->assertSame(self::GENERICA_PT_BR, $mensagem);
         $this->assertStringNotContainsString('insert', $mensagem);
         $this->assertStringNotContainsString($canario, $mensagem);
     }
@@ -65,7 +88,7 @@ class MensagemDeErroTest extends TestCase
 
         $mensagem = MensagemDeErro::paraUsuario($excecao, [], registrar: false);
 
-        $this->assertSame(MensagemDeErro::GENERICA, $mensagem);
+        $this->assertSame(self::GENERICA_PT_BR, $mensagem);
         $this->assertCount(0, $this->registrosDeErro());
     }
 
@@ -74,7 +97,7 @@ class MensagemDeErroTest extends TestCase
     {
         $mensagem = MensagemDeErro::paraUsuario(new PDOException('SQLSTATE[08006] could not translate host name "postgres"'));
 
-        $this->assertSame(MensagemDeErro::GENERICA, $mensagem);
+        $this->assertSame(self::GENERICA_PT_BR, $mensagem);
         $this->assertStringNotContainsString('postgres', $mensagem);
     }
 

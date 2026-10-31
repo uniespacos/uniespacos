@@ -47,8 +47,8 @@ class AvaliarReservaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'motivo.string' => 'O motivo deve ser um texto válido.',
-            'motivo.max' => 'O motivo não pode ter mais de 2000 caracteres.',
+            'motivo.string' => __('The reason must be a valid text.'),
+            'motivo.max' => __('The reason may not have more than :max characters.', ['max' => 2000]),
         ];
     }
 

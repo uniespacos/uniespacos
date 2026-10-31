@@ -70,7 +70,7 @@ class UpdateReservaRequest extends FormRequest
             'edit_scope.required' => 'O escopo de edição é obrigatório.',
             'edit_scope.in' => 'O escopo de edição deve ser "single" ou "recurring".',
             'edited_week_date.required_if' => 'A data da semana editada é obrigatória para edição de ocorrência única.',
-            'descricao.max' => 'A descrição não pode ter mais de 2000 caracteres.',
+            'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
             'data_inicial.required' => 'A data inicial é obrigatória.',
             'data_inicial.date' => 'A data inicial deve ser uma data válida.',
             'data_final.required' => 'A data final é obrigatória.',

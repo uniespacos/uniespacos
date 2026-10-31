@@ -11,7 +11,7 @@ use Throwable;
 
 final class MensagemDeErro
 {
-    public const GENERICA = 'ocorreu uma falha interna. Tente novamente.';
+    public const GENERICA = 'an internal error occurred. Please try again.';
 
     /**
      * @param  array<string, mixed>  $contexto
@@ -27,7 +27,7 @@ final class MensagemDeErro
             Log::error('Falha de infraestrutura ao processar ação do usuário', $contexto + ['exception' => $e]);
         }
 
-        return self::GENERICA;
+        return __(self::GENERICA);
     }
 
     private static function ehFalhaDeInfraestrutura(Throwable $e): bool

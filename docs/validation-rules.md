@@ -303,8 +303,8 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 **Mensagens personalizadas:**
 
-- `motivo.string`: "O motivo deve ser um texto válido."
-- `motivo.max`: "O motivo não pode ter mais de 2000 caracteres."
+- `motivo.string`: `__('The reason must be a valid text.')` (pt-BR: "O motivo deve ser um texto válido.")
+- `motivo.max`: `__('The reason may not have more than :max characters.', ['max' => 2000])` (pt-BR: "O motivo não pode ter mais de 2000 caracteres.")
 - `motivo.required_if` não tem mensagem própria. Usa a tradução padrão de `lang/pt/validation.php`: "O campo :attribute é obrigatório quando :other for :value."
 
 **Regra em `after()`:** cada horário avaliado deve pertencer a uma agenda gerenciada pelo gestor. Caso contrário: "Um ou mais horários pertencem a agendas que você não gerencia."

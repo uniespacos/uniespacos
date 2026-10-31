@@ -51,7 +51,7 @@ class StoreReservaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'descricao.max' => 'A descrição não pode ter mais de 2000 caracteres.',
+            'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
             'data_inicial.required' => 'A data inicial é obrigatória.',
             'data_inicial.date' => 'A data inicial deve ser uma data válida.',
             'data_inicial.after_or_equal' => 'A data inicial deve ser hoje ou uma data futura.',

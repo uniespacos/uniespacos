@@ -125,7 +125,7 @@ Log::info('Atualização de perfil', [
 | Tipo de exceção | Texto devolvido | Log |
 |-----------------|-----------------|-----|
 | Exceção de domínio (regra de negócio) | A própria mensagem da exceção | Nenhum |
-| `QueryException` ou `PDOException` | Texto genérico: "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
+| `QueryException` ou `PDOException` | Texto genérico traduzido via `__()`. A chave é `MensagemDeErro::GENERICA` ("an internal error occurred. Please try again."); em pt-BR sai "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
 
 `QueryException` e `PDOException` carregam SQL e valores. Por isso o detalhe vai só para o log.
 
@@ -597,6 +597,10 @@ public function store(StoreReservaRequest $request)
 As duas últimas (3 e 4) existem porque, sem elas, o teste passaria verde mesmo se a validação rejeitasse o payload silenciosamente: uma `ValidationException` também retorna 302, e o job não seria despachado — então essas asserções fecham a brecha.
 
 Esse teste previne que esse bug ressurja em futuras refatorações.
+
+## Mensagens Traduzíveis no Backend (`__()`)
+
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('The reason may not have more than :max characters.', ['max' => 2000])`). Toda chave nova precisa existir nos três arquivos.
 
 ## Diferença: Erros Esperados vs Inesperados
 
