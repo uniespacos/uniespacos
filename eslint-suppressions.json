@@ -112,11 +112,6 @@
       "count": 1
     }
   },
-  "resources/js/presentation/organisms/EspacoFiltroBusca.tsx": {
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 5
-    }
-  },
   "resources/js/presentation/organisms/EspacoFormFields.tsx": {
     "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 1

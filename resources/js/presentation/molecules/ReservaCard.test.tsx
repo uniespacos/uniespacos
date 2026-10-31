@@ -68,7 +68,41 @@ describe('ReservaCard', () => {
 
         expect(screen.getByText('Seminário de Inteligência Artificial')).toBeInTheDocument();
         expect(screen.getByText('Laboratório 3 - Módulo Central - 2º Andar')).toBeInTheDocument();
+        expect(screen.getByText('09:00 às 12:00')).toBeInTheDocument();
         expect(screen.getByText('Deferida')).toBeInTheDocument();
+    });
+
+    it('exibe nome do solicitante e contagem de horários no modo gestor', () => {
+        const reservaGestor: Reserva = {
+            ...mockReserva,
+            user: {
+                id: 9,
+                name: 'Maria Oliveira',
+                email: 'maria@example.com',
+                email_verified_at: null,
+                telefone: '',
+                setor_id: null,
+                unread_notifications: [],
+                created_at: '',
+                updated_at: '',
+                roles: [],
+                permissions: [],
+            },
+            horarios: [
+                mockReserva.horarios[0],
+                {
+                    ...mockReserva.horarios[0],
+                    id: 2,
+                    horario_inicio: '14:00:00',
+                    horario_fim: '16:00:00',
+                },
+            ],
+        };
+
+        render(<ReservaCard reserva={reservaGestor} isGestor={true} onDetalhes={jest.fn()} onAvaliar={jest.fn()} />);
+
+        expect(screen.getByText(/Maria Oliveira/i)).toBeInTheDocument();
+        expect(screen.getByText('2 horários')).toBeInTheDocument();
     });
 
     it('executa ações de usuário comum (Detalhes, Editar, Cancelar)', () => {
