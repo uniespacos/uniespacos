@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.101](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.100...v1.5.0-rc.101) (2026-10-31)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.4.4 ([1face34](https://github.com/uniespacos/uniespacos/commit/1face349a2f3df9af1aa45bf0ebbe3f93fcdfc9a))
+* **main:** release 1.4.4 ([db2b651](https://github.com/uniespacos/uniespacos/commit/db2b651029a6c4d907d7a7db93326aeff43b4a2a))
+* release de produção com patches de segurança (Laravel 12.70 e dependências) ([3ef15a1](https://github.com/uniespacos/uniespacos/commit/3ef15a13984e8271de90f282473ae32e06104df9))
+* sincronizar main em develop após release 1.4.4 ([f188d8d](https://github.com/uniespacos/uniespacos/commit/f188d8d4d2d664a580dd3ae5dbb6c645453f1967))
+
 ## [1.4.4](https://github.com/uniespacos/uniespacos/compare/v1.4.3...v1.4.4) (2026-10-30)
 
 
