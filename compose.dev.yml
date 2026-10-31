@@ -113,8 +113,10 @@ services:
   adminer:
     image: adminer:5
     restart: always
+    # Só na própria máquina: o Adminer dá acesso ao banco inteiro e não deve
+    # ficar visível na rede local (auditoria LGPD 2026-10-31, achado A-02).
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,9 +125,12 @@ services:
     restart: unless-stopped
     volumes:
       - ./docker/development/mailpit/data:/data
+    # Só na própria máquina: a caixa guarda os e-mails enviados pelo ambiente de
+    # dev. O app fala com o Mailpit pela rede do Docker (mailpit:1025), não pela
+    # porta do host (auditoria LGPD 2026-10-31, achado A-02).
     ports:
-      - 8025:8025
-      - 1025:1025
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
     environment:
       MP_DATABASE: /data/mailpit.db
 
