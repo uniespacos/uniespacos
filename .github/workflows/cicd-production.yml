@@ -37,32 +37,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
-          coverage: none
-          tools: composer:v2
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
       - name: Setup Environment
         run: |
           cp .env.testing .env
           sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/g' .env
           sed -i 's/DB_DATABASE=uniespacos/DB_DATABASE=uniespacos_test/g' .env
-          composer install --no-interaction --no-progress --prefer-dist
-          php artisan key:generate
+
+      - name: Setup PHP + vendor
+        uses: ./.github/actions/setup-php-deps
+        with:
+          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
+
+      - name: Generate App Key
+        run: php artisan key:generate
 
       - name: Run Migrations
         env:
@@ -91,22 +78,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci --prefer-offline
+      - name: Setup Node + node_modules
+        uses: ./.github/actions/setup-node-deps
 
       - name: Run Tests
         run: npm test -- --ci --maxWorkers=2
 
+  # Build roda EM PARALELO com os testes; o deploy exige os três verdes. Nenhuma tag flutuante é
+  # aplicada em push de tag (`latest`/`type=ref` só valem para branch), então uma imagem de commit
+  # com teste quebrado fica só com a tag de versão/sha no GHCR e nunca vai para o servidor.
   build-and-push:
     name: 🐳 Build & Push to GHCR
     if: github.event_name == 'push'
-    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -144,6 +127,8 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
+      # Cache de camadas no GHCR (compartilhado com staging). Ver comentário no cicd-staging.yml:
+      # `type=gha` é isolado por ref e cada release é uma tag nova, então nunca havia cache hit.
       - name: Build and push PHP App Image
         env:
           APP_NAME: ${{ secrets.APP_NAME}}
@@ -156,14 +141,15 @@ jobs:
           push: true
           tags: ${{ steps.meta_app.outputs.tags }}
           labels: ${{ steps.meta_app.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/app:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/app:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
           build-args: |
             VITE_REVERB_APP_KEY=${{ secrets.VITE_REVERB_APP_KEY }}
             VITE_REVERB_HOST=${{ secrets.VITE_REVERB_HOST }}
             VITE_REVERB_PORT=${{ secrets.VITE_REVERB_PORT }}
             VITE_REVERB_SCHEME=${{ secrets.VITE_REVERB_SCHEME }}
 
+      # Sem cache: a imagem web é só um COPY de /public da imagem app recém-construída.
       - name: Build and push Caddy Web Image
         env:
           APP_NAME: ${{ secrets.APP_NAME}}
@@ -175,14 +161,12 @@ jobs:
           push: true
           tags: ${{ steps.meta_web.outputs.tags }}
           labels: ${{ steps.meta_web.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           build-args: |
             APP_IMAGE=ghcr.io/${{ github.repository }}/app:${{ steps.meta_app.outputs.version }}
 
   deploy_production:
     name: 🚀 Deploy to Production
-    needs: build-and-push
+    needs: [build-and-push, test-backend, test-frontend]
     runs-on: ubuntu-latest
     environment:
       name: production

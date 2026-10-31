@@ -37,32 +37,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
-          coverage: none
-          tools: composer:v2
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
       - name: Setup Environment
         run: |
           cp .env.testing .env
           sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/g' .env
           sed -i 's/DB_DATABASE=uniespacos/DB_DATABASE=uniespacos_test/g' .env
-          composer install --no-interaction --no-progress --prefer-dist
-          php artisan key:generate
+
+      - name: Setup PHP + vendor
+        uses: ./.github/actions/setup-php-deps
+        with:
+          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
+
+      - name: Generate App Key
+        run: php artisan key:generate
 
       - name: Run Migrations
         env:
@@ -91,22 +78,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci --prefer-offline
+      - name: Setup Node + node_modules
+        uses: ./.github/actions/setup-node-deps
 
       - name: Run Tests
         run: npm test -- --ci --maxWorkers=2
 
+  # Build roda EM PARALELO com os testes (antes esperava ~1,5min por eles). Isso é seguro porque
+  # o deploy continua exigindo testes + build verdes, e a tag flutuante `staging` (usada pelo
+  # workflow_dispatch) só é movida depois do deploy — uma imagem de commit com teste quebrado fica
+  # no GHCR apenas com a tag de versão/sha, sem nunca ir para o servidor.
   build-and-push:
     name: 🐳 Build & Push to GHCR
     if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
-    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -130,7 +114,6 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
-            type=raw,value=staging,enable=${{ github.ref_type == 'tag' }}
 
       - name: Generate Docker meta for web image
         id: meta_web
@@ -140,8 +123,12 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
-            type=raw,value=staging,enable=${{ github.ref_type == 'tag' }}
 
+      # Cache de camadas no próprio GHCR (tag `buildcache`), e não mais em `type=gha`: o cache do
+      # Actions é isolado por ref, e cada release é uma tag nova — então nenhuma build jamais
+      # reaproveitava a anterior (apt + extensões PHP + npm ci recompilados toda vez, ~190s), além
+      # de lotar a cota de 10 GB do Actions e despejar o cache de node_modules/vendor dos testes.
+      # O mesmo `buildcache` é compartilhado com o pipeline de produção.
       - name: Build and push PHP App Image
         env:
           APP_NAME: ${{ secrets.APP_NAME }}
@@ -154,14 +141,16 @@ jobs:
           push: true
           tags: ${{ steps.meta_app.outputs.tags }}
           labels: ${{ steps.meta_app.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/app:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/app:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
           build-args: |
             VITE_REVERB_APP_KEY=${{ secrets.VITE_REVERB_APP_KEY_STAGING }}
             VITE_REVERB_HOST=${{ secrets.VITE_REVERB_HOST_STAGING }}
             VITE_REVERB_PORT=${{ secrets.VITE_REVERB_PORT_STAGING }}
             VITE_REVERB_SCHEME=${{ secrets.VITE_REVERB_SCHEME_STAGING }}
 
+      # Sem cache: a imagem web é só um COPY de /public da imagem app recém-construída (que muda
+      # a cada release), então não há camada reaproveitável — exportar cache só custaria tempo.
       - name: Build and push Caddy Web Image
         env:
           APP_NAME: ${{ secrets.APP_NAME }}
@@ -173,15 +162,13 @@ jobs:
           push: true
           tags: ${{ steps.meta_web.outputs.tags }}
           labels: ${{ steps.meta_web.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           build-args: |
             APP_IMAGE=ghcr.io/${{ github.repository }}/app:${{ steps.meta_app.outputs.version }}
 
   deploy_staging:
     name: 🚀 Deploy to Staging
     if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
-    needs: build-and-push
+    needs: [build-and-push, test-backend, test-frontend]
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -237,3 +224,24 @@ jobs:
             set +a
             ./deploy.staging.sh ${IMAGE_TAG}
           "
+
+      # A tag flutuante `staging` só aponta para imagens que passaram nos testes E subiram no
+      # servidor. É ela que o workflow_dispatch reimplanta. `imagetools create` só reescreve o
+      # manifest no registry (segundos), sem baixar nem reconstruir nada.
+      - name: Log in to GitHub Container Registry
+        if: github.ref_type == 'tag'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promover imagens para a tag `staging`
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          for img in app web; do
+            docker buildx imagetools create \
+              -t "ghcr.io/${{ github.repository }}/${img}:staging" \
+              "ghcr.io/${{ github.repository }}/${img}:${VERSION}"
+          done
