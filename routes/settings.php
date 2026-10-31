@@ -6,8 +6,9 @@ use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Middleware\EncryptHistory;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('settings.profile.edit');
