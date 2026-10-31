@@ -8,11 +8,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteProfileRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\Instituicao;
+use App\Services\ProcessadorDeFotoDePerfil;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,7 +30,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, ProcessadorDeFotoDePerfil $processadorDeFoto): RedirectResponse
     {
         $user = $request->user();
         $validated = $request->validated();
@@ -44,13 +47,22 @@ class ProfileController extends Controller
         }
 
         $currentPhotoPath = $user->getRawOriginal('profile_pic');
+        $foto = $request->file('photo');
 
-        if ($request->hasFile('photo')) {
+        if ($foto instanceof UploadedFile) {
+            $novaFotoPath = $processadorDeFoto->armazenar($foto);
+
+            if ($novaFotoPath === null) {
+                throw ValidationException::withMessages([
+                    'photo' => __('A imagem enviada não pôde ser processada. Envie outro arquivo.'),
+                ]);
+            }
+
             if ($currentPhotoPath) {
                 Storage::disk('public')->delete($currentPhotoPath);
             }
 
-            $user->profile_pic = $request->file('photo')->store('avatars', 'public');
+            $user->profile_pic = $novaFotoPath;
         } elseif ($request->boolean('remove_photo')) {
             if ($currentPhotoPath) {
                 Storage::disk('public')->delete($currentPhotoPath);
