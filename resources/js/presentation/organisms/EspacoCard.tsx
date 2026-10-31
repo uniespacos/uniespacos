@@ -7,6 +7,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { PERMISSION_ESPACOS_ATUALIZAR } from '@/constants/permissions';
 import { useTranslation } from '@/i18n';
 import { hasPermission } from '@/lib/auth';
+import { resolveStorageUrl } from '@/lib/storage-url';
 import { cn } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import type { Espaco, User } from '@/types';
@@ -89,8 +90,8 @@ export default function EspacoCard({
 
     const imageSources =
         espaco.imagens && espaco.imagens.length > 0
-            ? espaco.imagens.map((img) => `/storage/${img}`)
-            : [espaco.main_image_index ? `/storage/${espaco.main_image_index}` : espacoImage];
+            ? espaco.imagens.map((img) => resolveStorageUrl(img) ?? espacoImage)
+            : [resolveStorageUrl(espaco.main_image_index) ?? espacoImage];
 
     const isModoGerenciamento = Boolean(isGerenciarEspacos) && hasPermission(user, PERMISSION_ESPACOS_ATUALIZAR);
     const isClicavel = !isModoGerenciamento;

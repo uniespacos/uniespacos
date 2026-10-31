@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useTranslation } from '@/i18n';
+import { resolveStorageUrl } from '@/lib/storage-url';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { ImageUpload, ImageWithPreview } from '@/presentation/molecules/ImageUpload';
 import { LocationSelector } from '@/presentation/molecules/LocationSelector';
@@ -39,7 +40,7 @@ export default function CadastrarEspacoPage() {
         if (!isEditMode || !espaco.imagens) return [];
         return espaco.imagens.map((imgPath) => ({
             file: new File([], imgPath, { type: 'image/*' }),
-            preview: `/storage/${imgPath}`,
+            preview: resolveStorageUrl(imgPath) ?? '',
             path: imgPath,
         }));
     });
