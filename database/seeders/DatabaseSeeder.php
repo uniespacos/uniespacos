@@ -17,33 +17,47 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    private const AMBIENTES_DE_DESENVOLVIMENTO = ['local', 'development', 'testing'];
+
     public function run(): void
     {
         $this->call([
-            // Production — dados reais do sistema
             PermissionSeeder::class,
             RoleSeeder::class,
             InstituicaoSeeder::class,
             UnidadeSeeder::class,
             SetorSeeder::class,
+        ]);
 
-            // Development — dados de teste
+        if (! app()->environment(self::AMBIENTES_DE_DESENVOLVIMENTO)) {
+            $this->command?->warn('Seeders de desenvolvimento ignorados no ambiente '.app()->environment().'. Contas de teste não foram criadas.');
+
+            return;
+        }
+
+        $this->call([
             UserSeeder::class,
             EspacoSeeder::class,
             ReservaSeeder::class,
         ]);
 
-        // Sincroniza as roles dos usuários nomeados de teste após EspacoSeeder
-        // (que pode ter atribuído role 'gestor' extra a esses usuários).
-        $namedUsers = [
+        $this->sincronizarPapeisDosUsuariosDeTeste();
+    }
+
+    /**
+     * Roda depois do EspacoSeeder, que pode ter dado papel 'gestor' extra a esses usuários.
+     */
+    private function sincronizarPapeisDosUsuariosDeTeste(): void
+    {
+        $usuariosDeTeste = [
             'institucional@gmail.com' => 'institucional',
             'gestor@gmail.com' => 'gestor',
             'comum@gmail.com' => 'comum',
         ];
 
-        foreach ($namedUsers as $email => $role) {
+        foreach ($usuariosDeTeste as $email => $papel) {
             $user = User::where('email', $email)->first();
-            $user?->syncRoles([$role]);
+            $user?->syncRoles([$papel]);
         }
     }
 }
