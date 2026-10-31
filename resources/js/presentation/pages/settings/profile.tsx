@@ -14,9 +14,8 @@ import SettingsLayout from '@/presentation/templates/settings/Layout';
 import { type BreadcrumbItem, type Instituicao, type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Camera, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
 import type React from 'react';
-import { type SyntheticEvent } from 'react';
+import { useRef, useState, type SyntheticEvent } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -138,7 +137,14 @@ export default function Profile({
                         >
                             <Camera className="h-3 w-3" />
                         </button>
-                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            aria-label={t('auth.profile.change_photo')}
+                            onChange={handlePhotoChange}
+                        />
                     </div>
 
                     <div className="min-w-0 flex-1">

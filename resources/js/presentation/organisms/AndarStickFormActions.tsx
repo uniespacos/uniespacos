@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/i18n';
 import { ArrowUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +12,7 @@ interface AndarStickFormActionsProps {
 }
 
 export default function AndarStickFormActions({ onScrollToTop, andaresCount }: AndarStickFormActionsProps) {
+    const { t } = useTranslation();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -38,7 +40,14 @@ export default function AndarStickFormActions({ onScrollToTop, andaresCount }: A
                         <div className="text-muted-foreground text-sm">
                             {andaresCount} andar{andaresCount !== 1 ? 'es' : ''}
                         </div>
-                        <Button type="button" variant="outline" size="sm" onClick={onScrollToTop} className="h-8 bg-transparent">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onScrollToTop}
+                            aria-label={t('common.a11y.scrollToTop')}
+                            className="h-11 min-w-11 bg-transparent md:h-8 md:min-w-0"
+                        >
                             <ArrowUp className="h-4 w-4" />
                         </Button>
                     </div>

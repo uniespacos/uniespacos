@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/i18n';
 import { type FormCadastroValues } from '@/types/admin-forms';
 import { useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
@@ -37,6 +38,8 @@ export function ImageUpload({
     errors,
     setMainImageIndex,
 }: ImageUploadProps) {
+    const { t } = useTranslation();
+
     const handleImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
@@ -129,12 +132,14 @@ export function ImageUpload({
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        className="bg-background h-6 w-6 rounded-full shadow-md"
+                                        className="bg-background h-11 w-11 rounded-full shadow-md md:h-6 md:w-6"
                                         onClick={() => {
                                             setMainImageIndex(index);
                                         }}
                                         disabled={processing || mainImageIndex === index}
-                                        title="Definir como imagem principal"
+                                        aria-label={t('common.a11y.setMainImage', { n: index + 1 })}
+                                        aria-pressed={mainImageIndex === index}
+                                        title={t('common.a11y.setMainImage', { n: index + 1 })}
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -155,11 +160,12 @@ export function ImageUpload({
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        className="text-destructive-accent hover:text-destructive-accent h-6 w-6 rounded-full opacity-90 shadow-md"
+                                        className="text-destructive-accent hover:text-destructive-accent h-11 w-11 rounded-full opacity-90 shadow-md md:h-6 md:w-6"
                                         onClick={() => {
                                             handleRemoveImage(index);
                                         }}
                                         disabled={processing}
+                                        aria-label={t('common.a11y.removeImage', { n: index + 1 })}
                                     >
                                         <X className="text-destructive-accent h-3 w-3" />
                                     </Button>

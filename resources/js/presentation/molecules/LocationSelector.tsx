@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { SelectContent, SelectItem, SelectTrigger, Select as SelectUI, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTranslation } from '@/i18n';
 import { nivelParaLabel, nomeParaNivel } from '@/lib/utils/andars/AndarHelpers';
-import { Plus } from 'lucide-react';
 import { Andar, Modulo, Unidade } from '@/types';
+import { Plus } from 'lucide-react';
 
 interface LocationSelectorProps {
     unidades: Unidade[];
@@ -38,6 +39,7 @@ export function LocationSelector({
     processing,
     errors,
 }: LocationSelectorProps) {
+    const { t } = useTranslation();
     const tiposDeAcessoDoAndar = andares.find((andar) => andar.id == andarSelecionado)?.tipo_acesso || [];
 
     return (
@@ -52,7 +54,7 @@ export function LocationSelector({
                         }}
                         disabled={processing}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger id="unidade_id">
                             <SelectValue placeholder="Selecione uma unidade" />
                         </SelectTrigger>
                         <SelectContent>
@@ -75,7 +77,7 @@ export function LocationSelector({
                         }}
                         disabled={!unidadeSelecionada || processing}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger id="module_id">
                             <SelectValue placeholder={unidadeSelecionada ? 'Selecione um módulo' : 'Selecione uma unidade primeiro'} />
                         </SelectTrigger>
                         <SelectContent>
@@ -97,7 +99,7 @@ export function LocationSelector({
                     <Label htmlFor="andar_id">Andar</Label>
                     <div className="flex gap-2">
                         <SelectUI value={andarSelecionado?.toString()} onValueChange={handleAndarChange} disabled={!moduloSelecionado || processing}>
-                            <SelectTrigger>
+                            <SelectTrigger id="andar_id">
                                 <SelectValue placeholder={moduloSelecionado ? 'Selecione um andar' : 'Selecione um módulo primeiro'} />
                             </SelectTrigger>
                             <SelectContent>
@@ -113,7 +115,15 @@ export function LocationSelector({
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button type="button" variant="outline" size="icon" disabled aria-disabled="true">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        disabled
+                                        aria-disabled="true"
+                                        aria-label={t('common.a11y.addFloor')}
+                                        className="h-11 w-11 md:h-9 md:w-9"
+                                    >
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
