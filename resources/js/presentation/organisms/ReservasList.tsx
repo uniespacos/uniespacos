@@ -1,4 +1,3 @@
-import { comSituacaoEfetivaDoGestor } from '@/lib/utils/reserva-helpers';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PERMISSION_RESERVAS_AVALIAR } from '@/constants/permissions';
@@ -6,6 +5,7 @@ import { SituacaoReserva } from '@/contracts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from '@/i18n';
 import { Can } from '@/lib/auth-can';
+import { comSituacaoEfetivaDoGestor } from '@/lib/utils/reserva-helpers';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
 import { ColumnDef, DataTable } from '@/presentation/molecules/DataTable';
 import DeleteItem from '@/presentation/molecules/DeleteItem';
@@ -106,24 +106,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
                 </Button>
 
                 {isGestorEvaluable && (
-                    <Can
-                        permission={PERMISSION_RESERVAS_AVALIAR}
-                        fallback={
-                            <Button
-                                variant="default"
-                                size="sm"
-                                className="h-8 gap-1 px-2.5 text-xs font-medium"
-                                onClick={() => {
-                                    handleAvaliarButton(reserva.id);
-                                }}
-                            >
-                                <Edit className="h-3.5 w-3.5" />
-                                {reserva.situacao === SituacaoReserva.EM_ANALISE
-                                    ? t('reservas.acoes.avaliar')
-                                    : t('reservas.avaliacao.reavaliacao_titulo')}
-                            </Button>
-                        }
-                    >
+                    <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
                         <Button
                             variant="default"
                             size="sm"
@@ -152,7 +135,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
                             {canEdit && (
                                 <DropdownMenuItem
                                     onClick={() => {
-                                        router.get(`reservas/${String(reserva.id)}/edit`);
+                                        router.get(route('reservas.edit', reserva.id));
                                     }}
                                 >
                                     <Edit className="mr-2 h-4 w-4" />
@@ -232,7 +215,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
             onDetalhes={handleAbrirDetalhes}
             onAvaliar={handleAvaliarButton}
             onEditar={(id) => {
-                router.get(`reservas/${String(id)}/edit`);
+                router.get(route('reservas.edit', id));
             }}
             onCancelar={setRemoverReserva}
         />

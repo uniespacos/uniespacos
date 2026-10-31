@@ -50,6 +50,9 @@ export const es = {
             noData: 'No hay datos disponibles en este momento.',
             noRecords: 'Ningún elemento registrado.',
         },
+        filters: {
+            all: 'Todos',
+        },
         dialogs: {
             confirmTitle: 'Confirmación',
             confirmDescription: '¿Está seguro de que desea continuar con esta acción?',
@@ -81,6 +84,7 @@ export const es = {
     nav: {
         dashboard: 'Panel Inicial',
         consultar_espacos: 'Consultar Espacios',
+        espacos_favoritos: 'Espacios Favoritos',
         minhas_reservas: 'Mis Reservas',
         gerir_reservas: 'Gestionar Reservas',
         gerir_espacos: 'Gestionar Espacios',
@@ -113,7 +117,9 @@ export const es = {
         gestor_title: 'Panel del Gestor',
         institucional_title: 'Panel Institucional',
         stats: {
+            total_espacos: 'Total de Espacios',
             total_reservas: 'Total de Reservas',
+            reservas_mes: 'Reservas del Mes',
             pendentes: 'Pendientes',
             em_analise: 'En Análisis',
             parcialmente_deferida: 'Parcialmente Aprobadas',
@@ -126,6 +132,9 @@ export const es = {
             solicitar_reserva: 'Solicitar Reserva',
             consultar_espacos: 'Consultar Espacios',
             gerir_reservas: 'Gestionar Reservas',
+            meus_favoritos: 'Espacios Favoritos',
+            meus_favoritos_desc: 'Acceda rápidamente a sus espacios guardados',
+            minhas_reservas_desc: 'Siga el estado de sus solicitudes',
         },
         tabs: {
             solicitacoes: 'Mis Solicitudes',
@@ -251,7 +260,8 @@ export const es = {
             conflict_with_user: 'Solicitante: {{user}}',
             conflicts_note: 'Puede optar por deferir incluso con conflictos. Considere analizar las reservas conflictivas antes de continuar.',
             conflict_cache_snapshot_title: 'Captura de Conflictos ({{count}} detectados)',
-            conflict_cache_snapshot_note: 'Esta es una captura histórica del momento en que el sistema procesó la reserva. Puede estar desactualizada. Los conflictos actuales se muestran arriba.',
+            conflict_cache_snapshot_note:
+                'Esta es una captura histórica del momento en que el sistema procesó la reserva. Puede estar desactualizada. Los conflictos actuales se muestran arriba.',
         },
         stepper: {
             step1_title: 'Horarios y Recurrencia',
@@ -302,6 +312,10 @@ export const es = {
             terms_description:
                 'Declaro que conozco las normas de utilización de los espacios físicos de {{institution_name}} y me comprometo con el cuidado y conservación del lugar durante el período reservado.',
         },
+        card: {
+            horarios_count: '{{count}} horarios',
+            horario_unico: '{{inicio}} a {{fim}}',
+        },
     },
     agenda: {
         semana_anterior: 'Semana Anterior',
@@ -310,7 +324,8 @@ export const es = {
         proxima_semana_label: 'Próxima semana',
         anterior: 'Anterior',
         proxima: 'Próxima',
-        hoje: 'Hoje',
+        hoje: 'Hoy',
+        sem_gestor: 'Sin gestor asignado',
     },
     auth: {
         layout: {
@@ -505,6 +520,8 @@ export const es = {
             filtros_ativos: 'Filtros activos:',
             busca_chip: 'Busca: “{{query}}”',
             unidade_chip: 'Unidad: {{sigla}}',
+            modulo_chip: 'Módulo: {{nome}}',
+            andar_chip: 'Piso: {{nome}}',
             limpar_tudo: 'Limpiar todo',
             todas_unidades: 'Todas las Unidades',
             todos_modulos: 'Todos los Módulos',
@@ -512,6 +529,16 @@ export const es = {
             qualquer_capacidade: 'Cualquier capacidad',
             qualquer: 'Cualquiera',
             lugares: 'Lugares',
+        },
+        empty: {
+            title: 'Ningún espacio encontrado',
+            desc: 'No encontramos espacios con los filtros seleccionados. Intente limpiar o ajustar los criterios de búsqueda.',
+        },
+        acessibilidade: {
+            terreo: 'Acceso en Planta Baja',
+            rampa: 'Rampa',
+            elevador: 'Ascensor',
+            escada: 'Escalera',
         },
         card: {
             reservar: 'Solicitar Reserva',
