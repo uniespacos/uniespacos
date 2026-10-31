@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Notifications\Auth\ResetPasswordQueued;
 use App\Notifications\Auth\VerifyEmailQueued;
+use App\Services\ExclusaoDeContaService;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -146,6 +147,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'App.Models.User.'.$this->getKey();
+    }
+
+    /**
+     * O banco guarda o marcador NOME_ANONIMIZADO; a tradução é feita na leitura, no idioma de quem lê.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value): string {
+                if ($value === ExclusaoDeContaService::NOME_ANONIMIZADO) {
+                    return (string) __('Anonymized user');
+                }
+
+                return is_string($value) ? $value : '';
+            },
+        );
     }
 
     /**

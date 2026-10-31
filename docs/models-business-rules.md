@@ -338,12 +338,18 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
    Na mesma `DB::transaction`:
    - remove as notificações do titular, os favoritos (`espaco_user`) e os papéis e permissões Spatie;
-   - troca o nome por `Usuário anonimizado`, o e-mail por `anonimizado-{id}@invalid`, zera `telefone` e `profile_pic` (string vazia, pois as colunas são NOT NULL), gera senha aleatória de 64 caracteres (a senha antiga deixa de valer) e limpa `remember_token`, `email_verified_at` e os campos de 2FA;
+   - grava o nome como marcador `ExclusaoDeContaService::NOME_ANONIMIZADO` (`Usuário anonimizado`), o e-mail por `anonimizado-{id}@invalid`, zera `telefone` e `profile_pic` (string vazia, pois as colunas são NOT NULL), gera senha aleatória de 64 caracteres (a senha antiga deixa de valer) e limpa `remember_token`, `email_verified_at` e os campos de 2FA;
    - remove as sessões (`sessions.user_id`) e o token de redefinição de senha, localizado pelo e-mail original.
 
    Depois do commit, apaga o arquivo da foto se `profile_pic` for caminho local `avatars/...`. URL externa não é tocada. Falha ao apagar o arquivo é logada e não desfaz a anonimização.
 
    **Marcador de conta anonimizada:** `User::estaAnonimizado()` compara o padrão do e-mail (`anonimizado-*@invalid`). Não há coluna nova. `User::notify()` não envia nada a conta anonimizada, nem grava linha em `notifications`, porque o e-mail não existe e o titular pediu eliminação.
+
+   **Nome exibido traduzido na leitura:** o banco guarda o marcador `NOME_ANONIMIZADO` (não traduzido). O accessor `User::name()` (`Attribute::get`) devolve `__('Anonymized user')` quando o valor bruto é esse marcador, no idioma da request (ou do worker, em job) de quem lê; qualquer outro valor volta como está. O accessor não depende da coluna `email`, então funciona nos selects explícitos sem `email`. Consequências:
+   - `getRawOriginal('name')` continua sendo o marcador; `ExclusaoDeContaService::anonimizar()` grava o valor bruto e não é afetado.
+   - Atualização de perfil, factories e `fill()` operam sobre o valor bruto. Ordenação e busca por nome (`UserRepositoryEloquent`) continuam no banco, sobre a coluna bruta.
+   - Serialização Inertia e relatórios leem pelo accessor, então exibem o rótulo traduzido. Consulta crua (`DB::table`/SQL) continua devolvendo o marcador.
+   - Um usuário ativo cujo nome real seja exatamente `Usuário anonimizado` seria exibido traduzido; o caso é improvável e aceito.
 
    **Preservado de propósito:**
    - `reservas.user_id` e `horarios.user_id` (avaliador): rastreabilidade. O `onDelete set null` não dispara mais na exclusão de conta.
@@ -352,7 +358,7 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
    **Trava de gestor:** usuário que ainda gere alguma agenda (`agendas.user_id`) não é anonimizado. `ContaNaoPodeSerAnonimizadaException` é lançada antes de qualquer alteração. Na autoexclusão a mensagem volta ao perfil no campo `password`. Na exclusão pelo institucional volta como flash `error`. Para liberar, remover a gestão pelo cadastro de usuários (`UserService::updatePermissions()` desvincula as agendas) e repetir a ação.
 
-   **Efeito nos fluxos de reserva:** o titular anonimizado continua existindo, então listagem, detalhe, avaliação (`AvaliarReservaJob`), cancelamento e conflitos seguem sem nulo. A detecção de conflito (`ConflictDetectionService::findConflictsFor()`) não junta mais com `users`; antes, uma reserva sem titular sumia da detecção. Os e-mails de reserva usam `$reserva->user?->name` com o rótulo `Solicitante não identificado` quando a reserva não tem titular (registros anteriores à anonimização).
+   **Efeito nos fluxos de reserva:** o titular anonimizado continua existindo, então listagem, detalhe, avaliação (`AvaliarReservaJob`), cancelamento e conflitos seguem sem nulo. A detecção de conflito (`ConflictDetectionService::findConflictsFor()`) não junta mais com `users`; antes, uma reserva sem titular sumia da detecção. Os e-mails de reserva usam `$reserva->user?->name` com o rótulo `__('Unidentified requester')` quando a reserva não tem titular (registros anteriores à anonimização).
 
    **Fora do alcance desta regra:** `failed_jobs.payload`, backups e dumps (retenção, T-19/T-23); notificações anteriores à T-24, que podem conter o nome de terceiros; fotos já gravadas com metadados (A-19, T-31).
 

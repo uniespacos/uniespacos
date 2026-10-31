@@ -123,7 +123,7 @@ class InstitucionalUsuarioController extends Controller
         try {
             $this->service->anonimizar($usuario);
 
-            return back()->with('success', 'Conta do usuário anonimizada com sucesso.');
+            return back()->with('success', __('User account anonymized successfully.'));
         } catch (ContaNaoPodeSerAnonimizadaException $e) {
             return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {

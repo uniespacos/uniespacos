@@ -565,7 +565,9 @@ Esse teste previne que esse bug ressurja em futuras refatorações.
 
 ## Mensagens Traduzíveis no Backend (`__()`)
 
-Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos; `tests/Unit/LangJsonChavesTest.php` cobre os textos da T-24.
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos; `tests/Unit/LangJsonChavesTest.php` cobre os textos da T-24 e da T-25 (anonimização: mensagem de gestor de agenda, flash de sucesso, `Anonymized user` e `Unidentified requester`).
+
+Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado como marcador e traduzido na leitura por accessor no model, não no banco. Ver `models-business-rules.md`, seção de exclusão de conta. Logs (`Log::...`) não passam por `__()`: ficam em português ou inglês técnico.
 
 - Locale da request vem de `HandleLocale` (sessão). Em job da fila não há sessão: capture `app()->getLocale()` no construtor e passe `$this->locale` como terceiro argumento de `__()` no `handle()`, sem alterar o locale global do worker.
 - Textos que o front monta com `t()` (dicionários em `resources/js/i18n/locales/`) não passam pelo `lang/`. Notificações usam os dois: `titulo`/`descricao` via `__()` e `chave`/`parametros` para o front (ver `notifications-and-channels.md`).

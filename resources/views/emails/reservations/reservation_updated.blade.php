@@ -1,12 +1,12 @@
 @extends('emails.layout')
 
 @section('content')
-    <p>Prezado(a) {{ $reserva->user?->name ?? 'Solicitante não identificado' }},</p>
+    <p>Prezado(a) {{ $reserva->user?->name ?? __('Unidentified requester') }},</p>
     <p>Sua reserva para <strong>'{{ $reserva->titulo }}'</strong> foi atualizada com sucesso.</p>
 
     <ul>
         <li><strong>Título da Reserva:</strong> {{ $reserva->titulo }}</li>
-        <li><strong>Solicitante:</strong> {{ $reserva->user?->name ?? 'Solicitante não identificado' }}</li>
+        <li><strong>Solicitante:</strong> {{ $reserva->user?->name ?? __('Unidentified requester') }}</li>
         @php
             $primeiroHorario = $reserva->horarios->first();
             $espaco = $primeiroHorario ? $primeiroHorario->agenda->espaco : null;

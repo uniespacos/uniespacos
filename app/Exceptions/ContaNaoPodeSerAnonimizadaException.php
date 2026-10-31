@@ -10,6 +10,6 @@ final class ContaNaoPodeSerAnonimizadaException extends DomainException
 {
     public static function gestorDeAgenda(): self
     {
-        return new self('Não é possível excluir esta conta enquanto ela for gestora de agenda. Peça ao institucional para remover a gestão das agendas antes.');
+        return new self((string) __('This account cannot be deleted while it manages a schedule. Ask the institutional team to remove the schedule management first.'));
     }
 }
