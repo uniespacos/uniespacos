@@ -1687,18 +1687,6 @@ parameters:
 			path: app/Services/EspacoService.php
 
 		-
-			message: '#^Cannot access property \$modulo on App\\Models\\Andar\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/EspacoService.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/EspacoService.php
-
-		-
 			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|string\.$#'
 			identifier: method.nonObject
 			count: 2

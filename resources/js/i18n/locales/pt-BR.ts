@@ -28,6 +28,26 @@ export const ptBR = {
             viewDetails: 'Ver detalhes',
             details: 'Detalhes',
         },
+        a11y: {
+            search: 'Buscar',
+            clearSelection: 'Limpar seleção',
+            bulkActions: 'Ações em massa',
+            selectAllPage: 'Selecionar todos os itens da página',
+            selectItem: 'Selecionar item {{n}}',
+            selectRow: 'Selecionar linha {{n}}',
+            rowActions: 'Ações de {{nome}}',
+            paginationNav: 'Paginação do relatório',
+            goToPage: 'Ir para a página {{page}}',
+            firstPage: 'Primeira página',
+            previousPage: 'Página anterior',
+            nextPage: 'Próxima página',
+            lastPage: 'Última página',
+            addFloor: 'Adicionar andar',
+            removeFloor: 'Remover {{nome}}',
+            scrollToTop: 'Voltar ao topo',
+            setMainImage: 'Definir imagem {{n}} como principal',
+            removeImage: 'Remover imagem {{n}}',
+        },
         status: {
             active: 'Ativo',
             inactive: 'Inativo',
@@ -48,6 +68,7 @@ export const ptBR = {
             adjustFilter: 'Tente ajustar sua busca ou filtros selecionados.',
             noData: 'Sem dados disponíveis no momento.',
             noRecords: 'Nenhum item cadastrado.',
+            noNotifications: 'Nenhuma notificação por aqui.',
         },
         filters: {
             all: 'Todos',
@@ -325,6 +346,7 @@ export const ptBR = {
         proxima: 'Próxima',
         hoje: 'Hoje',
         sem_gestor: 'Sem gestor definido',
+        sem_turnos: 'Nenhum turno disponível neste espaço.',
     },
     auth: {
         layout: {
@@ -570,6 +592,12 @@ export const ptBR = {
         filtros_card_desc: 'Ajuste os parâmetros para refinar os dados consolidados do relatório.',
         empty_results_title: 'Nenhum registro encontrado',
         empty_results_desc: 'Não existem dados consolidados para o período e critérios selecionados. Tente ampliar as datas ou remover filtros.',
+        empty_chart: {
+            indicadores: 'Nenhum indicador para os filtros selecionados.',
+            inventario: 'Nenhum espaço para os filtros selecionados.',
+            ocupacao: 'Nenhum dado de ocupação para os filtros selecionados.',
+            reservas: 'Nenhuma reserva para os filtros selecionados.',
+        },
         tipos: {
             reservas_periodo: 'Reservas por Período',
             ocupacao_espacos: 'Taxa de Ocupação de Espaços',
@@ -693,6 +721,7 @@ export const ptBR = {
             desc: 'Estruture os setores acadêmicos e administrativos',
             novo: 'Novo Setor',
             nenhum: 'Nenhum setor encontrado',
+            sem_usuarios: 'Nenhum usuário vinculado a este setor',
         },
         roles: {
             titulo: 'Gerenciar Papéis & Permissões',
@@ -705,6 +734,7 @@ export const ptBR = {
             desc: 'Cadastre, edite e configure espaços físicos e recursos',
             novo: 'Novo Espaço',
             nenhum: 'Nenhum espaço encontrado',
+            cadastrar_primeiro: 'Cadastrar Primeiro Espaço',
             cadastrar: 'Cadastrar Espaço',
             editar: 'Editar Espaço',
             cadastrarDesc: 'Preencha os dados para cadastrar um novo espaço.',

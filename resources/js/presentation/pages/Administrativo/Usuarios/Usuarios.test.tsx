@@ -1,5 +1,5 @@
-import UsuariosPage from './Usuarios';
 import { fireEvent, render, screen } from '@testing-library/react';
+import UsuariosPage from './Usuarios';
 
 const mockGet = jest.fn();
 const mockPut = jest.fn();
@@ -60,7 +60,11 @@ jest.mock('@inertiajs/react', () => ({
         delete safeProps.preserveScroll;
         delete safeProps.only;
         delete safeProps.as;
-        return <a href={href} {...safeProps}>{children}</a>;
+        return (
+            <a href={href} {...safeProps}>
+                {children}
+            </a>
+        );
     },
     router: {
         get: (...args: unknown[]) => {
@@ -135,8 +139,7 @@ describe('UsuariosPage', () => {
     it('renderiza botões de ação para usuários', () => {
         render(<UsuariosPage />);
 
-        const actionButtons = screen.getAllByRole('button');
-        expect(actionButtons.length).toBeGreaterThan(0);
+        expect(screen.getByRole('button', { name: 'Ações de João Silva' })).toBeInTheDocument();
     });
 
     it('usuarios_mostra_gestor_de_reserva', () => {

@@ -1,10 +1,12 @@
-import React from 'react';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { DatabaseNotificationItem, NotificationPeriodCategory } from '@/types/notification';
 import { Link } from '@inertiajs/react';
-import { isToday, isYesterday, isThisWeek, parseISO, isValid, format } from 'date-fns';
+import { format, isThisWeek, isToday, isValid, isYesterday, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, XCircle, Clock, Bell, Circle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bell, CheckCircle2, Circle, Clock, XCircle } from 'lucide-react';
+import React from 'react';
 
 export interface NotificationGroupListProps {
     notifications: DatabaseNotificationItem[];
@@ -13,13 +15,10 @@ export interface NotificationGroupListProps {
 }
 
 export const NotificationGroupList: React.FC<NotificationGroupListProps> = ({ notifications, onItemClick, className }) => {
+    const { t } = useTranslation();
+
     if (notifications.length === 0) {
-        return (
-            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
-                <Bell className="h-8 w-8 opacity-40" />
-                <p>Nenhuma notificação por aqui.</p>
-            </div>
-        );
+        return <EmptyState icon={Bell} size="compact" title={t('common.empty.noNotifications')} />;
     }
 
     // Agrupamento temporal

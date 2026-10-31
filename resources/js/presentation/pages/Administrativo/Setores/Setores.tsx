@@ -187,7 +187,7 @@ export default function SetoresPage() {
                         }}
                         aria-label="Excluir setor"
                     >
-                        <Trash2 className="h-4 w-4 text-destructive-accent" />
+                        <Trash2 className="text-destructive-accent h-4 w-4" />
                     </Button>
                 </div>
             </CardContent>
@@ -215,7 +215,7 @@ export default function SetoresPage() {
                 }}
                 aria-label="Excluir setor"
             >
-                <Trash2 className="h-4 w-4 text-destructive-accent" />
+                <Trash2 className="text-destructive-accent h-4 w-4" />
             </Button>
         </div>
     );
@@ -291,7 +291,7 @@ export default function SetoresPage() {
                     pagination={{ links: setores.links }}
                     emptyState={{
                         title: t('admin.setores.nenhum'),
-                        description: 'Nenhum setor cadastrado para os filtros selecionados.',
+                        description: t('common.empty.adjustFilter'),
                     }}
                     actions={renderActions}
                 />

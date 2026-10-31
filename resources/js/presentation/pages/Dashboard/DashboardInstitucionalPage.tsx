@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
 import { getTurnoText } from '@/lib/utils';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
 import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
@@ -169,11 +170,7 @@ export default function DashboardInstitucionalPage({
                         {reservas.length > 0 ? (
                             <TabsItemReserva reservas={reservas} />
                         ) : (
-                            <Card className="border-border/70">
-                                <CardContent className="text-muted-foreground py-12 text-center text-sm">
-                                    {t('dashboard.empty.no_reservas')}
-                                </CardContent>
-                            </Card>
+                            <EmptyState icon={ListChecks} title={t('dashboard.empty.no_reservas')} />
                         )}
                     </TabsContent>
 
@@ -302,11 +299,7 @@ export default function DashboardInstitucionalPage({
                                 setSearchTerm={setSearchTerm}
                             />
                         ) : (
-                            <Card className="border-border/70">
-                                <CardContent className="text-muted-foreground py-12 text-center text-sm">
-                                    {t('dashboard.empty.no_favoritos')}
-                                </CardContent>
-                            </Card>
+                            <EmptyState icon={Star} title={t('dashboard.empty.no_favoritos')} />
                         )}
                     </TabsContent>
                 </Tabs>

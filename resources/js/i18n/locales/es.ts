@@ -30,6 +30,26 @@ export const es = {
             viewDetails: 'Ver detalles',
             details: 'Detalles',
         },
+        a11y: {
+            search: 'Buscar',
+            clearSelection: 'Limpiar selección',
+            bulkActions: 'Acciones masivas',
+            selectAllPage: 'Seleccionar todos los elementos de esta página',
+            selectItem: 'Seleccionar elemento {{n}}',
+            selectRow: 'Seleccionar fila {{n}}',
+            rowActions: 'Acciones de {{nome}}',
+            paginationNav: 'Paginación del informe',
+            goToPage: 'Ir a la página {{page}}',
+            firstPage: 'Primera página',
+            previousPage: 'Página anterior',
+            nextPage: 'Página siguiente',
+            lastPage: 'Última página',
+            addFloor: 'Agregar piso',
+            removeFloor: 'Eliminar {{nome}}',
+            scrollToTop: 'Volver arriba',
+            setMainImage: 'Establecer imagen {{n}} como principal',
+            removeImage: 'Eliminar imagen {{n}}',
+        },
         status: {
             active: 'Activo',
             inactive: 'Inactivo',
@@ -50,6 +70,7 @@ export const es = {
             adjustFilter: 'Intente ajustar su búsqueda o los filtros seleccionados.',
             noData: 'No hay datos disponibles en este momento.',
             noRecords: 'Ningún elemento registrado.',
+            noNotifications: 'No hay notificaciones por ahora.',
         },
         filters: {
             all: 'Todos',
@@ -327,6 +348,7 @@ export const es = {
         proxima: 'Próxima',
         hoje: 'Hoy',
         sem_gestor: 'Sin gestor asignado',
+        sem_turnos: 'No hay turnos disponibles en este espacio.',
     },
     auth: {
         layout: {
@@ -572,6 +594,12 @@ export const es = {
         filtros_card_desc: 'Ajuste los parámetros para refinar los datos consolidados del informe.',
         empty_results_title: 'Ningún registro encontrado',
         empty_results_desc: 'No existen datos consolidados para el período y criterios seleccionados. Intente ampliar las fechas o eliminar filtros.',
+        empty_chart: {
+            indicadores: 'No hay indicadores para los filtros seleccionados.',
+            inventario: 'No hay espacios para los filtros seleccionados.',
+            ocupacao: 'No hay datos de ocupación para los filtros seleccionados.',
+            reservas: 'No hay reservas para los filtros seleccionados.',
+        },
         tipos: {
             reservas_periodo: 'Reservas por Período',
             ocupacao_espacos: 'Tasa de Ocupación de Espacios',
@@ -695,6 +723,7 @@ export const es = {
             desc: 'Estructure los sectores académicos y administrativos',
             novo: 'Nuevo Sector',
             nenhum: 'Ningún sector encontrado',
+            sem_usuarios: 'Ningún usuario vinculado a este sector',
         },
         roles: {
             titulo: 'Gestionar Roles y Permisos',
@@ -707,6 +736,7 @@ export const es = {
             desc: 'Registre, edite y configure espacios físicos y recursos',
             novo: 'Nuevo Espacio',
             nenhum: 'Ningún espacio encontrado',
+            cadastrar_primeiro: 'Registrar Primer Espacio',
             cadastrar: 'Registrar Espacio',
             editar: 'Editar Espacio',
             cadastrarDesc: 'Complete los datos para registrar un nuevo espacio.',

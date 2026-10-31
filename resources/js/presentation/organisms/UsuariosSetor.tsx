@@ -1,9 +1,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useTranslation } from '@/i18n';
 import { UserAvatar } from '@/presentation/atoms/UserAvatar';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { Setor, User } from '@/types';
-import { Loader2, Mail, Phone } from 'lucide-react';
+import { Loader2, Mail, Phone, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function UsuariosSetor({ setor, usuarios: initialUsuarios }: Props) {
+    const { t } = useTranslation();
     const [usuarios, setUsuarios] = useState<User[]>(initialUsuarios ?? []);
     const [loading, setLoading] = useState<boolean>(!initialUsuarios);
 
@@ -71,10 +74,7 @@ export function UsuariosSetor({ setor, usuarios: initialUsuarios }: Props) {
                             <span>Carregando usuários...</span>
                         </div>
                     ) : usuarios.length === 0 ? (
-                        <div className="text-muted-foreground py-8 text-center">
-                            <UsuarioIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                            <p>Nenhum usuário vinculado a este setor</p>
-                        </div>
+                        <EmptyState icon={Users} size="compact" title={t('admin.setores.sem_usuarios')} />
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>

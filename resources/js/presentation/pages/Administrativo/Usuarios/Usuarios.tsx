@@ -105,16 +105,24 @@ export default function UsuariosPage() {
     const renderUserActions = (user: User) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-11 w-11 md:h-8 md:w-8" aria-label={t('common.a11y.rowActions', { nome: user.name })}>
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { handleOpenEditModal(user); }}>
+                <DropdownMenuItem
+                    onClick={() => {
+                        handleOpenEditModal(user);
+                    }}
+                >
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { handleOpenPermissionModal(user); }}>
+                <DropdownMenuItem
+                    onClick={() => {
+                        handleOpenPermissionModal(user);
+                    }}
+                >
                     <Key className="mr-2 h-4 w-4" />
                     Permissões
                 </DropdownMenuItem>
@@ -205,7 +213,9 @@ export default function UsuariosPage() {
                         <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{roleLabel(t, user.roles[0] ?? ROLE_COMUM)}</Badge>
                         <div className="flex items-center space-x-1.5">
                             <div className={cn('h-2 w-2 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
-                            <span className="text-muted-foreground text-xs">{user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}</span>
+                            <span className="text-muted-foreground text-xs">
+                                {user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}
+                            </span>
                         </div>
                     </div>
                     <div>{renderUserActions(user)}</div>
