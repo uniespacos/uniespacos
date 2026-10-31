@@ -91,11 +91,7 @@ abstract class BaseNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'titulo' => $this->titulo,
-            'descricao' => $this->descricao,
-            'url' => $this->url,
-        ];
+        return $this->payload();
     }
 
     /**
@@ -103,10 +99,28 @@ abstract class BaseNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return new BroadcastMessage([
+        return new BroadcastMessage($this->payload());
+    }
+
+    /**
+     * Identificadores persistidos junto da descrição; nunca nomes de pessoas.
+     *
+     * @return array<string, int|null>
+     */
+    protected function identificadores(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string, int|string|null>
+     */
+    private function payload(): array
+    {
+        return array_merge([
             'titulo' => $this->titulo,
             'descricao' => $this->descricao,
             'url' => $this->url,
-        ]);
+        ], $this->identificadores());
     }
 }

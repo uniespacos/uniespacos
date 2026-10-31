@@ -95,7 +95,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
 
                     const horarioFormatado = horarioOriginal.horario_inicio.substring(0, 5);
                     const dataFormatada = format(parse(horarioOriginal.data, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy');
-                    const detalheDoConflito = `Conflito com a reserva '${conflito.conflito_reserva_titulo}' de ${conflito.conflito_user_name}.`;
+                    const detalheDoConflito = 'Conflito com outra reserva deferida neste horário.';
 
                     return `- Horário das ${horarioFormatado} do dia ${dataFormatada}: Indeferido. ${detalheDoConflito}`;
                 })

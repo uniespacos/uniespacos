@@ -27,6 +27,8 @@ class AvaliarReservaJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const JUSTIFICATIVA_CONFLITO = 'Conflito com outra reserva deferida neste horário.';
+
     public int $tries = 3;
 
     public function __construct(
@@ -77,9 +79,8 @@ class AvaliarReservaJob implements ShouldQueue
                         $justificativaFinal = $motivoDoGestor;
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
-                            $conflito = $conflitosMap->get($horarioId);
                             $statusFinal = SituacaoReservaEnum::INDEFERIDA->value;
-                            $justificativaFinal = "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}.";
+                            $justificativaFinal = self::JUSTIFICATIVA_CONFLITO;
                         }
 
                         Horario::where('id', $horarioId)
@@ -93,14 +94,9 @@ class AvaliarReservaJob implements ShouldQueue
                 } else {
                     if ($horariosConflitantesIds->isNotEmpty()) {
                         foreach ($horariosConflitantesIds as $id) {
-                            $conflito = $conflitosMap->get($id);
-                            $justificativa = $conflito
-                                ? "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}."
-                                : 'Conflito com outra reserva.';
-
                             Horario::where('id', $id)->whereIn('agenda_id', $agendasDoGestorIds)->update([
                                 'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
-                                'justificativa' => $justificativa,
+                                'justificativa' => self::JUSTIFICATIVA_CONFLITO,
                                 'user_id' => $this->gestor->id,
                             ]);
                         }

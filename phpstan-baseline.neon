@@ -817,18 +817,6 @@ parameters:
 			path: app/Jobs/AvaliarReservaJob.php
 
 		-
-			message: '#^Cannot access property \$conflito_reserva_titulo on stdClass\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Cannot access property \$conflito_user_name on stdClass\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
 			message: '#^Cannot call method notify\(\) on App\\Models\\User\|null\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -977,12 +965,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Notifications/BaseNotification.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Notifications/NewReservationNotification.php
 
 		-
 			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Str\:\:lower\(\) expects string, mixed given\.$#'
@@ -2009,18 +1991,6 @@ parameters:
 			identifier: cast.int
 			count: 1
 			path: app/Services/Relatorio/Reports/ReservasPeriodoRelatorio.php
-
-		-
-			message: '#^Cannot access property \$conflito_reserva_titulo on stdClass\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/ReservaService.php
-
-		-
-			message: '#^Cannot access property \$conflito_user_name on stdClass\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/ReservaService.php
 
 		-
 			message: '#^Cannot access property \$id on mixed\.$#'

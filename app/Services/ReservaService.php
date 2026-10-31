@@ -376,9 +376,8 @@ class ReservaService
         foreach ($horariosDaSemana as $horario) {
             $horario->is_conflicted = false;
             if ($conflitosMap->has($horario->id)) {
-                $conflito = $conflitosMap->get($horario->id);
                 $horario->is_conflicted = true;
-                $horario->conflict_details = "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}.";
+                $horario->conflict_details = 'Conflito com outra reserva deferida neste horário.';
             }
         }
 
