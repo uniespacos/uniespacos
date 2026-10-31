@@ -503,6 +503,7 @@ export const es = {
         sem_favoritos: 'Ningún espacio favorito',
         sem_favoritos_desc: 'Aún no ha añadido espacios a sus favoritos.',
         agenda_titulo: 'Agenda de Espacio',
+        agenda_titulo_com_nome: 'Agenda - {{nome}}',
         recursos: 'Recursos',
         limpar_filtros: 'Limpiar filtros',
         capacidade: 'Capacidad: {{count}} personas',

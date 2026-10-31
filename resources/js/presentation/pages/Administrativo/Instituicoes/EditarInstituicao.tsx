@@ -31,7 +31,7 @@ export default function EditarInstituicao() {
     const form = useForm<EditarInstituicaoForm>({
         nome: instituicao.nome,
         sigla: instituicao.sigla,
-        endereco: instituicao.endereco,
+        endereco: instituicao.endereco ?? '',
     });
 
     const submit = (e: React.SyntheticEvent) => {

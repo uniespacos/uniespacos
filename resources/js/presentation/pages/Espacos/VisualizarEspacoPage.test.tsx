@@ -4,10 +4,13 @@ import { __resetEchoChannelRegistryForTests } from '@/lib/echo-channel-registry'
 import VisualizarEspaço from '@/presentation/pages/Espacos/VisualizarEspacoPage';
 import type { Espaco, Reserva } from '@/types';
 import * as InertiaReact from '@inertiajs/react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-jest.mock('@inertiajs/react');
+jest.mock('@inertiajs/react', () => ({
+    Head: jest.fn(() => null),
+    router: { reload: jest.fn(), get: jest.fn() },
+}));
 
 jest.mock('@/presentation/templates/AppLayout', () => {
     return function DummyLayout({ children }: { children: React.ReactNode }) {
@@ -105,7 +108,6 @@ describe('VisualizarEspacoPage', () => {
         const { router } = jest.mocked(InertiaReact);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(router.reload).toHaveBeenCalledWith({ only: ['espaco'] });
-
     });
 
     it('should debounce multiple reserva:updated events', () => {
@@ -128,7 +130,6 @@ describe('VisualizarEspacoPage', () => {
         expect(router.reload).toHaveBeenCalledTimes(1);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(router.reload).toHaveBeenCalledWith({ only: ['espaco'] });
-
     });
 
     it('should render with isEditMode and reserva props', () => {
@@ -149,5 +150,13 @@ describe('VisualizarEspacoPage', () => {
         const { getByTestId } = render(<VisualizarEspaço espaco={mockEspaco} semana={mockSemana} reserva={mockReserva} isEditMode={true} />);
 
         expect(getByTestId('agenda-espaco')).toBeInTheDocument();
+    });
+
+    it('usa_titulo_da_agenda_no_head_e_como_h1', () => {
+        render(<VisualizarEspaço espaco={mockEspaco} semana={mockSemana} />);
+
+        const titulosHead = jest.mocked(InertiaReact.Head).mock.calls.map(([props]) => props.title);
+        expect(titulosHead).toContain('Agenda - Sala de Reuniões');
+        expect(screen.getByRole('heading', { level: 1, name: 'Agenda - Sala de Reuniões' })).toBeInTheDocument();
     });
 });

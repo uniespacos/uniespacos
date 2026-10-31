@@ -1,6 +1,9 @@
 import type { BreadcrumbItem } from '@/types';
+import { useForm } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
 import EditarUnidadePage from './EditarUnidade';
+
+let mockSiglaUnidade: string | null = 'JQ';
 
 jest.mock('@inertiajs/react', () => ({
     usePage: () => ({
@@ -14,19 +17,19 @@ jest.mock('@inertiajs/react', () => ({
             unidade: {
                 id: 2,
                 nome: 'Campus Jequié',
-                sigla: 'JQ',
+                sigla: mockSiglaUnidade,
                 instituicao: { id: 1, nome: 'Universidade Estadual do Sudoeste da Bahia', sigla: 'UESB', endereco: '' },
             },
         },
     }),
     Head: ({ title }: { title: string }) => <title>{title}</title>,
-    useForm: () => ({
+    useForm: jest.fn(() => ({
         data: { nome: 'Campus Jequié', sigla: 'JQ', instituicao_id: '1' },
         setData: jest.fn(),
         put: jest.fn(),
         processing: false,
         errors: {},
-    }),
+    })),
 }));
 
 jest.mock('@/presentation/templates/AppLayout', () => ({
@@ -60,6 +63,7 @@ jest.mock('@/presentation/organisms/UnidadesForm', () => ({
 describe('EditarUnidadePage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSiglaUnidade = 'JQ';
         (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string, params?: unknown) => {
             const routes: Record<string, string> = {
                 'institucional.unidades.index': '/institucional/unidades',
@@ -98,5 +102,17 @@ describe('EditarUnidadePage', () => {
         expect(screen.getByText('Editar Unidade - Altere os dados da unidade abaixo.')).toBeInTheDocument();
         expect(screen.getByText('Unidade Form edit')).toBeInTheDocument();
         expect(screen.queryByText(/Cadastrar Unidade/)).not.toBeInTheDocument();
+    });
+
+    it('normaliza_sigla_nula_para_string_vazia_no_formulario', () => {
+        mockSiglaUnidade = null;
+
+        render(<EditarUnidadePage />);
+
+        expect(useForm).toHaveBeenCalledWith({
+            nome: 'Campus Jequié',
+            sigla: '',
+            instituicao_id: '1',
+        });
     });
 });

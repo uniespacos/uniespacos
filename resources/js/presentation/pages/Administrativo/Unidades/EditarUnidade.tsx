@@ -30,7 +30,7 @@ export default function EditarUnidade() {
 
     const { data, setData, put, processing, errors } = useForm<EditarUnidadeForm>({
         nome: unidade.nome,
-        sigla: unidade.sigla,
+        sigla: unidade.sigla ?? '',
         instituicao_id: unidade.instituicao?.id.toString() ?? '',
     });
 

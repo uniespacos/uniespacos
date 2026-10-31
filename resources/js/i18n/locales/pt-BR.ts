@@ -501,6 +501,7 @@ export const ptBR = {
         sem_favoritos: 'Nenhum espaço favorito',
         sem_favoritos_desc: 'Você ainda não adicionou espaços aos seus favoritos.',
         agenda_titulo: 'Agenda de Espaço',
+        agenda_titulo_com_nome: 'Agenda - {{nome}}',
         recursos: 'Recursos',
         limpar_filtros: 'Limpar filtros',
         capacidade: 'Capacidade: {{count}} pessoas',

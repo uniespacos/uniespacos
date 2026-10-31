@@ -1,4 +1,5 @@
 import type { BreadcrumbItem } from '@/types';
+import { useForm } from '@inertiajs/react';
 import { render, screen } from '@testing-library/react';
 import EditarInstituicaoPage from './EditarInstituicao';
 
@@ -9,16 +10,18 @@ const instituicao = {
     endereco: 'Estrada do Bem Querer, km 04',
 };
 
+let mockEndereco: string | null = instituicao.endereco;
+
 jest.mock('@inertiajs/react', () => ({
-    usePage: () => ({ props: { instituicao } }),
+    usePage: () => ({ props: { instituicao: { ...instituicao, endereco: mockEndereco } } }),
     Head: ({ title }: { title: string }) => <title>{title}</title>,
-    useForm: () => ({
+    useForm: jest.fn(() => ({
         data: { nome: 'Universidade Estadual do Sudoeste da Bahia', sigla: 'UESB', endereco: 'Estrada do Bem Querer, km 04' },
         setData: jest.fn(),
         put: jest.fn(),
         processing: false,
         errors: {},
-    }),
+    })),
 }));
 
 jest.mock('@/presentation/templates/AppLayout', () => ({
@@ -52,6 +55,7 @@ jest.mock('@/presentation/organisms/InstituicaoForm', () => ({
 describe('EditarInstituicaoPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockEndereco = instituicao.endereco;
         (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string, params?: unknown) => {
             const routes: Record<string, string> = {
                 'institucional.instituicoes.index': '/institucional/instituicoes',
@@ -90,5 +94,17 @@ describe('EditarInstituicaoPage', () => {
         expect(screen.getByText('Editar Instituição - Altere os dados da instituição abaixo.')).toBeInTheDocument();
         expect(screen.getByText('Instituição Form edit')).toBeInTheDocument();
         expect(screen.queryByText(/Cadastrar Instituição/)).not.toBeInTheDocument();
+    });
+
+    it('normaliza_endereco_nulo_para_string_vazia_no_formulario', () => {
+        mockEndereco = null;
+
+        render(<EditarInstituicaoPage />);
+
+        expect(useForm).toHaveBeenCalledWith({
+            nome: 'Universidade Estadual do Sudoeste da Bahia',
+            sigla: 'UESB',
+            endereco: '',
+        });
     });
 });

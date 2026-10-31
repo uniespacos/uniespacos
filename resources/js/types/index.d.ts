@@ -175,7 +175,7 @@ export interface Instituicao {
     id: number;
     nome: string;
     sigla: string;
-    endereco: string;
+    endereco: string | null;
     unidades?: Unidade[]; // Relação aninhada, array de unidades
     setors?: Setor[]; // Relação aninhada, array de setores
 }
@@ -183,7 +183,7 @@ export interface Instituicao {
 export interface Unidade {
     id: number;
     nome: string;
-    sigla: string;
+    sigla: string | null;
     instituicao?: Instituicao; // Relação aninhada
     modulos?: Modulo[]; // Relação aninhada, array de módulos
     setors?: Setor[]; // Relação aninhada

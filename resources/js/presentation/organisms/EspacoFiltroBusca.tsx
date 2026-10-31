@@ -77,7 +77,7 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
     const unidadeSiglaMap = useMemo(() => {
         const map = new Map<number, string>();
         for (const unidade of unidades) {
-            map.set(unidade.id, unidade.sigla);
+            map.set(unidade.id, unidade.sigla ?? unidade.nome);
         }
         return map;
     }, [unidades]);
@@ -176,7 +176,7 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
 
         if (localFilters.unidade !== 'all') {
             const u = unidades.find((item) => item.id.toString() === localFilters.unidade);
-            if (u) chips.push({ key: 'unidade', label: t('espacos.filtros.unidade_chip', { sigla: u.sigla }) });
+            if (u) chips.push({ key: 'unidade', label: t('espacos.filtros.unidade_chip', { sigla: u.sigla ?? u.nome }) });
         }
         if (localFilters.modulo !== 'all') {
             const m = modulos.find((item) => item.id.toString() === localFilters.modulo);

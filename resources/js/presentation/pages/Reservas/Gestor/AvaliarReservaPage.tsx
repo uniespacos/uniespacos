@@ -12,6 +12,7 @@ import { verificarStatusReserva } from '@/lib/utils/reserva-status.helpers';
 import { SituacaoIcon } from '@/presentation/atoms/SituacaoIcon';
 import AgendaNavegacao from '@/presentation/molecules/AgendaNavegacao';
 import CalendarReservationDetails from '@/presentation/molecules/CalendarReservationDetails';
+import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { ConflictAlertBox } from '@/presentation/organisms/ConflictAlertBox';
 import { ConflictCacheSnapshotPanel } from '@/presentation/organisms/ConflictCacheSnapshotPanel';
 import EvaluationForm from '@/presentation/organisms/EvaluationForm';
@@ -46,12 +47,7 @@ interface AvaliarReservaPageProps {
     conflictCacheSnapshot?: Record<string, ConflictInfo> | null;
 }
 
-export default function AvaliarReservaPage({
-    reserva,
-    semana,
-    todosOsConflitos = {},
-    conflictCacheSnapshot = null,
-}: AvaliarReservaPageProps) {
+export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos = {}, conflictCacheSnapshot = null }: AvaliarReservaPageProps) {
     const { t } = useTranslation();
     useReservationLiveUpdates();
     useReservaRefreshOnEvent({ only: ['reserva'] });
@@ -156,39 +152,36 @@ export default function AvaliarReservaPage({
 
     const situacaoHeader = verificarStatusReserva(slotsSelecao);
 
+    const tituloAvaliacao = isReavaliacao ? t('reservas.avaliacao.reavaliacao_titulo') : t('reservas.avaliacao.titulo');
+    const espacoAvaliacao = reserva.horarios[0]?.agenda?.espaco;
+    const andarAvaliacao = espacoAvaliacao?.andar?.nome ? getAndarLabelByValue(espacoAvaliacao.andar.nome) : null;
+    const espacoDescricao = `${t('espacos.titulo')}: ${espacoAvaliacao?.nome ?? ''}`;
+    const descricaoAvaliacao = andarAvaliacao ? `${espacoDescricao} / ${andarAvaliacao}` : espacoDescricao;
+
     if (reserva.validation_status === ValidationStatus.PROCESSING || reserva.validation_status === ValidationStatus.PENDING) {
         return (
             <div className="flex h-full flex-col items-center justify-center">
                 <Loader2 className="text-primary mb-4 h-12 w-12 animate-spin" />
                 <h2 className="text-xl font-semibold">{t('common.status.processing')}</h2>
-                <p className="text-muted-foreground">
-                    {t('common.actions.loading')}
-                </p>
+                <p className="text-muted-foreground">{t('common.actions.loading')}</p>
             </div>
         );
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={isReavaliacao ? t('reservas.avaliacao.reavaliacao_titulo') : t('reservas.avaliacao.titulo')} />
+            <Head title={tituloAvaliacao} />
             <div className="mx-auto flex h-full w-full max-w-4xl flex-1 flex-col gap-6 rounded-xl p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-foreground text-3xl font-bold">
-                            {isReavaliacao ? t('reservas.avaliacao.reavaliacao_titulo') : t('reservas.avaliacao.titulo')}
-                        </h1>
-                        <p className="text-muted-foreground mt-1">
-                            {t('espacos.titulo')}: {reserva.horarios[0]?.agenda?.espaco?.nome} /{' '}
-                            {reserva.horarios[0]?.agenda?.espaco?.andar?.nome
-                                ? getAndarLabelByValue(reserva.horarios[0].agenda.espaco.andar.nome)
-                                : null}
-                        </p>
-                    </div>
-                    <Badge className={`${getStatusReservaColor(situacaoHeader)} flex items-center gap-1`}>
-                        <SituacaoIcon situacao={situacaoHeader} />
-                        {getStatusReservaText(situacaoHeader)}
-                    </Badge>
-                </div>
+                <GenericHeader
+                    titulo={tituloAvaliacao}
+                    descricao={descricaoAvaliacao}
+                    actions={
+                        <Badge className={`${getStatusReservaColor(situacaoHeader)} flex items-center gap-1`}>
+                            <SituacaoIcon situacao={situacaoHeader} />
+                            {getStatusReservaText(situacaoHeader)}
+                        </Badge>
+                    }
+                />
 
                 <ReservaInfoCard reserva={reserva}>
                     <div>
