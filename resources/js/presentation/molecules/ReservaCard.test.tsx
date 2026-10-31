@@ -53,6 +53,17 @@ const mockReserva: Reserva = {
     ],
 };
 
+type HorarioPayloadDashboard = Omit<Horario, 'data' | 'horario_inicio' | 'horario_fim' | 'situacao'>;
+
+function horarioPayloadDashboard(): Horario {
+    const payload: HorarioPayloadDashboard = {
+        id: 1,
+        agenda: mockReserva.horarios[0].agenda,
+    };
+
+    return payload as Horario;
+}
+
 describe('ReservaCard', () => {
     it('renderiza título, localização, datas e badge de situação', () => {
         render(
@@ -167,5 +178,32 @@ describe('ReservaCard', () => {
         expect(screen.queryByRole('button', { name: /Avaliar/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Editar/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Cancelar/i })).not.toBeInTheDocument();
+    });
+
+    it('não quebra com payload parcial do dashboard (horarios sem horario_inicio/horario_fim) e omite a linha de horário', () => {
+        const reservaDashboard: Reserva = {
+            ...mockReserva,
+            horarios: [horarioPayloadDashboard()],
+        };
+
+        render(<ReservaCard reserva={reservaDashboard} isGestor={false} onDetalhes={jest.fn()} />);
+
+        expect(screen.getByText('Seminário de Inteligência Artificial')).toBeInTheDocument();
+        expect(screen.getByText('Laboratório 3 - Módulo Central - 2º Andar')).toBeInTheDocument();
+        expect(screen.queryByText(/\d{2}:\d{2}/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/horário/i)).not.toBeInTheDocument();
+    });
+
+    it('não quebra quando a reserva não possui horários e omite a linha de horário', () => {
+        const reservaSemHorarios: Reserva = {
+            ...mockReserva,
+            horarios: [],
+        };
+
+        render(<ReservaCard reserva={reservaSemHorarios} isGestor={false} onDetalhes={jest.fn()} />);
+
+        expect(screen.getByText('Seminário de Inteligência Artificial')).toBeInTheDocument();
+        expect(screen.queryByText(/\d{2}:\d{2}/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/horário/i)).not.toBeInTheDocument();
     });
 });
