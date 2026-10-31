@@ -11,3 +11,17 @@ storage/framework/views/*
 tests
 phpunit.xml
 README.md
+
+# Dados pessoais e cópias de produção nunca entram no contexto do build
+# (auditoria LGPD 2026-10-31, achado A-01). O build da CI parte de checkout
+# limpo; estas regras protegem o build feito a partir de uma estação de dev.
+**/*.sql
+**/*.sql.gz
+**/*.dump
+storage/backups
+storage/app/public/*
+!storage/app/public/.gitignore
+public/storage
+docker/development/mailpit
+docs/auditoria*
+docs/plano-*
