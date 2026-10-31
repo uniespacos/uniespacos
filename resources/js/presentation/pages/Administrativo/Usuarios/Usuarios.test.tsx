@@ -1,3 +1,5 @@
+import { en } from '@/i18n/locales/en';
+import { ptBR } from '@/i18n/locales/pt-BR';
 import { fireEvent, render, screen } from '@testing-library/react';
 import UsuariosPage from './Usuarios';
 
@@ -31,6 +33,20 @@ jest.mock('@inertiajs/react', () => ({
                         roles: ['gestor'],
                         permissions: [],
                         setor_id: null,
+                        unread_notifications: [],
+                        created_at: '2026-01-01T00:00:00Z',
+                        updated_at: '2026-01-01T00:00:00Z',
+                    },
+                    {
+                        id: 3,
+                        name: 'Usuário anonimizado',
+                        email: 'anonimizado-3@invalid',
+                        email_verified_at: null,
+                        telefone: '',
+                        roles: [],
+                        permissions: [],
+                        setor_id: null,
+                        anonimizado: true,
                         unread_notifications: [],
                         created_at: '2026-01-01T00:00:00Z',
                         updated_at: '2026-01-01T00:00:00Z',
@@ -147,5 +163,39 @@ describe('UsuariosPage', () => {
 
         expect(screen.getByText('Maria Souza')).toBeInTheDocument();
         expect(screen.getByText('Gestor de Reserva')).toBeInTheDocument();
+    });
+
+    it('renderiza o filtro de contas anonimizadas desligado por padrão', () => {
+        render(<UsuariosPage />);
+
+        const filtro = screen.getByRole('switch', { name: 'Mostrar apenas contas anonimizadas' });
+        expect(filtro).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('ao ligar o filtro, visita a listagem com anonimizados=1 e preserva a busca', () => {
+        render(<UsuariosPage />);
+
+        fireEvent.click(screen.getByRole('switch', { name: 'Mostrar apenas contas anonimizadas' }));
+
+        expect(mockGet).toHaveBeenCalledWith(
+            expect.stringContaining('institucional/usuarios'),
+            expect.objectContaining({ anonimizados: '1' }),
+            expect.objectContaining({ preserveState: true, preserveScroll: true }),
+        );
+    });
+
+    it('mostra a conta anonimizada com o status próprio e sem ações de edição, permissão ou exclusão', () => {
+        render(<UsuariosPage />);
+
+        expect(screen.getAllByText('Conta anonimizada').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Usuário anonimizado').length).toBeGreaterThan(0);
+        expect(screen.queryByRole('button', { name: 'Ações de Usuário anonimizado' })).not.toBeInTheDocument();
+    });
+
+    it('traz os rótulos do filtro e do status de conta anonimizada nos locales pt-BR e en', () => {
+        expect(ptBR.usuarios.mostrar_apenas_anonimizadas).toBe('Mostrar apenas contas anonimizadas');
+        expect(ptBR.usuarios.conta_anonimizada).toBe('Conta anonimizada');
+        expect(en.usuarios.mostrar_apenas_anonimizadas).toBe('Show only anonymized accounts');
+        expect(en.usuarios.conta_anonimizada).toBe('Anonymized account');
     });
 });

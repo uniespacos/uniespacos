@@ -57,7 +57,7 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
         $this->criarReserva($this->titular);
         app(ExclusaoDeContaService::class)->anonimizar($this->titular);
 
-        $response = $this->actingAs($this->gestor)->get(route('gestor.reservas.index'));
+        $response = $this->actingAs($this->gestor)->get(route('gestor.reservas.index', ['arquivo' => 'todas']));
 
         $response->assertOk();
         $props = json_encode($response->viewData('page')['props'], JSON_UNESCAPED_UNICODE);
@@ -68,7 +68,7 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
 
     public function test_detalhe_da_reserva_no_gestor_abre_com_titular_anonimizado(): void
     {
-        $reserva = $this->criarReserva($this->titular);
+        $reserva = $this->criarReserva($this->titular, 'deferida');
         app(ExclusaoDeContaService::class)->anonimizar($this->titular);
 
         $response = $this->actingAs($this->gestor)->get(route('gestor.reservas.show', $reserva));
@@ -83,7 +83,7 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
     {
         Notification::fake();
         $reserva = $this->criarReserva($this->titular);
-        app(ExclusaoDeContaService::class)->anonimizar($this->titular);
+        $this->anonimizarSemCancelarPendentes($this->titular);
 
         $this->avaliarComoDeferida($reserva->fresh());
 
@@ -106,7 +106,7 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
     {
         Notification::fake();
         $reserva = $this->criarReserva($this->titular);
-        app(ExclusaoDeContaService::class)->anonimizar($this->titular);
+        $this->anonimizarSemCancelarPendentes($this->titular);
         $admin = User::factory()->create();
         $admin->assignRole('institucional');
 
@@ -204,6 +204,14 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
         ]);
 
         return $reserva;
+    }
+
+    private function anonimizarSemCancelarPendentes(User $titular): void
+    {
+        $titular->forceFill([
+            'name' => ExclusaoDeContaService::NOME_ANONIMIZADO,
+            'email' => User::emailAnonimizado($titular->id),
+        ])->save();
     }
 
     private function avaliarComoDeferida(Reserva $reserva): void

@@ -7,5 +7,6 @@
     "This account cannot be deleted while it manages a schedule. Ask the institutional team to remove the schedule management first.": "No se puede eliminar esta cuenta mientras sea gestora de agenda. Pida al equipo institucional que primero quite la gestión de agendas.",
     "User account anonymized successfully.": "La cuenta del usuario fue anonimizada correctamente.",
     "Anonymized user": "Usuario anonimizado",
+    "This account is anonymized and can no longer be changed.": "Esta cuenta fue anonimizada y ya no puede modificarse.",
     "Unidentified requester": "Solicitante no identificado"
 }

@@ -360,6 +360,16 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
    **Efeito nos fluxos de reserva:** o titular anonimizado continua existindo, então listagem, detalhe, avaliação (`AvaliarReservaJob`), cancelamento e conflitos seguem sem nulo. A detecção de conflito (`ConflictDetectionService::findConflictsFor()`) não junta mais com `users`; antes, uma reserva sem titular sumia da detecção. Os e-mails de reserva usam `$reserva->user?->name` com o rótulo `__('Unidentified requester')` quando a reserva não tem titular (registros anteriores à anonimização).
 
+   **Reservas pendentes do titular são canceladas na anonimização (T-25, revisão do responsável):** dentro da mesma `DB::transaction`, toda reserva do titular (`reservas.user_id`) com `situacao = em_analise` é inativada pelo mesmo caminho do cancelamento: `ReservaService::inativar()` marca a reserva e os horários como `inativa`. A seleção trava as linhas (`lockForUpdate`), então uma avaliação concorrente não cruza a anonimização. "Pendente" é só `em_analise` na reserva. Não há filtro por data: como o cancelamento é da reserva inteira, uma reserva em análise com data já passada também é cancelada, para não deixar pendência sem solicitante na fila do gestor. Reservas `deferida`, `indeferida`, `parcialmente_deferida` e `inativa` não são alteradas, e reservas de outros solicitantes também não.
+
+   Os efeitos externos do cancelamento (aviso aos gestores por `ReservationCanceledNotification`, sem nome do titular; revalidação de conflitos; `ReservaEvent` `canceled`, que invalida o cache de relatórios) rodam só depois do commit, em `ExclusaoDeContaService::notificarCancelamentos()`, que chama `ReservaService::notificarCancelamento()`. O pós-commit é explícito, e não via `afterCommit`, porque sob `DatabaseTransactions` nos testes esse callback nunca dispara. Falha de um desses efeitos é logada e não desfaz a anonimização. Se qualquer etapa da transação falhar, a reserva continua em análise e nenhum aviso é enviado. A conta anonimizada não recebe aviso (`User::notify()`).
+
+   **Decisões do responsável registradas:**
+   - Gestor de agenda continua bloqueado de ser anonimizado enquanto gerir alguma agenda (decisão 1). Nenhuma mudança.
+   - `users.setor_id` do titular anonimizado fica preservado (decisão 2), para os relatórios agregados por setor. Nenhuma mudança.
+
+   **Contas anonimizadas na lista administrativa:** `UserRepositoryEloquent::getPaginatedForAdminByInstituicao()` esconde contas anonimizadas por padrão, pelo mesmo padrão do e-mail (`anonimizado-%@invalid`, com os curingas escapados). Com o parâmetro `anonimizados=1` (validado em `ListarUsuariosRequest`), a listagem mostra somente essas contas. Busca por nome e e-mail, ordenação e paginação seguem o filtro, que volta em `filters.anonimizados`. A conta aparece com o nome traduzido e marcada como `anonimizado`, e não recebe editar, redefinir senha, reenviar verificação, alterar papel ou excluir (ver `UserPolicy`).
+
    **Fora do alcance desta regra:** `failed_jobs.payload`, backups e dumps (retenção, T-19/T-23); notificações anteriores à T-24, que podem conter o nome de terceiros; fotos já gravadas com metadados (A-19, T-31).
 
 ---

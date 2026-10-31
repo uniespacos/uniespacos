@@ -24,6 +24,10 @@ class LangJsonChavesTest extends TestCase
         'Unidentified requester',
     ];
 
+    private const CHAVES_DE_TEXTO_DA_REVISAO_T25 = [
+        'This account is anonymized and can no longer be changed.',
+    ];
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -44,6 +48,12 @@ class LangJsonChavesTest extends TestCase
     public function test_textos_novos_da_t25_existem_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_TEXTO_DA_T25);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_textos_da_revisao_da_t25_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_TEXTO_DA_REVISAO_T25);
     }
 
     private function assertChavesTraduzidas(string $arquivo, array $chaves): void

@@ -645,6 +645,8 @@ export const es = {
         gerenciar_usuarios_desc: 'Visualice y gestione los usuarios registrados en el sistema',
         buscar_placeholder: 'Buscar por nombre, correo o teléfono...',
         todos_setores: 'Todos los sectores',
+        mostrar_apenas_anonimizadas: 'Mostrar solo cuentas anonimizadas',
+        conta_anonimizada: 'Cuenta anonimizada',
         nenhum_usuario: 'Ningún usuario encontrado',
         ajustar_busca: 'Intente ajustar su búsqueda o los filtros seleccionados.',
         sem_setor_vinculado: 'Sin sector vinculado',

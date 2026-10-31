@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
+use App\Models\Horario;
+use App\Models\Reserva;
 use App\Models\User;
 use App\Repositories\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +23,7 @@ class ExclusaoDeContaService
 
     public function __construct(
         protected UserRepositoryInterface $repoUser,
+        protected ReservaService $reservaService,
     ) {}
 
     public function anonimizar(User $user): void
@@ -31,10 +35,12 @@ class ExclusaoDeContaService
         $emailOriginal = $user->email;
         $fotoLocal = $this->caminhoDaFotoLocal($user);
 
-        DB::transaction(function () use ($user, $emailOriginal): void {
+        $cancelamentos = DB::transaction(function () use ($user, $emailOriginal): array {
             if ($this->repoUser->temAgendaGerida($user)) {
                 throw ContaNaoPodeSerAnonimizadaException::gestorDeAgenda();
             }
+
+            $cancelamentos = $this->cancelarReservasPendentes($user);
 
             $this->repoUser->removerNotificacoes($user);
             $this->repoUser->removerFavoritos($user);
@@ -42,9 +48,51 @@ class ExclusaoDeContaService
             $this->repoUser->anonimizar($user, $this->atributosAnonimizados($user));
             $this->repoUser->removerSessoes($user);
             $this->repoUser->removerTokenDeRedefinicaoDeSenha($emailOriginal);
+
+            return $cancelamentos;
         });
 
+        $this->notificarCancelamentos($user, $cancelamentos);
         $this->apagarFotoLocal($user, $fotoLocal);
+    }
+
+    /**
+     * @return list<array{reserva: Reserva, horariosLiberados: Collection<int, Horario>}>
+     */
+    private function cancelarReservasPendentes(User $user): array
+    {
+        $cancelamentos = [];
+
+        foreach ($this->reservaService->pendentesDoSolicitante($user) as $reserva) {
+            $cancelamentos[] = [
+                'reserva' => $reserva,
+                'horariosLiberados' => $this->reservaService->inativar($reserva),
+            ];
+        }
+
+        return $cancelamentos;
+    }
+
+    /**
+     * @param  list<array{reserva: Reserva, horariosLiberados: Collection<int, Horario>}>  $cancelamentos
+     */
+    private function notificarCancelamentos(User $user, array $cancelamentos): void
+    {
+        foreach ($cancelamentos as $cancelamento) {
+            try {
+                $this->reservaService->notificarCancelamento(
+                    $cancelamento['reserva'],
+                    $user,
+                    $cancelamento['horariosLiberados'],
+                );
+            } catch (\Throwable $e) {
+                Log::error('Falha ao concluir cancelamento de reserva pendente após anonimização', [
+                    'user_id' => $user->id,
+                    'reserva_id' => $cancelamento['reserva']->id,
+                    'exception' => $e,
+                ]);
+            }
+        }
     }
 
     /**

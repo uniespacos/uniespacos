@@ -75,9 +75,14 @@ class UserRepositoryEloquent implements UserRepositoryInterface
      * telefone, selo de verificação e o papel). Agendas, permissões e a cadeia
      * de localização NÃO entram aqui: são exclusivas do modal de permissões e
      * chegam sob demanda via getWithPermissionContext() para um único usuário.
+     *
+     * Por padrão, contas anonimizadas ficam fora da listagem. Com $apenasAnonimizados,
+     * a listagem mostra somente elas.
      */
-    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
     {
+        $padraoAnonimizado = $this->padraoLikeEmailAnonimizado();
+
         return $this->user
             ->select(['id', 'name', 'email', 'telefone', 'email_verified_at', 'setor_id'])
             ->whereHas('setor.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
@@ -85,9 +90,25 @@ class UserRepositoryEloquent implements UserRepositoryInterface
                 fn ($q2) => $q2->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
             ))
             ->when($setorId, fn ($q) => $q->where('setor_id', $setorId))
+            ->when(
+                $apenasAnonimizados,
+                fn ($q) => $q->where('email', 'like', $padraoAnonimizado),
+                fn ($q) => $q->where('email', 'not like', $padraoAnonimizado),
+            )
             ->with('roles:id,name')
             ->orderBy('name')
             ->paginate($perPage);
+    }
+
+    /**
+     * Padrão LIKE do e-mail de conta anonimizada, com os curingas do próprio
+     * prefixo/domínio escapados para casarem literalmente.
+     */
+    private function padraoLikeEmailAnonimizado(): string
+    {
+        $escapar = static fn (string $texto): string => str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $texto);
+
+        return $escapar(User::PREFIXO_EMAIL_ANONIMIZADO).'%'.$escapar(User::DOMINIO_EMAIL_ANONIMIZADO);
     }
 
     /**

@@ -38,6 +38,7 @@ class InstitucionalUsuarioController extends Controller
             Auth::user(),
             $validated['search'] ?? null,
             isset($validated['setor_id']) ? (int) $validated['setor_id'] : null,
+            (bool) ($validated['anonimizados'] ?? false),
         );
 
         return Inertia::render('Administrativo/Usuarios/Usuarios', $data);

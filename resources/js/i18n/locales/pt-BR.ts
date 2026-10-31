@@ -643,6 +643,8 @@ export const ptBR = {
         gerenciar_usuarios_desc: 'Visualize e gerencie os usuários cadastrados no sistema',
         buscar_placeholder: 'Buscar por nome, email ou telefone...',
         todos_setores: 'Todos os setores',
+        mostrar_apenas_anonimizadas: 'Mostrar apenas contas anonimizadas',
+        conta_anonimizada: 'Conta anonimizada',
         nenhum_usuario: 'Nenhum usuário encontrado',
         ajustar_busca: 'Tente ajustar sua busca ou filtros selecionados.',
         sem_setor_vinculado: 'Sem setor vinculado',

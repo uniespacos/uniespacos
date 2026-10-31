@@ -42,14 +42,16 @@ class UserService
      *
      * @return array<string, mixed>
      */
-    public function getIndexData(User $authUser, ?string $search = null, ?int $setorId = null): array
+    public function getIndexData(User $authUser, ?string $search = null, ?int $setorId = null, bool $apenasAnonimizados = false): array
     {
         $instituicaoId = $authUser->setor->unidade->instituicao_id;
 
         /** @var LengthAwarePaginator<int, User> $users */
-        $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId);
+        $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId, $apenasAnonimizados);
         $users->through(fn (User $user) => array_merge($user->toArray(), [
+            'name' => $user->name,
             'roles' => $user->getRoleNames(),
+            'anonimizado' => $user->estaAnonimizado(),
         ]));
         $users->withQueryString();
         $setores = Setor::select(['id', 'sigla'])->orderBy('sigla')->get();
@@ -57,7 +59,7 @@ class UserService
         return [
             'users' => $users,
             'setores' => $setores,
-            'filters' => ['search' => $search, 'setor_id' => $setorId],
+            'filters' => ['search' => $search, 'setor_id' => $setorId, 'anonimizados' => $apenasAnonimizados],
         ];
     }
 
