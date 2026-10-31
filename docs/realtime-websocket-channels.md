@@ -135,6 +135,43 @@ Broadcast para Clients:
 
 ---
 
+## Ciclo de Vida da Conexão Echo
+
+**Localização:** `resources/js/app.tsx` (função `syncEchoWithAuthState(pageProps)`)
+
+A conexão Reverb **não é mais criada no carregamento do bundle**. Antes, `window.Echo` era instanciado incondicionalmente, inclusive em páginas públicas (`/login`, `/register`). Hoje o `window.Echo` existe somente enquanto há usuário autenticado, e a função `syncEchoWithAuthState` sincroniza a conexão com o estado de autenticação em dois pontos:
+
+- **Carga inicial:** `setup()` do `createInertiaApp`, com `props.initialPage.props`.
+- **Navegação:** `router.on('navigate', e => syncEchoWithAuthState(e.detail.page.props))`.
+
+```mermaid
+flowchart TD
+    A[setup do createInertiaApp] --> S[syncEchoWithAuthState]
+    N[router.on navigate] --> S
+    S --> Q{pageProps.auth.user existe?}
+    Q -- Sim --> E{echoInstance existe ou VITE_REVERB_APP_KEY vazia?}
+    E -- Sim --> X[Nada a fazer]
+    E -- Não --> C[new Echo reverb, window.Echo e window.Pusher]
+    Q -- Não --> D{echoInstance existe?}
+    D -- Sim --> F[disconnect, echoInstance = undefined, delete window.Echo]
+    D -- Não --> X
+```
+
+| Situação | Comportamento |
+| --- | --- |
+| Página pública (`/login`, `/register`), sem usuário | Nenhum Echo criado; nenhum socket Reverb aberto |
+| Usuário autenticado, Echo ainda não criado | Cria `new Echo({ broadcaster: 'reverb', ... })` e atribui a `window.Echo` (e `window.Pusher`) |
+| Usuário autenticado, `VITE_REVERB_APP_KEY` vazia | Echo não é criado |
+| Usuário deixa de estar autenticado (logout) | `echoInstance.disconnect()`, instância zerada e `delete window.Echo` |
+
+### Ressalva: evento `navigate` e visitas `replace`
+
+O evento `navigate` do Inertia 2.3 dispara **depois do swap da página** e **somente em visitas que não são `replace`**. O Inertia trata como `replace` qualquer visita cuja URL final é igual à URL atual.
+
+Como login (`/login` → `/dashboard`) e logout (→ `/login`) trocam de URL, o evento é disparado e a sincronização acontece. Uma mudança de estado de autenticação **que não troque de URL não é detectada**. Ao alterar esse fluxo, mantenha essa premissa em mente.
+
+---
+
 ## Hooks React
 
 ### useReservationLiveUpdates()
@@ -289,42 +326,49 @@ Window.Echo é parametrizado como `Echo<'reverb'>` em `resources/js/types/global
 ```tsx
 // Estrutura interna (type-safe)
 type EchoInstance = Window['Echo'];
-type EchoPublicChannel = ReturnType<EchoInstance['channel']>;
+export type EchoPublicChannel = ReturnType<EchoInstance['channel']>;
 
 interface ChannelRef<T> {
     channel: T;
     refCount: number;
 }
 
-const registry = new Map<string, ChannelRef<EchoPublicChannel>>();
+const publicChannels = new Map<string, ChannelRef<EchoPublicChannel>>();
 
-export function acquirePublicChannel(name: string) {
-    const echo = getEchoInstance();
-    if (!echo) return undefined;
+export function acquirePublicChannel(name: string): EchoPublicChannel | undefined {
+    const echo = window.Echo;
+    if (!echo) return undefined;  // Ex.: página pública, sem Echo criado
 
-    if (!registry.has(name)) {
-        registry.set(name, {
-            refCount: 0,
-            channel: echo.channel(name)  // Subscreve
-        });
+    const existing = publicChannels.get(name);
+    if (existing) {
+        existing.refCount += 1;  // Incrementa referência
+        return existing.channel;
     }
 
-    const entry = registry.get(name)!;
-    entry.refCount++;  // Incrementa referência
-    return entry.channel;
+    const channel = echo.channel(name);  // Subscreve
+    publicChannels.set(name, { channel, refCount: 1 });
+    return channel;
 }
 
-export function releasePublicChannel(name: string) {
-    const entry = registry.get(name);
-    if (!entry) return;
+export function releasePublicChannel(name: string): void {
+    const existing = publicChannels.get(name);
+    if (!existing) return;
 
-    entry.count--;
-    if (entry.count === 0) {
-        window.Echo.leave(name);  // Desinscreve só quando refCount === 0
-        registry.delete(name);
+    existing.refCount -= 1;
+    if (existing.refCount <= 0) {
+        window.Echo?.leave(name);  // Desinscreve só quando refCount chega a 0 e Echo existe
+        publicChannels.delete(name);
     }
 }
 ```
+
+`acquirePrivateChannel` / `releasePrivateChannel` seguem o mesmo contrato, com `echo.private(name)` e `Map` próprio.
+
+### Contrato de canal `undefined`
+
+- `acquirePublicChannel` e `acquirePrivateChannel` retornam `undefined` quando `window.Echo` não existe (ex.: página pública, usuário não autenticado).
+- `releasePublicChannel` e `releasePrivateChannel` só chamam `leave` se Echo existir; sem Echo, apenas removem a entrada do registry.
+- **Consumidores precisam tolerar `undefined`:** sempre checar o retorno de `acquire*` antes de chamar `channel.listen(...)` ou `stopListening(...)`.
 
 ### Uso
 
@@ -416,17 +460,25 @@ REVERB_PORT=8080
 
 ### Frontend
 
-**`resources/js/bootstrap.ts`:**
+Variáveis lidas em `resources/js/app.tsx`: `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e `VITE_REVERB_SCHEME` (`https` força TLS).
+
+Se `VITE_REVERB_APP_KEY` estiver vazia, o Echo não é criado (ver [Ciclo de Vida da Conexão Echo](#ciclo-de-vida-da-conexão-echo)).
+
+**`resources/js/app.tsx` (criação do Echo, dentro de `syncEchoWithAuthState`):**
 ```javascript
-window.Echo = new Echo({
+window.Pusher = Pusher;
+echoInstance = new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT,
-    wssPort: import.meta.env.VITE_REVERB_PORT,
-    forceTLS: import.meta.env.VITE_REVERB_FORCE_TLS === 'true',
+    wssHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_SCHEME === 'https' ? 443 : parseInt(import.meta.env.VITE_REVERB_PORT ?? '80', 10) || 80,
+    wssPort: parseInt(import.meta.env.VITE_REVERB_PORT ?? '443', 10) || 443,
+    forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
     enabledTransports: ['ws', 'wss'],
+    disableStats: true,
 });
+window.Echo = echoInstance;
 ```
 
 ---
@@ -473,15 +525,19 @@ window.Echo = new Echo({
 
 ### "Channel returned is undefined"
 
-**Causa:** `window.Echo` não está inicializado ou conexão falhou
+**Causa:** `window.Echo` não existe. Isso é esperado em páginas públicas e para usuário não autenticado (o Echo só é criado com usuário autenticado e `VITE_REVERB_APP_KEY` preenchida), ou a conexão falhou
 
 **Verificação:**
 ```bash
 # Frontend console
-console.log(window.Echo);  # Deve estar definido
+console.log(window.Echo);  # Deve estar definido somente com usuário autenticado
 ```
 
-**Solução:** Garantir que `bootstrap.ts` é importado antes do app
+**Solução:**
+
+- Confirmar que o usuário está autenticado e que `VITE_REVERB_APP_KEY` está definida
+- Confirmar que a visita de login/logout trocou de URL (visitas `replace` não disparam `navigate`, ver [Ciclo de Vida da Conexão Echo](#ciclo-de-vida-da-conexão-echo))
+- Consumidores devem tratar `undefined` (ver [Contrato de canal `undefined`](#contrato-de-canal-undefined))
 
 ### "Element type is invalid; expected string but got undefined"
 
@@ -588,6 +644,7 @@ docker restart uniespacos-queue-worker-1
 - **Routes:** `routes/channels.php`
 - **Jobs:** `app/Jobs/ProcessarCriacaoReserva.php`, `AvaliarReservaJob.php`, `UpdateReservaJob.php`, `ValidateReservationConflictsJob.php`
 - **Hooks:** `resources/js/hooks/useReservationLiveUpdates.ts`, `useEspacoLiveUpdates.ts`
+- **Ciclo de vida do Echo:** `resources/js/app.tsx`
 - **Registry:** `resources/js/lib/echo-channel-registry.ts`
 - **Validação:** `app/Rules/HorariosMesmoEspaco.php`
 - **Página:** `resources/js/presentation/pages/Espacos/VisualizarEspacoPage.tsx`
