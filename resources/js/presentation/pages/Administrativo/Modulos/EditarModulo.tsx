@@ -1,4 +1,3 @@
-import { validarEstrutura } from '@/lib/utils/andars/AndarHelpers';
 import { useTranslation } from '@/i18n';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import ModuloForm from '@/presentation/organisms/ModuloForm';
@@ -7,7 +6,8 @@ import { Instituicao, Modulo, Unidade } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
-import { CadastrarModuloForm } from './CadastrarModulo';
+import { type CadastrarModuloForm } from './CadastrarModulo';
+import { validarAndaresModulo } from './validarAndaresModulo';
 
 export default function EditarModulo() {
     const { t } = useTranslation();
@@ -34,19 +34,9 @@ export default function EditarModulo() {
 
     const submit = (e: React.SyntheticEvent) => {
         e.preventDefault();
-        const validacaoEstrutura = validarEstrutura(data.andares);
-        if (!validacaoEstrutura.valido) {
-            toast.error(`Estrutura inválida: ${validacaoEstrutura.erros.join(', ')}`);
-            return;
-        }
-        let hasAcessoError = false;
-        data.andares.forEach((andar) => {
-            if (andar.tipo_acesso.length === 0) {
-                hasAcessoError = true;
-            }
-        });
-        if (hasAcessoError) {
-            toast.error('Todos os andares devem ter pelo menos um tipo de acesso definido.');
+        const erro = validarAndaresModulo(data.andares, t);
+        if (erro) {
+            toast.error(erro);
             return;
         }
         patch(route('institucional.modulos.update', { modulo: modulo.id }));
@@ -54,23 +44,19 @@ export default function EditarModulo() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Criar Modulo" />
+            <Head title={t('admin.modulos.editar')} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-                    <GenericHeader titulo="Cadastrar Modulo" descricao="Preencha os dados abaixo para cadastrar um novo modulo." />
-                    <ModuloForm
-                        data={data}
-                        setData={setData}
-                        submit={submit}
-                        errors={errors}
-                        processing={processing}
-                        title="Criar Novo Módulo"
-                        description="Preencha os dados abaixo para cadastrar um novo modulo."
-                        instituicao={instituicao}
-                        unidades={unidades}
-                        modulo={modulo}
-                    />
-                </div>
+                <GenericHeader titulo={t('admin.modulos.editar')} descricao={t('admin.modulos.editarDesc')} />
+                <ModuloForm
+                    data={data}
+                    setData={setData}
+                    submit={submit}
+                    errors={errors}
+                    processing={processing}
+                    instituicao={instituicao}
+                    unidades={unidades}
+                    modulo={modulo}
+                />
             </div>
         </AppLayout>
     );

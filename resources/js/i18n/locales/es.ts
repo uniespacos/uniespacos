@@ -13,6 +13,7 @@ export const es = {
             confirm: 'Confirmar',
             loading: 'Cargando...',
             submitting: 'Enviando...',
+            saving: 'Guardando...',
             filter: 'Filtrar',
             clear: 'Limpiar',
             export: 'Exportar',
@@ -647,7 +648,13 @@ export const es = {
             novo: 'Nuevo Módulo',
             nenhum: 'Ningún módulo encontrado',
             cadastrar: 'Registrar Módulo',
+            cadastrarDesc: 'Complete los datos a continuación para registrar un nuevo módulo.',
             editar: 'Editar Módulo',
+            editarDesc: 'Actualice los datos del módulo y la configuración de sus pisos.',
+            erros: {
+                estruturaInvalida: 'Estructura inválida: {{detalhes}}',
+                tipoAcessoObrigatorio: 'Todos los pisos deben tener al menos un tipo de acceso definido.',
+            },
         },
         setores: {
             titulo: 'Gestionar Sectores',

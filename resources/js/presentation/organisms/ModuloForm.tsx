@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { SelectContent, SelectItem, SelectTrigger, Select as SelectUI, SelectValue } from '@/components/ui/select';
+import { useTranslation } from '@/i18n';
 import { criarTerreoInicial, garantirTerreo, nivelParaNome } from '@/lib/utils/andars/AndarHelpers';
 import { isEditMode, transformModuloToFormData } from '@/lib/utils/andars/ModuloDataFormTransformer';
 import { FormField } from '@/presentation/molecules/FormField';
@@ -9,7 +10,7 @@ import AndaresManager from '@/presentation/organisms/AndarManager';
 import AndarStickFormActions from '@/presentation/organisms/AndarStickFormActions';
 import { Instituicao, Modulo, Unidade } from '@/types';
 import { type AndarFormData, type CadastrarModuloForm } from '@/types/admin-forms';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -19,25 +20,13 @@ export interface ModuloFormProps {
     submit: (e: React.SyntheticEvent) => void;
     errors: Record<string, string>;
     processing: boolean;
-    title: string;
-    description: string;
     instituicao: Instituicao;
     unidades: Unidade[];
     modulo?: Modulo;
 }
 
-export default function ModuloForm({
-    data,
-    setData,
-    submit,
-    errors,
-    processing,
-    title,
-    description,
-    instituicao,
-    unidades,
-    modulo,
-}: ModuloFormProps) {
+export default function ModuloForm({ data, setData, submit, errors, processing, instituicao, unidades, modulo }: ModuloFormProps) {
+    const { t } = useTranslation();
     const topRef = useRef<HTMLDivElement>(null);
     const andaresRef = useRef<HTMLDivElement>(null);
 
@@ -107,12 +96,8 @@ export default function ModuloForm({
         <div ref={topRef}>
             <form onSubmit={submit} className="space-y-6 pb-20">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                        {editMode && <div className="text-muted-foreground text-sm">ID do Módulo: {modulo?.id}</div>}
-                    </CardHeader>
                     <CardContent className="space-y-4">
+                        {editMode && <div className="text-muted-foreground text-sm">ID do Módulo: {modulo?.id}</div>}
                         <FormField label="Instituição" htmlFor="instituicao">
                             <Input id="instituicao" value={instituicao.nome} disabled />
                         </FormField>
@@ -171,13 +156,21 @@ export default function ModuloForm({
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardFooter className="flex justify-end space-x-2">
-                        <Button type="submit" disabled={processing}>
-                            {processing ? 'Salvando...' : editMode ? 'Atualizar Módulo' : 'Salvar Módulo'}
-                        </Button>
-                    </CardFooter>
-                </Card>
+                <div className="flex justify-end gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            router.get(route('institucional.modulos.index'));
+                        }}
+                        disabled={processing}
+                    >
+                        {t('common.actions.cancel')}
+                    </Button>
+                    <Button type="submit" disabled={processing}>
+                        {processing ? t('common.actions.saving') : editMode ? t('common.actions.update') : t('common.actions.save')}
+                    </Button>
+                </div>
             </form>
 
             <AndarStickFormActions processing={processing} isEditMode={editMode} onScrollToTop={scrollToTop} andaresCount={data.andares.length} />

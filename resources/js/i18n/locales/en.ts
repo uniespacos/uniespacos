@@ -13,6 +13,7 @@ export const en = {
             confirm: 'Confirm',
             loading: 'Loading...',
             submitting: 'Submitting...',
+            saving: 'Saving...',
             filter: 'Filter',
             clear: 'Clear',
             export: 'Export',
@@ -646,7 +647,13 @@ export const en = {
             novo: 'New Building',
             nenhum: 'No buildings found',
             cadastrar: 'Create Module',
+            cadastrarDesc: 'Fill in the details below to create a new module.',
             editar: 'Edit Module',
+            editarDesc: 'Update the module details and the configuration of its floors.',
+            erros: {
+                estruturaInvalida: 'Invalid structure: {{detalhes}}',
+                tipoAcessoObrigatorio: 'Every floor must have at least one access type defined.',
+            },
         },
         setores: {
             titulo: 'Manage Sectors',

@@ -173,16 +173,6 @@
       "count": 5
     }
   },
-  "resources/js/presentation/pages/Administrativo/Modulos/CadastrarModulo.tsx": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
-  "resources/js/presentation/pages/Administrativo/Modulos/EditarModulo.tsx": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "resources/js/presentation/pages/Dashboard/DashboardInstitucionalPage.tsx": {
     "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 1

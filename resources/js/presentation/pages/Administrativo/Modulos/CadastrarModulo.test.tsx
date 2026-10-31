@@ -1,6 +1,6 @@
-import CadastrarModuloPage from './CadastrarModulo';
-import { render, screen } from '@testing-library/react';
 import type { BreadcrumbItem } from '@/types';
+import { render, screen } from '@testing-library/react';
+import CadastrarModuloPage from './CadastrarModulo';
 
 const mockPost = jest.fn();
 
@@ -107,5 +107,13 @@ describe('CadastrarModuloPage', () => {
 
         expect(createLink).toHaveAttribute('href', '/institucional/modulos/create');
         expect(createLink).toHaveTextContent('Cadastrar Módulo');
+    });
+
+    it('titulo_head_e_cabecalho_mostram_cadastro', () => {
+        render(<CadastrarModuloPage />);
+
+        expect(document.title).toBe('Cadastrar Módulo');
+        expect(screen.getByText('Cadastrar Módulo - Preencha os dados abaixo para cadastrar um novo módulo.')).toBeInTheDocument();
+        expect(screen.queryByText(/Editar Módulo|Criar Modulo|Cadastrar Modulo/)).not.toBeInTheDocument();
     });
 });

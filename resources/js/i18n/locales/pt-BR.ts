@@ -11,6 +11,7 @@ export const ptBR = {
             confirm: 'Confirmar',
             loading: 'Carregando...',
             submitting: 'Enviando...',
+            saving: 'Salvando...',
             filter: 'Filtrar',
             clear: 'Limpar',
             export: 'Exportar',
@@ -645,7 +646,13 @@ export const ptBR = {
             novo: 'Novo Módulo',
             nenhum: 'Nenhum módulo encontrado',
             cadastrar: 'Cadastrar Módulo',
+            cadastrarDesc: 'Preencha os dados abaixo para cadastrar um novo módulo.',
             editar: 'Editar Módulo',
+            editarDesc: 'Altere os dados do módulo e a configuração dos seus andares.',
+            erros: {
+                estruturaInvalida: 'Estrutura inválida: {{detalhes}}',
+                tipoAcessoObrigatorio: 'Todos os andares devem ter pelo menos um tipo de acesso definido.',
+            },
         },
         setores: {
             titulo: 'Gerenciar Setores / Departamentos',

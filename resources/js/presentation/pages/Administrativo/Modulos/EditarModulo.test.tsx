@@ -1,6 +1,6 @@
-import EditarModuloPage from './EditarModulo';
-import { render, screen } from '@testing-library/react';
 import type { BreadcrumbItem } from '@/types';
+import { render, screen } from '@testing-library/react';
+import EditarModuloPage from './EditarModulo';
 
 const mockPatch = jest.fn();
 
@@ -119,5 +119,13 @@ describe('EditarModuloPage', () => {
 
         expect(editLink).toHaveAttribute('href', '/institucional/modulos/1/edit');
         expect(editLink).toHaveTextContent('Editar Módulo');
+    });
+
+    it('titulo_head_e_cabecalho_mostram_edicao', () => {
+        render(<EditarModuloPage />);
+
+        expect(document.title).toBe('Editar Módulo');
+        expect(screen.getByText('Editar Módulo - Altere os dados do módulo e a configuração dos seus andares.')).toBeInTheDocument();
+        expect(screen.queryByText(/Cadastrar Módulo|Criar Modulo|Cadastrar Modulo/)).not.toBeInTheDocument();
     });
 });
