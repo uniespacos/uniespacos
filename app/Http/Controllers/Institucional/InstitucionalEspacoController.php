@@ -14,6 +14,7 @@ use App\Models\Espaco;
 use App\Services\EspacoService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -76,16 +77,16 @@ class InstitucionalEspacoController extends Controller
         }
     }
 
-    public function show(Espaco $espaco): Response|RedirectResponse
+    public function show(Request $request, Espaco $espaco): Response|RedirectResponse
     {
-        try {
-            $data = $this->service->getWithAgendaData($espaco);
-
-            return Inertia::render('Espacos/VisualizarEspacoPage', $data);
-        } catch (\Exception $th) {
+        if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
-                ->with('error', 'Espaço sem gestor cadastrado - Aguardando cadastro');
+                ->with('error', 'Este espaço ainda não possui um gestor definido.');
         }
+
+        $data = $this->service->getWithWeekSchedule($espaco, $request->string('semana', 'today')->toString());
+
+        return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }
 
     public function edit(Espaco $espaco): Response

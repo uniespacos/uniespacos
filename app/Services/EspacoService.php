@@ -136,67 +136,6 @@ class EspacoService
     }
 
     /**
-     * Loads an Espaco with its agenda managers and reserved slots for the detail page.
-     * Throws an exception if the space has no assigned managers.
-     *
-     * @return array<string, mixed>
-     *
-     * @throws \Exception
-     */
-    public function getWithAgendaData(Espaco $espaco): array
-    {
-        $espaco->load([
-            'andar.modulo',
-            'agendas' => function ($query) {
-                $query->with([
-                    'user.setor',
-                    'horarios' => function ($q) {
-                        $q->where('situacao', 'deferida')->with(['reserva.user']);
-                    },
-                ]);
-            },
-        ]);
-
-        $gestoresEspaco = [];
-        $horariosReservados = [];
-
-        foreach ($espaco->agendas as $agenda) {
-            $horariosReservados[$agenda->turno] = [];
-
-            if ($agenda->user_id !== null && $agenda->user !== null) {
-                $gestoresEspaco[$agenda->turno] = [
-                    'nome' => $agenda->user->name,
-                    'email' => $agenda->user->email,
-                    'setor' => $agenda->user->setor?->nome,
-                    'agenda_id' => $agenda->id,
-                ];
-            }
-
-            foreach ($agenda->horarios as $horario) {
-                if ($horario->reserva !== null) {
-                    $horariosReservados[$agenda->turno][] = [
-                        'horario' => $horario,
-                        'autor' => $horario->reserva->user->name,
-                    ];
-                }
-            }
-        }
-
-        if (empty($gestoresEspaco)) {
-            throw new \Exception('Space has no assigned managers.');
-        }
-
-        return [
-            'espaco' => $espaco,
-            'agendas' => $espaco->agendas,
-            'andar' => $espaco->andar,
-            'modulo' => $espaco->andar->modulo,
-            'gestores_espaco' => $gestoresEspaco,
-            'horarios_reservados' => $horariosReservados,
-        ];
-    }
-
-    /**
      * Creates a new space with uploaded images and initializes its three shift agendas.
      *
      * @param  array<string, mixed>  $data
