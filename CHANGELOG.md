@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0-rc.105](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.104...v1.5.0-rc.105) (2026-10-31)
+
+
+### Features
+
+* **frontend:** congruência de UI/UX — acessibilidade, estado vazio e anatomia de página ([6d33289](https://github.com/uniespacos/uniespacos/commit/6d33289298629ca752bc1503131456225908bace))
+
+
+### Miscellaneous Chores
+
+* remover do baseline do PHPStan entradas do método getWithAgendaData removido ([3941603](https://github.com/uniespacos/uniespacos/commit/3941603ba78e02dd898fad0163a6f9044c506f08))
+
 ## [1.5.0-rc.104](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.103...v1.5.0-rc.104) (2026-10-31)
 
 
