@@ -1,0 +1,47 @@
+name: Cache Warmup
+
+# O cache do GitHub Actions é isolado por ref: uma PR só enxerga cache salvo na própria PR, na
+# branch base (develop/main) ou na branch padrão. Como nada rodava em push no develop, cada PR nova
+# começava com cache frio (npm ci de ~50s). Este workflow popula node_modules/ e vendor/ no escopo
+# de develop e main sempre que os lockfiles mudam. Com `lookup-only`, quando o cache já existe o
+# job só confere a chave e termina em segundos, sem baixar nada.
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - package-lock.json
+      - composer.lock
+      - .github/actions/**
+      - .github/workflows/cache-warmup.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    name: ⚛️ node_modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+        with:
+          lookup-only: 'true'
+
+  php:
+    name: 🐘 vendor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-php-deps
+        with:
+          composer-flags: --no-scripts
+          lookup-only: 'true'

@@ -1,0 +1,54 @@
+name: Setup PHP + dependências (com cache de vendor)
+description: >
+  Instala o PHP e restaura `vendor/` do cache, chaveado pelo hash do composer.lock.
+  O `composer install` roda sempre: no cache hit ele vira no-op (~1s) mas continua validando
+  lock x vendor e plataforma, então um cache corrompido/desatualizado nunca passa batido.
+
+inputs:
+  php-version:
+    description: Versão do PHP
+    required: false
+    default: '8.4'
+  extensions:
+    description: Extensões do PHP
+    required: false
+    default: mbstring, dom, fileinfo
+  composer-flags:
+    description: Flags extras do composer install
+    required: false
+    default: ''
+  lookup-only:
+    description: Só verifica se o cache existe (usado pelo cache-warmup para não baixar à toa)
+    required: false
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: '"true" quando vendor/ veio do cache'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: ${{ inputs.extensions }}
+        coverage: none
+        tools: composer:v2
+
+    # vendor/ não depende das extensões instaladas (só de PHP + lock), então todos os jobs
+    # (Pint, PHPStan, testes) compartilham a mesma entrada de cache.
+    - name: Cache vendor
+      id: cache
+      uses: actions/cache@v6
+      with:
+        path: vendor
+        key: vendor-${{ runner.os }}-php${{ inputs.php-version }}-${{ hashFiles('composer.lock') }}
+        lookup-only: ${{ inputs.lookup-only }}
+
+    - name: Install Dependencies
+      if: inputs.lookup-only != 'true' || steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: composer install --no-interaction --no-progress --prefer-dist ${{ inputs.composer-flags }}

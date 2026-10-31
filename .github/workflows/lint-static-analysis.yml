@@ -17,55 +17,59 @@ concurrency:
 
 permissions:
   contents: read
+  # Necessário para o paths-filter listar os arquivos da PR via API.
+  pull-requests: read
 
 jobs:
+  # Mesma lógica do tests.yml: PR que só mexe em docs/changelog/manifest (ex.: release-please)
+  # não precisa de lint nem PHPStan.
+  changes:
+    name: 🔎 Detectar mudanças
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - name: Filtrar arquivos alterados
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!.release-please-manifest*.json'
+              - '!docs/**'
+
   lint-backend:
     name: 🐘 PHP Lint (Pint)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Setup PHP + vendor
+        uses: ./.github/actions/setup-php-deps
         with:
-          php-version: '8.4'
-          extensions: mbstring, dom, fileinfo
-          coverage: none
-          tools: composer:v2
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+          composer-flags: --no-scripts
 
       - name: Run Pint (PHP Code Style)
         run: vendor/bin/pint --test
 
   lint-frontend:
     name: ⚛️ Frontend Lint & Types
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci --prefer-offline
+      - name: Setup Node + node_modules
+        uses: ./.github/actions/setup-node-deps
 
       - name: Run TypeScript Check
         run: npx tsc --noEmit
@@ -73,8 +77,22 @@ jobs:
       - name: Run ESLint (Frontend Linting)
         run: npm run lint:check
 
+  # Relatório informativo do débito de lint. Roda o ESLint inteiro de novo (~18s), por isso fica
+  # em job paralelo e fora do agregador: não segura o check obrigatório nem pode reprová-lo.
+  lint-debt:
+    name: 📊 Débito de Lint (informativo)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Node + node_modules
+        uses: ./.github/actions/setup-node-deps
+
       - name: Reportar Débito de Lint (Supressões)
-        if: always()
         run: |
           echo "## 📊 Débito de Lint (supressões ativas)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
@@ -83,32 +101,17 @@ jobs:
 
   static-analysis:
     name: 🔬 PHP Static Analysis (PHPStan)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Setup PHP + vendor
+        uses: ./.github/actions/setup-php-deps
         with:
-          php-version: '8.4'
-          extensions: mbstring, dom, fileinfo
-          coverage: none
-          tools: composer:v2
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+          composer-flags: --no-scripts
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=2G
@@ -125,17 +128,29 @@ jobs:
   # ("🔍 Lint & Static Analysis"), independente de como os jobs de lint são divididos.
   # `if: always()` é essencial: sem ele, uma falha em lint-backend/lint-frontend deixaria
   # este job como "skipped", e o GitHub trata check obrigatório pulado como aprovado.
+  # Quando `changes` conclui que não há código na PR, os jobs de lint ficam "skipped" de propósito
+  # e o agregador aprova — mas só se o próprio `changes` passou.
   lint:
     name: 🔍 Lint & Static Analysis
     if: always()
-    needs: [lint-backend, lint-frontend, static-analysis]
+    needs: [changes, lint-backend, lint-frontend, static-analysis]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - name: Verificar resultado dos jobs de lint
         env:
-          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          HAS_CODE: ${{ needs.changes.outputs.code }}
+          RESULTADOS: ${{ needs.lint-backend.result }} ${{ needs.lint-frontend.result }} ${{ needs.static-analysis.result }}
         run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "::error::Detecção de mudanças falhou ($CHANGES_RESULT)"
+            exit 1
+          fi
+          if [ "$HAS_CODE" != "true" ]; then
+            echo "Nenhuma mudança de código (só docs/changelog/manifest) — lint dispensado."
+            exit 0
+          fi
           echo "Resultados dos jobs de lint: $RESULTADOS"
           for resultado in $RESULTADOS; do
             if [ "$resultado" != "success" ]; then

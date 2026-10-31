@@ -1,0 +1,44 @@
+name: Setup Node + dependências (com cache de node_modules)
+description: >
+  Instala o Node e restaura `node_modules` do cache, chaveado pelo hash do package-lock.json.
+  No cache hit o `npm ci` é pulado inteiro (era ~45-55s por job só de instalação).
+  No miss roda `npm ci` normalmente e o cache é salvo no fim do job.
+
+inputs:
+  node-version:
+    description: Versão do Node
+    required: false
+    default: '24'
+  lookup-only:
+    description: Só verifica se o cache existe (usado pelo cache-warmup para não baixar à toa)
+    required: false
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: '"true" quando node_modules veio do cache'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    # A chave inclui SO + versão do Node: binários nativos (esbuild, rollup, lightningcss etc.)
+    # são compilados/baixados por plataforma, então não dá para reaproveitar entre versões.
+    # Sem restore-keys de propósito: node_modules parcial de outro lock é pior que instalar do zero.
+    - name: Cache node_modules
+      id: cache
+      uses: actions/cache@v6
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-node${{ inputs.node-version }}-${{ hashFiles('package-lock.json') }}
+        lookup-only: ${{ inputs.lookup-only }}
+
+    - name: Install Dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci --prefer-offline --no-audit --no-fund

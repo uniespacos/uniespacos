@@ -7,7 +7,14 @@ FROM node:24-alpine AS frontend-builder
 
 WORKDIR /var/www
 
+# Copy only necessary files for npm install to leverage Docker layer caching
+COPY package.json package-lock.json ./
+RUN npm ci
+
 # Accept build arguments for environment variables
+# Declarados DEPOIS do `npm ci` de propósito: ARG/ENV entram na chave de cache das camadas
+# seguintes, e staging e produção passam valores diferentes. Antes do npm ci, isso fazia
+# cada ambiente reinstalar todas as dependências; aqui só o `npm run build` depende deles.
 ARG VITE_REVERB_APP_KEY
 ARG VITE_REVERB_HOST
 ARG VITE_REVERB_PORT
@@ -18,10 +25,6 @@ ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY
 ENV VITE_REVERB_HOST=$VITE_REVERB_HOST
 ENV VITE_REVERB_PORT=$VITE_REVERB_PORT
 ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
-
-# Copy only necessary files for npm install to leverage Docker layer caching
-COPY package.json package-lock.json ./
-RUN npm ci
 
 # Copy the rest of the frontend-related source code
 COPY vite.config.ts .
