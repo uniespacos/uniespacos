@@ -111,7 +111,25 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
                 data_final: novaDataFinal,
             };
         });
-    }, [slotsSelecao, data.recorrencia, setData]);
+    }, [slotsSelecao, setData]);
+
+    useEffect(() => {
+        if (slotsSelecao.length === 0) return;
+
+        setData((prevData) => {
+            if (prevData.recorrencia === 'personalizado') return prevData;
+
+            const opcaoRecorrencia = opcoesRecorrencia.find((op) => op.valor === prevData.recorrencia);
+            if (!opcaoRecorrencia) return prevData;
+
+            const novaDataFinal =
+                prevData.recorrencia === 'unica'
+                    ? new Date(Math.max(...slotsSelecao.map((s) => s.data.getTime())))
+                    : opcaoRecorrencia.calcularDataFinal(prevData.data_inicial ?? new Date());
+
+            return { ...prevData, data_final: novaDataFinal };
+        });
+    }, [data.recorrencia, slotsSelecao, setData]);
 
     const handleFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
