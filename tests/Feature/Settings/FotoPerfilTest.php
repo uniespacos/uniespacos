@@ -6,6 +6,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Setor;
 use App\Models\User;
+use App\Services\ProcessadorDeFotoDePerfil;
 use GdImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -257,6 +258,97 @@ class FotoPerfilTest extends TestCase
         $this->assertSame($fotoAnterior, $usuario->refresh()->getRawOriginal('profile_pic'));
         Storage::disk('public')->assertExists($fotoAnterior);
         $this->assertSame([$fotoAnterior], Storage::disk('public')->allFiles());
+    }
+
+    #[Test]
+    public function png_com_dados_corrompidos_apos_o_cabecalho_e_recusado_sem_gravar_nada(): void
+    {
+        $ihdr = pack('NN', 40, 40)."\x08\x06\x00\x00\x00";
+        $png = "\x89PNG\r\n\x1a\n"
+            .pack('N', 13).'IHDR'.$ihdr.pack('N', crc32('IHDR'.$ihdr))
+            .pack('N', 16).'IDAT'.str_repeat("\x00", 16).pack('N', 0);
+
+        $usuario = $this->usuario();
+        $this->atualizarFoto($usuario, UploadedFile::fake()->createWithContent('quebrada.png', $png))
+            ->assertSessionHasErrors('photo');
+
+        $this->assertSame('', $usuario->refresh()->getRawOriginal('profile_pic'));
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    #[Test]
+    public function imagem_que_nao_cabe_no_orcamento_de_memoria_e_recusada_sem_gravar_nada(): void
+    {
+        $arquivo = UploadedFile::fake()->createWithContent('grande.jpg', $this->jpegComOrientacaoEGps(2000, 1500, 1));
+        $limite = memory_get_usage(true) + 10 * 1024 * 1024;
+
+        $caminho = (new ProcessadorDeFotoDePerfil($limite))->armazenar($arquivo);
+
+        $this->assertNull($caminho);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    #[Test]
+    public function limite_de_memoria_ilimitado_processa_a_imagem(): void
+    {
+        $arquivo = UploadedFile::fake()->createWithContent('grande.jpg', $this->jpegComOrientacaoEGps(2000, 1500, 1));
+
+        $caminho = (new ProcessadorDeFotoDePerfil(-1))->armazenar($arquivo);
+
+        $this->assertNotNull($caminho);
+        $this->assertSame([800, 600], array_slice(getimagesizefromstring($this->gravadaComoBytes($caminho)), 0, 2));
+    }
+
+    #[Test]
+    public function imagem_que_cabe_no_orcamento_de_memoria_e_processada(): void
+    {
+        $arquivo = UploadedFile::fake()->createWithContent('grande.jpg', $this->jpegComOrientacaoEGps(2000, 1500, 1));
+        $limite = memory_get_usage(true) + 300 * 1024 * 1024;
+
+        $caminho = (new ProcessadorDeFotoDePerfil($limite))->armazenar($arquivo);
+
+        $this->assertNotNull($caminho);
+        $this->assertSame([800, 600], array_slice(getimagesizefromstring($this->gravadaComoBytes($caminho)), 0, 2));
+    }
+
+    #[Test]
+    public function orientacao_exif_seis_em_imagem_grande_gira_e_respeita_o_lado_maximo(): void
+    {
+        $arquivo = UploadedFile::fake()->createWithContent('celular.jpg', $this->jpegComOrientacaoEGps(2000, 1000, 6));
+        $caminho = (new ProcessadorDeFotoDePerfil(-1))->armazenar($arquivo);
+
+        $this->assertNotNull($caminho);
+        $this->assertSame([400, 800], array_slice(getimagesizefromstring($this->gravadaComoBytes($caminho)), 0, 2));
+    }
+
+    #[Test]
+    public function orientacao_exif_oito_gira_no_sentido_anti_horario(): void
+    {
+        $usuario = $this->usuario();
+        $this->atualizarFoto($usuario, UploadedFile::fake()->createWithContent('celular.jpg', $this->jpegComOrientacaoEGps(600, 300, 8)))
+            ->assertSessionHasNoErrors();
+
+        $caminho = $usuario->refresh()->getRawOriginal('profile_pic');
+        $this->assertSame([300, 600], array_slice(getimagesizefromstring($this->gravadaComoBytes($caminho)), 0, 2));
+
+        $imagem = imagecreatefromstring($this->gravadaComoBytes($caminho));
+        $this->assertSame('azul', $this->corPredominante($imagem, 150, 20));
+        $this->assertSame('vermelho', $this->corPredominante($imagem, 150, 580));
+    }
+
+    #[Test]
+    public function orientacao_exif_tres_inverte_a_foto_em_180_graus(): void
+    {
+        $usuario = $this->usuario();
+        $this->atualizarFoto($usuario, UploadedFile::fake()->createWithContent('celular.jpg', $this->jpegComOrientacaoEGps(600, 300, 3)))
+            ->assertSessionHasNoErrors();
+
+        $caminho = $usuario->refresh()->getRawOriginal('profile_pic');
+        $this->assertSame([600, 300], array_slice(getimagesizefromstring($this->gravadaComoBytes($caminho)), 0, 2));
+
+        $imagem = imagecreatefromstring($this->gravadaComoBytes($caminho));
+        $this->assertSame('azul', $this->corPredominante($imagem, 150, 20));
+        $this->assertSame('vermelho', $this->corPredominante($imagem, 450, 280));
     }
 
     #[Test]

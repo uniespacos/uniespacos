@@ -35,6 +35,12 @@ class ProcessadorDeFotoDePerfil
 
     private const TAG_ORIENTACAO = 0x0112;
 
+    private const BYTES_POR_PIXEL = 4;
+
+    private const FATOR_MEMORIA_DECODIFICACAO = 1.5;
+
+    public function __construct(private readonly ?int $limiteDeMemoria = null) {}
+
     public function armazenar(UploadedFile $arquivo): ?string
     {
         $bytes = file_get_contents($arquivo->getRealPath());
@@ -49,25 +55,49 @@ class ProcessadorDeFotoDePerfil
             return null;
         }
 
-        $imagem = @imagecreatefromstring($bytes);
+        if (! $this->cabeNaMemoria($info[0], $info[1])) {
+            return null;
+        }
+
+        try {
+            $imagem = imagecreatefromstring($bytes);
+        } catch (\ErrorException) {
+            return null;
+        }
 
         if (! $imagem instanceof GdImage) {
             return null;
         }
 
-        $orientada = $this->aplicarOrientacao($imagem, $this->orientacaoExif($bytes));
+        $reduzida = $this->redimensionar($imagem);
+        unset($imagem);
+
+        $orientada = $this->aplicarOrientacao($reduzida, $this->orientacaoExif($bytes));
 
         if (! $orientada instanceof GdImage) {
             return null;
         }
 
-        [$conteudo, $extensao] = $this->codificar($this->redimensionar($orientada), $info[2]);
+        [$conteudo, $extensao] = $this->codificar($orientada, $info[2]);
 
         $caminho = self::PASTA.'/'.Str::random(self::COMPRIMENTO_NOME).'.'.$extensao;
 
         Storage::disk(self::DISCO)->put($caminho, $conteudo);
 
         return $caminho;
+    }
+
+    private function cabeNaMemoria(int $largura, int $altura): bool
+    {
+        $limite = $this->limiteDeMemoria ?? ini_parse_quantity((string) ini_get('memory_limit'));
+
+        if ($limite === -1) {
+            return true;
+        }
+
+        $necessaria = $largura * $altura * self::BYTES_POR_PIXEL * self::FATOR_MEMORIA_DECODIFICACAO;
+
+        return $necessaria <= $limite - memory_get_usage(true);
     }
 
     private function orientacaoExif(string $bytes): int
