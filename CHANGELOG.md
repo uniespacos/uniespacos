@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0-rc.102](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.101...v1.5.0-rc.102) (2026-10-31)
+
+
+### Features
+
+* **frontend:** aprimorar ergonomia e clareza dos fluxos nas telas existentes ([559e976](https://github.com/uniespacos/uniespacos/commit/559e9764afc485bbeb53325cad9d75e4a235cd21))
+
+
+### Bug Fixes
+
+* **frontend:** corrigir permissão do Avaliar, rotas relativas, rótulos e fuso horário ([2e28136](https://github.com/uniespacos/uniespacos/commit/2e281363202ead5bf63631d995ed8551bd573f1b))
+* **frontend:** trocar a recorrência não sobrescreve a data inicial escolhida ([f28ad2d](https://github.com/uniespacos/uniespacos/commit/f28ad2d8bf577efa870dffe339ff7143585f9363))
+
 ## [1.5.0-rc.101](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.100...v1.5.0-rc.101) (2026-10-31)
 
 
