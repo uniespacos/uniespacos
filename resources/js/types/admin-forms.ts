@@ -39,3 +39,4 @@ export interface CadastrarUnidadeForm {
     instituicao_id: string;
     [key: string]: string;
 }
+

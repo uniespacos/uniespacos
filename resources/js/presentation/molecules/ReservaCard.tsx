@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
 import { Reserva } from '@/types';
-import { Calendar, Edit, FileText, MapPin, XCircle } from 'lucide-react';
+import { Calendar, Clock, Edit, FileText, MapPin, User, XCircle } from 'lucide-react';
 
 interface ReservaCardProps {
     reserva: Reserva;
@@ -29,6 +29,17 @@ export function ReservaCard({ reserva, isGestor, onDetalhes, onAvaliar, onEditar
     const hasEvalPermission = useCan({ permission: PERMISSION_RESERVAS_AVALIAR });
     const isModoGestor = isGestor ?? hasEvalPermission;
 
+    const primeiroHorario = reserva.horarios[0];
+    const resumoHorarios =
+        reserva.horarios.length === 1
+            ? t('reservas.card.horario_unico', {
+                  inicio: primeiroHorario.horario_inicio.slice(0, 5),
+                  fim: primeiroHorario.horario_fim.slice(0, 5),
+              })
+            : reserva.horarios.length > 1
+              ? t('reservas.card.horarios_count', { count: reserva.horarios.length })
+              : null;
+
     return (
         <div className="bg-card border-border/80 relative flex w-full min-w-0 overflow-hidden rounded-xl border shadow-xs transition-all duration-200 active:scale-[0.99]">
             <div className={cn('w-1.5 shrink-0', estilo.solido)} />
@@ -42,6 +53,14 @@ export function ReservaCard({ reserva, isGestor, onDetalhes, onAvaliar, onEditar
                 </div>
 
                 <div className="text-muted-foreground space-y-1.5 text-xs">
+                    {isModoGestor && reserva.user?.name ? (
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <User className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
+                            <span className="min-w-0 truncate" title={reserva.user.name}>
+                                <span className="font-medium">{t('reservas.tabela.solicitante')}:</span> {reserva.user.name}
+                            </span>
+                        </div>
+                    ) : null}
                     <div className="flex min-w-0 items-center gap-1.5">
                         <MapPin className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
                         <span className="min-w-0 truncate" title={local || t('common.status.unknown')}>
@@ -51,9 +70,16 @@ export function ReservaCard({ reserva, isGestor, onDetalhes, onAvaliar, onEditar
                     <div className="flex min-w-0 items-center gap-1.5">
                         <Calendar className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
                         <span className="min-w-0 truncate">
-                            {formatDate(reserva.data_inicial)} até {formatDate(reserva.data_final)}
+                            {formatDate(reserva.data_inicial)}
+                            {formatDate(reserva.data_inicial) !== formatDate(reserva.data_final) ? ` até ${formatDate(reserva.data_final)}` : ''}
                         </span>
                     </div>
+                    {resumoHorarios ? (
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <Clock className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
+                            <span className="min-w-0 truncate">{resumoHorarios}</span>
+                        </div>
+                    ) : null}
                 </div>
 
                 <div className="border-border/60 flex flex-wrap items-center gap-2 border-t pt-3">

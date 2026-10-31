@@ -20,7 +20,7 @@ import { nivelParaLabel, nomeParaNivel } from '@/lib/utils/andars/AndarHelpers';
 import { Andar, Modulo, Unidade } from '@/types';
 import { router } from '@inertiajs/react';
 import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 declare function route(name: string, params?: unknown): string;
 
@@ -42,12 +42,21 @@ interface FiltroBuscaEspacosProps {
 export default function EspacoFiltroBusca({ route: targetRoute, filters, unidades, modulos, andares, capacidadeEspacos }: FiltroBuscaEspacosProps) {
     const { t } = useTranslation();
     const [localFilters, setLocalFilters] = useState({
-        unidade: filters.unidade || 'all',
-        modulo: filters.modulo || 'all',
-        andar: filters.andar || 'all',
-        capacidade: filters.capacidade || 'qualquer',
+        unidade: filters.unidade ?? 'all',
+        modulo: filters.modulo ?? 'all',
+        andar: filters.andar ?? 'all',
+        capacidade: filters.capacidade ?? 'qualquer',
     });
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+    useEffect(() => {
+        setLocalFilters({
+            unidade: filters.unidade ?? 'all',
+            modulo: filters.modulo ?? 'all',
+            andar: filters.andar ?? 'all',
+            capacidade: filters.capacidade ?? 'qualquer',
+        });
+    }, [filters.unidade, filters.modulo, filters.andar, filters.capacidade]);
 
     const extraParams = useMemo(() => {
         const params: Record<string, string | undefined> = {};
@@ -60,14 +69,22 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
 
     const { searchTerm, setSearchTerm } = useDebouncedSearch({
         routeName: targetRoute,
-        initialSearch: filters.search || '',
+        initialSearch: filters.search ?? '',
         extraParams,
         only: ['espacos', 'filters'],
     });
 
+    const unidadeSiglaMap = useMemo(() => {
+        const map = new Map<number, string>();
+        for (const unidade of unidades) {
+            map.set(unidade.id, unidade.sigla);
+        }
+        return map;
+    }, [unidades]);
+
     const filteredModulos = useMemo(() => {
         if (localFilters.unidade === 'all') {
-            return [];
+            return modulos;
         }
         return modulos.filter((m) => m.unidade_id.toString() === localFilters.unidade);
     }, [localFilters.unidade, modulos]);
@@ -163,14 +180,14 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
         }
         if (localFilters.modulo !== 'all') {
             const m = modulos.find((item) => item.id.toString() === localFilters.modulo);
-            if (m) chips.push({ key: 'modulo', label: `${t('espacos.filtros.modulo')}: ${m.nome}` });
+            if (m) chips.push({ key: 'modulo', label: t('espacos.filtros.modulo_chip', { nome: m.nome }) });
         }
         if (localFilters.andar !== 'all') {
             const a = andares.find((item) => item.id.toString() === localFilters.andar);
             if (a) {
                 const nivel = nomeParaNivel(a.nome);
                 const label = nivelParaLabel(nivel);
-                chips.push({ key: 'andar', label: `${t('espacos.filtros.andar')}: ${label}` });
+                chips.push({ key: 'andar', label: t('espacos.filtros.andar_chip', { nome: label }) });
             }
         }
         if (localFilters.capacidade !== 'qualquer') {
@@ -219,18 +236,22 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
                     onValueChange={(value) => {
                         handleFilterChange('modulo', value);
                     }}
-                    disabled={localFilters.unidade === 'all'}
+                    disabled={filteredModulos.length === 0}
                 >
                     <SelectTrigger id={`${prefix}espacos-modulo`} className="w-full">
                         <SelectValue placeholder={t('espacos.filtros.todos_modulos')} />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">{t('espacos.filtros.todos_modulos')}</SelectItem>
-                        {filteredModulos.map((modulo) => (
-                            <SelectItem key={modulo.id} value={modulo.id.toString()}>
-                                {modulo.nome}
-                            </SelectItem>
-                        ))}
+                        {filteredModulos.map((modulo) => {
+                            const unidadeSigla =
+                                localFilters.unidade === 'all' && unidades.length > 1 ? unidadeSiglaMap.get(modulo.unidade_id) : undefined;
+                            return (
+                                <SelectItem key={modulo.id} value={modulo.id.toString()}>
+                                    {unidadeSigla ? `${modulo.nome} (${unidadeSigla})` : modulo.nome}
+                                </SelectItem>
+                            );
+                        })}
                     </SelectContent>
                 </Select>
             </div>
