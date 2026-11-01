@@ -575,6 +575,19 @@ MAIL_PASSWORD=...
 
 ---
 
+### Rodapé comum dos e-mails (LGPD)
+
+**Arquivo:** `resources/views/emails/layout.blade.php`
+
+Todos os templates de e-mail do sistema estendem `emails.layout` (`@extends('emails.layout')`), então o rodapé aparece em todos eles. Ele traz:
+
+- Link para a Política de Privacidade: `url('/privacidade')`, com o rótulo `__('Privacy Policy')`.
+- Linha de contato provisório da Procuradoria Jurídica: `__('Questions about your personal data? Contact the UESB Legal Department (provisional channel):')`, seguida de `projur@uesb.edu.br`.
+
+O rodapé não consulta configuração: não há flag que o oculte. A página de destino pode ser desligada por `PRIVACY_PAGE_ENABLED`, caso em que o link leva a 404 (ver [privacy-page.md](./privacy-page.md)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`.
+
+---
+
 ## Padrão Try-Catch Obrigatório
 
 Toda chamada a `.notify()` em jobs e services **deve estar envolvida em try-catch**.

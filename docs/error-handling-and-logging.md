@@ -48,6 +48,10 @@ O envelope é aplicado apenas em requisições que esperam JSON (`Accept: applic
 - Preserva `error_code` já presente (evita sobrescrita intencional)
 - Define `details` a partir de `errors` se não houver valor
 
+### Limites de taxa (429)
+
+Respostas de throttling em requisições JSON recebem `error_code: TOO_MANY_REQUESTS` pelo mesmo envelope. Os limitadores, as chaves usadas (IP, e-mail, usuário) e o tratamento em visitas Inertia (o 429 vira `Errors/ErrorPage`) estão em [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29).
+
 ## ErrorCode Enum
 
 Mapeamento estável entre status HTTP e códigos de erro que o cliente reconhece.
@@ -134,8 +138,10 @@ O parâmetro `registrar` (padrão `true`) evita log duplicado. Passe `registrar:
 ```php
 Log::error('Falha ao criar unidade', ['exception' => $th]);
 
-return back()->with('error', 'Erro ao criar a unidade: '.MensagemDeErro::paraUsuario($th, registrar: false));
+return back()->with('error', __('Error creating unit: :message', ['message' => MensagemDeErro::paraUsuario($th, registrar: false)]));
 ```
+
+O prefixo é uma chave `__()` em inglês, e o detalhe entra como `:message`. Ver a seção de mensagens traduzíveis abaixo.
 
 **Regra:** nunca concatenar `$e->getMessage()` direto em flash ou resposta. Use sempre `MensagemDeErro::paraUsuario()`.
 
@@ -369,6 +375,7 @@ Apenas `user_id`. Incluir rota/URL seria dado enganoso (um job não faz requisi�
 3. `context()` anexa user_id, rota, etc. via `ExceptionContext::build()`
 4. `render()` converte AuthenticationException em redirect para login (Inertia)
 5. `respond()` aplica envelope se `expectsJson() === true`
+6. Para requisições não-JSON, os status 403, 404, 419, 429, 500 e 503 são trocados pela página de erro do Inertia (`Errors/ErrorPage`). Os demais seguem como a resposta padrão do Laravel
 
 ### Layer 2: Validação (`FormRequest`)
 
@@ -600,7 +607,14 @@ Esse teste previne que esse bug ressurja em futuras refatorações.
 
 ## Mensagens Traduzíveis no Backend (`__()`)
 
-Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos; `tests/Unit/LangJsonChavesTest.php` cobre os textos da T-24 e da T-25 (anonimização: mensagem de gestor de agenda, flash de sucesso, `Anonymized user` e `Unidentified requester`).
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos. `tests/Unit/LangJsonChavesTest.php` tem um teste por grupo de chaves e por arquivo (`pt.json`, `pt_BR.json`, `es.json`). Os grupos cobrem a T-24 e a T-25 (anonimização: mensagem de gestor de agenda, flash de sucesso, `Anonymized user` e `Unidentified requester`), a resposta neutra de recuperação de senha (T-29), o rodapé de privacidade do e-mail, os prefixos de erro institucionais, a notificação de falha na reserva e as mensagens flash dos controllers.
+
+**Mensagens flash dos controllers:**
+
+- Flash de sucesso ou erro usa `->with('success', __('<chave em inglês>'))` ou `->with('error', __(...))`.
+- Erro com detalhe técnico usa uma chave com `:message` (ex.: `Error updating unit: :message`) e passa o detalhe por `MensagemDeErro::paraUsuario()`.
+- Não concatenar prefixo em português com a mensagem (ex.: `'Erro ao ...: '.$msg`). O prefixo fica fixo no idioma de origem e não é traduzido em `en` e `es`.
+- `lang/pt.json` e `lang/pt_BR.json` têm o mesmo conteúdo. Ao criar chave nova, atualizar os dois e o `es.json`.
 
 Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado como marcador e traduzido na leitura por accessor no model, não no banco. Ver `models-business-rules.md`, seção de exclusão de conta. Logs (`Log::...`) não passam por `__()`: ficam em português ou inglês técnico.
 
