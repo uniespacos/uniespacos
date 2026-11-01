@@ -17,6 +17,7 @@ use App\Http\Controllers\Institucional\InstitucionalUnidadeController;
 use App\Http\Controllers\Institucional\InstitucionalUsuarioController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PrivacidadeController;
 use App\Http\Controllers\ReservaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,11 @@ Route::get('/', function () {
 Route::post('/locale/{locale}', [LocaleController::class, 'update'])
     ->middleware('throttle:locale')
     ->name('locale.update');
+
+// Política de Privacidade pública (guest e autenticados, sem exigir verificação de e-mail)
+Route::get('/privacidade', PrivacidadeController::class)
+    ->middleware('throttle:60,1')
+    ->name('privacidade');
 
 Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
 

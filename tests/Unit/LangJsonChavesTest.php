@@ -60,6 +60,59 @@ class LangJsonChavesTest extends TestCase
         "An error occurred while processing the update of your reservation ':titulo'. Please try again.",
     ];
 
+    private const CHAVES_DO_RODAPE_DE_PRIVACIDADE_DO_EMAIL = [
+        'Privacy Policy',
+        'Questions about your personal data? Contact the UESB Legal Department (provisional channel):',
+    ];
+
+    private const CHAVES_DE_MENSAGENS_FLASH_DOS_CONTROLLERS = [
+        'This space does not have a manager defined yet.',
+        'Space added to favorites!',
+        'Space removed from favorites!',
+        'Assessment sent for background processing. You will be notified when it is complete.',
+        'An error occurred while sending the assessment for processing.',
+        'Space created successfully!',
+        'An unexpected error occurred while creating the space.',
+        'Space updated successfully!',
+        'An unexpected error occurred while updating the space.',
+        'The password provided is incorrect.',
+        'Space deleted successfully!',
+        'Error deleting, please try again.',
+        'Managers updated successfully!',
+        'An error occurred while updating the space managers.',
+        'Institution created successfully.',
+        'Institution updated successfully.',
+        'Institution deleted successfully.',
+        'Module created successfully!',
+        'Module updated successfully!',
+        'Module removed successfully!',
+        "Role ':nome' created successfully.",
+        "Role ':nome' updated successfully.",
+        "Role ':nome' removed successfully.",
+        "Permissions of role ':nome' updated successfully.",
+        'Sector creation is done from the sectors administration panel.',
+        'Sector registered successfully!',
+        'Sector editing is done from the sectors administration panel.',
+        'Sector updated successfully!',
+        'Sector removed successfully!',
+        'Unit created successfully.',
+        'Unit updated successfully.',
+        'Unit deleted successfully.',
+        'User created successfully.',
+        'User updated successfully.',
+        'Verification email resent.',
+        'Permissions updated successfully.',
+        'Error deleting user.',
+        'Password reset link sent.',
+        'Could not send the reset link.',
+        'Notifications marked as read.',
+        'Could not send your request for processing. Please try again.',
+        'Your change request was sent for processing.',
+        'An error occurred while sending the update for processing.',
+        'Reservation cancelled successfully!',
+        'Error cancelling the reservation. Please try again.',
+    ];
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -110,6 +163,18 @@ class LangJsonChavesTest extends TestCase
     public function test_notificacao_de_falha_na_reserva_existe_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DA_NOTIFICACAO_DE_FALHA_NA_RESERVA);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_rodape_de_privacidade_do_email_existe_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DO_RODAPE_DE_PRIVACIDADE_DO_EMAIL);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagens_flash_dos_controllers_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_MENSAGENS_FLASH_DOS_CONTROLLERS);
     }
 
     /**

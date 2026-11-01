@@ -71,7 +71,7 @@ class InstitucionalModuloController extends Controller
             $this->service->store($request->validated());
 
             return redirect()->route('institucional.modulos.index')
-                ->with('success', 'Módulo cadastrado com sucesso!');
+                ->with('success', __('Module created successfully!'));
         } catch (\Exception $e) {
             return back()->with(['error' => __('Error creating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
@@ -99,7 +99,7 @@ class InstitucionalModuloController extends Controller
             $this->service->update($modulo, $request->validated());
 
             return redirect()->route('institucional.modulos.index')
-                ->with('success', 'Módulo atualizado com sucesso!');
+                ->with('success', __('Module updated successfully!'));
         } catch (\Exception $e) {
             return back()->with(['error' => __('Error updating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
@@ -110,13 +110,13 @@ class InstitucionalModuloController extends Controller
         $this->authorize('delete', $modulo);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
             $this->service->delete($modulo);
 
-            return back()->with('success', 'Módulo removido com sucesso!');
+            return back()->with('success', __('Module removed successfully!'));
         } catch (\Exception $e) {
             return back()->withErrors(['error' => __('Error removing module: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
         }

@@ -60,7 +60,7 @@ class InstitucionalUnidadeController extends Controller
             $this->service->store($request->validated());
 
             return redirect()->route('institucional.unidades.index')
-                ->with('success', 'Unidade criada com sucesso.');
+                ->with('success', __('Unit created successfully.'));
         } catch (\Throwable $th) {
             return redirect()->route('institucional.unidades.index')
                 ->with('error', __('Error creating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
@@ -85,7 +85,7 @@ class InstitucionalUnidadeController extends Controller
             $this->service->update($unidade, $request->validated());
 
             return redirect()->route('institucional.unidades.index')
-                ->with('success', 'Unidade atualizada com sucesso.');
+                ->with('success', __('Unit updated successfully.'));
         } catch (\Throwable $th) {
             return back()->withInput()->with('error', __('Error updating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }
@@ -96,13 +96,13 @@ class InstitucionalUnidadeController extends Controller
         $this->authorize('delete', $unidade);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
             $this->service->delete($unidade);
 
-            return back()->with('success', 'Unidade excluída com sucesso.');
+            return back()->with('success', __('Unit deleted successfully.'));
         } catch (\Throwable $th) {
             return back()->with('error', __('Error deleting unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }

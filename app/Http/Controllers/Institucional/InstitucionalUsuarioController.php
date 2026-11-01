@@ -52,7 +52,7 @@ class InstitucionalUsuarioController extends Controller
         $this->service->create($request->validated());
 
         return redirect()->route('institucional.usuarios.index')
-            ->with('success', 'Usuário criado com sucesso.');
+            ->with('success', __('User created successfully.'));
     }
 
     public function update(UpdateUserRequest $request, User $usuario): RedirectResponse
@@ -61,7 +61,7 @@ class InstitucionalUsuarioController extends Controller
 
         $this->service->update($usuario, $request->validated());
 
-        return back()->with('success', 'Usuário atualizado com sucesso.');
+        return back()->with('success', __('User updated successfully.'));
     }
 
     public function resendVerification(User $usuario): RedirectResponse
@@ -71,7 +71,7 @@ class InstitucionalUsuarioController extends Controller
         try {
             $this->service->resendVerificationEmail($usuario);
 
-            return back()->with('success', 'E-mail de verificação reenviado.');
+            return back()->with('success', __('Verification email resent.'));
         } catch (\Exception $e) {
             return back()->with('error', MensagemDeErro::paraUsuario($e));
         }
@@ -85,7 +85,7 @@ class InstitucionalUsuarioController extends Controller
 
         return back()->with(
             $sent ? 'success' : 'error',
-            $sent ? 'Link de redefinição de senha enviado.' : 'Não foi possível enviar o link de redefinição.',
+            $sent ? __('Password reset link sent.') : __('Could not send the reset link.'),
         );
     }
 
@@ -103,7 +103,7 @@ class InstitucionalUsuarioController extends Controller
         try {
             $this->service->updatePermissions($user, $request->validated());
 
-            return back()->with('success', 'Permissões atualizadas com sucesso.');
+            return back()->with('success', __('Permissions updated successfully.'));
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar permissões do usuário', [
                 'usuario_alvo_id' => $user->id,
@@ -119,7 +119,7 @@ class InstitucionalUsuarioController extends Controller
         $this->authorize('delete', $usuario);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
@@ -134,7 +134,7 @@ class InstitucionalUsuarioController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Erro ao excluir usuário.');
+            return back()->with('error', __('Error deleting user.'));
         }
     }
 }
