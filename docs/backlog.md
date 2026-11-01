@@ -25,8 +25,8 @@
 
 - [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
   A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
-- [ ] **T-05** · Rotacionar e descartar logs antigos de produção — `P0` · pequeno · operação
-  Logo depois do release, com a T-04 completa. Registrar a decisão sobre incidente no runbook (T-16). = A-03, R-P03, S13.
+- [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · escopo revisto, plano aguardando aprovação
+  Logo depois do release, com a T-04 completa. Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa. = A-03, R-P03, S13.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Pode correr em paralelo à validação. Destrava T-20 e T-35. = H-01 a H-03.
 
