@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `develop` @ `629bdab` (1.5.0-rc.108, em staging) · produção: `main` v1.4.4 (30/10/2026).
+> **Base:** `develop` @ `9027acc` (1.5.0-rc.109, em staging) · produção: `main` v1.4.4 (30/10/2026).
 > **Atualizado em:** 2026-11-01.
 
 ## Como ler
@@ -14,8 +14,8 @@
 
 ## Agora
 
-- **Em staging:** 1.5.0-rc.108, com o lote LGPD (#489), a congruência de UI/UX (#487) e o resíduo da Onda 1 (#494). Produção segue na v1.4.4.
-- **Próximo passo:** validação manual em staging, com o responsável → release 1.5.0 → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
+- **Em staging:** 1.5.0-rc.109, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496). Validação manual concluída em 01/11: os 29 passos passaram. Produção segue na v1.4.4.
+- **Próximo passo:** release 1.5.0 (em andamento) → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,11 +23,8 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **Validação em staging** · Roteiro manual na rc.108 — `P0` · pequeno · operação (responsável, em andamento)
-  29 passos em 6 blocos: (1) telas com menos dados; (2) logout, botão "Voltar" e foto de perfil; (3) notificações sem nome de terceiros em pt/en/es e limite de 2000 caracteres; (4) anonimização de conta; (5) página de privacidade desligada (404 em `/privacidade`, links ocultos nas telas e nos e-mails, contato da Projur presente no e-mail) e rodapés; (6) recuperação de senha e limites de taxa. Comece pelo bloco 1 e pelo passo 15. No passo 2, o setor do gestor deve aparecer: a T-26 (c) foi corrigida no #494, então um traço já é falha. Roteiro: plano LGPD local, arquivo 09.
-  **Pronto quando:** os 29 passos passam.
-- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação
-  Depende da validação em staging acima. A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
+- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
+  A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
 - [ ] **T-05** · Rotacionar e descartar logs antigos de produção — `P0` · pequeno · operação
   Logo depois do release, com a T-04 completa. Registrar a decisão sobre incidente no runbook (T-16). = A-03, R-P03, S13.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
@@ -350,6 +347,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #PR-VALIDACAO.
 - **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
 - **01/11** · #492 sincronização da documentação e do backlog.
