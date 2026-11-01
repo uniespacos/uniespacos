@@ -50,6 +50,9 @@ npx prettier --write <arquivo>
   obrigatório na proteção de branch é ação do responsável.
 - **A PR do `release-please` é aprovada e mergeada manualmente pelo usuário.** Não aprove, não
   aprove-e-mergeie, não faça squash/merge nela por conta própria.
+- **Backlog reativo:** `docs/backlog.md` é atualizado no mesmo branch/PR de cada mudança de status de um
+  item (iniciado, bloqueado, adiado, decidido, concluído), e pendência importante vira item na hora. Regra
+  completa em [`docs/processo/auditorias-e-planos.md`](docs/processo/auditorias-e-planos.md#backlog-reativo).
 
 ## Arquitetura
 
@@ -64,7 +67,8 @@ npx prettier --write <arquivo>
   o código-fonte). Débito: `npm run lint:debt`.
 
 Detalhe de convenção mora nas skills (carregam sob demanda, não pesam no contexto):
-`backend-conventions`, `frontend-conventions`, `testing-and-env`.
+`backend-conventions`, `frontend-conventions`, `testing-and-env`. Para auditoria de privacidade e dados
+pessoais contra a LGPD, com plano de adequação, use `lgpd-audit` (método somente leitura, com evidência).
 
 ## Agentes
 

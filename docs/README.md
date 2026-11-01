@@ -11,6 +11,7 @@ Sistema de reserva de espaços da UESB. Esta pasta é a fonte de verdade sobre o
 | Como uma reserva funciona de ponta a ponta | [`regras-de-negocio/fluxo-de-reservas.md`](./regras-de-negocio/fluxo-de-reservas.md) |
 | Regras invioláveis, comandos, fluxo de PR e armadilhas do ambiente | [`CLAUDE.md`](../CLAUDE.md), na raiz do repositório |
 | Convenções de código (backend, frontend, testes, git) | skills em [`.claude/skills/`](../.claude/skills/) |
+| Auditoria de privacidade e dados pessoais contra a LGPD | skill [`lgpd-audit`](../.claude/skills/lgpd-audit/SKILL.md) |
 
 ## Mapa
 
@@ -57,7 +58,7 @@ O inventário de dados e o runbook de incidente entram nesta pasta quando forem 
 
 | Documento | Assunto |
 | --- | --- |
-| [`auditorias-e-planos.md`](./processo/auditorias-e-planos.md) | Como conduzir uma auditoria e um plano em fases, e como fechar o ciclo no backlog. |
+| [`auditorias-e-planos.md`](./processo/auditorias-e-planos.md) | Como conduzir uma auditoria e um plano em fases, como fechar o ciclo no backlog e a regra de backlog reativo. |
 
 ### Material acadêmico — `UniEspaço Web/`
 

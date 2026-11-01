@@ -10,6 +10,27 @@ Ciclo: **auditoria → plano mestre → execução por fase (sessão limpa por f
 - Não use `git add -f` para forçá-los.
 - Convenção de nome, que casa com o `.gitignore`: `docs/auditoria-<tema>-<aaaa-mm-dd>/` e `docs/plano-<tema>/`.
 
+## Backlog reativo
+
+[`../backlog.md`](../backlog.md) é a fonte única do que falta fazer. Ele é atualizado **no momento em que o status de um item muda**, não em lote no fim do ciclo. Vale para qualquer agente ou pessoa que mexa no trabalho: `master`, `planner`, `backend`, `frontend`, `docs` ou o dev.
+
+| Mudança de status | O que registrar no item |
+|---|---|
+| Iniciado | "Em andamento" e o nome da branch de trabalho |
+| Bloqueado | o motivo e de qual decisão ou item ele depende |
+| Adiado | o gatilho de retomada (um evento ou uma data), não "depois" |
+| Decisão tomada | a decisão e a data; o item de decisão é fechado ou desdobrado em itens de execução |
+| Concluído | o item sai da lista de pendências e entra em "Entregas recentes" com o nº da PR, na própria PR (commit logo depois de abri-la) |
+
+Regras:
+
+1. **Pendência nova vira item na hora.** Bug, débito ou decisão pendente descoberto durante uma tarefa entra no backlog com ID, prioridade (`P0` a `P4`), esforço (pequeno, médio ou grande) e tipo, no padrão do arquivo.
+2. **Mesmo branch e mesma PR.** A atualização entra no branch/PR da mudança que alterou o status. Não se abre PR separada depois para atualizar o backlog. Isso vale também para a conclusão: assim que a PR é aberta, um commit na mesma branch marca o item como concluído e o registra em "Entregas recentes" com o número da PR. Quando ela mergeia, o backlog já está certo.
+3. **Data do topo.** A linha "Atualizado em" do `backlog.md` recebe a data da alteração.
+4. **Material local junto.** Se o trabalho vem de plano ou auditoria local (`docs/plano-*`, `docs/auditoria*`), o arquivo de andamento local é atualizado no mesmo momento. Esse material nunca é citado como fonte em documento versionado.
+5. **Quem escreve.** O `planner` propõe os itens e os IDs que cada tarefa move. O `master` confere, antes de commitar, que o backlog reflete o status novo, e inclui os IDs no prompt de cada delegação. O `docs` aplica a alteração quando a tarefa a pede. `backend` e `frontend` não reescrevem o backlog por conta própria, salvo se a tarefa pedir: reportam os IDs afetados, o status novo e as pendências novas, e o `master` as registra. Isso evita conflito entre agentes em paralelo.
+6. **Segurança sem roteiro.** Item de segurança descreve o objetivo, sem passo a passo de exploração (ver Prompt 4).
+
 ## Prompt 1: Auditoria técnica
 
 Use no início da iniciativa. Entrega só diagnóstico.

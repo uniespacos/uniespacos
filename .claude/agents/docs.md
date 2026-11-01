@@ -36,7 +36,7 @@ Antes de criar qualquer documento novo, verifique se o assunto pertence a um dos
 | `docs/arquitetura/modelo-de-dados.dbml` | Esquema do banco. |
 | `docs/operacao/deploy-e-segredos.md` | Variáveis de ambiente, segredos e deploy. |
 | `docs/privacidade/pagina-de-privacidade.md` | Página pública `/privacidade`. |
-| `docs/processo/auditorias-e-planos.md` | Como conduzir auditoria e plano em fases e fechar o ciclo no backlog. |
+| `docs/processo/auditorias-e-planos.md` | Como conduzir auditoria e plano em fases, fechar o ciclo no backlog e a regra de backlog reativo. |
 
 ## Diretrizes de Execução
 
@@ -45,3 +45,4 @@ Antes de criar qualquer documento novo, verifique se o assunto pertence a um dos
 3. **Planos e auditorias locais:** Os arquivos `docs/auditoria*` e `docs/plano-*` estão no `.gitignore` e são material de trabalho: não os versione nem os cite como fonte em documento versionado. Ao fechar um ciclo, o que falta vai para `docs/backlog.md`, as regras vivas vão para o documento da área e o material local é arquivado fora de `docs/` (ver `docs/processo/auditorias-e-planos.md`).
 4. **Padrão de Idioma e Tom:** Mantenha a documentação técnica integralmente em português brasileiro (PT-BR), com diagramas Mermaid e tabelas claras sempre que estruturar novos fluxos.
 5. **Documento descreve o código atual:** intenção, plano e pendência ficam no `docs/backlog.md`.
+6. **Backlog reativo:** ao receber mudança de status de item, atualize o item em `docs/backlog.md` (status, nº da PR, motivo do bloqueio ou gatilho do adiamento) e a linha "Atualizado em" do topo. Na conclusão, registre o item em "Entregas recentes" com o nº da PR, na própria PR (não depois do merge). Regra completa em `docs/processo/auditorias-e-planos.md`, seção Backlog reativo.

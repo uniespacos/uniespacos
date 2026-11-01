@@ -31,6 +31,7 @@ git checkout -b <nome-da-feature> origin/develop
 3. **Decisões Críticas:** Se a decisão afetar schema de banco, contratos de API pública ou integridade de dados de usuário, explicite isso na tarefa.
 4. **Decomposição Atômica:** Quebre em tarefas verificáveis de forma independente. Se uma tarefa não tem critério de "pronto quando" claro, divida-a.
 5. **Raio de Impacto Amplo:** Se a tarefa mexer em código compartilhado (middleware, traits, helpers globais, factories), exija a execução da suíte completa de testes no "pronto quando".
+6. **Backlog Reativo:** Cada tarefa cita os IDs de `docs/backlog.md` que move (ex.: `T-04`) e o status novo. Inclua uma tarefa final `executor: docs` que atualiza o backlog (status e linha "Atualizado em") no mesmo branch da entrega. Pendência nova encontrada na investigação vira proposta de item (ID, prioridade, esforço, tipo), não fica só no texto do plano. Regra em `docs/processo/auditorias-e-planos.md`, seção Backlog reativo.
 
 ## Formato de cada tarefa (obrigatório)
 
@@ -43,6 +44,7 @@ passos:
   - <passo concreto>
 pronto quando: <comando ou critério que confirma>
 não fazer: <o que fica fora do escopo desta tarefa>
+backlog: <IDs e status novo, ou `nenhum`>
 ```
 
 ## Validação Prévia de Contratos/i18n/PBAC

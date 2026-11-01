@@ -92,6 +92,7 @@ Passe contexto completo e fechado:
 - Arquivos relevantes (onde mexer, onde consultar como referência)
 - Critério de pronto (comando de teste, lint, verificação visual)
 - Restrições específicas (não mexer em X, preservar comportamento Y)
+- IDs do backlog afetados e o status novo (ex.: `T-04` → concluído), para o executor os reportar de volta
 
 ### 4. Quando Chamar o Agente de Documentação (`docs`)
 Após a conclusão de tarefas de código (`backend` ou `frontend`), avalie se precisa documentar:
@@ -115,12 +116,13 @@ Após a conclusão de tarefas de código (`backend` ou `frontend`), avalie se pr
 | Mudança em recorrência (tipos, expansão de horários) | `regras-de-negocio/recorrencia.md` |
 | Mudança em cache de conflitos (`conflict_cache`, revalidação) | `regras-de-negocio/cache-de-conflitos.md` |
 | Página de privacidade / LGPD | `privacidade/pagina-de-privacidade.md` |
-| Item concluído ou nova pendência | `backlog.md` |
+| Qualquer mudança de status de item do backlog (iniciado, bloqueado, adiado, decidido, concluído) ou nova pendência importante | `backlog.md` (regra em `docs/processo/auditorias-e-planos.md`, seção Backlog reativo) |
 
 Ao delegar para `docs`, forneça o contexto estruturado:
 ```
 executor: docs
 objetivo: Atualizar <arquivo em docs/> com <o que mudou>
+backlog: <IDs e status novo, se houver>
 contexto_de_mudanças:
   - "<Classe/Componente>": o que faz / o que mudou
   - "<Método/Prop>": comportamento novo
@@ -138,20 +140,23 @@ Quando o executor devolver:
   mock que engole erro, ou asserção afrouxada, isso não é a tarefa concluída — devolva a tarefa
   pedindo a causa raiz.
 - Se uma falha aparecer em algo que a tarefa não tocou, confirme se é determinística ou probabilística antes de rotular como pré-existente.
+- **Backlog reflete o novo status?** Antes de commitar ou pushar, confira em `docs/backlog.md` que cada ID afetado está com o status novo e que as pendências novas do relatório viraram item. Se não estiver, delegue ao `docs` antes de seguir.
 
 ### 6. Coordenação de PR
 
 **Para qualquer PR (código, documentação, agentes):**
-- Deixe branch **commitada e pushada**
+- Deixe branch **commitada e pushada**, com `docs/backlog.md` no mesmo branch e os itens afetados já com o status novo
 - Reporte:
   - ✅ Validações rodadas (`npx tsc --noEmit`, `npx jest`, `artisan test`, `npx eslint resources/js`)
   - 📝 Documentação atualizada (sim/não, qual arquivo)
+  - 📋 Backlog: IDs afetados e status novo (ou "nenhum item afetado")
   - ⚠️ O que falta validar (se houver)
 - **NUNCA rode `gh pr create` por conta própria.** Aguarde que o usuário valide o trabalho e peça explicitamente para criar a PR naquele momento.
 - **Apenas quando o usuário pedir explicitamente** ("cria a PR agora"): `gh pr create + reporte URL`
 
 **Fluxo pós-merge:**
 - Após merge em develop, release-please dispara automaticamente
+- O backlog já deve chegar ao merge atualizado: o item concluído entra em "Entregas recentes" com o nº da PR num commit na própria branch, logo depois de abrir a PR
 - **PR do release-please é SEMPRE aprovada/mergeada manualmente pelo usuário** — não mexa nela
 
 ### 7. Memória e Otimização de Contexto (ai-memory)
