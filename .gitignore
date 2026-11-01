@@ -51,5 +51,9 @@ docker/development/mailpit/*
 # Documentação de auditorias internas
 /docs/auditoria*
 /docs/plano-*
+# Rascunhos de LGPD ainda não aprovados (T-14, T-16) e material de referência em PDF
+/docs/privacidade/inventario-de-dados.md
+/docs/privacidade/runbook-incidente.md
+/docs/*.pdf
 # Saidas soltas do phpstan na raiz (ex.: redirecionamento de `composer analyse > ...phpstan.txt`)
 /*phpstan*.txt
