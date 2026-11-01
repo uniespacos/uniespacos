@@ -110,7 +110,7 @@ class InstitucionalUsuarioController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Erro ao atualizar permissões: '.MensagemDeErro::paraUsuario($e, registrar: false));
+            return back()->with('error', __('Error updating permissions: :message', ['message' => MensagemDeErro::paraUsuario($e, registrar: false)]));
         }
     }
 

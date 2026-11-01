@@ -63,7 +63,7 @@ class InstitucionalUnidadeController extends Controller
                 ->with('success', 'Unidade criada com sucesso.');
         } catch (\Throwable $th) {
             return redirect()->route('institucional.unidades.index')
-                ->with('error', 'Erro ao criar a unidade: '.MensagemDeErro::paraUsuario($th));
+                ->with('error', __('Error creating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }
     }
 
@@ -87,7 +87,7 @@ class InstitucionalUnidadeController extends Controller
             return redirect()->route('institucional.unidades.index')
                 ->with('success', 'Unidade atualizada com sucesso.');
         } catch (\Throwable $th) {
-            return back()->withInput()->with('error', 'Erro ao atualizar a unidade: '.MensagemDeErro::paraUsuario($th));
+            return back()->withInput()->with('error', __('Error updating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }
     }
 
@@ -104,7 +104,7 @@ class InstitucionalUnidadeController extends Controller
 
             return back()->with('success', 'Unidade excluída com sucesso.');
         } catch (\Throwable $th) {
-            return back()->with('error', 'Erro ao deletar a unidade: '.MensagemDeErro::paraUsuario($th));
+            return back()->with('error', __('Error deleting unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }
     }
 }

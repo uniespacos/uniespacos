@@ -81,7 +81,7 @@ class InstitucionalSetorController extends Controller
             return redirect()->route('institucional.setors.index')
                 ->with('success', 'Setor cadastrado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao cadastrar setor: '.MensagemDeErro::paraUsuario($e)])->withInput();
+            return back()->with(['error' => __('Error creating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
@@ -100,7 +100,7 @@ class InstitucionalSetorController extends Controller
 
             return back()->with('success', 'Setor atualizado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao atualizar setor: '.MensagemDeErro::paraUsuario($e)])->withInput();
+            return back()->with(['error' => __('Error updating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
@@ -117,7 +117,7 @@ class InstitucionalSetorController extends Controller
 
             return back()->with('success', 'Setor removido com sucesso!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Erro ao remover setor: '.MensagemDeErro::paraUsuario($e)]);
+            return back()->withErrors(['error' => __('Error removing sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
         }
     }
 }

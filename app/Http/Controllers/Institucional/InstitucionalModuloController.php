@@ -73,7 +73,7 @@ class InstitucionalModuloController extends Controller
             return redirect()->route('institucional.modulos.index')
                 ->with('success', 'Módulo cadastrado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao cadastrar módulo: '.MensagemDeErro::paraUsuario($e)])->withInput();
+            return back()->with(['error' => __('Error creating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
@@ -101,7 +101,7 @@ class InstitucionalModuloController extends Controller
             return redirect()->route('institucional.modulos.index')
                 ->with('success', 'Módulo atualizado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao atualizar módulo: '.MensagemDeErro::paraUsuario($e)])->withInput();
+            return back()->with(['error' => __('Error updating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
@@ -118,7 +118,7 @@ class InstitucionalModuloController extends Controller
 
             return back()->with('success', 'Módulo removido com sucesso!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Erro ao remover módulo: '.MensagemDeErro::paraUsuario($e)]);
+            return back()->withErrors(['error' => __('Error removing module: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
         }
     }
 }

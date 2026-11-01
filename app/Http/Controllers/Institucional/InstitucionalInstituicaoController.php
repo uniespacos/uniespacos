@@ -72,7 +72,7 @@ class InstitucionalInstituicaoController extends Controller
             return redirect()->route('institucional.instituicoes.index')
                 ->with('success', 'Instituição atualizada com sucesso.');
         } catch (\Throwable $th) {
-            return back()->withInput()->with('error', 'Erro ao atualizar a instituição: '.MensagemDeErro::paraUsuario($th));
+            return back()->withInput()->with('error', __('Error updating institution: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
         }
     }
 

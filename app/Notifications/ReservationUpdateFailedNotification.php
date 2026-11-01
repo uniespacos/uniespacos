@@ -16,11 +16,14 @@ class ReservationUpdateFailedNotification extends BaseNotification
 
     public function __construct(Reserva $reserva, User $user)
     {
+        $locale = app()->getLocale();
+
         parent::__construct(
-            'Falha ao Atualizar Reserva',
-            "Ocorreu um erro ao processar a atualização da sua reserva '{$reserva->titulo}'. Por favor, tente novamente.",
+            __('Failed to Update Reservation', [], $locale),
+            __("An error occurred while processing the update of your reservation ':titulo'. Please try again.", ['titulo' => $reserva->titulo], $locale),
             route('reservas.edit', $reserva->id)
         );
+        $this->locale($locale);
         $this->reserva = $reserva;
         $this->user = $user;
     }
@@ -31,7 +34,7 @@ class ReservationUpdateFailedNotification extends BaseNotification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Falha ao Atualizar Reserva: '.$this->reserva->titulo)
+            ->subject(__('Failed to Update Reservation: :titulo', ['titulo' => $this->reserva->titulo]))
             ->view('emails.reservations.reservation_failed', [
                 'reservationTitle' => $this->reserva->titulo,
                 'user' => $this->user,
