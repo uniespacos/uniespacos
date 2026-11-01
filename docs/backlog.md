@@ -1,8 +1,8 @@
 # Backlog — UniEspaços
 
-> **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-10-31.
-> **Base:** `develop` @ `f3624f5` (1.5.0-rc.106, em staging) · produção: `main` v1.4.4 (30/10/2026).
-> **Atualizado em:** 2026-10-31.
+> **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
+> **Base:** `develop` @ `d2b0cb3` (1.5.0-rc.106, em staging) · produção: `main` v1.4.4 (30/10/2026).
+> **Atualizado em:** 2026-11-01.
 
 ## Como ler
 
@@ -52,7 +52,7 @@
   Prazo decidido (P-16). Depende da T-08. Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Pronto quando:** `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` em produção, com arquivos rotacionados em staging.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. = S61, F1, E2-O.1.
+  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -134,6 +134,9 @@
   **Pronto quando:** uma reserva de um mês com conflito na terceira semana volta erro de validação no envio, sem criar a reserva.
 - [ ] **B69, B71, B72** · Revisar validação e autorização dos FormRequests de atualização (espaço, módulo, unidade, instituição) — `P2` · médio · segurança
   Testes de caracterização primeiro (S30).
+- [ ] **S73** · Editar módulo exige a permissão de atualização, não a de criação — `P2` · pequeno · bug
+  `UpdateModuloRequest::authorize()` chama o `authorize()` padrão, que exige `modulos.criar`, enquanto `ModuloPolicy::update` exige `modulos.atualizar`. Um papel com só a atualização recebe 403 ao editar módulo; hoje é latente, porque o papel `institucional` tem as duas. Ligado à revisão da B69, B71 e B72.
+  **Pronto quando:** `UpdateModuloRequest` usa `modulos.atualizar`, e um teste cobre a edição com um papel que tem só essa permissão.
 - [ ] **S41** · Endurecer os workflows de deploy (verificação de host, versões fixadas, origem da imagem) — `P2` · pequeno · segurança
   Inclui unificar os Caddyfiles e corrigir o `workflow_dispatch` de staging, que implanta a imagem da última RC em vez da branch escolhida (B79). Depende da D-EST-24. = B68, B79, E1-33.
 - [ ] **S46 → S48–S50** · Isolamento por instituição nas operações de escrita: ADR e implementação — `P2` · grande · segurança
@@ -170,42 +173,75 @@
 - [ ] **S29** · Limites de upload e pool do php-fpm na imagem de produção — `P2` · pequeno · operação
   Produção usa os limites padrão do PHP, abaixo do limite que a aplicação valida. Depende da pergunta D (memória do host). = B18, B75, DT-07, E1-22.
 - [ ] **S28, S31** · Retrato do RBAC de produção versionado, paridade dos seeders na CI e catálogo de permissões do front — `P3` · médio · débito técnico
-  O catálogo do front não tem `relatorios.*`. Depende da pergunta C (exportar a matriz de produção). = B11, B12, E1-09, E1-10.
+  O catálogo do front (`resources/js/constants/permissions.ts`) já tem os 4 tipos de relatório e `secao.relatorios`, mas faltam `relatorios.escopo-agendas` e `relatorios.escopo-instituicao`. Depende da pergunta C (exportar a matriz de produção). = B11, B12, E1-09, E1-10.
 - [ ] **DOC-01** · Tirar `docs/` do contexto de build da imagem de produção — `P3` · pequeno · operação
   O `.dockerignore` exclui só `docs/auditoria*` e `docs/plano-*`; os cerca de 25 MB de `docs/UniEspaço Web/` entram na imagem.
 
 **Débitos técnicos e limpeza**
 
 - [ ] **S64** · Reduzir as supressões do ESLint, com ratchet — `P3` · médio · débito técnico
-  Hoje: 73 supressões em 33 arquivos no `eslint-suppressions.json`, mais 9 inline (`npm run lint:debt`).
-- [ ] **DOC-02** · Atualizar o `CLAUDE.md` e sincronizar o `GEMINI.md` — `P3` · pequeno · docs
-  O `CLAUDE.md` ainda cita 92 supressões em 43 arquivos. O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
+  Reconferido em 01/11: 73 supressões em 33 arquivos no `eslint-suppressions.json` (`npm run lint:debt`), mais 6 `eslint-disable` inline: 5 `eslint-disable-next-line` em dois arquivos de teste (`hooks/use-espaco-live-updates.test.ts` e `presentation/pages/Espacos/VisualizarEspacoPage.test.tsx`) e 1 `/* eslint-disable */` em `ssr.tsx`.
+- [ ] **DOC-02** · Sincronizar o `GEMINI.md` com o `CLAUDE.md` — `P3` · pequeno · docs
+  O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
 - [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
   O nível 9 está ativo e o gate impede crescimento, mas o `phpstan-baseline.neon` ainda ignora cerca de 400 erros.
 - [ ] **S65, S70, B39, B49, B50** · Limpeza de código morto e de ferramentas — `P4` · médio · débito técnico
   Controllers `Auth/` e `routes/auth.php` (conferir antes: o arquivo tem rotas ativas), `docker/production/nginx`, `compose.test.yml` e `versions.txt`; Prettier com o plugin do Tailwind (B34, B48; conferir depois da atualização do Prettier); Jest em worktree com ponto no caminho (B49); resposta das rotas `show` removidas (B39).
 - [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
 - [ ] **RR-D3** · Comando de auditoria dos horários com data anterior à criação, com `--dry-run` — `P4` · pequeno · depende de decisão sobre o destino desses registros.
-- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno.
+- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno. Entra no PR da I18N-F1, que traduz as Rules.
 - [ ] **RR-F04** · Renomear a prop `conflictCache` do `ConflictAlertBox`, que recebe conflitos calculados na hora — `P4` · pequeno.
 - [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
+- [ ] **S72** · Remover o código legado de unicidade de nome de andar — `P3` · pequeno · débito técnico
+  `app/Rules/UniqueNormalizedFloorName.php` e `Andar::normalizarNome()` não têm uso. A Rule consulta a coluna `nome_normalizado`, que não existe em `andars`: resíduo do CRUD avulso de andar removido no #251.
+  **Pronto quando:** os dois arquivos e as referências saem do código, e a suíte passa.
+- [ ] **S74** · Garantir a unicidade de andar por módulo no banco, com testes — `P3` · médio · débito técnico
+  A regra existe só na aplicação (`StoreModuloRequest::validateAndaresUniqueness` e `updateOrCreate` em `ModuloService::update`). Não há índice único `(modulo_id, nome)` em `andars`, e não há testes de criação ou edição de módulo. Antes da migration, conferir duplicatas em produção (no banco de dev não há nenhuma).
+  **Pronto quando:** há testes de feature de criação e edição de módulo; a unicidade é decidida (índice único ou só aplicação) e, se for índice, a migration roda sem duplicatas em produção.
 
 ## Onda 6 — Internacionalização (`P2`–`P4`)
 
-Plano pronto e ainda não iniciado; tarefas e decisões em `docs/auditoria-i18n/plano-implementacao-i18n.md` (local). Ordem: I18N-D → F0 → F1 e F5 em paralelo → F2 → F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → F8.
+Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e critérios em `docs/plano-i18n/` (local; uma pasta por fase), auditoria em `docs/auditoria-i18n-2026-10-31/`. Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
 
-- [ ] **I18N-D** · Decidir a convenção de chaves e o diretório do pt-BR — `P2` · pequeno · decisão
-  O #489 usou frase em inglês como chave no JSON (`__('Space added to favorites!')`); o plano pede chaves com namespace (`flash.<entidade>.<acao>`). Também há `lang/pt.json` e `lang/pt_BR.json` mantidos em duplicidade, e `lang/pt/` em vez de `lang/pt_BR/`. Decidir antes da F2 e da F3.
-- [ ] **I18N-F0** · Fundação de locale: enum, `users.locale` e `<html lang>` — `P2` · médio.
-- [ ] **I18N-F1** · Pacotes de idioma, validação e testes de paridade de chaves — `P2` · médio · depende da F0.
-- [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio.
-- [ ] **I18N-F2** · Fechar flash, `abort()` e exceções traduzíveis (falta pouco) — `P3` · pequeno · depende da F1 e da I18N-D.
-- [ ] **I18N-F3** · Notificações e e-mails no idioma do destinatário, inclusive em jobs — `P3` · grande · depende da F0 e da F1.
-- [ ] **I18N-F4+6a** · Relatórios PDF e Excel e cache com chaves estáveis (backend e front juntos) — `P3` · médio.
-- [ ] **I18N-6b, 6c, 6d, 6f** · Migrar os textos do front por lote: espaços, admin, reservas, autenticação e comuns (cerca de 350 strings) — `P3` · grande.
-- [ ] **I18N-6e** · Shell e notificações no front — `P3` · pequeno · depende da F3 e da F5.
-- [ ] **I18N-F7** · Guardrails de i18n na CI e documento da convenção — `P3` · médio.
-- [ ] **I18N-F8** · Carregamento sob demanda, manifest multilíngue e RTL — `P4` · médio.
+- [ ] **I18N-F0** · Fundação de locale: idioma salvo no usuário e formato único — `P2` · médio
+  Enum de locale único; `users.locale` com `HasLocalePreference`; a prop `locale` do Inertia sempre em `pt-BR`/`en`/`es`; remove a prop `quote`, que não é usada; `<html lang>` acompanha a troca de idioma; cria `docs/arquitetura/internacionalizacao.md` com a convenção decidida.
+  **Pronto quando:** a escolha de idioma persiste entre sessões; a prop `locale` nunca sai fora de `pt-BR`/`en`/`es`; `<html lang>` muda junto com o idioma; há testes cobrindo.
+- [ ] **I18N-F1** · Arquivos de idioma, validação e testes de paridade — `P2` · médio · depende da F0
+  `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais. Inclui a RR-F01.
+  **Pronto quando:** a validação em `es` sai em espanhol, e remover uma chave de `es.json` faz um teste falhar.
+- [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio · depende da F0
+  Plural no motor; date-fns e formatos de data pelo locale ativo (hoje há `ptBR` importado em 7 arquivos e 12 formatos `dd/MM` fixos); ordenação pelo locale; textos dos primitivos de UI; dicionários divididos por namespace; pseudo-locale só em dev; testes com o motor real no lugar de mocks; script de inventário versionado.
+  **Pronto quando:** nenhum import de `date-fns/locale` fora de `resources/js/i18n/`; testes de plural e datas nos 3 idiomas; nenhum teste com `jest.mock('@/i18n')`.
+- [ ] **I18N-F2** · Mensagens de erro ao usuário traduzidas e sem detalhe técnico interno — `P3` · pequeno · depende da F1
+  As flash messages já estão traduzidas (#489), e falhas de banco já viram mensagem genérica. Falta: exceção de domínio com mensagem traduzível, mensagem genérica para qualquer exceção não prevista, e as mensagens de `abort()` dos relatórios.
+  **Pronto quando:** exceções de domínio e `abort()` aparecem traduzidos nos 3 idiomas, e exceção não prevista mostra só a mensagem genérica.
+- [ ] **I18N-F3** · Notificações e e-mails no idioma do destinatário, inclusive em jobs — `P3` · grande · depende da F0 e da F1 (parte de front, da F5)
+  O texto passa a ser gerado no idioma de quem recebe, nos canais banco, broadcast e e-mail; `chave` + `parametros` nas 8 notificações que ainda não têm, com o mapeamento no front; templates de e-mail e resumo de horários traduzidos. Mantém a regra da T-24 (sem nome de pessoa). A justificativa automática de conflito continua no idioma de quem avaliou (decidido). Coordenar com a T-26 (b) (formato da prop `notifications`). Notificações antigas sem `chave` usam o fallback, e a T-19 as remove com o tempo.
+  **Pronto quando:** uma notificação disparada em job para um usuário com idioma `en` chega em inglês nos três canais, e as 10 notificações têm chave mapeada no front.
+- [ ] **I18N-F4+6a** · Relatórios PDF e Excel e cache com chaves estáveis (backend e front juntos) — `P3` · médio · depende da F1 e da F5
+  O resumo e os filtros usam chave estável em vez do rótulo em português; a tradução acontece depois do cache, com a versão do cache incrementada; PDF/Excel formatados pelo locale; telas de relatório traduzidas. Um PR só, porque o contrato JSON muda.
+  **Pronto quando:** exportações em `en` e `es` saem traduzidas, a mesma entrada de cache serve todos os idiomas, e as telas de relatório não têm texto fixo.
+- [ ] **I18N-6b** · Textos do front: espaços e andares (cerca de 42 strings) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6c** · Textos do front: administração, usuários e permissões (cerca de 108 strings, incluindo os rótulos de permissão) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6d** · Textos do front: reservas e agenda (cerca de 57 strings, incluindo a validação do formulário de reserva) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6f** · Textos do front: autenticação, componentes comuns e configurações (cerca de 42 strings) — `P3` · pequeno · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6e** · Shell, navegação e painel de notificações no front (cerca de 30 strings) — `P3` · pequeno · depende da F3 e da F5
+  Itens de menu, cabeçalho e painel de notificações do shell.
+  **Pronto quando:** todos os itens de menu usam chave de tradução, e o painel de notificações não tem texto fixo.
+- [ ] **I18N-F7** · Guardrails de i18n na CI e documento da convenção — `P3` · médio · depende das anteriores
+  Lint que proíbe texto literal em JSX, sem supressões; testes de paridade dos rótulos de enum e dos idiomas; `docs/arquitetura/internacionalizacao.md` completo, com glossário e checklist de novo idioma. Depois dele vem a consolidação do plano.
+  **Pronto quando:** um texto literal novo em JSX falha no lint, e uma chave faltando falha nos testes.
+- [ ] **I18N-F8** · Carregamento sob demanda, manifest multilíngue e RTL — `P4` · médio
+  Só com gatilho: um 4º idioma, tradutor externo ou PWA com nome traduzido.
+  **Pronto quando:** definido conforme o gatilho.
 
 ## Onda 7 — Produto: funcionalidades (`P2`–`P4`)
 
@@ -284,14 +320,13 @@ Plano pronto e ainda não iniciado; tarefas e decisões em `docs/auditoria-i18n/
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
-| I18N-D · Convenção de chaves de i18n | I18N-F2, I18N-F3 |
 
 ## Gestão do repositório (não é código)
 
-- [ ] Comentar o fechamento das issues #48 e #102 (fechadas sem comentário) e registrar na #41 que a entrega veio no #432. A validação manual com dois navegadores (T6.6) nunca foi registrada.
+- [ ] Comentar o fechamento das issues #48 e #102 (fechadas sem comentário). A #41 já foi tratada (entrega no #432 comentada no GitHub e label `wontfix` removida). A validação manual com dois navegadores (T6.6) nunca foi registrada.
 - [ ] Alinhar as labels: #104 está `P0` (o plano pede ADR antes e deixa fora da 2.0); #107 está `P4` (requisito "Must" original); #98 e #462 estão sem prioridade.
 - [ ] As 18 issues do plano de estabilização (`criar-issues.sh`) nunca foram criadas. Este backlog passa a ser a fonte: fechar o milestone vazio "Estabilização v1 — Fase 1" e abrir issue só quando o item entrar em execução.
-- [ ] Apagar a branch `chore/remover-docs-obsoletos` (o que ela removia já não existe). Manter a `docs/v2-0-documentacao-preparatoria` até o E3-01.
+- [ ] Limpar as 33 branches remotas antigas já absorvidas por `develop`: 14 `fase-*`, 5 `fix/fase-*`, 4 `fix/governanca-eslint-*` e 10 avulsas. Conferir cada uma por conteúdo, não por `git branch -r --merged`: o repo usa squash merge e a maioria nunca teve PR própria (entrou pela branch-mãe). Fora da limpeza: `feat/tickets-module` (PR #397 aberta), `refactor/melhorias-arquitetura-ux-frontend` (commit de 30/10; perguntar ao dono), `docs/v2-0-documentacao-preparatoria` (manter até o E3-01) e `docs/backlog-alinhamento-i18n`.
 - [ ] Arquivar os planos locais concluídos (ver [Origem dos itens](#origem-dos-itens)).
 
 > O `Closes #N` não fecha a issue em merge para `develop`; o GitHub só fecha em merge para a branch padrão (`main`). Feche manualmente, com comentário.
@@ -319,11 +354,13 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **01/11** · #491 consolidação da documentação (novo índice, roadmap, docs de domínio alinhados e backlog consolidado).
 - **31/10** · #489 LGPD: payloads e logs mínimos, anonimização de conta, limites de taxa, página de privacidade (rascunho) e mensagens traduzíveis. Em staging.
 - **30–31/10** · #481, #483 e #487: fronteiras de camadas, correções de UX, acessibilidade, estado vazio e anatomia de página.
-- **30/10** · #476 dependências; #475 release 1.4.4 em produção.
+- **30/10** · #485 cache de dependências e camadas Docker na CI, com o workflow `cache-warmup.yml` (em PR só de changelog, pula a suíte); #476 dependências; #475 release 1.4.4 em produção.
 - **24/10** · #465 hotfix 1.4.3 (PHP 8.4.27); #469 e #470 patches de segurança e Laravel 12.70 (S25, S40); #471 hardening do Docker.
 - **05–09/10** · #438 a #459: linha de base verde e onda 1 da estabilização (B1, B4, B7 a B10, B13, B17, B19, B29 a B32, B43, B46).
+- **01/10** · #434 HTTP/3 desabilitado no Caddy de produção, mantendo h1 e h2.
 - **30/09** · #432 débitos técnicos 2026-09: canal privado por espaço, filtro de período, tempo real nas listas, gate do PHPStan e snapshot do `conflict_cache`.
 - **29–30/08** · #403 áreas de foco (relatórios com policy e cache, revalidação de conflitos) e #406 regras de reserva (sobreposição síncrona, lock, datas, auto-aprovação).
 
@@ -340,7 +377,7 @@ Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` est
 | Board e roadmap | 30/09 | absorvido pela estabilização e pela LGPD | decisões D-1 a D-9 |
 | Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |
 | LGPD | 31/10 | em execução; lote 1 em staging | Ondas 1 e 2 |
-| i18n | 31/10 | plano pronto, não iniciado | Onda 6 |
+| i18n | 31/10–01/11 | plano revisado (rev. 3), não iniciado | Onda 6 |
 
 ## Como manter
 

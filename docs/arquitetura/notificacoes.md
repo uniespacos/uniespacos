@@ -156,7 +156,7 @@ Implementado individualmente em cada notificação. Usa template customizado em 
 
 **Namespace:** `App\Notifications\NewReservationNotification`
 
-**Disparada por:** `ProcessarCriacaoReserva::handle()` (linhas 121–129)
+**Disparada por:** `ProcessarCriacaoReserva::handle()`
 
 **Destinatário:** Todos os gestores da reserva, EXCETO o solicitante
 
@@ -184,7 +184,7 @@ Sem nome do solicitante em `notifications.data` (T-24). O e-mail (`emails.reserv
 
 **Namespace:** `App\Notifications\ReservationCreatedNotification`
 
-**Disparada por:** `ProcessarCriacaoReserva::handle()` (linhas 137–144)
+**Disparada por:** `ProcessarCriacaoReserva::handle()`
 
 **Destinatário:** O solicitante da reserva
 
@@ -225,7 +225,7 @@ Job: ProcessarCriacaoReserva
 
 **Namespace:** `App\Notifications\ReservationEvaluatedNotification`
 
-**Disparada por:** `AvaliarReservaJob::handle()` (linhas 157–168)
+**Disparada por:** `AvaliarReservaJob::handle()`
 
 **Destinatário:** O solicitante da reserva
 
@@ -284,7 +284,7 @@ Sem nome de quem cancelou em `notifications.data` (T-24). O e-mail (`emails.rese
 
 **Namespace:** `App\Notifications\ReservationUpdatedNotification`
 
-**Disparada por:** `UpdateReservaJob::handle()` (linhas 140–147)
+**Disparada por:** `UpdateReservaJob::handle()`
 
 **Destinatário:** O solicitante da reserva (user que pediu atualização)
 
@@ -308,7 +308,7 @@ URL: route('reservas.show', $reserva->id)
 
 **Namespace:** `App\Notifications\ReservationFailedNotification`
 
-**Disparada por:** `ProcessarCriacaoReserva::failed()` (linhas 162–166)
+**Disparada por:** `ProcessarCriacaoReserva::failed()`
 
 **Destinatário:** O solicitante (quando job exaure 3 tentativas)
 
@@ -336,7 +336,7 @@ Propriedades extras:
 
 **Namespace:** `App\Notifications\ReservationUpdateFailedNotification`
 
-**Disparada por:** `UpdateReservaJob::failed()` (linhas 180–187)
+**Disparada por:** `UpdateReservaJob::failed()`
 
 **Destinatário:** O usuário que tentou atualizar (quando job exaure)
 
@@ -366,8 +366,8 @@ Propriedades extras:
 
 **Disparada por:**
 
-- `EspacoService::updateEspacoAndAgendas()` (linhas 276–280 e 318–320)
-- `UserService::attachOrDetachAgendas()` (linhas 152–158)
+- `EspacoService::updateGestores()`: ao designar um novo gestor para um turno do espaço, quando ele ainda não tem `reservas.avaliar`
+- `UserService::updatePermissions()`: quando o papel informado é `gestor`
 
 **Destinatário:** Usuário recém-designado como gestor
 
@@ -400,8 +400,8 @@ Propriedades extras:
 
 **Disparada por:**
 
-- `EspacoService::updateEspacoAndAgendas()` (linhas 326–328)
-- `UserService::attachOrDetachAgendas()` (linhas 163–168)
+- `EspacoService::updateGestores()`: ao trocar o gestor de um turno, quando o usuário anterior não gerencia mais nenhuma agenda
+- `UserService::updatePermissions()`: quando o papel informado não é `gestor` (o usuário perde as agendas que gerenciava)
 
 **Destinatário:** Usuário removido de gestão
 
@@ -432,7 +432,7 @@ Propriedades extras:
 
 **Namespace:** `App\Notifications\SectorUpdatedNotification`
 
-**Disparada por:** `SetorService::update()` (linhas 49–50)
+**Disparada por:** `SetorService::update()`
 
 **Destinatário:** Todos os usuários associados ao setor
 

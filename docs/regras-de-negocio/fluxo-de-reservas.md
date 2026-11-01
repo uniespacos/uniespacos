@@ -427,7 +427,7 @@ Todas as notificações relacionadas a reserva estendem `BaseNotification` que i
 | `broadcast` | Laravel Reverb (WebSocket) | Entrega em tempo real | Nunca |
 | `mail` | SMTP / Mailtrap | Assíncrono (fila) | Em auto-aprovação (veja 9.3) |
 
-O canal `broadcast` permite que o frontend (`notification-dropdown.tsx`) receba notificações em tempo real via WebSocket.
+O canal `broadcast` permite que o frontend (`resources/js/presentation/organisms/NotificationDropdown.tsx`) receba notificações em tempo real via WebSocket.
 
 ### 9.2 Notificações de Reserva
 

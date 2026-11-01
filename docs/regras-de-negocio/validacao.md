@@ -8,7 +8,7 @@ Este documento descreve as Rules customizadas, os FormRequests que as usam e ond
   - [HorarioDisponivel](#horariodisponivel)
   - [HorariosMesmoEspaco](#horariosmesmoespaco)
   - [UsuarioDaMesmaInstituicaoDaAgenda](#usuariodamesmainstituicaodaagenda)
-  - [UniqueNormalizedFloorName](#uniquenormalizedfloorname)
+  - [Unicidade de andares por módulo](#unicidade-de-andares-por-módulo)
 - [FormRequests e Suas Rules](#formrequests-e-suas-rules)
 - [Onde cada verificação de conflito acontece](#onde-cada-verificação-de-conflito-acontece)
   - [Horários em análise (#107)](#horários-em-análise-107)
@@ -177,57 +177,45 @@ if ($user->setor->unidade->instituicao_id
 
 ---
 
-### UniqueNormalizedFloorName
+### Unicidade de andares por módulo
 
-**Localização:** `app/Rules/UniqueNormalizedFloorName.php`
+**Localização:** `app/Http/Requests/StoreModuloRequest.php` (`validateAndaresUniqueness()`) e `app/Services/ModuloService.php` (`update()`)
 
-**Responsabilidade:** Garantir que nenhum outro andar tenha o mesmo nome normalizado (case-insensitive, trimmed).
+**Responsabilidade:** Garantir que um módulo não tenha dois andares com o mesmo nome.
 
-#### Quando é Usada
+Não é uma Rule. A unicidade é **por módulo**, não global, porque todo módulo tem o seu próprio `terreo`.
 
-**Status:** Implementada mas não está sendo utilizada na FormRequest `StoreAndarRequest` atualmente.
+#### Por que não é texto livre
 
-**Contexto:** A rule existe como preparação para validação customizada de unicidade de andares. Atualmente, a unicidade é verificada via constraint de banco (unique index em `nome_normalizado`) e tratada via catch de `QueryException` no controller.
+`andares.*.nome` é um slug de lista fechada, validado com `in:subsolo-2,subsolo-1,terreo,andar-1,...,andar-10`. Um módulo tem no máximo 12 andares (`max:12`). Como o conjunto de valores é fixo, a comparação é exata, sem normalização de caixa ou de espaços.
 
-#### Lógica de Validação
+#### Como a unicidade é garantida hoje
 
-```php
-// Normaliza o nome (lowercase + trim)
-$normalized = Andar::normalizarNome($value);  // "ANDAR 1" → "andar 1"
+Não há CRUD avulso de andar. Os andares são criados e editados junto com o módulo: `InstitucionalModuloController::store()` e `update()` validam com `StoreModuloRequest` e `UpdateModuloRequest` (este estende o primeiro) e delegam a `ModuloService::store()` e `ModuloService::update()`.
 
-// Verifica se existe outro andar com esse nome normalizado
-$query = Andar::where('nome_normalizado', $normalized);
+| Fluxo | Mecanismo | Efeito |
+|-------|-----------|--------|
+| Criação (`ModuloService::store()`) | `StoreModuloRequest::validateAndaresUniqueness()` rejeita slugs repetidos no payload | Erro de validação em `andares` ("Há andares duplicados. Cada andar deve ser único."), devolvido ao formulário pelo Inertia |
+| Edição (`ModuloService::update()`) | Mesma validação no payload. Em seguida, `$modulo->andars()->updateOrCreate(['nome' => ...], ...)`, escopado por `modulo_id` | Reenviar um andar existente atualiza o `tipo_acesso` em vez de duplicar |
 
-// Em updates, ignora o próprio andar
-if ($this->ignoreId !== null) {
-    $query->where('id', '!=', $this->ignoreId);
-}
-```
+Na edição, andares que saem do payload são apagados. A exceção é o andar que ainda tem espaços: nesse caso o service lança exceção e a transação é desfeita.
 
-#### Normalização
+O `withValidator` também impõe a integridade da sequência: não pode haver gaps, o térreo é obrigatório, e cada andar exige o anterior (`andar-1` exige o térreo; `subsolo-2` exige `subsolo-1`).
 
-```php
-// Em app/Models/Andar.php
-public static function normalizarNome(string $nome): string
-{
-    return mb_strtolower(trim($nome));
-}
-```
-
-**Exemplos de equivalência normalizada:**
-- `"Andar 1"`, `"ANDAR 1"`, `"andar 1"` → tudo normaliza para `"andar 1"`
-- `"  2º Andar  "` → normaliza para `"  2º andar  "` (trim + lowercase)
-
-#### Mensagem de Erro (se usada)
+#### Mensagem de Erro
 
 ```
-"Este nome de andar, ou uma variação dele, já está cadastrado."
+"Há andares duplicados. Cada andar deve ser único."
 ```
 
-#### Nota Técnica
+#### Limite do Banco
 
-- Implementação preparada para uso futuro ou refatoração (ex: migrar de constraint DB para validação explícita em FormRequest)
-- Implementa tanto `ValidationRule` (Laravel 11+) quanto suporta padrão de rule customizada
+- A tabela `andars` tem apenas a chave primária. Não há índice único em `(modulo_id, nome)` e não há coluna de nome normalizado.
+- A unicidade depende só da aplicação. Na criação não há corrida possível, porque cada requisição cria um módulo novo. Na edição, duas requisições simultâneas para o mesmo módulo podem, em tese, executar o `updateOrCreate` ao mesmo tempo (nenhuma encontra o andar e as duas o inserem), gerando duplicatas. Não há lock nem constraint que impeça isso. Esse é o risco residual conhecido. A constraint no banco está prevista no [backlog](../backlog.md) (S74).
+
+#### Código Legado Sem Uso
+
+`app/Rules/UniqueNormalizedFloorName.php` é resíduo do antigo CRUD de andar, removido no #251. Nenhum código a usa. Ela consulta a coluna `nome_normalizado`, que não existe na tabela, então ligá-la hoje quebraria com erro de SQL. O método `Andar::normalizarNome()` só é usado por ela. Ambos podem ser removidos juntos; a remoção está no [backlog](../backlog.md) (S72).
 
 ---
 
@@ -376,6 +364,7 @@ Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` p
 
 | Validação | Nível | Bloqueante |
 |-----------|-------|-----------|
-| `UniqueNormalizedFloorName` | Backend (Rule, preparada) | ✅ Sim (se usado) |
-| Constraint DB (unique index) | Backend (DB) | ✅ Sim (ativo) |
+| Andares repetidos no payload (`StoreModuloRequest`) | Backend (FormRequest) | ✅ Sim |
+| Andar existente reenviado na edição (`ModuloService::update()`, `updateOrCreate` por módulo) | Backend (Service) | ✅ Sim (atualiza, não duplica) |
+| Constraint DB (unique index em `andars`) | Não existe (só a PK) | — Risco residual de corrida entre requisições simultâneas |
 
