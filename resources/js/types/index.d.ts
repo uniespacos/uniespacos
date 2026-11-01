@@ -41,6 +41,7 @@ export interface SharedData {
     ziggy: Config & { location: string };
     flash: FlashMessages;
     sidebarOpen: boolean;
+    privacidadeHabilitada?: boolean;
     locale?: SupportedLocale;
     name?: string;
     quote?: {

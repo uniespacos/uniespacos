@@ -87,6 +87,8 @@ Cada item é um objeto com `is_summary` (bool) e `texto` (string).
 
 **Prop compartilhada do usuário autenticado:** `HandleInertiaRequests::formatAuthUser()` envia `auth.user` com `setor`, papéis, permissões e `unread_notifications_count` (contagem, não a lista). A prop `notifications` leva as 15 notificações mais recentes.
 
+**Prop compartilhada da flag de privacidade:** `HandleInertiaRequests::share()` envia `privacidadeHabilitada` (booleano, a partir de `config('privacidade.pagina_habilitada')`, padrão `false`). O hook `usePrivacidadeHabilitada()` lê a prop com `=== true`. Ela controla os links para `/privacidade`; ver [página de privacidade](../privacidade/pagina-de-privacidade.md#comportamento-com-a-flag).
+
 ### Validações Customizadas
 
 Veja `HorarioDisponivel` (app/Rules) — rejeita faixa que se sobrepõe a horário `deferida` na mesma agenda e data (`horario_inicio < fim AND horario_fim > inicio`). Ver [validação](../regras-de-negocio/validacao.md#horariodisponivel).

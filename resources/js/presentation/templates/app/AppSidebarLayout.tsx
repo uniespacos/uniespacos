@@ -1,3 +1,4 @@
+import { usePrivacidadeHabilitada } from '@/hooks/use-privacidade-habilitada';
 import { InstallPwaBanner } from '@/presentation/molecules/InstallPwaBanner';
 import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import { AppSidebar } from '@/presentation/organisms/AppSidebar';
@@ -9,15 +10,19 @@ import { type BreadcrumbItem } from '@/types';
 import { type PropsWithChildren } from 'react';
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
+    const privacidadeHabilitada = usePrivacidadeHabilitada();
+
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
             <AppContent variant="sidebar">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
-                <footer className="text-muted-foreground px-4 pt-2 text-center text-xs">
-                    <PrivacyLink />
-                </footer>
+                {privacidadeHabilitada && (
+                    <footer className="text-muted-foreground px-4 pt-2 text-center text-xs">
+                        <PrivacyLink />
+                    </footer>
+                )}
             </AppContent>
             <MobileBottomBar />
             <InstallPwaBanner />

@@ -581,10 +581,10 @@ MAIL_PASSWORD=...
 
 Todos os templates de e-mail do sistema estendem `emails.layout` (`@extends('emails.layout')`), então o rodapé aparece em todos eles. Ele traz:
 
-- Link para a Política de Privacidade: `url('/privacidade')`, com o rótulo `__('Privacy Policy')`.
-- Linha de contato provisório da Procuradoria Jurídica: `__('Questions about your personal data? Contact the UESB Legal Department (provisional channel):')`, seguida de `projur@uesb.edu.br`.
+- Link para a Política de Privacidade, `url('/privacidade')`, com o rótulo `__('Privacy Policy')`. **Condicional:** só aparece com `config('privacidade.pagina_habilitada')` ligada (`PRIVACY_PAGE_ENABLED=true`, padrão `false`).
+- Linha de contato provisório da Procuradoria Jurídica: `__('Questions about your personal data? Contact the UESB Legal Department (provisional channel):')`, seguida de `projur@uesb.edu.br`. **Fixo:** aparece sempre, com a flag ligada ou desligada.
 
-O rodapé não consulta configuração: não há flag que o oculte. A página de destino pode ser desligada por `PRIVACY_PAGE_ENABLED`, caso em que o link leva a 404 (ver [página de privacidade](../privacidade/pagina-de-privacidade.md)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`.
+Com a flag desligada, `/privacidade` responde 404 e o rodapé traz só o contato da Projur (ver [página de privacidade](../privacidade/pagina-de-privacidade.md#comportamento-com-a-flag)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`, com os dois casos da flag.
 
 ---
 

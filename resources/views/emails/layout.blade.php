@@ -147,7 +147,9 @@
                 <p>&copy; {{ date('Y') }} <strong>UniEspaços</strong>. Todos os direitos reservados.</p>
                 <p>Sistema de Gestão de Reservas de Espaços Acadêmicos.</p>
                 <p>Precisa de ajuda? <a href="mailto:uniespacos@uesb.edu.br">Contate o suporte</a>.</p>
+                @if (config('privacidade.pagina_habilitada'))
                 <p><a href="{{ url('/privacidade') }}">{{ __('Privacy Policy') }}</a></p>
+                @endif
                 <p>{{ __('Questions about your personal data? Contact the UESB Legal Department (provisional channel):') }} <a href="mailto:projur@uesb.edu.br">projur@uesb.edu.br</a></p>
             </div>
         </div>
