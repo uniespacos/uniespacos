@@ -348,7 +348,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
-- **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #PR-VALIDACAO.
+- **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
 - **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
 - **01/11** · #492 sincronização da documentação e do backlog.
