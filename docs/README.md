@@ -43,7 +43,7 @@ Sistema de reserva de espaços da UESB. Esta pasta é a fonte de verdade sobre o
 
 | Documento | Assunto |
 | --- | --- |
-| [`deploy-e-segredos.md`](./operacao/deploy-e-segredos.md) | Variáveis de ambiente, segredos do CI/CD e deploy. |
+| [`deploy-e-segredos.md`](./operacao/deploy-e-segredos.md) | Segredos do GitHub Actions usados no deploy (staging e produção) e o workflow de aquecimento de cache das dependências. |
 
 ### Privacidade — `privacidade/`
 

@@ -166,7 +166,7 @@ Log::error('Descrição breve do que falhou', [
 1. **Mensagem:** Texto que explica o que falhou, sem detalhes de dados.
 2. **Contexto:** Array associativo com:
    - `user_id`: ID do usuário autenticado (ou `null` se não autenticado)
-   - `action`: Tipo de ação (ex: `'create_reservation'`, `'evaluate_reservation'`)
+   - `action` (opcional, não usado hoje pelos controllers): tipo da operação, para filtrar logs quando a mensagem não bastar
    - `duration_ms`: Tempo decorrido (para operações longas)
    - Identificadores: `reserva_id`, `agenda_id`, `espaco_id`
    - **Nunca:** campos com valores, tokens, senhas, ou payload completo
@@ -272,25 +272,33 @@ throw new Exception("Conflito detectado sob lock para agenda {agenda_id} em {dat
 
 **Nota sobre testes:** quando o job é instanciado diretamente e `handle()` é chamado sem passar pela fila de verdade (padrão usado em `tests/Unit/Jobs/*` e `tests/Feature/ReservaConcorrenciaTest.php`, via `app()->call([$job, 'handle'])`), a propriedade interna do job que representa o "job de fila real" nunca é preenchida. Nesse cenário, `$this->fail($e)` é um no-op silencioso (`InteractsWithQueue::fail()` só age se esse job real existir) — o `failed()` não é chamado, e a exceção não escapa de `handle()`. Os testes desse cenário validam o efeito observável (rollback: nenhum horário conflitante persistido) em vez de tentar capturar a exceção.
 
-#### Em Controller — Logging de Operações
+#### Em Controller — Tratamento de Falha ao Despachar
+
+**Arquivo:** `app/Http/Controllers/ReservaController.php` (método `store`, bloco `catch`, simplificado)
 
 ```php
-public function store(StoreReservaRequest $request): JsonResponse
+public function store(StoreReservaRequest $request): RedirectResponse
 {
-    Log::info('Reservation store initiated', [
-        'user_id' => auth()->id(),
-        'action' => 'create_reservation',
-        'horarios_count' => count($request->validated()['horarios_solicitados']),
-    ]);
+    try {
+        $this->service->create($request->validated(), Auth::user());
 
-    ProcessarCriacaoReserva::dispatch(
-        $request->validated(),
-        $request->user(),
-    );
+        return back();
+    } catch (\Exception $error) {
+        Log::error('Erro ao despachar o job de criação de reserva', [
+            'user_id' => Auth::id(),
+            'exception' => $error,
+        ]);
 
-    return response()->json(['status' => 'queued']);
+        return back()->withErrors(['error' => __('Could not send your request for processing. Please try again.')]);
+    }
 }
 ```
+
+**Pontos-chave:**
+
+- O contexto registra só `user_id` e a exceção. Não há payload nem contagem de horários no log.
+- A resposta ao usuário é um redirect com erro (fluxo Inertia), não JSON.
+- O processamento é assíncrono: o controller apenas despacha `ProcessarCriacaoReserva`. A falha de execução do job é tratada no próprio job.
 
 ## Contexto Automático de Exceções
 

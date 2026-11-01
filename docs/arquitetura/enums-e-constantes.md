@@ -5,6 +5,7 @@ Este documento descreve todos os enums e constantes de domínio do UniEspaços, 
 ## Sumário
 
 - [SituacaoReservaEnum — Estados de Avaliação](#situacaoreservaenum--estados-de-avaliação)
+- [ValidationStatusEnum — Status da Validação de Conflitos](#validationstatusenum--status-da-validação-de-conflitos)
 - [ModoArquivoEnum — Filtro de Ativas/Arquivadas](#modoarquivoenum--filtro-de-ativasarquivadas)
 - [OrdenacaoReservaEnum — Critérios de Ordenação](#ordenacaoreservaenum--critérios-de-ordenação)
 - [AgendaEnum — Turnos de Gestão](#agendaenum--turnos-de-gestão)
@@ -94,6 +95,40 @@ Cada `Horario` tem seu próprio estado (`Horario.situacao`):
 | `inativa` | Cancelado (quando a reserva-mãe é arquivada). |
 
 **Nota:** `solicitado` é apenas um estado interno de criação; após a expansão de horários, é convertido para `em_analise`.
+
+---
+
+## ValidationStatusEnum — Status da Validação de Conflitos
+
+**Localização:** `app/Enums/Reserva/ValidationStatusEnum.php`
+
+**Tipo de dado:** string (enum)
+
+Ciclo de vida da validação assíncrona de conflitos de uma reserva, gravado na coluna `reservas.validation_status`. É um eixo separado de `situacao`: diz se a checagem de conflitos rodou e se o snapshot `conflict_cache` está válido, não o resultado da avaliação do gestor. O snapshot é descrito em [cache de conflitos](../regras-de-negocio/cache-de-conflitos.md).
+
+### Valores Possíveis
+
+| Valor | Gravado por | Significado |
+|-------|-------------|-------------|
+| `pending` | `CleanDuplicateHorariosCommand` (ao limpar o `conflict_cache`) | Validação pendente. `FixStuckReservationsValidation` reprocessa as reservas nesse estado. |
+| `processing` | `ValidateReservationConflictsJob` (início da execução) | Validação em andamento. |
+| `completed` | `ValidateReservationConflictsJob` (ao final, junto com o `conflict_cache`) | Snapshot válido. `AvaliarReservaJob` e `ReservaService` consideram só reservas nesse estado. |
+| `failed` | `ValidateReservationConflictsJob` (em caso de erro) | A validação falhou; a reserva não tem snapshot válido. |
+
+### Ciclo
+
+```mermaid
+flowchart LR
+    pending -->|ValidateReservationConflictsJob inicia| processing
+    completed -->|revalidação disparada por ReservaService| processing
+    processing -->|conflict_cache gravado| completed
+    processing -->|erro| failed
+    completed -->|CleanDuplicateHorariosCommand| pending
+```
+
+### Observação de Implementação
+
+O enum **não é referenciado** no código. A coluna é escrita e comparada com os literais `'pending'`, `'processing'`, `'completed'` e `'failed'`, em `ValidateReservationConflictsJob`, `AvaliarReservaJob`, `ReservaService`, `FixStuckReservationsValidation` e `CleanDuplicateHorariosCommand`. Os valores do enum coincidem com esses literais, mas uma mudança de valor exige atualizar os cinco pontos.
 
 ---
 

@@ -253,7 +253,7 @@ return $user->hasPermissionTo('reservas.deletar')  // Bypass de propriedade, se 
 
 **Rota associada:**
 - `DELETE /reservas/{reserva}` (ReservaController::destroy)
-- Despatch job `CancelReservaJob` em background (define `situacao = 'inativa'`)
+- Chama `ReservaService::cancel()`, de forma síncrona. Se a reserva já está `inativa`, retorna sem efeito (evita nova rodada de notificações). Senão, marca reserva e horários como `inativa` dentro de `DB::transaction` e, depois do commit, notifica os gestores, revalida reservas em conflito nos horários liberados e emite o evento que invalida o cache de relatórios (ver [fluxo de reservas](./fluxo-de-reservas.md))
 
 ---
 

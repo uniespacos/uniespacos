@@ -59,7 +59,7 @@ npx prettier --write <arquivo>
   Primitivos shadcn ficam em `resources/js/components/ui`.
 - **Linter & Qualidade:** ESLint 9 Flat Config (`strict-type-checked`). **Tolerância Zero a Suppressions**:
   Tolerância zero a novas supressões. Débito existente (medido em 2026-09-01, reconferido em
-  2026-09-02): 92 supressões em 43 arquivos no `eslint-suppressions.json`, mais 9 ocorrências
+  2026-11-01): 73 supressões em 33 arquivos no `eslint-suppressions.json`, mais 6 ocorrências
   inline. Verificação pura: `npm run lint:check` (nunca `npm run lint`, que aplica `--fix` e altera
   o código-fonte). Débito: `npm run lint:debt`.
 

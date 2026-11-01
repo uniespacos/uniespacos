@@ -30,3 +30,42 @@ esta tabela documenta só os **nomes** esperados pelos workflows.
   via `source .env` no passo de deploy. O que os workflows carregam como secret é só o necessário
   para o **build** (chaves públicas do Reverb para o Vite) e para **conectar** no servidor (SSH,
   Cloudflare Access, GHCR).
+
+---
+
+## Workflow de aquecimento de cache (`cache-warmup.yml`)
+
+Arquivo: `.github/workflows/cache-warmup.yml`. Não faz deploy nem usa segredos. Popula, na branch base, o cache de dependências que as PRs reaproveitam.
+
+### Gatilhos
+
+| Evento | Condição |
+|---|---|
+| `push` em `develop` ou `main` | Só quando mudam `package-lock.json`, `composer.lock`, algum arquivo em `.github/actions/**` ou o próprio `cache-warmup.yml` |
+| `workflow_dispatch` | Execução manual |
+
+### Por que existe
+
+O cache do GitHub Actions é isolado por ref: uma PR só enxerga cache salvo na própria PR, na branch base (`develop` ou `main`) ou na branch padrão. Sem este workflow, nada rodava em push para `develop`, e cada PR nova começava com cache frio, com cerca de 50s só no `npm ci`.
+
+### Jobs
+
+Os dois jobs usam as actions compostas de `.github/actions/` com `lookup-only: 'true'`:
+
+| Job | Action | Chave do cache |
+|---|---|---|
+| `⚛️ node_modules` | `setup-node-deps` | `node-modules-{SO}-node{versão}-{hash de package-lock.json}` |
+| `🐘 vendor` | `setup-php-deps` (com `composer-flags: --no-scripts`) | `vendor-{SO}-php{versão}-{hash de composer.lock}` |
+
+| Situação | Comportamento |
+|---|---|
+| Cache hit | O job só confere a chave. O passo de instalação é pulado e o job termina em segundos. |
+| Cache miss | O passo de instalação roda normalmente (`npm ci` ou `composer install`). |
+
+Os workflows de PR e de deploy (`tests.yml`, `lint-static-analysis.yml`, `cicd-staging.yml` e `cicd-production.yml`) usam as mesmas actions sem `lookup-only`. Eles restauram o cache salvo por este workflow.
+
+### Cuidados
+
+- A chave de `node_modules` inclui SO e versão do Node, porque os binários nativos (esbuild, rollup, lightningcss etc.) são por plataforma.
+- Não há `restore-keys` de propósito: um `node_modules` parcial de outro lock é pior que instalar do zero.
+- O `concurrency` cancela a execução anterior do mesmo ref.
