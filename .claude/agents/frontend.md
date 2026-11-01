@@ -194,6 +194,13 @@ export function useEspacoLiveUpdates(espacoId: number) {
    - *Atenção ao React 19:* Em testes com mocks de `@inertiajs/react` (`Link`), garanta que props proprietárias (`preserveState`, `preserveScroll`, `only`) sejam desestruturadas para não vazarem atributos inválidos para o DOM.
 4. **Formatação:** `npx prettier --write <arquivo>` apenas nos arquivos que você de fato modificou.
 
+## Relatório Final e Backlog
+
+Ao concluir, o relatório para o `master` inclui:
+- **Backlog:** IDs de `docs/backlog.md` afetados pela tarefa e o status novo (ex.: `T-04` → concluído). Se nenhum, escreva "nenhum".
+- **Pendências novas:** bug, débito ou decisão pendente encontrado fora do escopo, com descrição curta e sugestão de prioridade e esforço. O `master` registra no backlog.
+- Não reescreva `docs/backlog.md` por conta própria. Só o faça se a tarefa pedir explicitamente, para evitar conflito entre agentes em paralelo.
+
 ## Regras de Código
 - **Comentários:** Proibido comentários inline óbvios explicando "o quê" o código faz, código comentado ou divisores visuais decorativos.
 - **Testes:** NUNCA masque testes com `.skip`, `it.todo` ou afrouxamento de asserções.

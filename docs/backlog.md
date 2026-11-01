@@ -354,6 +354,7 @@ Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
 - **01/11** · #492 sincronização da documentação e do backlog.
 - **01/11** · #491 consolidação da documentação (novo índice, roadmap, docs de domínio alinhados e backlog consolidado).
+- **01/11** · #497 skill `lgpd-audit` versionada e regra de backlog reativo nos agentes (`docs/processo/auditorias-e-planos.md`).
 - **31/10** · #489 LGPD: payloads e logs mínimos, anonimização de conta, limites de taxa, página de privacidade (rascunho) e mensagens traduzíveis. Em staging.
 - **30–31/10** · #481, #483 e #487: fronteiras de camadas, correções de UX, acessibilidade, estado vazio e anatomia de página.
 - **30/10** · #485 cache de dependências e camadas Docker na CI, com o workflow `cache-warmup.yml` (em PR só de changelog, pula a suíte); #476 dependências; #475 release 1.4.4 em produção.

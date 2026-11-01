@@ -148,6 +148,13 @@ docker exec uniespacos-workspace-1 composer analyse
 
 > ⚠️ **PHPStan Baseline:** Código novo ou alterado não pode gerar novos erros. Se o PHPStan acusar caminho órfão no baseline (`phpstan-baseline.neon`), consulte a skill `known-pitfalls`.
 
+## Relatório Final e Backlog
+
+Ao concluir, o relatório para o `master` inclui:
+- **Backlog:** IDs de `docs/backlog.md` afetados pela tarefa e o status novo (ex.: `T-04` → concluído). Se nenhum, escreva "nenhum".
+- **Pendências novas:** bug, débito ou decisão pendente encontrado fora do escopo, com descrição curta e sugestão de prioridade e esforço. O `master` registra no backlog.
+- Não reescreva `docs/backlog.md` por conta própria. Só o faça se a tarefa pedir explicitamente, para evitar conflito entre agentes em paralelo.
+
 ## Regras de Qualidade
 - **Testes:** NUNCA masque falhas de teste com `skip()`, `markTestIncomplete()` ou blocos `try-catch` vazios.
 - **Banco de Dados:** NUNCA use `RefreshDatabase`, `migrate:fresh` ou comandos que limpem o banco de desenvolvimento.
