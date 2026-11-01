@@ -16,11 +16,19 @@ O sistema de real-time do UniEspaços implementa notificações e atualizações
 
 ## Arquitetura de Canais
 
-### Canais Implementados
+### Canais Existentes
+
+| Canal | Tipo | Definido em | Consumido por | Uso |
+|-------|------|-------------|---------------|-----|
+| `reserva-channel` | Público | `app/Events/ReservaEvent.php` | `use-reservation-live-updates.ts` | Eventos de reserva (`reserva-event`) |
+| `App.Models.Espaco.{id}` | Privado | `routes/channels.php` | `use-espaco-live-updates.ts`, `ReservaConflictAlert.tsx` | Eventos de reserva de um espaço |
+| `App.Models.User.{id}` | Privado | `routes/channels.php` | `NotificationDropdown.tsx` | Notificações de banco broadcastadas (`BaseNotification::toBroadcast()`) |
+
+Não há canal de presença. O canal público `reserva-channel` ainda existe; a remoção dele e a troca por canal privado por usuário estão planejadas no item S39 de [backlog](../backlog.md).
 
 #### 1. Canal Público: `reserva-channel`
 
-**Localização:** Configurado em `app/Events/ReservaEvent.php`
+**Localização:** `app/Events/ReservaEvent.php` (`broadcastOn()`)
 
 **Responsabilidade:** Broadcasting de eventos de reserva para **todos os usuários conectados**.
 
@@ -32,13 +40,16 @@ ReservaEvent::dispatch('validated', $reserva->id, $espacoId, $horariosCount);
 ReservaEvent::dispatch('evaluated', $reserva->id, $espacoId, $horariosCount);
 ```
 
-**Evento Broadcast:**
+**Evento Broadcast:** `ReservaEvent` implementa `ShouldBroadcastNow` (envio sem fila) e é publicado com o nome `reserva-event` (`broadcastAs()`), recebido no cliente como `.reserva-event`.
+
 ```php
-// Em ReservaEvent::broadcastOn()
-return [
-    'reserva-channel',  // Público
-    "App.Models.Espaco.{$this->espacoId}"  // Privado (Fase 4)
-];
+public function broadcastOn(): array
+{
+    return [
+        new Channel('reserva-channel'),                             // público
+        new PrivateChannel("App.Models.Espaco.{$this->espacoId}"),  // privado
+    ];
+}
 ```
 
 **Payload Broadcast:**
@@ -60,23 +71,38 @@ return [
 
 #### 2. Canal Privado: `App.Models.Espaco.{espacoId}`
 
-**Localização:** Configurado em `routes/channels.php`
+**Localização:** `routes/channels.php`
 
-**Responsabilidade:** Broadcasting de atualizações específicas de espaço, com **autorização por espaço**.
+**Responsabilidade:** Broadcasting de atualizações específicas de espaço, com **regra de canal por espaço**.
 
-**Autorização:**
+**Autorização (`routes/channels.php`):**
 ```php
 Broadcast::channel('App.Models.Espaco.{id}', function ($user, $id) {
-    return $user->can('view', Espaco::findOrFail($id));
+    return Espaco::query()->whereKey($id)->exists();
 });
 ```
+
+A regra verifica apenas se o espaço existe. Não há checagem de permissão (`espacos.visualizar`) nem de vínculo com o gestor. O payload (`action`, `reservaId`, `espacoId`, `horariosCount`) não contém dado pessoal.
 
 **Propósito:** Quando um gestor está visualizando um espaço específico (página `VisualizarEspacoPage`), recebe atualizações em tempo real apenas de reservas daquele espaço.
 
 **Uso:**
 - Mesmo evento de reserva é broadcast tanto em `reserva-channel` (público) quanto em `App.Models.Espaco.{id}` (privado)
-- Usuário autorizado a visualizar espaço recebe atualização instantânea
-- Usuário não autorizado não recebe
+- Quem passa na regra de `routes/channels.php` recebe a atualização instantânea
+- Quem não passa não recebe
+
+#### 3. Canal Privado: `App.Models.User.{id}`
+
+**Localização:** `routes/channels.php`; o nome do canal vem de `User::receivesBroadcastNotificationsOn()`
+
+**Autorização:**
+```php
+Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
+```
+
+**Responsabilidade:** Entregar a notificação de banco (`BaseNotification::toBroadcast()`) somente ao próprio usuário. Payload em [notificacoes.md](./notificacoes.md).
 
 ---
 
@@ -176,13 +202,13 @@ Como login (`/login` → `/dashboard`) e logout (→ `/login`) trocam de URL, o 
 
 ### useReservationLiveUpdates()
 
-**Localização:** `resources/js/hooks/useReservationLiveUpdates.ts`
+**Localização:** `resources/js/hooks/use-reservation-live-updates.ts`
 
 **Responsabilidade:** Escutar canal público de reservas e disparar CustomEvent para toda a aplicação.
 
 **Uso:**
 ```tsx
-import { useReservationLiveUpdates } from '@/hooks/useReservationLiveUpdates';
+import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 
 export function ReservasPage() {
     useReservationLiveUpdates();  // Registra listener global
@@ -200,11 +226,9 @@ export function ReservasPage() {
 ```tsx
 export function useReservationLiveUpdates(): void {
     useEffect(() => {
-        if (!window.Echo) return;
-
         const ACOES_QUE_ATUALIZAM = new Set(['created', 'validated', 'evaluated']);
 
-        // Adquire canal público (reference-counted)
+        // Adquire canal público (reference-counted); undefined se não houver Echo
         const channel = acquirePublicChannel('reserva-channel');
         if (!channel) return;
 
@@ -240,13 +264,13 @@ export function useReservationLiveUpdates(): void {
 
 ### useEspacoLiveUpdates(espacoId)
 
-**Localização:** `resources/js/hooks/useEspacoLiveUpdates.ts` (Fase 4)
+**Localização:** `resources/js/hooks/use-espaco-live-updates.ts` (Fase 4)
 
 **Responsabilidade:** Escutar atualizações **específicas de um espaço**, com autorização via channel privado.
 
 **Uso:**
 ```tsx
-import { useEspacoLiveUpdates } from '@/hooks/useEspacoLiveUpdates';
+import { useEspacoLiveUpdates } from '@/hooks/use-espaco-live-updates';
 
 export function VisualizarEspacoPage({ espaco }: Props) {
     // Subscreve a atualizações do espaço específico
@@ -266,14 +290,10 @@ export function VisualizarEspacoPage({ espaco }: Props) {
 ```tsx
 export function useEspacoLiveUpdates(espacoId: number): void {
     useEffect(() => {
-        if (typeof window === 'undefined' || !window.Echo) {
-            return;
-        }
+        const channelName = `App.Models.Espaco.${espacoId}`;
 
-        // Adquire canal privado com autorização automática
-        const channel = acquirePrivateChannel(
-            `App.Models.Espaco.${espacoId}`
-        );
+        // Adquire canal privado; undefined se não houver Echo ou a autorização falhar
+        const channel = acquirePrivateChannel(channelName);
         if (!channel) return;
 
         // Escuta mesmo evento que a versão pública
@@ -300,7 +320,7 @@ export function useEspacoLiveUpdates(espacoId: number): void {
 
 **Comportamento de Autorização:**
 - Ao chamar `acquirePrivateChannel()`, Echo automaticamente autentica o canal
-- Servidor verifica `$user->can('view', Espaco::findOrFail($id))`
+- Servidor executa a regra de `routes/channels.php`: `Espaco::query()->whereKey($id)->exists()`
 - Se falhar, `channel` retorna `undefined` e hook descarta silenciosamente
 - Se passar, usuário recebe atualizações instantâneas do espaço
 
@@ -364,7 +384,7 @@ export function releasePublicChannel(name: string): void {
 
 `acquirePrivateChannel` / `releasePrivateChannel` seguem o mesmo contrato, com `echo.private(name)` e `Map` próprio.
 
-### Contrato de canal `undefined`
+### Contrato de retorno de `acquirePublicChannel` e `acquirePrivateChannel`
 
 - `acquirePublicChannel` e `acquirePrivateChannel` retornam `undefined` quando `window.Echo` não existe (ex.: página pública, usuário não autenticado).
 - `releasePublicChannel` e `releasePrivateChannel` só chamam `leave` se Echo existir; sem Echo, apenas removem a entrada do registry.
@@ -458,13 +478,15 @@ REVERB_HOST=reverb              # Hostname do container Reverb
 REVERB_PORT=8080
 ```
 
+`REVERB_SCHEME=http` vale só para a comunicação interna (backend → Reverb, dentro do Docker). O HTTPS fica só no caminho externo (navegador → Caddy → Reverb). Regra completa em [CLAUDE.md](../../CLAUDE.md).
+
 ### Limite de taxa do `/broadcasting/auth` (T-29)
 
-`bootstrap/app.php` registra o endpoint de autorização de canais com `['middleware' => ['web', 'throttle:broadcasting']]`. O limitador `broadcasting` (60 requisições por minuto, por usuário autenticado, com fallback para IP) está em `AppServiceProvider::boot()`. Quando o limite é excedido, a autorização do canal privado responde 429. Detalhes e demais limitadores em [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29).
+`bootstrap/app.php` registra o endpoint de autorização de canais com `['middleware' => ['web', 'throttle:broadcasting']]`. O limitador `broadcasting` (60 requisições por minuto, por usuário autenticado, com fallback para IP) está em `AppServiceProvider::boot()`. Quando o limite é excedido, a autorização do canal privado responde 429. Detalhes e demais limitadores em [autorização](../regras-de-negocio/autorizacao.md#limites-de-taxa-throttling--t-29).
 
 ### Frontend
 
-Variáveis lidas em `resources/js/app.tsx`: `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e `VITE_REVERB_SCHEME` (`https` força TLS).
+Variáveis lidas em `resources/js/app.tsx`: `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e a variável de esquema do front (`https` força TLS).
 
 Se `VITE_REVERB_APP_KEY` estiver vazia, o Echo não é criado (ver [Ciclo de Vida da Conexão Echo](#ciclo-de-vida-da-conexão-echo)).
 
@@ -503,8 +525,8 @@ window.Echo = echoInstance;
 ### Integration: Hooks
 
 **Localização:**
-- `resources/js/hooks/useReservationLiveUpdates.test.ts` (Fase 3)
-- `resources/js/hooks/useEspacoLiveUpdates.test.ts` (Fase 4)
+- `resources/js/hooks/use-reservation-live-updates.test.ts` (Fase 3)
+- `resources/js/hooks/use-espaco-live-updates.test.ts` (Fase 4)
 
 **Cenários:**
 - ✅ Subscrição ao mount
@@ -541,7 +563,7 @@ console.log(window.Echo);  # Deve estar definido somente com usuário autenticad
 
 - Confirmar que o usuário está autenticado e que `VITE_REVERB_APP_KEY` está definida
 - Confirmar que a visita de login/logout trocou de URL (visitas `replace` não disparam `navigate`, ver [Ciclo de Vida da Conexão Echo](#ciclo-de-vida-da-conexão-echo))
-- Consumidores devem tratar `undefined` (ver [Contrato de canal `undefined`](#contrato-de-canal-undefined))
+- Consumidores devem tratar `undefined` (ver [Contrato de retorno de `acquirePublicChannel` e `acquirePrivateChannel`](#contrato-de-retorno-de-acquirepublicchannel-e-acquireprivatechannel))
 
 ### "Element type is invalid; expected string but got undefined"
 
@@ -565,13 +587,13 @@ Força Vite a recompilar o arquivo.
 
 **Verificação:**
 ```bash
-# Backend: confirmar que user pode visualizar espaço
-dd($user->can('view', $espaco));
+# Backend: a regra do canal precisa resultar em true
+Espaco::query()->whereKey($id)->exists();
 ```
 
 **Solução:**
-- Garantir que usuário tem permissão `espacos.visualizar`
-- Ou que pertence a setor cuja unidade gerencia o espaço
+- Confirmar que o espaço existe (regra de `routes/channels.php`)
+- Confirmar que `/broadcasting/auth` não respondeu 429 (limite de taxa, ver T-29)
 
 ---
 
@@ -600,7 +622,7 @@ channel.listen('.reserva-event', (event) => {
 
 ### 2. Autorização é Silenciosa
 
-**Comportamento:** Se `$user->can('view', $espaco)` falha, `channel` é `undefined`
+**Comportamento:** Se a autorização do canal falha (regra de `routes/channels.php` ou 429), `channel` é `undefined`
 
 **Cuidado:** Código continua sem erro, apenas sem listener
 
@@ -648,13 +670,13 @@ docker restart uniespacos-queue-worker-1
 - **Routes:** `routes/channels.php`
 - **Limite de taxa do canal (T-29):** `bootstrap/app.php` (`withBroadcasting`), `app/Providers/AppServiceProvider.php` (limitador `broadcasting`)
 - **Jobs:** `app/Jobs/ProcessarCriacaoReserva.php`, `AvaliarReservaJob.php`, `UpdateReservaJob.php`, `ValidateReservationConflictsJob.php`
-- **Hooks:** `resources/js/hooks/useReservationLiveUpdates.ts`, `useEspacoLiveUpdates.ts`
+- **Hooks:** `resources/js/hooks/use-reservation-live-updates.ts`, `resources/js/hooks/use-espaco-live-updates.ts`
 - **Ciclo de vida do Echo:** `resources/js/app.tsx`
 - **Registry:** `resources/js/lib/echo-channel-registry.ts`
 - **Validação:** `app/Rules/HorariosMesmoEspaco.php`
 - **Página:** `resources/js/presentation/pages/Espacos/VisualizarEspacoPage.tsx`
-- **Notificações:** `docs/notifications-and-channels.md`
-- **Validações:** `docs/validation-rules.md`
+- **Notificações:** [notificacoes.md](./notificacoes.md)
+- **Validações:** [validacao.md](../regras-de-negocio/validacao.md)
 
 ---
 

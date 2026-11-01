@@ -1,6 +1,6 @@
 # Validações Customizadas
 
-Este documento descreve todas as Rules customizadas, FormRequests que as usam, e o padrão de validação frontend vs backend implementado no UniEspaços.
+Este documento descreve as Rules customizadas, os FormRequests que as usam e onde cada verificação de conflito de horário acontece.
 
 ## Sumário
 
@@ -10,8 +10,8 @@ Este documento descreve todas as Rules customizadas, FormRequests que as usam, e
   - [UsuarioDaMesmaInstituicaoDaAgenda](#usuariodamesmainstituicaodaagenda)
   - [UniqueNormalizedFloorName](#uniquenormalizedfloorname)
 - [FormRequests e Suas Rules](#formrequests-e-suas-rules)
-- [Padrão: Validação Frontend vs Backend](#padrão-validação-frontend-vs-backend)
-- [Implicações para Issue #107](#implicações-para-issue-107)
+- [Onde cada verificação de conflito acontece](#onde-cada-verificação-de-conflito-acontece)
+  - [Horários em análise (#107)](#horários-em-análise-107)
 
 ---
 
@@ -32,14 +32,17 @@ Este documento descreve todas as Rules customizadas, FormRequests que as usam, e
 #### Lógica de Validação
 
 ```php
-// Verifica se existe conflito
-$conflict = DB::table('horarios')
-    ->where('data', $horario['data'])
-    ->where('horario_inicio', $horario['horario_inicio'])
-    ->where('agenda_id', $horario['agenda_id'])
-    ->where('situacao', 'deferida')  // Apenas deferida bloqueia
-    ->exists();
+// Simplificado de app/Rules/HorarioDisponivel.php
+DB::table('horarios')
+    ->where('data', $data)
+    ->where('agenda_id', $agendaId)
+    ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)  // Apenas deferida bloqueia
+    ->where('horario_inicio', '<', $horarioFim)                // Sobreposição de intervalo
+    ->where('horario_fim', '>', $horarioInicio)
+    ->exists();                                                 // + reserva_id != $ignorarReservaId, se informado
 ```
+
+Dois horários conflitam quando seus intervalos se sobrepõem. Intervalos adjacentes (um termina no instante em que o outro começa) não conflitam. Na edição, `UpdateReservaRequest` passa o ID da reserva ao construtor (`new HorarioDisponivel($reservaId)`), e os horários da própria reserva são excluídos da checagem. Na criação, `StoreReservaRequest` usa `new HorarioDisponivel` sem argumento.
 
 #### Caso de Uso: Cenário Prático
 
@@ -51,7 +54,7 @@ $conflict = DB::table('horarios')
 
 - Horários com `situacao = 'em_analise'` (em avaliação) **não bloqueiam** a validação
 - **Motivo:** Um horário sob análise ainda pode ser indeferido; bloquear preventivamente torna a UX ruim (usuário não pode enviar uma segunda solicitação alternativa enquanto aguarda resposta)
-- Cabe ao gestor avaliar conflitos com horários pendentes; o frontend oferece visibilidade (via issue #107)
+- Cabe ao gestor avaliar conflitos com horários pendentes. Dar visibilidade das solicitações pendentes a quem solicita é o item #107 do [backlog](../backlog.md), ainda não implementado
 
 #### Mensagem de Erro
 
@@ -59,12 +62,12 @@ $conflict = DB::table('horarios')
 "O horário selecionado já está reservado ou em análise."
 ```
 
-**Nota:** A mensagem menciona "em análise" para fins informativos do usuário, mas tecnicamente o campo `situacao` da validação só checka `'deferida'`.
+**Nota:** A mensagem cita "em análise", mas só horários `deferida` bloqueiam. O ajuste da mensagem está pendente em [RR-F01](../backlog.md).
 
 #### Nível de Validação
 
-- **Backend:** Determinante; regra de negócio crítica
-- **Frontend:** Feedback visual (ConflictDetectionService, ver seção abaixo)
+- **Envio (backend):** determinante; rejeita com 422.
+- **Avaliação:** o gestor vê os conflitos na tela de avaliação, e o job de avaliação indefere o horário em conflito (ver [Onde cada verificação de conflito acontece](#onde-cada-verificação-de-conflito-acontece)).
 
 ---
 
@@ -246,7 +249,7 @@ public static function normalizarNome(string $nome): string
 | `horarios_solicitados` | `required`, `array`, `min:1`, **`HorariosMesmoEspaco`** | Array de time slots solicitados (validação de espaço único) |
 | `horarios_solicitados.*.data` | `required`, `date`, `after_or_equal:today` | Data de cada horário (hoje ou futura) |
 | `horarios_solicitados.*.horario_inicio` | `required`, `date_format:H:i:s` | Hora de início (HH:MM:SS) |
-| `horarios_solicitados.*.horario_fim` | `required`, `date_format:H:i:s` | Hora de término |
+| `horarios_solicitados.*.horario_fim` | `required`, `date_format:H:i:s`, `after:horarios_solicitados.*.horario_inicio` | Hora de término (deve ser posterior ao início) |
 | `horarios_solicitados.*.agenda_id` | `required`, `integer`, `exists:agendas,id`, **`HorarioDisponivel`** | Validação de disponibilidade |
 
 **Ordem de Validação Crítica:**
@@ -273,7 +276,7 @@ public static function normalizarNome(string $nome): string
 | `horarios_solicitados` | `present`, `array`, **`HorariosMesmoEspaco`** | Array de time slots (pode ser vazio, validação de espaço único) |
 | `horarios_solicitados.*.data` | `required`, `date` | Data de cada horário (sem validação de data passada) |
 | `horarios_solicitados.*.horario_inicio` | `required`, `date_format:H:i:s` | Hora de início (HH:MM:SS) |
-| `horarios_solicitados.*.horario_fim` | `required`, `date_format:H:i:s` | Hora de término |
+| `horarios_solicitados.*.horario_fim` | `required`, `date_format:H:i:s`, `after:horarios_solicitados.*.horario_inicio` | Hora de término (deve ser posterior ao início) |
 | `horarios_solicitados.*.agenda_id` | `required`, `integer`, `exists:agendas,id`, **`HorarioDisponivel`** | Validação de disponibilidade |
 | `edit_scope` | `required`, `Rule::in(['single', 'recurring'])` | Single: edita só essa ocorrência; Recurring: edita toda série |
 | `edited_week_date` | `required_if:edit_scope,single`, `nullable`, `date` | Data de referência para edição única |
@@ -331,102 +334,22 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 ---
 
-## Padrão: Validação Frontend vs Backend
+## Onde cada verificação de conflito acontece
 
-O UniEspaços implementa **dupla camada de validação** para horários:
+A sobreposição com horário `deferida` é verificada em quatro pontos, todos no backend. A condição é a mesma nos quatro: mesma agenda, mesma data e `horario_inicio < fim AND horario_fim > inicio`.
 
-### 1. Frontend (ConflictDetectionService)
+| Ponto | Onde | Quando | Efeito |
+|---|---|---|---|
+| Envio | `HorarioDisponivel` em `StoreReservaRequest` e `UpdateReservaRequest` | No POST/PUT | Rejeita com 422. Olha só os horários enviados; a expansão da recorrência acontece depois, no job (pendência RR-H2 no [backlog](../backlog.md)). |
+| Processamento | `ProcessarCriacaoReserva` e `UpdateReservaJob`, sob lock | Na fila | Revalida antes de gravar; o conflito faz o job falhar e o solicitante é notificado. Ver [fluxo de reservas](./fluxo-de-reservas.md). |
+| Avaliação | `AvaliarReservaJob`, via `ConflictDetectionService::findConflictsFor()` | Quando o gestor avalia | O horário em conflito com um `deferida` é marcado `indeferida` automaticamente. |
+| Tela de avaliação e snapshot | `ReservaService` (prop `todosOsConflitos`) e `ValidateReservationConflictsJob` | Ao abrir a avaliação; depois de criar, editar, avaliar ou cancelar | O gestor vê os conflitos no `ConflictAlertBox`, que é só informativo; o snapshot fica em `conflict_cache` ([cache de conflitos](./cache-de-conflitos.md)). |
 
-**Localização:** `app/Services/ConflictDetectionService.php`
+### Horários em análise (#107)
 
-**Propósito:** Feedback imediato ao usuário (UX) sem round-trip ao servidor
+Horários `em_analise` não bloqueiam o envio (`HorarioDisponivel`) e não contam como conflito (`ConflictDetectionService` só considera `deferida`). Por isso é possível enviar uma solicitação para um intervalo que já tem outra pendente; o gestor decide na avaliação. Mostrar essas solicitações pendentes é o item #107 do [backlog](../backlog.md).
 
-**Implementação:**
-```php
-public function findConflictsFor(int $reservaId): Collection
-{
-    $rows = DB::select('
-        SELECT ...
-        FROM horarios AS h_checar
-        JOIN horarios AS h_conflito
-            ON h_checar.reserva_id = ?
-            AND h_conflito.situacao = \'deferida\'
-            AND h_conflito.agenda_id = h_checar.agenda_id
-            AND h_conflito.data = h_checar.data
-            AND h_conflito.horario_inicio < h_checar.horario_fim
-            AND h_conflito.horario_fim > h_checar.horario_inicio
-        ...
-    ');
-    return collect($rows)->keyBy('horario_checado_id');
-}
-```
-
-**Comportamento:**
-- Usado ao carregar formulário de edição ou após seleção de novos horários
-- Retorna lista de conflitos (reserva_id, título, usuário conflitante)
-- Permite ao frontend exibir alerta: "Já existe reserva deferida: [Título] de [Usuário]"
-
-**Verificação:** Apenas `situacao = 'deferida'` (mesmo que HorarioDisponivel)
-
-### 2. Backend (HorarioDisponivel Rule)
-
-**Localização:** `app/Rules/HorarioDisponivel.php`
-
-**Propósito:** Validação autoritária (backend é sempre fonte verdade)
-
-**Aplicação:**
-- Executada no momento de POST/PUT (ao submeter formulário)
-- Rejeita se `horarios_solicitados.*.agenda_id` tiver conflito com `situacao = 'deferida'`
-- Garante que submit malicioso (contornando frontend) é bloqueado
-
-### Por Que Ambas?
-
-| Aspecto | Frontend | Backend |
-|--------|----------|---------|
-| **Timing** | Imediato (enquanto preenche) | Após submit |
-| **Propósito** | UX (feedback rápido) | Segurança (regra de negócio) |
-| **Confiabilidade** | Pode ser contornada (JS desabilitado, console) | Determinante; aplicada em toda requisição |
-| **Fluxo** | Alerta visual, impede submit se grave | Rejeita com erro HTTP 422 |
-
-**Padrão Implementado:**
-1. Frontend carrega conflicts e avisa: "Há reserva deferida neste horário"
-2. Usuário pode prosseguir mesmo assim (pode ser ignorado? ou realmente bloqueado?)
-3. Backend valida: se existe conflito deferido, reject
-4. Usuário recebe erro; precisa escolher outro horário
-
----
-
-## Implicações para Issue #107
-
-**Issue #107:** Alerta de pendências (horários sob análise que podem afetar disponibilidade)
-
-### Contexto
-
-Quando um usuário está tentando criar/editar uma reserva, pode haver **horários em outras reservas que estão em_analise** e podem ser deferidos depois, bloqueando o horário escolhido.
-
-### Comportamento Atual (Confirmado pelo Código)
-
-- `HorarioDisponivel` **não bloqueia** horários com `situacao = 'em_analise'`
-- `ConflictDetectionService` **também só retorna** `situacao = 'deferida'`
-- Resultado: O usuário pode enviar uma reserva para 14h–15h mesmo que haja outra solicitação pendente para o mesmo intervalo
-
-### Implementação para Issue #107
-
-Quando implementar "alerta de pendências", seguir este padrão:
-
-1. **Frontend:** Criar novo serviço (ex: `PendingSlotDetectionService`) que retorna horários com `situacao = 'em_analise'` na mesma agenda/data/intervalo
-2. **Aviso visual:** Mostrar alert **informativo** (não bloqueante): "Há horários sob análise neste intervalo. O resultado pode afetar a disponibilidade."
-3. **Permitir envio:** Usuário pode prosseguir; é responsabilidade do gestor avaliar prioridade
-4. **Decisão de negócio:** Documente se é "apenas aviso" ou "bloqueante em certos casos"
-
-### Exemplo de Regra de Negócio (Sugestão)
-
-```
-Se há ≥1 horário em_analise no intervalo:
-  - Mostrar badge/badge amarelo: "Pendências detectadas"
-  - Permitir submit (é apenas aviso)
-  - Caso seja aprovado depois, usuário será notificado de conflito
-```
+Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` para `em_analise` faria o `AvaliarReservaJob` indeferir automaticamente horários que só concorrem com pedidos ainda não avaliados.
 
 ---
 
@@ -438,8 +361,9 @@ Se há ≥1 horário em_analise no intervalo:
 |-----------|-------|-----------|
 | `HorariosMesmoEspaco` | Backend (Rule) | ✅ Sim |
 | `HorarioDisponivel` (deferida) | Backend (Rule) | ✅ Sim |
-| Conflitos deferidos (frontend) | Frontend (Service) | ⚠️ Info apenas |
-| Pendências (em_analise) | Frontend (Future) | ⚠️ Info apenas |
+| Conflitos na tela de avaliação | Backend (`ConflictDetectionService`), exibido ao gestor | ⚠️ Informativo |
+| Conflito na avaliação | Backend (`AvaliarReservaJob`) | ✅ Sim (indefere o horário) |
+| Solicitações em análise | Não implementado (#107) | — |
 
 ### Atribuição de Gestores
 

@@ -9,6 +9,8 @@ Este documento descreve o sistema de autorização de reservas: papéis, permiss
 - [ReservaPolicy — Métodos e Fluxos](#reservapolicy--métodos-e-fluxos)
 - [IDOR Prevention](#idor-prevention)
 - [Invariantes de Segurança](#invariantes-de-segurança)
+- [Visibilidade de dados pessoais](#visibilidade-de-dados-pessoais)
+- [Escopo dos relatórios](#escopo-dos-relatórios)
 - [Limites de Taxa (Throttling) — T-29](#limites-de-taxa-throttling--t-29)
 
 ---
@@ -52,23 +54,22 @@ O sistema de autorização reconhece **quatro atores** no contexto de reservas:
 
 ### 3. Usuário Institucional
 
-**Quem é:** Usuário com permissão genérica `'reservas.visualizar'`. Corresponde ao papel Spatie `'institucional'` (recebe a maioria das permissões reservas.*, exceto `'reservas.deletar'`, durante a seed).
+**Quem é:** Usuário com o papel Spatie `'institucional'` (administração institucional). O seed de produção (`database/seeders/Production/RoleSeeder.php`) concede a esse papel todas as permissões `web`, exceto `'reservas.deletar'` e `'reservas.atualizar'`.
 
 **Permissões implícitas:**
-- Visualizar qualquer reserva no sistema
-- Atualizar qualquer reserva (permissão `'reservas.atualizar'`)
-- Cancelar apenas a própria reserva (proprietário, não permissão de admin)
-- Avaliar reservas como gestor (se tiver `'reservas.avaliar'`)
+- Visualizar qualquer reserva (`'reservas.visualizar'`)
+- Listar reservas (`'reservas.listar'`)
+- Avaliar horários das agendas que gerencia, se também for gestor (`'reservas.avaliar'` + intersecção de agendas, ver `viewForGestor()`)
+- Editar e cancelar apenas a própria reserva, com as mesmas regras de qualquer usuário (`update()` e `delete()`)
 
 **Permissões requeridas:**
-- `'reservas.visualizar'` — permissão para visualizar qualquer reserva (monitoramento macro)
-- `'reservas.listar'` — para acessar listagens
-- `'reservas.atualizar'` (opcional) — se precisa editar reservas de terceiros
-- `'reservas.avaliar'` (opcional) — se é também gestor de agendas
+- `'reservas.visualizar'` — visualização de qualquer reserva (monitoramento)
+- `'reservas.listar'` — acesso às listagens
+- `'reservas.avaliar'` (opcional) — se também é gestor de agendas
 
-**Escopo:** Acesso irrestrito ao domínio de reservas, exceto cancelamento de reservas alheias.
+**Escopo:** Visualização irrestrita ao domínio de reservas. Edição e cancelamento de reservas alheias não são concedidos a este papel.
 
-**Exemplo:** Coordenador administrativo pode visualizar qualquer reserva, aprovar todas, editar qualquer uma — mas não pode cancelar reservas de terceiros (cancelamento é exclusivo do proprietário ou decisão do staff operacional específico).
+**Exemplo:** Coordenador administrativo pode visualizar qualquer reserva, mas não edita nem cancela reservas de terceiros. Se também for gestor da agenda "Sala A", pode avaliar os horários da Sala A.
 
 ---
 
@@ -90,7 +91,7 @@ As permissões Spatie relacionadas a reservas são:
 |-----------|-----------|----------|
 | `'reservas.listar'` | Listar reservas (acesso ao index) | `ReservaPolicy::viewAny()` |
 | `'reservas.visualizar'` | Visualizar qualquer reserva (bypass de propriedade) | `ReservaPolicy::view()` |
-| `'reservas.atualizar'` | Editar qualquer reserva (bypass de propriedade e situacao) | `ReservaPolicy::update()` |
+| `'reservas.atualizar'` | ~~Editar qualquer reserva (bypass de propriedade e situação)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional`). A edição segue a regra do proprietário. | `ReservaPolicy::update()` |
 | `'reservas.deletar'` | ~~Deletar qualquer reserva (bypass de propriedade)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_155138_revoke_reservas_deletar_from_institucional`) — cancelamento é exclusivamente por proprietário. | `ReservaPolicy::delete()` |
 | `'reservas.avaliar'` | Avaliar (aprovar/indeferir) horários de reservas em suas agendas | `ReservaPolicy::viewForGestor()`, `GestorReservaController::show()`, `GestorReservaController::update()` |
 
@@ -115,14 +116,14 @@ return $user->hasPermissionTo('reservas.listar')
 
 **Quem pode executar:**
 - Qualquer usuário autenticado com permissão `'reservas.listar'`
-- Papel `'institucional'` (tem todas as permissões)
-- Papel `'gestor'` (tem `'reservas.listar'` ou listagem separada via `ReservaService::getGestorListing()`)
+- Papel `'institucional'` (recebe `'reservas.listar'` pelo seed)
+
+O seed de produção não concede `'reservas.listar'` ao papel `'gestor'`. A listagem do gestor (`GET /gestor/reservas`) não chama esta policy; é protegida pelo middleware `secao.gestao-reservas`.
 
 **Nota:** Não filtra resultados — a filtragem ocorre em `ReservaService`. Apenas autoriza o acesso ao endpoint.
 
 **Rota associada:**
 - `GET /reservas` (ReservaController::index)
-- `GET /gestor/reservas` (GestorReservaController::index)
 
 ---
 
@@ -456,15 +457,15 @@ return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 
 Cada papel tem escopo bem definido e não se sobrepõe:
 
-| Ação | Solicitante | Gestor | Institucional | Admin |
-|------|------------|--------|---------------|-------|
-| Ver própria | ✅ | — | — | ✅ |
-| Ver alheia (via `reservas.visualizar`) | ❌ | ❌ | ✅ | ✅ |
-| Editar própria (se `em_analise`) | ✅ | — | — | ✅ |
-| Editar alheia (via `reservas.atualizar`) | ❌ | ❌ | ❌ | ❌ |
-| Cancelar própria | ✅ | — | — | ✅ |
-| Cancelar alheia (via `reservas.deletar`) | ❌ | ❌ | ❌ | ❌ |
-| Avaliar (via `reservas.avaliar` + agendas) | ❌ | ✅ | — | ✅ (se admin + agendas) |
+| Ação | Solicitante | Gestor | Institucional |
+|------|------------|--------|---------------|
+| Ver própria | ✅ | — | ✅ |
+| Ver alheia (via `reservas.visualizar`) | ❌ | ❌ | ✅ |
+| Editar própria (se `em_analise` e sem horário avaliado) | ✅ | — | ✅ |
+| Editar alheia (via `reservas.atualizar`) | ❌ | ❌ | ❌ |
+| Cancelar própria | ✅ | — | ✅ |
+| Cancelar alheia (via `reservas.deletar`) | ❌ | ❌ | ❌ |
+| Avaliar (via `reservas.avaliar` + agendas) | ❌ | ✅ | ✅ (só nas agendas que gerencia) |
 
 ---
 
@@ -474,7 +475,7 @@ Conceder permissão é explícito e centralizado:
 
 - **`'reservas.listar'`** — Acesso à listagem (não filtra o quê vê, mas não há filtragem em policy)
 - **`'reservas.visualizar'`** — Acesso irrestrito a qualquer reserva (implicação: staff confiável)
-- **`'reservas.atualizar'`** — Edição irrestrita (implicação: staff confiável)
+- **`'reservas.atualizar'`** — Bypass de edição. Não concedida a nenhum role desde 2026-08-23.
 - **`'reservas.deletar'`** — **Não concedida a nenhum role desde 2026-08-23.** Cancelamento é direito exclusivo do proprietário (decisão de negócio).
 - **`'reservas.avaliar'`** — Avaliação de reservas em agendas do gestor (implicação: responsável por agenda)
 
@@ -497,6 +498,58 @@ A intersecção garante que:
 - Um gestor não consegue "escapar" para avaliar agendas alheias
 - Não há forma de ser atribuído a uma agenda "secreta" sem explicitamente fazer `user->agendas()->attach()`
 - A listagem em `GestorReservaController::index()` e `viewForGestor()` se alinham
+
+---
+
+## Visibilidade de dados pessoais
+
+Esta seção descreve, por página, quais campos de usuário entram no payload Inertia. Os campos listados são os garantidos pelos testes indicados; campos fora da lista não devem ser assumidos.
+
+**Regra de implementação:** os payloads cobertos por teste têm chaves exatas, o que indica consultas com colunas limitadas (`select`). `User::$hidden` oculta a senha e as colunas de 2FA, mas não oculta `telefone` nem `profile_pic`; por isso a restrição de cada página depende da consulta, não do modelo.
+
+| Página / payload | Campos de usuário no payload | Testes |
+|------------------|------------------------------|--------|
+| `espacos.show` (agenda do espaço), usuário autenticado sem papel | `agendas[].user`: `id`, `name`, `email`, `setor_id`, `setor` (`id`, `nome`, `sigla`). `horarios[].reserva.user`: `id`, `name`, `setor_id`, `setor`, sem e-mail. `horarios[].avaliador`: `id`, `name` | `EspacoShowPrivacidadeTest`, `HorarioAvaliadorPrivacidadeTest` |
+| `reservas.edit` (edição da própria reserva) | Mesmos campos da agenda em `espacos.show`. `reserva.user`: `id`, `name`, `setor_id`, `setor`. `horarios[].avaliador`: `id`, `name` | `ReservaEdicaoPrivacidadeTest`, `HorarioAvaliadorPrivacidadeTest` |
+| `reservas.index` com modal aberto (`reservaToShow`) | `horarios[].agenda.user`: `id`, `name`, `email`, `setor_id`, sem `telefone` nem `profile_pic`. `horarios[].avaliador`: `id`, `name` | `PayloadsDePaginaPrivacidadeTest`, `HorarioAvaliadorPrivacidadeTest` |
+| `gestor.reservas.index` com modal aberto (`reservaToShow`) | `horarios[].avaliador`: `id`, `name`. Os demais campos do modal não são cobertos por teste desta seção | `HorarioAvaliadorPrivacidadeTest` |
+| `dashboard` (prop `auth.user`) | Apenas `unread_notifications_count`. A lista de notificações não vai no payload | `PayloadsDePaginaPrivacidadeTest` |
+| `institucional.espacos.index` (combobox de gestores, prop `users`) | `id`, `name`, `email`, `profile_pic`, `setor_id`, `agendas` (`id`, `espaco_id`, `turno`, `user_id`), `setor` (`id`, `nome`, `sigla`), sem `telefone` nem `email_verified_at` | `PayloadsDePaginaPrivacidadeTest` |
+| `institucional.espacos.index` (listagem de espaços) | `espacos.data[].agendas[].user`: `id`, `name`, `profile_pic` | `PayloadsDePaginaPrivacidadeTest` |
+| `dashboard` do institucional | `gestores`: `id`, `name`, `email`. `users`: `id`, `name`. `agendas[].user` dos espaços: `id`, `name` | `PayloadsDePaginaPrivacidadeTest` |
+
+**Avaliador do horário.** `horarios[].avaliador` expõe somente `id` e `name`. O valor é `null` enquanto o horário está `em_analise`. Os testes garantem que e-mail, telefone e foto do avaliador não voltam nas páginas acima.
+
+### Telefone
+
+O telefone não aparece em nenhum payload de agenda ou reserva da tabela acima. Fora dela, ele é serializado em duas telas institucionais, ambas protegidas por middleware de gestão:
+
+- listagem de usuários (`institucional.usuarios.index`, middleware `secao.gestao-usuarios`, método `UserRepositoryEloquent::getPaginatedForAdminByInstituicao()`);
+- endpoint JSON de usuários de um setor (`institucional.setors.usuarios`, middleware `secao.gestao-setores`, autorização `SetorPolicy::view`, método `InstitucionalSetorController::usuarios()`).
+
+Decisão do responsável (P-07): o telefone é contato de emergência e deve ser visível apenas ao gestor da reserva. Hoje ele aparece nas duas telas institucionais acima e não aparece em nenhum payload de gestor coberto pelos testes. O ajuste aguarda o levantamento de quem mais precisa ver o telefone (F-06 no [backlog](../backlog.md)).
+
+---
+
+## Escopo dos relatórios
+
+O escopo de dados de cada relatório é definido por `RelatorioPolicy::aplicarEscopoParaUsuario()` (`app/Policies/RelatorioPolicy.php`). O método está registrado como Gate `aplicarEscopoParaUsuario` no `AppServiceProvider`. `RelatorioService` consulta esse Gate e, se não houver resultado, chama a policy diretamente. Quando o escopo retornado é vazio, o serviço recusa a geração com `AuthorizationException`.
+
+| Permissão de relatório | Escopo retornado | Origem no seed |
+|------------------------|------------------|----------------|
+| `relatorios.escopo-instituicao` | `tipo: 'institucional'`, com `instituicaoId` da instituição do setor do usuário | Migration `2026_08_28_160000_add_relatorio_scope_permissions.php` (papel `institucional`) |
+| `relatorios.escopo-agendas` | `tipo: 'gestor'`, com `agendaIds` das agendas gerenciadas pelo usuário | Mesma migration (papel `gestor`) e `Production/RoleSeeder` |
+
+A policy testa primeiro o escopo institucional. Um usuário que tenha as duas permissões recebe o escopo institucional.
+
+**Fallback legado.** A policy ainda aceita permissões anteriores à criação das permissões de escopo, que não são permissões de relatório:
+
+- escopo institucional: `secao.dashboard-institucional`;
+- escopo de gestor: `secao.dashboard-gestor` e `reservas.avaliar`.
+
+A remoção desse fallback está planejada e registrada em [backlog](../backlog.md).
+
+Cache de resultados e tipos de relatório: ver [relatórios](./relatorios.md).
 
 ---
 
@@ -542,7 +595,7 @@ A classe implementa os dois contratos do Fortify (`FailedPasswordResetLinkReques
 - Requisição JSON: `{"message": "If an account exists with this email, we will send a link to reset your password."}`
 - Demais requisições: `back()->with('status', <mesma mensagem>)`
 
-A mensagem é a chave `__('If an account exists with this email, we will send a link to reset your password.')`, presente nos três arquivos de idioma (ver `error-handling-and-logging.md`, seção de mensagens traduzíveis).
+A mensagem é a chave `__('If an account exists with this email, we will send a link to reset your password.')`, presente nos três arquivos de idioma (ver [erros e logs](../arquitetura/erros-e-logs.md), seção de mensagens traduzíveis).
 
 ### Limitações conhecidas
 
@@ -582,7 +635,7 @@ Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAno
 
 ## Histórico de Mudanças
 
-**2026-08-23:** Revogada a permissão `'reservas.atualizar'` do role `'institucional'` (admin). Antes, admin podia editar qualquer reserva indevidamente, contrariando a separação de papéis da arquitetura: admin é gestão institucional geral (usuários, espaços, instituições etc.), a gestão de reservas (editar/avaliar) é exclusiva do gestor de agenda. Agora admin edita apenas sua própria reserva, se estiver `em_analise` e nenhum horário foi avaliado — mesma regra de um usuário comum. Admin mantém `'reservas.visualizar'` (monitoramento/métricas) e `'reservas.deletar'` (cancelamento de reserva alheia, fora do escopo desta revisão). Ver migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional.php`.
+**2026-08-23:** Revogada a permissão `'reservas.atualizar'` do role `'institucional'` (admin). Antes, admin podia editar qualquer reserva indevidamente, contrariando a separação de papéis da arquitetura: admin é gestão institucional geral (usuários, espaços, instituições etc.), a gestão de reservas (editar/avaliar) é exclusiva do gestor de agenda. Agora admin edita apenas sua própria reserva, se estiver `em_analise` e nenhum horário foi avaliado — mesma regra de um usuário comum. Admin mantém `'reservas.visualizar'` (monitoramento). A permissão `'reservas.deletar'` foi revogada no mesmo dia (ver abaixo). Ver migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional.php`.
 
 ---
 

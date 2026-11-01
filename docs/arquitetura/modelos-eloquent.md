@@ -25,13 +25,13 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 | `situacao` | string | Estado agregado: `em_analise`, `deferida`, `indeferida`, `parcialmente_deferida`, `inativa` |
 | `data_inicial` | date | Data de início (usada como fallback quando sem horários) |
 | `data_final` | date | Data de término |
-| `recorrencia` | string \| null | Padrão de recorrência (ver [`docs/recorrencia-semantica.md`](./recorrencia-semantica.md) para detalhes completos) |
+| `recorrencia` | string \| null | Padrão de recorrência (ver [recorrência](../regras-de-negocio/recorrencia.md)) |
 | `observacao` | string \| null | Notas do gestor após avaliação |
 | `user_id` | int | FK para solicitante |
 | `validation_status` | string | `pending`, `completed`, etc. (estado do job de validação de conflitos) |
 | `conflict_cache` | array (JSON) | Cache dos conflitos detectados |
 
-**Nota sobre `conflict_cache`:** Este é um snapshot histórico gravado por `ValidateReservationConflictsJob` no momento do processamento, exposto na interface do gestor como informação secundária de auditoria — não é fonte de verdade. Veja [`docs/conflict-cache-contract.md`](./conflict-cache-contract.md) para contrato completo, incluso divergência esperada com conflitos recalculados ao vivo.
+**Nota sobre `conflict_cache`:** Este é um snapshot histórico gravado por `ValidateReservationConflictsJob` no momento do processamento, exposto na interface do gestor como informação secundária de auditoria — não é fonte de verdade. Veja [cache de conflitos](../regras-de-negocio/cache-de-conflitos.md) para contrato completo, incluso divergência esperada com conflitos recalculados ao vivo.
 
 ### Atributos Dinâmicos (Computados em Runtime)
 
@@ -44,20 +44,7 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 
 #### `scopeArquivo($query, $modo)`
 
-Aplica o eixo de arquivamento (issue #108) a uma listagem. Usa `ModoArquivoEnum`:
-
-```php
-// ModoArquivoEnum::ATIVAS (padrão) — exclui inativas
-Reserva::arquivo(ModoArquivoEnum::ATIVAS)->get();
-
-// ModoArquivoEnum::ARQUIVADAS — só inativas
-Reserva::arquivo(ModoArquivoEnum::ARQUIVADAS)->get();
-
-// ModoArquivoEnum::TODAS — sem filtro
-Reserva::arquivo(ModoArquivoEnum::TODAS)->get();
-```
-
-**Motivo do design:** `inativa` é estado de arquivamento, não resultado de avaliação. Separar este eixo da situação evita contradições de filtro (ex: `situacao != 'inativa' AND situacao = 'inativa'`).
+Aplica o eixo de arquivamento (`ModoArquivoEnum`: `ativas`, padrão; `arquivadas`; `todas`). Valor inválido cai em `ativas`. Regra, motivo do design e exemplos em [arquivamento](../regras-de-negocio/arquivamento.md#os-modos-de-filtro-modoarquivoenum).
 
 #### `scopeOrdenar($query, $criterio)`
 
@@ -96,9 +83,13 @@ Cada item é um objeto com `is_summary` (bool) e `texto` (string).
 
 **Carregamento sugerido:** Use `with('horarios', 'user')` ao serializar para JSON para evitar N+1.
 
+**Colunas do usuário nos repositórios (LGPD, [T-26](../backlog.md)):** `ReservaRepositoryEloquent` carrega o usuário com colunas explícitas nas listagens: `getPaginatedForUser()` e `getPaginatedForGestor()` usam `user:id,name`. `findWithWeekSlots()` usa `agenda.user:id,name,email,setor_id` para o gestor da agenda. `findWithWeekSlots()` e `findForGestorModal()` carregam `user` sem seleção de colunas, então trazem a linha completa do solicitante.
+
+**Prop compartilhada do usuário autenticado:** `HandleInertiaRequests::formatAuthUser()` envia `auth.user` com `setor`, papéis, permissões e `unread_notifications_count` (contagem, não a lista). A prop `notifications` leva as 15 notificações mais recentes.
+
 ### Validações Customizadas
 
-Veja `HorarioDisponivel` (app/Rules) — valida se a faixa horária já está reservada (`horarios.situacao = 'deferida'`).
+Veja `HorarioDisponivel` (app/Rules) — rejeita faixa que se sobrepõe a horário `deferida` na mesma agenda e data (`horario_inicio < fim AND horario_fim > inicio`). Ver [validação](../regras-de-negocio/validacao.md#horariodisponivel).
 
 ### Regras de Negócio — Cascata de Situação
 
@@ -125,7 +116,7 @@ Caso contrário (mix de deferida/indeferida):
 
 2. **Inativa é arquivamento, não avaliação:** `inativa` não é resultado de uma decisão do gestor — é um marcador de "descarte/cancelamento". Nunca aparece como opção de aprovação/rejeição nos formulários de avaliação.
 
-3. **Auto-aprovação via unicidade de gestor:** Quando uma reserva é **criada** e existe apenas **um** gestor para **todos** os espaços solicitados, a reserva é automaticamente deferida via `AutoAprovacaoService::calcularSituacaoReserva()`. Essa decisão é tomada **apenas no momento de criação**; edições subsequentes da reserva (escopo `recurring`) não recalculam a situação agregada. Ver [`docs/auto-approval-rule.md`](./auto-approval-rule.md) para detalhes completos.
+3. **Auto-aprovação via unicidade de gestor:** Quando uma reserva é **criada** e existe apenas **um** gestor para **todos** os espaços solicitados, a reserva é automaticamente deferida via `AutoAprovacaoService::calcularSituacaoReserva()`. Essa decisão é tomada **apenas no momento de criação**; edições subsequentes da reserva (escopo `recurring`) não recalculam a situação agregada. Ver [auto-aprovação](../regras-de-negocio/auto-aprovacao.md) para detalhes completos.
 
 ---
 
@@ -334,7 +325,7 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
 4. **Notificações broadcast:** Via `receivesBroadcastNotificationsOn()` e `Notifiable`, o sistema pode enviar notificações em tempo real (ex: quando uma reserva é avaliada).
 
-5. **Exclusão de conta é anonimização, não remoção da linha (T-25, decisão P-05):** a linha de `users` nunca é apagada. `ExclusaoDeContaService::anonimizar()` é o único caminho, usado pela autoexclusão (`ProfileController::destroy`) e pela exclusão pelo institucional (`UserService::anonimizar()`). A `User` não usa SoftDeletes; ver [`docs/archive-soft-delete-flow.md`](./archive-soft-delete-flow.md#exclusão-de-conta-não-usa-soft-delete).
+5. **Exclusão de conta é anonimização, não remoção da linha (T-25, decisão P-05):** a linha de `users` nunca é apagada. `ExclusaoDeContaService::anonimizar()` é o único caminho, usado pela autoexclusão (`ProfileController::destroy`) e pela exclusão pelo institucional (`UserService::anonimizar()`). A `User` não usa SoftDeletes; ver [arquivamento](../regras-de-negocio/arquivamento.md#exclusão-de-conta-não-usa-soft-delete).
 
    Na mesma `DB::transaction`:
    - remove as notificações do titular, os favoritos (`espaco_user`) e os papéis e permissões Spatie;
@@ -370,7 +361,9 @@ $channel = $user->receivesBroadcastNotificationsOn();
 
    **Contas anonimizadas na lista administrativa:** `UserRepositoryEloquent::getPaginatedForAdminByInstituicao()` esconde contas anonimizadas por padrão, pelo mesmo padrão do e-mail (`anonimizado-%@invalid`, com os curingas escapados). Com o parâmetro `anonimizados=1` (validado em `ListarUsuariosRequest`), a listagem mostra somente essas contas. Busca por nome e e-mail, ordenação e paginação seguem o filtro, que volta em `filters.anonimizados`. A conta aparece com o nome traduzido e marcada como `anonimizado`, e não recebe editar, redefinir senha, reenviar verificação, alterar papel ou excluir (ver `UserPolicy`).
 
-   **Fora do alcance desta regra:** `failed_jobs.payload`, backups e dumps (retenção, T-19/T-23); notificações anteriores à T-24, que podem conter o nome de terceiros; fotos já gravadas com metadados (A-19, T-31).
+   **Fora do alcance desta regra:** `failed_jobs.payload` e cópias de segurança, que seguem a retenção (T-19 e T-23 no [backlog](../backlog.md)), e as notificações anteriores à T-24, que podem conter o nome de terceiros.
+
+6. **Foto de perfil reprocessada:** `ProcessadorDeFotoDePerfil::armazenar()` (`app/Services/ProcessadorDeFotoDePerfil.php`) decodifica a imagem enviada, aplica a orientação EXIF aos pixels e reduz para no máximo 800 px no maior lado (imagens menores não são ampliadas). Grava o resultado como JPEG ou WebP (PNG nos demais casos), com nome aleatório em `avatars/`. O arquivo é recodificado a partir dos pixels, então não carrega os metadados originais (EXIF, GPS). Imagens acima de 25 milhões de pixels, ou que não cabem na memória, são recusadas com erro no campo `photo`. Na troca, a foto anterior é apagada; na anonimização, a foto local é apagada (item 5).
 
 ---
 
@@ -524,7 +517,7 @@ enum AgendaEnum: string {
 
 1. **Queries N+1:** Sempre use `with()` ao carregar relacionamentos para serialização. Exemplo: `Reserva::with('horarios', 'user')->get()`.
 
-2. **Validações customizadas:** A regra `HorarioDisponivel` valida se uma faixa horária já está `deferida`. Conflitos adicionais são detectados pela `ConflictDetectionService` durante a avaliação.
+2. **Validações customizadas:** A regra `HorarioDisponivel` rejeita faixas que se sobrepõem a horário `deferida` ([validação](../regras-de-negocio/validacao.md#horariodisponivel)). Conflitos adicionais são detectados pela `ConflictDetectionService` durante a avaliação.
 
 3. **Permissões Spatie:** Referem-se a `reservas.listar`, `reservas.visualizar`, `reservas.atualizar`, `reservas.avaliar`, etc. Consulte `RoleService` e migrations de permissões para a lista completa.
 
