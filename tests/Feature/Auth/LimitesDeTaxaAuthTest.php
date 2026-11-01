@@ -41,6 +41,39 @@ class LimitesDeTaxaAuthTest extends TestCase
         $this->post('/forgot-password', ['email' => 'outro@test.local'])->assertStatus(429);
     }
 
+    /**
+     * Em produção, o 429 numa visita Inertia vira Errors/ErrorPage. Sem isso, o
+     * formulário recebe o HTML do Symfony e o usuário vê o modal de erro cru.
+     * O handler pula local e testing de propósito, por isso o ambiente é trocado aqui.
+     */
+    public function test_esqueci_a_senha_em_producao_mostra_a_pagina_de_erro_429_numa_visita_inertia(): void
+    {
+        $ambienteOriginal = $this->app['env'];
+        $this->app['env'] = 'production';
+
+        try {
+            $cabecalhosInertia = [
+                'X-Inertia' => 'true',
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'text/html, application/xhtml+xml',
+            ];
+
+            for ($i = 0; $i < 3; $i++) {
+                $this->withHeaders($cabecalhosInertia)
+                    ->post('/forgot-password', ['email' => 'alvo@test.local'])
+                    ->assertRedirect();
+            }
+
+            $this->withHeaders($cabecalhosInertia)
+                ->post('/forgot-password', ['email' => 'alvo@test.local'])
+                ->assertStatus(429)
+                ->assertJsonPath('component', 'Errors/ErrorPage')
+                ->assertJsonPath('props.status', 429);
+        } finally {
+            $this->app['env'] = $ambienteOriginal;
+        }
+    }
+
     public function test_redefinir_senha_responde_429_depois_do_limite_por_email(): void
     {
         $dados = [

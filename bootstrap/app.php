@@ -84,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return $response;
             }
 
-            if (! in_array($response->getStatusCode(), [403, 404, 419, 500, 503], true)) {
+            if (! in_array($response->getStatusCode(), [403, 404, 419, 429, 500, 503], true)) {
                 return $response;
             }
 
