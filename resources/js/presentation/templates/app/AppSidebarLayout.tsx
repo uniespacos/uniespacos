@@ -1,4 +1,5 @@
 import { InstallPwaBanner } from '@/presentation/molecules/InstallPwaBanner';
+import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import { AppSidebar } from '@/presentation/organisms/AppSidebar';
 import { AppSidebarHeader } from '@/presentation/organisms/AppSidebarHeader';
 import { MobileBottomBar } from '@/presentation/organisms/MobileBottomBar';
@@ -14,6 +15,9 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWi
             <AppContent variant="sidebar">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
+                <footer className="text-muted-foreground px-4 pt-2 text-center text-xs">
+                    <PrivacyLink />
+                </footer>
             </AppContent>
             <MobileBottomBar />
             <InstallPwaBanner />

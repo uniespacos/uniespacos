@@ -1,8 +1,16 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FormRegistroUsuario } from './FormRegistroUsuario';
 import type { Instituicao } from '@/types';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { FormRegistroUsuario } from './FormRegistroUsuario';
 
 describe('FormRegistroUsuario', () => {
+    beforeEach(() => {
+        (globalThis as unknown as { route: (name: string) => string }).route = jest.fn((name: string) => name);
+    });
+
+    afterEach(() => {
+        delete (globalThis as unknown as { route?: unknown }).route;
+    });
+
     const mockInstituicaos: Instituicao[] = [
         {
             id: 1,
@@ -90,12 +98,7 @@ describe('FormRegistroUsuario', () => {
         expect(screen.getByRole('heading', { name: /credenciais de acesso/i })).toBeInTheDocument();
 
         // Backend returns error for duplicate email
-        rerender(
-            <FormRegistroUsuario
-                {...defaultProps}
-                errors={{ email: 'O e-mail informado já está em uso.' }}
-            />
-        );
+        rerender(<FormRegistroUsuario {...defaultProps} errors={{ email: 'O e-mail informado já está em uso.' }} />);
 
         // Should automatically jump back to step 1
         expect(screen.getByText('O e-mail informado já está em uso.')).toBeInTheDocument();
