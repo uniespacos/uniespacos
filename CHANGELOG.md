@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.107](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.106...v1.5.0-rc.107) (2026-11-01)
+
+
+### Miscellaneous Chores
+
+* ignorar rascunhos de LGPD não aprovados e PDFs soltos em docs/ ([0bcc836](https://github.com/uniespacos/uniespacos/commit/0bcc836beec4a1f12f66e984039b115782bc2928))
+
 ## [1.5.0-rc.106](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.105...v1.5.0-rc.106) (2026-11-01)
 
 
