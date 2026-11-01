@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-10-31.
 > **Base:** `develop` @ `f3624f5` (1.5.0-rc.106, em staging) · produção: `main` v1.4.4 (30/10/2026).
-> **Atualizado em:** 2026-10-31.
+> **Atualizado em:** 2026-11-01.
 
 ## Como ler
 
@@ -52,7 +52,7 @@
   Prazo decidido (P-16). Depende da T-08. Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Pronto quando:** `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` em produção, com arquivos rotacionados em staging.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. = S61, F1, E2-O.1.
+  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -186,26 +186,53 @@
   Controllers `Auth/` e `routes/auth.php` (conferir antes: o arquivo tem rotas ativas), `docker/production/nginx`, `compose.test.yml` e `versions.txt`; Prettier com o plugin do Tailwind (B34, B48; conferir depois da atualização do Prettier); Jest em worktree com ponto no caminho (B49); resposta das rotas `show` removidas (B39).
 - [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
 - [ ] **RR-D3** · Comando de auditoria dos horários com data anterior à criação, com `--dry-run` — `P4` · pequeno · depende de decisão sobre o destino desses registros.
-- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno.
+- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno. Entra no PR da I18N-F1, que traduz as Rules.
 - [ ] **RR-F04** · Renomear a prop `conflictCache` do `ConflictAlertBox`, que recebe conflitos calculados na hora — `P4` · pequeno.
 - [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
 
 ## Onda 6 — Internacionalização (`P2`–`P4`)
 
-Plano pronto e ainda não iniciado; tarefas e decisões em `docs/auditoria-i18n/plano-implementacao-i18n.md` (local). Ordem: I18N-D → F0 → F1 e F5 em paralelo → F2 → F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → F8.
+Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e critérios em `docs/plano-i18n/` (local; uma pasta por fase), auditoria em `docs/auditoria-i18n-2026-10-31/`. Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
 
-- [ ] **I18N-D** · Decidir a convenção de chaves e o diretório do pt-BR — `P2` · pequeno · decisão
-  O #489 usou frase em inglês como chave no JSON (`__('Space added to favorites!')`); o plano pede chaves com namespace (`flash.<entidade>.<acao>`). Também há `lang/pt.json` e `lang/pt_BR.json` mantidos em duplicidade, e `lang/pt/` em vez de `lang/pt_BR/`. Decidir antes da F2 e da F3.
-- [ ] **I18N-F0** · Fundação de locale: enum, `users.locale` e `<html lang>` — `P2` · médio.
-- [ ] **I18N-F1** · Pacotes de idioma, validação e testes de paridade de chaves — `P2` · médio · depende da F0.
-- [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio.
-- [ ] **I18N-F2** · Fechar flash, `abort()` e exceções traduzíveis (falta pouco) — `P3` · pequeno · depende da F1 e da I18N-D.
-- [ ] **I18N-F3** · Notificações e e-mails no idioma do destinatário, inclusive em jobs — `P3` · grande · depende da F0 e da F1.
-- [ ] **I18N-F4+6a** · Relatórios PDF e Excel e cache com chaves estáveis (backend e front juntos) — `P3` · médio.
-- [ ] **I18N-6b, 6c, 6d, 6f** · Migrar os textos do front por lote: espaços, admin, reservas, autenticação e comuns (cerca de 350 strings) — `P3` · grande.
-- [ ] **I18N-6e** · Shell e notificações no front — `P3` · pequeno · depende da F3 e da F5.
-- [ ] **I18N-F7** · Guardrails de i18n na CI e documento da convenção — `P3` · médio.
-- [ ] **I18N-F8** · Carregamento sob demanda, manifest multilíngue e RTL — `P4` · médio.
+- [ ] **I18N-F0** · Fundação de locale: idioma salvo no usuário e formato único — `P2` · médio
+  Enum de locale único; `users.locale` com `HasLocalePreference`; a prop `locale` do Inertia sempre em `pt-BR`/`en`/`es`; remove a prop `quote`, que não é usada; `<html lang>` acompanha a troca de idioma; cria `docs/arquitetura/internacionalizacao.md` com a convenção decidida.
+  **Pronto quando:** a escolha de idioma persiste entre sessões; a prop `locale` nunca sai fora de `pt-BR`/`en`/`es`; `<html lang>` muda junto com o idioma; há testes cobrindo.
+- [ ] **I18N-F1** · Arquivos de idioma, validação e testes de paridade — `P2` · médio · depende da F0
+  `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais. Inclui a RR-F01.
+  **Pronto quando:** a validação em `es` sai em espanhol, e remover uma chave de `es.json` faz um teste falhar.
+- [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio · depende da F0
+  Plural no motor; date-fns e formatos de data pelo locale ativo (hoje há `ptBR` importado em 7 arquivos e 12 formatos `dd/MM` fixos); ordenação pelo locale; textos dos primitivos de UI; dicionários divididos por namespace; pseudo-locale só em dev; testes com o motor real no lugar de mocks; script de inventário versionado.
+  **Pronto quando:** nenhum import de `date-fns/locale` fora de `resources/js/i18n/`; testes de plural e datas nos 3 idiomas; nenhum teste com `jest.mock('@/i18n')`.
+- [ ] **I18N-F2** · Mensagens de erro ao usuário traduzidas e sem detalhe técnico interno — `P3` · pequeno · depende da F1
+  As flash messages já estão traduzidas (#489), e falhas de banco já viram mensagem genérica. Falta: exceção de domínio com mensagem traduzível, mensagem genérica para qualquer exceção não prevista, e as mensagens de `abort()` dos relatórios.
+  **Pronto quando:** exceções de domínio e `abort()` aparecem traduzidos nos 3 idiomas, e exceção não prevista mostra só a mensagem genérica.
+- [ ] **I18N-F3** · Notificações e e-mails no idioma do destinatário, inclusive em jobs — `P3` · grande · depende da F0 e da F1 (parte de front, da F5)
+  O texto passa a ser gerado no idioma de quem recebe, nos canais banco, broadcast e e-mail; `chave` + `parametros` nas 8 notificações que ainda não têm, com o mapeamento no front; templates de e-mail e resumo de horários traduzidos. Mantém a regra da T-24 (sem nome de pessoa). A justificativa automática de conflito continua no idioma de quem avaliou (decidido). Coordenar com a T-26 (b) (formato da prop `notifications`). Notificações antigas sem `chave` usam o fallback, e a T-19 as remove com o tempo.
+  **Pronto quando:** uma notificação disparada em job para um usuário com idioma `en` chega em inglês nos três canais, e as 10 notificações têm chave mapeada no front.
+- [ ] **I18N-F4+6a** · Relatórios PDF e Excel e cache com chaves estáveis (backend e front juntos) — `P3` · médio · depende da F1 e da F5
+  O resumo e os filtros usam chave estável em vez do rótulo em português; a tradução acontece depois do cache, com a versão do cache incrementada; PDF/Excel formatados pelo locale; telas de relatório traduzidas. Um PR só, porque o contrato JSON muda.
+  **Pronto quando:** exportações em `en` e `es` saem traduzidas, a mesma entrada de cache serve todos os idiomas, e as telas de relatório não têm texto fixo.
+- [ ] **I18N-6b** · Textos do front: espaços e andares (cerca de 42 strings) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6c** · Textos do front: administração, usuários e permissões (cerca de 108 strings, incluindo os rótulos de permissão) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6d** · Textos do front: reservas e agenda (cerca de 57 strings, incluindo a validação do formulário de reserva) — `P3` · médio · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6f** · Textos do front: autenticação, componentes comuns e configurações (cerca de 42 strings) — `P3` · pequeno · depende da F5
+  Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
+- [ ] **I18N-6e** · Shell, navegação e painel de notificações no front (cerca de 30 strings) — `P3` · pequeno · depende da F3 e da F5
+  Itens de menu, cabeçalho e painel de notificações do shell.
+  **Pronto quando:** todos os itens de menu usam chave de tradução, e o painel de notificações não tem texto fixo.
+- [ ] **I18N-F7** · Guardrails de i18n na CI e documento da convenção — `P3` · médio · depende das anteriores
+  Lint que proíbe texto literal em JSX, sem supressões; testes de paridade dos rótulos de enum e dos idiomas; `docs/arquitetura/internacionalizacao.md` completo, com glossário e checklist de novo idioma. Depois dele vem a consolidação do plano.
+  **Pronto quando:** um texto literal novo em JSX falha no lint, e uma chave faltando falha nos testes.
+- [ ] **I18N-F8** · Carregamento sob demanda, manifest multilíngue e RTL — `P4` · médio
+  Só com gatilho: um 4º idioma, tradutor externo ou PWA com nome traduzido.
+  **Pronto quando:** definido conforme o gatilho.
 
 ## Onda 7 — Produto: funcionalidades (`P2`–`P4`)
 
@@ -284,7 +311,6 @@ Plano pronto e ainda não iniciado; tarefas e decisões em `docs/auditoria-i18n/
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
-| I18N-D · Convenção de chaves de i18n | I18N-F2, I18N-F3 |
 
 ## Gestão do repositório (não é código)
 
@@ -340,7 +366,7 @@ Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` est
 | Board e roadmap | 30/09 | absorvido pela estabilização e pela LGPD | decisões D-1 a D-9 |
 | Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |
 | LGPD | 31/10 | em execução; lote 1 em staging | Ondas 1 e 2 |
-| i18n | 31/10 | plano pronto, não iniciado | Onda 6 |
+| i18n | 31/10–01/11 | plano revisado (rev. 3), não iniciado | Onda 6 |
 
 ## Como manter
 
