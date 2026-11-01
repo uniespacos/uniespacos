@@ -1,189 +1,349 @@
-# Fila de Issues — Acompanhamento
+# Backlog — UniEspaços
 
-A partir da auditoria em [`auditoria-issues-2026-08-20.md`](./auditoria-issues-2026-08-20.md).
-Atualizado a cada entrega.
+> **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-10-31.
+> **Base:** `develop` @ `f3624f5` (1.5.0-rc.106, em staging) · produção: `main` v1.4.4 (30/10/2026).
+> **Atualizado em:** 2026-10-31.
 
-**Última atualização:** 2026-08-23 · develop em `854bf76` · limpeza de issues no GitHub (comentários de fechamento, reabertura de #41)
+## Como ler
 
----
+- **Ordem:** as ondas estão na ordem de execução. A LGPD (Ondas 1 e 2) tem precedência; itens `P1` das Ondas 3 e 4 podem correr em paralelo aos `P3` da LGPD.
+- **Prioridade:** `P0` bloqueia o próximo release ou é risco imediato · `P1` alto impacto, próximo ciclo · `P2` importante, planejar · `P3` melhoria · `P4` ideia ou baixo impacto.
+- **Esforço:** pequeno (até 1 dia) · médio (alguns dias) · grande (uma semana ou mais).
+- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação. Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
+- **Segurança:** o repositório é público. Itens de segurança descrevem o objetivo, sem detalhe de exploração; o detalhe fica nos planos locais (ver [Origem dos itens](#origem-dos-itens)).
 
-## ✅ Concluídas
+## Agora
 
-- [x] **Revogar `reservas.deletar` do institucional** `P3` · `effort: small`
-      Branch `fix/remove-admin-reserva-deletar`
-      Segunda parte da revisão de regra de negócio iniciada no #260 (ver PR da branch irmã `fix/remove-admin-reserva-atualizar`): admin (`institucional`) é gestão institucional geral, não gerencia reservas de terceiros — nem editando, nem cancelando. Migration `2026_08_23_155138_revoke_reservas_deletar_from_institucional.php` revoga (não deleta) a permissão do role, mesma razão técnica da tarefa irmã: `ReservaPolicy::delete()` chama `hasPermissionTo('reservas.deletar')` incondicionalmente para todo usuário, deletar a permissão quebraria o cancelamento para todo mundo. `RoleSeeder` corrigido para não reatribuir a permissão a cada seed. Admin agora cancela apenas a própria reserva, como um usuário comum.
-      _3 testes novos (`ReservaCancelamentoAdminTest`) · 176 testes passando · 1 falha pré-existente isolada (ErrorHandlingTest, não relacionada)_
-
-- [x] **#119 — IDOR em detalhes/edição de reserva** `P0`
-      Branch `fix/idor-reserva-authorization` → PR #253 → merged `4a59670`
-      Regressão de um fix anterior (`725d76f` corrigiu, `214c437` removeu no refactor). Achados extras: vazamento de PII (email/telefone) e escalada de privilégio no `GestorReservaController::update`. Inclui página de erro Inertia (fatia da #112).
-      _9 testes de regressão · baseline 6 falhas → 9 passando_
-
-- [x] **#222 — Link de notificação abre semana errada** `P1`
-      Branch `fix/222-semana-reserva-notificacao` → PR #256 → merged `3b62a3e`
-      Corrigido no `show()` e não nas Notifications, porque a URL fica gravada na tabela `notifications` — assim o histórico já enviado também é consertado. Helper `resolveDataAncora` unificou o padrão em 3 pontos.
-      _8 testes · baseline 5 falhas → 8 passando_
-
-- [x] **#101 — Ordem dos gestores por turno no admin** `P1`
-      Branch `fix/101-ordem-gestores-turno` → PR #258 → merged `4374bcd`
-      Espelhou o padrão do `GerenciarGestoresDialog` (enumerar turnos fixos) em vez de só ordenar, atendendo ao "mesmo que o turno esteja vazio". Extraiu `TURNOS_ORDENADOS`/`TURNO_LABEL` eliminando 3 cópias da ordem.
-      _6 testes de componente · baseline 5 falhas → 6 passando_
-
-- [x] **#105 — Exibir espaço e módulo na lista de reservas** `P2`
-      Branch `fix/105-modulo-lista-reservas` → PR #261 → merged `4cd67ea` · issue fechada
-      Cadeia `andar.modulo` adicionada ao eager loading dos dois repositórios. No `getPaginatedForGestor`, que usa selects por coluna, foi preciso incluir `andar_id`/`modulo_id` — sem as chaves estrangeiras a relação aninhada volta `null` sem erro. Extraído o componente `LocalReserva`.
-      _3 testes de payload + 4 de componente · baseline 3 falhas → 7 passando_
-
-- [x] **#112 — Tratamento de erros e logging padronizados** `P2`
-      Branch `fix/112-tratamento-erros-api` → PR #263 → merged `a504887` · ⚠️ **issue ainda OPEN no GitHub**
-      A premissa da issue não batia com o código: não existe `routes/api.php`, e os únicos endpoints JSON vivos são os 4 de relatórios. Envelope feito **aditivo** (`error_code`/`details` ao lado de `message`/`errors`), porque `use-gerar-relatorio.ts` lê `data.message` na raiz e o `useForm` do Inertia depende do bag `errors` — mover qualquer um dos dois quebraria em silêncio.
-      Decisão de segurança: a issue pedia "request data" no log, mas o app trafega senha em texto plano (`ConfirmPasswordRequest`, no cancelamento de reserva). O payload ficou **fora** do contexto, travado por teste.
-      Achado de bug: `phpunit.xml` definia `APP_ENV=testing` sem `force="true"`, então o `.env` do container de dev vencia e **a suíte nunca rodou em env `testing`** — o bypass da página de erro da #119 nunca foi exercitado como documentado.
-      O GitGuardian barrou o PR por causa dos literais `'password' => 'senha-super-secreta'` no teste novo; trocados por canários de runtime (`347ca67`). Falso positivo — nenhuma credencial real vazou.
-      _26 chamadas de log padronizadas · 13 testes novos · 95 → 115 testes passando_
-
-- [x] **#108 — Filtro/arquivamento (soft delete) de reservas** `P1`
-      Branch `fix/108-filtro-arquivamento-reservas` → PR #266 → merged `8f180f0` (+ ajuste visual `ed85116`) · ⚠️ **issue ainda OPEN no GitHub**
-      O requisito 1 da issue (soft delete) **já estava pronto** — `cancel()` marca `inativa` em transação e não existe delete permanente. A issue descrevia um risco inexistente.
-      O bug real era outro: `getPaginatedForUser` aplicava `where('situacao', '!=', 'inativa')` incondicionalmente e logo depois oferecia filtro por situação, então filtrar por arquivadas produzia `situacao != 'inativa' AND situacao = 'inativa'` — **contradição lógica, lista sempre vazia**. O gestor tinha a versão correta do mesmo código; a assimetria era a raiz.
-      Achado extra: **"Todas" mentia para os dois papéis** — mandava `''`, o parâmetro sumia, e ambos caíam no default que esconde arquivadas.
-      Solução: separar os eixos. `situacao` fica só com resultado de avaliação; novo `arquivo` (`ativas`/`arquivadas`/`todas`) via `scopeArquivo` no model, usado pelos dois repositórios. URL legada `?situacao=inativa` é traduzida para não passar a devolver vazio. Entrou também uma guarda de idempotência no cancelamento (recancelar reserva arquivada não dispara mais notificação repetida).
-      _12 testes de feature + 6 de componente · baseline 8 falhas → 12 passando · 115 → 127 testes PHP_
-
-- [x] **#265 — Avaliar uma reserva arquivada a ressuscita** `P1` · `effort: small`
-      Branch `fix/265-archived-resurrection` → PR #299 → merged `5161d2b`
-      `AvaliarReservaJob::updateReservaOverallStatus` recalculava `situacao` a partir da contagem de horários sem tratar `inativa` — toda avaliação em uma reserva arquivada a ressuscitava. Match adicionado para validar que reserva é ativa antes de reatribuir status.
-      _17 testes · 17 passando_
-
-- [x] **GAP-03 — Escopo `recurring` em AvaliarReservaJob excede agendas do gestor** `P1` · `effort: small`
-      Branch `fix/gap-03-recurring-scope-authorization` → PR #302 → merged 2026-08-22
-      No `AvaliarReservaJob` com `scope=recurring`, a propagação não restringe às agendas que o gestor gerencia — pode exceder responsabilidade. Implementada validação em 2 níveis: (1) no `AvaliarReservaRequest::after()` valida cada horário ID pertence às agendas do gestor; (2) no `AvaliarReservaJob::validateHorariosAutorization()` revalida antes de processar. **Bônus 1:** Corrigido bug crítico de UX/acessibilidade no `Alert` com `variant="destructive"` — o alerta de reavaliação estava invisível por contraste 1:1. Corrigido com `text-destructive-accent` (vermelho escuro) que rende ~5:1. **Bônus 2:** Adicionados contadores de horários na lista do gestor (`ReservasList`). Quando uma reserva está em `parcialmente_deferida`, mostra quantos horários estão `em_analise` e quantos foram `indeferida`, dando clareza de quais ações o gestor ainda precisa tomar.
-      _9 testes novos/atualizados · 19 testes passando · 0 regressões · docs atualizada (6.1)_
-
-- [x] **#255 — `data_inicial`/`data_final` dessincronizam na edição single** `P2` · `effort: medium`
-      Branch `fix/255-data-dessincronizam` → PR #311 → merged `fa758ae`
-      Ao editar com `edit_scope='single'` (dia/horário específico), o `UpdateReservaJob` reescrevia `data_inicial`/`data_final` com os limites da semana editada em vez de recalcular a partir do MIN/MAX real dos horários restantes. Bloqueava navegação para semanas fora do range incorreto. Solução: na scope 'single', recalcula datas a partir dos horários após a edição; na scope 'recurring', usa as datas do `validatedData`. Incluída command `reservas:fix-datas-periodo` para correção de dados legados com opções `--dry-run` e `--force`.
-      _3 testes novos + 1 command de migração · 160+ testes passando_
-
-- [x] **GAP-02 — UpdateReservaJob não regenera conflitos** `P1` · `effort: medium`
-      Branch `fix/gap-02-regenerate-conflicts` → commit `554e85a`
-      Após edição de reserva (single ou recurring), o `conflict_cache` fica obsoleto. Solução: despachar `ValidateReservationConflictsJob` ao final de `UpdateReservaJob::handle()`, fora da transaction, garantindo que o cache é regenerado após cada edição. Job é idempotente e funciona para ambos os escopos. Padrão segue `ProcessarCriacaoReserva` e `AvaliarReservaJob`.
-      _2 testes novos · 12 testes passando_
-
-- [x] **#106 — Dia da semana nos grupos de turno** `P4`
-      Branch `feature/106-dias-turno` → PR #323 → merged `c52b4e7` (squash)
-      O dia da semana passou a aparecer no header de cada grupo de turno (`AgendaCalendario`, `calendar-shift-section`) e o header global duplicado de dias da semana foi removido. No mobile, `CalendarDiaMobile` passou a agrupar as agendas por turno, eliminando linhas repetidas. Ajuste visual: removido o `gap-6` herdado do `Card` entre a legenda e o cabeçalho do turno. A ressalva "o header sticky já entrega o essencial" foi levantada antes da execução, mas a entrega foi validada e mergeada.
-
-- [x] **GAP-11 Fase 4 — Canais WebSocket privados por espaço** `P3` · `effort: medium`
-      Branch `feature/gap-11-fase-4-expand-channels` → PR #338 → merged `197b202` (2026-08-23)
-      Implementação de broadcasting em tempo real específico por espaço. **Backend:** ReservaEvent enriquecido com `espacoId` e `horariosCount`, broadcast dual (público `reserva-channel` + privado `App.Models.Espaco.{id}`), autorização via policy em `routes/channels.php`. **Validação:** Nova rule `HorariosMesmoEspaco` garante que todas as reservas abrangem um único espaço. **Frontend:** Novo hook `useEspacoLiveUpdates(espacoId)` subscreve a atualizações privadas de espaço; hook `useReservationLiveUpdates()` reutiliza o público. **Infraestrutura:** Channel registry com reference counting integrado em ambos os hooks. **Testes:** 7 testes de integração em `VisualizarEspacoPage`, 8 de unitário em hooks, cobertura de registry. Atualizado em `docs/realtime-websocket-channels.md` (novo arquivo) e `docs/validation-rules.md`.
-      _24 testes novos · ESLint/TypeScript/PHPUnit limpos · 0 regressões_
+- **Em staging:** 1.5.0-rc.106, com o lote LGPD (#489) e a congruência de UI/UX (#487). Produção segue na v1.4.4.
+- **Próximo passo:** Onda 1, nesta ordem: PR pequeno com o resíduo da T-04 e o setor no dashboard → validação manual em staging → decisão sobre a página de privacidade → release 1.5.0 → T-05.
+- **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
+- **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
 ---
 
-## 🔨 Em andamento
+## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **Revogar `reservas.deletar` do institucional** `P3` · `effort: small`
-      Branch `fix/remove-admin-reserva-deletar`
-      Mesma inconsistência de regra de negócio identificada no #260: admin não deveria cancelar reserva alheia, só a própria — cancelamento de reserva de terceiros é decisão do próprio dono, não do admin. Achado colateral da revisão de `reservas.atualizar`.
+- [ ] **T-04** · Logs de autenticação sem parâmetros de acesso — `P0` · pequeno · segurança
+  Resíduo do lote LGPD: revisar os logs de autenticação para não registrar endereços com parâmetros de acesso. = A-03, B55, S13.
+  **Pronto quando:** teste de regressão cobre todos os fluxos de autenticação que gravam log.
+- [ ] **T-26 (c)** · Setor do gestor no dashboard institucional — `P1` · pequeno · bug · no mesmo PR da T-04
+  O dashboard institucional mostra "sem setor vinculado" para todo gestor, porque a consulta não carrega o setor. Defeito anterior ao lote, mas visível na validação.
+  **Pronto quando:** teste de payload cobre o setor e a tela mostra o setor real.
+- [ ] **Decisão** · A página de privacidade em rascunho vai ao ar? — `P0` · decisão do responsável
+  A flag `PRIVACY_PAGE_ENABLED` vem ligada por padrão; sem decisão, o texto-rascunho (versão 0.1, contato provisório) entra em produção no release. Opções: publicar marcado como rascunho, desligar a flag em produção até o texto final (T-10, T-17, T-18) ou aprovar o texto. = T-17, T-18.
+- [ ] **Validação em staging** · Roteiro manual na rc.106 — `P0` · pequeno · operação (responsável)
+  29 passos em 6 blocos: (1) telas com menos dados; (2) logout, botão "Voltar" e foto de perfil; (3) notificações sem nome de terceiros em pt/en/es e limite de 2000 caracteres; (4) anonimização de conta; (5) página de privacidade e rodapés; (6) recuperação de senha e limites de taxa. Comece pelo bloco 1 e pelo passo 15. No passo 2, "ou um traço" esconde o defeito do setor (T-26 (c)). Roteiro: plano LGPD local, arquivo 09.
+  **Pronto quando:** os 29 passos passam.
+- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação
+  Depende dos quatro itens acima. Sem migration. Checklist: backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
+- [ ] **T-05** · Rotacionar e descartar logs antigos de produção — `P0` · pequeno · operação
+  Logo depois do release, com a T-04 completa. Registrar a decisão sobre incidente no runbook (T-16). = A-03, R-P03, S13.
+- [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
+  Pode correr em paralelo à validação. Destrava T-20 e T-35. = H-01 a H-03.
+
+## Onda 2 — LGPD: próximo lote (`P1`–`P3`)
+
+**Código**
+
+- [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
+  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. Também limpa registros antigos que ainda têm nome de terceiros (anteriores à T-24). = S52, DT-11, B23, A-06.
+  **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
+- [ ] **T-20** · Log diário com 14 dias e nível `info` em produção — `P1` · pequeno · lgpd
+  Prazo decidido (P-16). Depende da T-08. Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
+  **Pronto quando:** `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` em produção, com arquivos rotacionados em staging.
+- [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
+  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. = S61, F1, E2-O.1.
+- [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
+  O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
+  **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
+- [ ] **T-35** · Validar na inicialização se a configuração de produção está segura — `P2` · pequeno · segurança
+  Comando `app:check-env`. Depende da T-08. = S53, A-18.
+- [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
+  Recusa rodar em produção. Prepara a T-01 e a T-03.
+- [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
+  Depende da T-26 completa.
+- [ ] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
+  Atualizar [`arquitetura/erros-e-logs.md`](./arquitetura/erros-e-logs.md) depois da T-19 e da T-20.
+
+**Operação de produção (um arquivo por vez)**
+
+- [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
+  Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
+- [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
+  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+- [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
+  Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
+- [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
+  = S67, E2-20, A-21, B27.
+
+**Aguardando decisão institucional** (ver [Decisões pendentes](#decisões-pendentes-não-é-código))
+
+- [ ] **T-30** · Reforçar a autenticação de perfis administrativos — `P2` · médio · segurança · depende da F-12
+  = A-10, P-13, P-18.
+- [ ] **T-14, T-16** · Versionar o inventário de dados e o runbook de incidente em `docs/privacidade/` — `P2` · pequeno · docs
+  Rascunhos prontos, fora do git; aguardam aprovação e a definição de papéis (T-10). O RIPD (T-15) e o registro de incidentes continuam fora do git.
+- [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
+- [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
+- [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
+
+**Diferidas pelo responsável**
+
+- [ ] **T-01, T-03** · Ambientes de desenvolvimento só com dados sintéticos ou anonimizados — `P1` · médio · lgpd · diferida (P-11)
+  É o maior risco do plano LGPD; vale reavaliar a data. A T-41 prepara o caminho. = A-01, A-02, R-P01.
+- [ ] **T-33** · Orientação de privacidade nos campos de texto livre — diferida (P-14)
+
+**Complementares**
+
+- [ ] **T-38** · Servir a fonte tipográfica pela própria aplicação — `P3` · pequeno · lgpd. = A-23.
+- [ ] **T-46** · Checklist de privacidade no template de PR e nas skills — `P3` · pequeno · docs.
+- [ ] **T-45** · Trilha de ações administrativas sobre dados pessoais — `P3` · médio · lgpd · depende da T-12 (ver também a GAP-10).
+- [ ] **T-29 (limitação)** · Reduzir a informação revelada nos fluxos públicos de conta — `P3` · pequeno · segurança.
+- [ ] **T-47, T-48** · Revisões periódicas e métricas de prestação de contas — `P3` · tarefa humana e recorrente · dependem da T-15, da T-10 e da T-16.
+
+## Onda 3 — Estabilidade e segurança da v1 (`P1`)
+
+- [ ] **S42** · Revisar a configuração de proxies confiáveis (borda e aplicação) — `P1` · pequeno · segurança
+  = B28, E1-35, D-EST-17.
+- [ ] **S17** · Congelar o relógio nos testes que dependem da data real — `P2` · médio · teste
+  Habilita a S26, a S33 e a S36. Cerca de 19 arquivos de teste PHP usam `now()` ou `today()` sem congelar; o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
+  **Pronto quando:** existe um trait de congelamento em `tests/Concerns/` e a suíte passa em duas datas simuladas (dia 31 e dia 1).
+- [ ] **S26** · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
+  Uma falha do Reverb pode marcar o job como falho e pular a notificação. Decisão tomada: broadcast depois do commit, num ponto único com `try/catch` (D-EST-14). = B15, B59, B60, E1-17.
+  **Pronto quando:** com um broadcaster que lança exceção, criar e avaliar reserva não gera `failed_jobs` e o solicitante é notificado.
+- [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
+  Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S26 e da S17. = B15, B61, E1-18.
+- [ ] **S14** · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
+  Salvar o modal de quem tem dois papéis (comum e gestor) pode apagar as agendas dessa pessoa. Mitigação em vigor: os institucionais foram orientados a não salvar o modal desses usuários (I4). = B56, E2-14, A-15; decisão relacionada: B44.
+  **Pronto quando:** um teste HTTP de `updatePermissions` preserva papéis e agendas de usuário com dois papéis.
+- [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
+  `retry_after` maior que o timeout do worker, que é maior que o dos jobs; o comando de reparo cobre todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
+
+## Onda 4 — Regras de negócio e segurança (`P2`)
+
+- [ ] **S37** · Usuário sem setor: resolução segura da instituição e aviso para completar o perfil — `P2` · pequeno · bug
+  Há acessos a `setor->unidade` sem proteção para nulo (erro 500 latente). Decisão tomada: middleware de setor com 403 explicativo (D-EST-03). = B2, E1-02, E1-03.
+- [ ] **S38** · Endurecer o escopo padrão dos relatórios para contas sem vínculo organizacional completo — `P2` · médio · segurança
+  Negar por padrão quando o escopo não puder ser determinado. Depende da S37 (e da S36). = B5, E1-08.
+- [ ] **S36** · "Hoje" no fuso de negócio (America/Bahia) nas regras de data — `P2` · médio · bug
+  À noite, o usuário pode não conseguir reservar para o próprio dia, porque a validação usa UTC. Decisão tomada: regras em America/Bahia, armazenamento em UTC (D-EST-02). Depende da S17. = B3, E1-04.
+- [ ] **RR-H3** · Fechar a brecha de reserva dupla sob concorrência — `P2` · médio · bug
+  O lock só alcança linhas que já existem e não há restrição no banco; duas criações simultâneas no mesmo horário vazio podem passar. Decidir a abordagem: lock consultivo por agenda e dia, ou restrição de exclusão no PostgreSQL.
+  **Pronto quando:** um teste com duas conexões reais não grava dois horários deferidos sobrepostos.
+- [ ] **RR-H2** · Validar no envio todas as semanas da recorrência — `P2` · médio · bug
+  A validação síncrona olha só a primeira data; um conflito em semana posterior aparece no job como falha genérica.
+  **Pronto quando:** uma reserva de um mês com conflito na terceira semana volta erro de validação no envio, sem criar a reserva.
+- [ ] **B69, B71, B72** · Revisar validação e autorização dos FormRequests de atualização (espaço, módulo, unidade, instituição) — `P2` · médio · segurança
+  Testes de caracterização primeiro (S30).
+- [ ] **S41** · Endurecer os workflows de deploy (verificação de host, versões fixadas, origem da imagem) — `P2` · pequeno · segurança
+  Inclui unificar os Caddyfiles e corrigir o `workflow_dispatch` de staging, que implanta a imagem da última RC em vez da branch escolhida (B79). Depende da D-EST-24. = B68, B79, E1-33.
+- [ ] **S46 → S48–S50** · Isolamento por instituição nas operações de escrita: ADR e implementação — `P2` · grande · segurança
+  Hoje há uma instituição ativa; é requisito do gate da v2. Depende da decisão E1-16 (quem edita instituições alheias). = B6, E1-16, E2-A, A-16, A-26.
+- [ ] **S39** · Atualizações em tempo real de reservas só por canais privados autenticados — `P3` · médio · segurança
+  Remove o canal público `reserva-channel` e o listener morto. Decisão tomada: canal privado por usuário. Depende da S26. = B14, E1-15, B66.
+- [ ] **B76** · Sanitizar o conteúdo das células nas exportações de planilha — `P3` · pequeno · segurança
+  Depois do teste de exportação (S24).
+- [ ] **S66** · Guarda-corpos administrativos e de conta — `P3` · médio · segurança
+  = B51, B62, B64.
+- [ ] **DEB-D2** · Remover o fallback de permissões legadas da `RelatorioPolicy` — `P3` · pequeno · débito técnico · ⏸ parado
+  Aguarda rodar em produção as consultas de conferência (somente leitura) do relatório da fase 09 dos débitos 2026-09. = AF-R4a.
+- [ ] **DEB-A1** · Validar no backend o horário contra a grade e o turno da agenda — `P3` · médio · débito técnico
+  A grade canônica ainda vive no frontend (`resources/js/constants/turnos.ts`). Depende do #104.
+
+## Onda 5 — Qualidade, operação e débitos técnicos (`P2`–`P4`)
+
+**Testes**
+
+- [ ] **B26** · Testes de caracterização dos módulos que a v2 vai alterar — `P2` · grande · teste
+  `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
+- [ ] **AF-6.3b** · Testes de conteúdo dos 4 tipos de relatório — `P3` · médio · teste · depende da S38
+- [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
+  = B38, B52, I11.
+
+**Operação**
+
+- [ ] **S44, S45** · Health-check da fila e rastreador de erros — `P2` · médio · operação
+  Hoje uma falha de fila só aparece por reclamação. Dependem da D-EST-15 (canal de alerta) e da D-EST-01 (rastreador). = B23, E1-30, E1-31.
+- [ ] **S21, S71** · Runbooks versionados de deploy, rollback, hotfix, sincronização `main` → `develop` e restore — `P2` · médio · docs
+  Não há nenhum (o hotfix 1.4.3 foi feito sem). Base: REGRAS §3 do plano de estabilização (arquivo local). Destino: `docs/operacao/`. O restore depende da T-23. = E2-D, B65.
+- [ ] **S27** · Limite de taxa, teto diário e retentativa dos e-mails de notificação — `P2` · médio · bug
+  O backoff já existe (#451). Depende das perguntas A e B (tipo de conta SMTP) e da I6. = B47.
+- [ ] **S29** · Limites de upload e pool do php-fpm na imagem de produção — `P2` · pequeno · operação
+  Produção usa os limites padrão do PHP, abaixo do limite que a aplicação valida. Depende da pergunta D (memória do host). = B18, B75, DT-07, E1-22.
+- [ ] **S28, S31** · Retrato do RBAC de produção versionado, paridade dos seeders na CI e catálogo de permissões do front — `P3` · médio · débito técnico
+  O catálogo do front não tem `relatorios.*`. Depende da pergunta C (exportar a matriz de produção). = B11, B12, E1-09, E1-10.
+- [ ] **DOC-01** · Tirar `docs/` do contexto de build da imagem de produção — `P3` · pequeno · operação
+  O `.dockerignore` exclui só `docs/auditoria*` e `docs/plano-*`; os cerca de 25 MB de `docs/UniEspaço Web/` entram na imagem.
+
+**Débitos técnicos e limpeza**
+
+- [ ] **S64** · Reduzir as supressões do ESLint, com ratchet — `P3` · médio · débito técnico
+  Hoje: 73 supressões em 33 arquivos no `eslint-suppressions.json`, mais 9 inline (`npm run lint:debt`).
+- [ ] **DOC-02** · Atualizar o `CLAUDE.md` e sincronizar o `GEMINI.md` — `P3` · pequeno · docs
+  O `CLAUDE.md` ainda cita 92 supressões em 43 arquivos. O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
+- [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
+  O nível 9 está ativo e o gate impede crescimento, mas o `phpstan-baseline.neon` ainda ignora cerca de 400 erros.
+- [ ] **S65, S70, B39, B49, B50** · Limpeza de código morto e de ferramentas — `P4` · médio · débito técnico
+  Controllers `Auth/` e `routes/auth.php` (conferir antes: o arquivo tem rotas ativas), `docker/production/nginx`, `compose.test.yml` e `versions.txt`; Prettier com o plugin do Tailwind (B34, B48; conferir depois da atualização do Prettier); Jest em worktree com ponto no caminho (B49); resposta das rotas `show` removidas (B39).
+- [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
+- [ ] **RR-D3** · Comando de auditoria dos horários com data anterior à criação, com `--dry-run` — `P4` · pequeno · depende de decisão sobre o destino desses registros.
+- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno.
+- [ ] **RR-F04** · Renomear a prop `conflictCache` do `ConflictAlertBox`, que recebe conflitos calculados na hora — `P4` · pequeno.
+- [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
+
+## Onda 6 — Internacionalização (`P2`–`P4`)
+
+Plano pronto e ainda não iniciado; tarefas e decisões em `docs/auditoria-i18n/plano-implementacao-i18n.md` (local). Ordem: I18N-D → F0 → F1 e F5 em paralelo → F2 → F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → F8.
+
+- [ ] **I18N-D** · Decidir a convenção de chaves e o diretório do pt-BR — `P2` · pequeno · decisão
+  O #489 usou frase em inglês como chave no JSON (`__('Space added to favorites!')`); o plano pede chaves com namespace (`flash.<entidade>.<acao>`). Também há `lang/pt.json` e `lang/pt_BR.json` mantidos em duplicidade, e `lang/pt/` em vez de `lang/pt_BR/`. Decidir antes da F2 e da F3.
+- [ ] **I18N-F0** · Fundação de locale: enum, `users.locale` e `<html lang>` — `P2` · médio.
+- [ ] **I18N-F1** · Pacotes de idioma, validação e testes de paridade de chaves — `P2` · médio · depende da F0.
+- [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio.
+- [ ] **I18N-F2** · Fechar flash, `abort()` e exceções traduzíveis (falta pouco) — `P3` · pequeno · depende da F1 e da I18N-D.
+- [ ] **I18N-F3** · Notificações e e-mails no idioma do destinatário, inclusive em jobs — `P3` · grande · depende da F0 e da F1.
+- [ ] **I18N-F4+6a** · Relatórios PDF e Excel e cache com chaves estáveis (backend e front juntos) — `P3` · médio.
+- [ ] **I18N-6b, 6c, 6d, 6f** · Migrar os textos do front por lote: espaços, admin, reservas, autenticação e comuns (cerca de 350 strings) — `P3` · grande.
+- [ ] **I18N-6e** · Shell e notificações no front — `P3` · pequeno · depende da F3 e da F5.
+- [ ] **I18N-F7** · Guardrails de i18n na CI e documento da convenção — `P3` · médio.
+- [ ] **I18N-F8** · Carregamento sob demanda, manifest multilíngue e RTL — `P4` · médio.
+
+## Onda 7 — Produto: funcionalidades (`P2`–`P4`)
+
+- [ ] **#107** · Mostrar na agenda as solicitações em análise — `P2` · médio · feature
+  Requisito "Must" do escopo original. Decidir o público: solicitante ou gestor (D-2). Armadilha: não ampliar o `ConflictDetectionService` para `em_analise`, porque a avaliação passaria a indeferir automaticamente; usar um serviço à parte.
+- [ ] **GAP-10** · Trilha de auditoria das avaliações (quem, quando e por quê) — `P2` · médio · feature
+  A reavaliação sobrescreve avaliador e justificativa. Bloqueia o #46; é o requisito 14 da v2. Ver também a T-45.
+- [ ] **#98** · Versão de build no rodapé, só para administradores — `P2` · pequeno · feature. = S68, E2-I.
+- [ ] **#46** · Edição de título e descrição da reserva com autorização do gestor — `P3` · grande · decisão primeiro
+  Fazer um brainstorm das regras (D-3) e reescrever a issue. Depende da GAP-10. A D-EST-09 sugere fechar ou redefinir.
+- [ ] **#104** · Templates de horário configuráveis pelo gestor — `P3` · grande · ADR primeiro (D-5)
+  A label `P0` do GitHub não reflete o plano ("fora da 2.0", D-EST-09). O template precisa ser respeitado por `HorarioDisponivel` e `ConflictDetectionService`; destrava a DEB-A1.
+- [ ] **GAP-09** · Fluxo para reserva parcialmente deferida — `P3` · médio · decisão primeiro
+  Resumo de horários deferidos e indeferidos, com ação sobre os indeferidos. Inclui decidir se `ReservaPolicy::update` permite editar reserva com horário já avaliado (GAP-06).
+- [ ] **#49** · Ir para a sala anterior ou a próxima a partir da agenda — `P3` · pequeno · depende da D-4 (andar ou módulo; ordem).
+- [ ] **#462** · Busca de salas por necessidade (recursos e capacidade) — `P3` · grande · depende de modelar recursos e equipamentos.
+- [ ] **GAP-07** · Indicador de progresso para o solicitante depois de criar a reserva — `P4` · médio
+  A lista já recarrega por evento; a D-EST-18 deixa para a 2.x.
+- [ ] **GAP-08** · Hora de pico, mapa de calor e série histórica nos relatórios — `P4` · médio.
+
+## Futuro — v2.0
+
+- [ ] **E3-01** · Re-baseline da documentação da v2 — `P3` · grande · decisão
+  A documentação preparatória está na branch `docs/v2-0-documentacao-preparatoria`, não mergeada e escrita sobre a rc.71. Precisa aplicar o ADENDO-V2 antes de entrar na `develop`, já no padrão de nomes de `docs/`. Escopo da v2: Gestor de Unidade e Gestor de Espaço, dashboard composto, setor e expediente, aprovação por urgência, QR Code e chamados, consolidação retroativa (sprints 0 a 7).
+  **Gate da v2:** 14 dias de v1 estável · fuso de negócio (S36) · isolamento de escrita (S48–S50) · staging anonimizado (E3-03, T-41) · restore testado nos últimos 30 dias (T-23) · jobs sem falha por broadcast (S26) · testes de caracterização (B26) · destino do PR #397.
+- [ ] **PR #397** · Decidir o destino do módulo de chamados — `P2` · pequeno · decisão
+  Aberto desde 26/08, sem revisão, com conflitos em 83 arquivos. Recomendação dos planos: fechar como substituído e reimplementar na v2 (sprint 6). = D-EST-05, D-7, A-06.
 
 ---
 
-## 📋 Fila
+## Decisões pendentes (não é código)
 
-- [ ] **GAP-05 — ReservasGestorPage sem filtro de período** `P2` · `effort: medium`
-      Lista traz todas as reservas sem data filter — lento em produção. Adicionar período + índice.
+### Institucionais (LGPD)
 
-**UX em tempo real (do core-workflow-report.md)**
+| Decisão | Quem decide | Destrava |
+| --- | --- | --- |
+| F-01 · Encarregado formal, com contato próprio (provisório: Projur e prefeituras dos campi) | gestão da UESB | T-10, texto final da política (T-17, T-18), runbook (T-16) |
+| F-08 · Canal, rito e prazo de atendimento ao titular | encarregado | T-10, T-39, T-40, T-48 |
+| F-02 · Bases legais e norma estadual | jurídico | T-11, T-14, T-15 |
+| F-03 · Prazos de guarda (proposta DT-11: 30, 90, 7 e 7 dias) e eliminar ou anonimizar | encarregado e CPAD | T-12, T-19 (valores finais), T-23 |
+| F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
+| F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
+| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade institucional (T-26) |
+| F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
+| F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
+| F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
+| F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
+| F-14 · Conferir os binários de `docs/UniEspaço Web/` | responsável | H-05 e reorganização da pasta |
+| Manter diferidas ou antecipar a T-01 e a T-03 | responsável | maior risco do plano LGPD |
 
-- [ ] **GAP-07 — Falta feedback de progresso para solicitante na criação** `P2` · `effort: medium`
-      Flash genérico "sendo processado". Adicionar dashboard com barra de progresso via Reverb.
+### Produto e técnica (responsável)
 
-**Escalabilidade e UX (do core-workflow-report.md)**
+| Decisão | Destrava |
+| --- | --- |
+| Página de privacidade em rascunho no release (ver Onda 1) | release 1.5.0 |
+| D-EST-13 e DT-10 · Backup: destino, retenção, cifragem e staging para o ensaio (com a TI) | T-23 |
+| D-EST-23 e D-EST-24 · Efeitos do backup parado; liberar a S34 e a S41 a S43 com backup manual | Ondas 3 e 4 |
+| D-EST-01 · Rastreador de erros | S45 |
+| D-EST-15 · Canal de alerta | S44 |
+| DT-13 · CSP e HSTS | T-28 |
+| DT-14 · Reparo automático de reservas presas | S35 |
+| E1-16 · Quem edita instituições alheias | S46, S48–S50 |
+| Perguntas A, B e I6 · Tipo de conta e limites do SMTP | S27 |
+| Pergunta C · Exportar a matriz RBAC de produção | S28, S31 |
+| Pergunta D · Medir a memória do host de produção | S29 |
+| D-EST-21 · Novo critério de "2 releases sem hotfix" (a contagem recomeça na 1.4.4) | saída da Fase 1 da estabilização |
+| D-EST-04 e D-8 · Cadência de releases | processo de release |
+| D-9 · Institucional sem agendas deve avaliar reservas? | regra de autorização |
+| D-6 · Login institucional (@uesb.edu.br), requisito "Must" original ainda sem issue | nova issue |
+| D-1 · Multi-instituição | v2 |
+| D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
+| D-7 e D-EST-05 · Destino do PR #397 | v2 |
+| B44 · Papéis acumulados comum e gestor | S14 |
+| B39 · O que as rotas `show` removidas devem responder | S65 |
+| RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
+| RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
+| I18N-D · Convenção de chaves de i18n | I18N-F2, I18N-F3 |
 
-- [ ] **GAP-04 — Notificações de e-mail sem template HTML** `P2` · `effort: small`
-      `BaseNotification.toMail()` usa texto puro. Usar template Blade customizado.
+## Gestão do repositório (não é código)
 
-**Outros GitHub issues**
+- [ ] Comentar o fechamento das issues #48 e #102 (fechadas sem comentário) e registrar na #41 que a entrega veio no #432. A validação manual com dois navegadores (T6.6) nunca foi registrada.
+- [ ] Alinhar as labels: #104 está `P0` (o plano pede ADR antes e deixa fora da 2.0); #107 está `P4` (requisito "Must" original); #98 e #462 estão sem prioridade.
+- [ ] As 18 issues do plano de estabilização (`criar-issues.sh`) nunca foram criadas. Este backlog passa a ser a fonte: fechar o milestone vazio "Estabilização v1 — Fase 1" e abrir issue só quando o item entrar em execução.
+- [ ] Apagar a branch `chore/remover-docs-obsoletos` (o que ela removia já não existe). Manter a `docs/v2-0-documentacao-preparatoria` até o E3-01.
+- [ ] Arquivar os planos locais concluídos (ver [Origem dos itens](#origem-dos-itens)).
 
-- [ ] **#104 — Templates de horário configuráveis pelo gestor** `P0 de negócio` · `effort: large`
-      Nenhuma base no código. Exige migration, revisão da lógica de conflito e do calendário. **Precisa de design antes da execução.**
+> O `Closes #N` não fecha a issue em merge para `develop`; o GitHub só fecha em merge para a branch padrão (`main`). Feche manualmente, com comentário.
 
-- [ ] **#98 — Versão de build no footer** `P3`
-      a ideia é sempre ter ciencia de qual versão está em produção, quando reportado um problema saber qual branch corrigir
+## Fora da fila
 
-- [ ] **#107 — Alerta de solicitações pendentes sobrepostas** `P4` · `effort: large` no caso quando o usuario gestor estiver com reservas que sao sobrepostas ele ter noção que há duas solicitações de interesse
+Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
-- [ ] **#46 — Edição administrativa de reserva** `P4`
-      Escopo maior: exige audit log, notificação ao dono, habilitar permission `reservas.atualizar`.a ideia é que o usuario possa editar o titulo ou a descrição da reserva mediante autorização do gestor, envolve planejar uma forma de validar como esse fluxo vai acontecer, voce precisa criar um brainstorm comigo para entender as regras e oque pode ser feito
+- **GAP-01** · obsoleto: o fluxo mudou e o hook foi removido (fase 07 dos débitos 2026-09).
+- **GAP-04** · falso positivo: os e-mails já usam templates Blade desde fevereiro de 2026 (#117).
+- **GAP-05** · feito no #432 (filtro de período nas listas de reservas).
+- **GAP-02 e GAP-03** · feitos em agosto: a edição regenera os conflitos (commit `554e85a`) e a propagação `recurring` respeita as agendas do gestor (#302).
+- **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
+- **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
+- **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
+- **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (falta o resíduo da Onda 1), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
+- **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
+- **Recorrência "personalizado"** (auditoria de regras de reserva, H1) · falso positivo: comportamento projetado, documentado em [`regras-de-negocio/recorrencia.md`](./regras-de-negocio/recorrencia.md).
+- **Deprecar o `ValidateReservationConflictsJob`** · cancelado: o job continua em uso.
+- **Teste de carga do `ShouldBeUnique`** (áreas de foco) · descartado: coberto pelo lock de agenda do #406.
+- **B20, B40 e B42** · refutados ou fechados. **DT-12** · resolvido: Laravel 12.70 em produção desde 30/10. **D-EST-21** · prejudicada, porque o trem R2 não aconteceu.
+- **Calendário da estabilização v1** (trens R2 a R5 e a meta de 06/11 para a Fase 1) · vencido: o plano parou em 10/10.
 
-- [ ] **#49 — Navegação rápida entre salas do pavilhão** `P4` a ideia é que o gestor quando estiver buscando uma sala ele possa atraves do visualizar agenda selecionar a proxima sala do modulo que ele está, para percorrer entre a lista de salas
+## Entregas recentes
 
-**Futuro (requer design)**
+Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
-- [ ] **GAP-08 — Dashboard com métricas de ocupação** `P3` · `effort: large`
-      `HomeController`/`HomeService` existem mas não consolidam ocupação. Gráficos e tendências.
+- **31/10** · #489 LGPD: payloads e logs mínimos, anonimização de conta, limites de taxa, página de privacidade (rascunho) e mensagens traduzíveis. Em staging.
+- **30–31/10** · #481, #483 e #487: fronteiras de camadas, correções de UX, acessibilidade, estado vazio e anatomia de página.
+- **30/10** · #476 dependências; #475 release 1.4.4 em produção.
+- **24/10** · #465 hotfix 1.4.3 (PHP 8.4.27); #469 e #470 patches de segurança e Laravel 12.70 (S25, S40); #471 hardening do Docker.
+- **05–09/10** · #438 a #459: linha de base verde e onda 1 da estabilização (B1, B4, B7 a B10, B13, B17, B19, B29 a B32, B43, B46).
+- **30/09** · #432 débitos técnicos 2026-09: canal privado por espaço, filtro de período, tempo real nas listas, gate do PHPStan e snapshot do `conflict_cache`.
+- **29–30/08** · #403 áreas de foco (relatórios com policy e cache, revalidação de conflitos) e #406 regras de reserva (sobreposição síncrona, lock, datas, auto-aprovação).
 
-- [ ] **GAP-09 — Aprovação parcial granular** `P3` · `effort: medium`
-      Status `parcialmente_deferida` sem caminho claro. Notificar solicitante com opções.
+## Origem dos itens
 
-- [ ] **GAP-10 — Histórico e audit trail de avaliações** `P3` · `effort: medium`
-      Falta rastreabilidade além de `user_id` no `Horario`. Tabela de log ou eventos de domínio.
+Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` estão no `.gitignore`). O que falta de cada um está acima; o detalhe de execução (briefings, consultas, roteiros) fica no material local.
 
----
+| Plano | Período | Situação | Itens que sobraram |
+| --- | --- | --- | --- |
+| Auditoria de issues e backlog anterior | ago/2026 | concluído | #46, #49, #98, #104, #107, GAP-06 a GAP-10 |
+| Áreas de foco | 28/08 | concluído (#403) | AF-6.3a, AF-6.3b, S38, DEB-D2 |
+| Regras de reserva | 29/08 | concluído (#406) | RR-H2, RR-H3, RR-D3, RR-F01, RR-F04, S36 |
+| Débitos técnicos 2026-09 | 24–29/09 | fases 01 a 08 no #432; fase 09 parada | DEB-D2, DEB-A1, DEB-D3, DEB-R4, S39 |
+| Board e roadmap | 30/09 | absorvido pela estabilização e pela LGPD | decisões D-1 a D-9 |
+| Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |
+| LGPD | 31/10 | em execução; lote 1 em staging | Ondas 1 e 2 |
+| i18n | 31/10 | plano pronto, não iniciado | Onda 6 |
 
-## 🚫 Fora da fila
+## Como manter
 
-- [x] **#111 — Alerta de exclusão mal posicionado** → **fechada em 2026-08-20**
-      Já estava corrigida no código antes da auditoria (`Dialog` do Radix em `delete-item.tsx:54-100`), aparentemente por refatoração que não referenciou a issue. Verificada e fechada. A label `P0` estava obsoleta.
-
-- [ ] **#41 — Refresh manual (F5)** `P4` → reabrindo para reavaliação
-      Estava marcado `wontfix` sem documentação de contexto. Reabrindo em 2026-08-23 para investigar:
-      - Ainda é problema em produção?
-      - WebSocket broadcasting resolveu?
-      - Vale realmente wontfix ou merece fix?
-
----
-
-## 🗑️ Obsoletos/Descontinuados
-
-- [x] **GAP-01 — AvaliarReservaPage não auto-reload após ValidateJob terminar** `P0` · `effort: medium`
-      **Status:** Descontinuado em 2026-08-22 — O fluxo mudou.
-      **Motivo:** A página `AvaliarReservaPage` redireciona **imediatamente** após submit para `gestor.reservas.index`. O hook `useReservationValidation` que deveria escutar o evento `ReservationValidated` nunca executa porque o usuário já saiu da página. O cenário descrito (gestor vendo loader + auto-reload) não ocorre mais. O hook causava erro `channel.leave is not a function` sem propósito. Hook removido da codebase na Fase 07 de 2026-09 (até então era código morto).
-      **Ações tomadas:**
-    - Removido import de `useReservationValidation` de `AvaliarReservaPage.tsx`
-    - Removido hook call (linha 56)
-    - Adicionado guard defensivo ao hook para futuros usos (`channel?.leave`)
-
----
-
-## Pendências de gestão (não são código)
-
-- [x] Fechar a **#111** — feita em 2026-08-20
-- [x] Fechar **#119**, **#222**, **#101** com comentário do que foi corrigido — feitas em 2026-08-20
-- [x] Fechar **#112** e **#108** no GitHub com comentário — feitas em 2026-08-23 (envelope JSON + soft delete)
-- [ ] Repriorizar a **#119** de `P2` → `P0` no GitHub (registro histórico; a issue já está fechada)
-- [ ] Decidir se `institucional` sem agendas **deveria** avaliar reservas (efeito colateral documentado na #119)
-- [x] Decidir o escopo pretendido de `reservas.atualizar` — resolvido: revogada do institucional, admin edita só a própria reserva
-- [x] Fechar a **#260** no GitHub com comentário explicando a revisão de escopo — feita em 2026-08-23
-- [x] Fechar a **#255** no GitHub com comentário — feita em 2026-08-23 (datas em single scope)
-- [x] Validar a **#106** com o time antes de investir — entregue e mergeada em 2026-08-23 (PR #323)
-- [x] Re-abrir **#41** para reavaliação de escopo (wontfix foi descisão sem contexto) — reabrindo 2026-08-23
-
-> A ressalva sobre o corpo da #119 (`ReservaPolicy::view()` desatualizada) ficou registrada no comentário de fechamento, então não é mais necessário editar o corpo da issue.
-
----
-
-## Placar
-
-|                        |                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| Concluídas e mergeadas | **12** (#119, #222, #101, #105, #112, #108, #265, GAP-03, #255, GAP-02, #106, GAP-11-F4) |
-| Concluídas, aguardando PR | **2** (#260/`reservas.atualizar` — PR #343; revogação de `reservas.deletar` — branch `fix/remove-admin-reserva-deletar`) |
-| Fechadas no GitHub     | **12** (#119, #222, #101, #105, #111, #112, #108, #255, #260, #265, #106, GAP-11-F4)    |
-| Em andamento           | **0**                                                                                     |
-| Na fila                | **17** (6 GitHub + 7 GAPs + futuro + #41 reabrindo para reavaliação)                     |
-| Obsoletos              | **1** (GAP-01)                                                                           |
-| Wontfix                | **0**                                                                                     |
-
-> ⚠️ **Fechar issues manualmente após o merge.** O `Closes #NNN` no commit **não** dispara o auto-close quando o merge é para `develop` — o GitHub só fecha automaticamente em merges para o branch default (`main`).
+- Item novo entra na onda certa, com ID, prioridade, esforço e critério de pronto.
+- Item concluído sai daqui no mesmo PR que o entrega; atualize a data no topo. O histórico fica no `CHANGELOG.md`.
+- Auditoria nova é material de trabalho local; ao terminar, o que falta entra aqui e as regras vivas vão para o documento da área. Ver [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md).
