@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.5.0-rc.106](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.105...v1.5.0-rc.106) (2026-11-01)
+
+
+### Features
+
+* **lgpd:** adequação à LGPD (minimização, anonimização, limites de taxa e página de privacidade) ([e71d5dc](https://github.com/uniespacos/uniespacos/commit/e71d5dcd090430cdc2361f539c8b01ec7aa56d2d))
+* **lgpd:** adiciona links para a política de privacidade no cadastro e nos rodapés ([bff6c6c](https://github.com/uniespacos/uniespacos/commit/bff6c6cc055b1fac56fe3785e6d5a530006170ba))
+* **lgpd:** adiciona página pública da política de privacidade ([436a0dd](https://github.com/uniespacos/uniespacos/commit/436a0ddb7780dc78df400d108809b99d9f09011a))
+* **lgpd:** adiciona página pública de privacidade e rodapé de e-mail, e internacionaliza mensagens flash legadas ([5933e95](https://github.com/uniespacos/uniespacos/commit/5933e95149b2c2e2874c6bad20db17edf1998618))
+* **lgpd:** anonimiza a conta em vez de excluir, num serviço único (T-25) ([efe4484](https://github.com/uniespacos/uniespacos/commit/efe44847c3d3e1d093f143e5362e42bcdd6c068d))
+* **lgpd:** cancela reservas pendentes ao anonimizar e filtra contas anonimizadas na lista (T-25) ([ce59195](https://github.com/uniespacos/uniespacos/commit/ce59195b314d2dd00880af5cf6c60b32d43c0676))
+* **lgpd:** limita taxa de cadastro, recuperação de senha, locale e broadcasting e neutraliza o "esqueci a senha" (T-29) ([e4262fd](https://github.com/uniespacos/uniespacos/commit/e4262fd0f799bf9f04dede701a1c879973b44434))
+
+
+### Bug Fixes
+
+* **lgpd:** cifra o histórico do navegador e limpa no logout e na autoexclusão ([5095aa0](https://github.com/uniespacos/uniespacos/commit/5095aa09a225b8c4bf89fe691b638e0b207aa194))
+* **lgpd:** internacionaliza a mensagem de erro da foto de perfil (pt-BR, en, es) ([aff66e4](https://github.com/uniespacos/uniespacos/commit/aff66e46b685e0aec39ad73a582f7e4becc47427))
+* **lgpd:** internacionaliza os prefixos "Erro ao" dos módulos institucionais e a notificação de falha na reserva ([1d53bc2](https://github.com/uniespacos/uniespacos/commit/1d53bc229aeed05207ecc73440189cbf1492c9ff))
+* **lgpd:** internacionaliza os textos novos da T-24 (pt-BR, en, es) ([4656fc4](https://github.com/uniespacos/uniespacos/commit/4656fc410e9d6625fdfa36dd1664f993d960906e))
+* **lgpd:** internacionaliza os textos novos da T-25 (pt-BR, en, es) ([1976e42](https://github.com/uniespacos/uniespacos/commit/1976e42b8ec92305264cd138a5fcb5ada163b425))
+* **lgpd:** internacionaliza os textos novos de minimização e validação (pt-BR, en, es) ([930ef1c](https://github.com/uniespacos/uniespacos/commit/930ef1ce65e2a402ecd86ff5b3ad645b67f5f907))
+* **lgpd:** mostra a página de erro 429 em visitas Inertia fora de local e testing ([fd40bba](https://github.com/uniespacos/uniespacos/commit/fd40bbaffee9940536c33e15b176f3a154236d80))
+* **lgpd:** processa a foto de perfil sem estourar a memória (A-19) ([fc5f555](https://github.com/uniespacos/uniespacos/commit/fc5f555c82f067fc6eea71e24352614163c555e7))
+* **lgpd:** reduz os payloads de página às colunas que a tela usa ([c7758f1](https://github.com/uniespacos/uniespacos/commit/c7758f1ba59836594dfabacd25645c6d548da369))
+* **lgpd:** reprocessa a foto de perfil e remove EXIF e GPS antes de gravar ([cc6f3ae](https://github.com/uniespacos/uniespacos/commit/cc6f3ae3526824e49d8bd890db4a8f6423a44a07))
+* **lgpd:** tira o nome de terceiros de notifications.data e da justificativa de conflito (T-24) ([4b1a5c2](https://github.com/uniespacos/uniespacos/commit/4b1a5c2f0ee0f3f6ea119d5c3707c285689ba23b))
+* limita e tipa campos de texto livre de reserva e avaliação ([4a53969](https://github.com/uniespacos/uniespacos/commit/4a53969549aaa3c34a8de7682269d7e9de8383ee))
+* mantém o log de qualquer exceção ao atualizar permissões de usuário ([fd2c311](https://github.com/uniespacos/uniespacos/commit/fd2c311cf926a9ecab9d5606525264ba483306a7))
+* registra SQL com valores só com flag explícita em local/development ([178224e](https://github.com/uniespacos/uniespacos/commit/178224e8edc9af0a0d3084f2d067a9bce1260a4a))
+* remove cabeçalhos e URL assinada do log de verificação de e-mail ([2efdede](https://github.com/uniespacos/uniespacos/commit/2efdede686524cc0ac2fe2c3bbf95f39a84640a1))
+* seeders de desenvolvimento só rodam em local, development e testing ([2a876cf](https://github.com/uniespacos/uniespacos/commit/2a876cf982429f56ca5bf31af8a9da7e4437ecb7))
+* tira dado pessoal de logs e mensagens de erro exibidas ao usuário ([f5eb589](https://github.com/uniespacos/uniespacos/commit/f5eb58970d070ca148f1a1be0b0091b8e7618e37))
+
+
+### Miscellaneous Chores
+
+* **dev:** publica Adminer e Mailpit só em 127.0.0.1 ([6024312](https://github.com/uniespacos/uniespacos/commit/6024312ef04dbf414bc8c764a9ef50e3923fbd6b))
+* **docker:** tira dumps, backups, logs e uploads do contexto de build ([57888af](https://github.com/uniespacos/uniespacos/commit/57888afbd1525c82466b39532e2015e876f88d41))
+
 ## [1.5.0-rc.105](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.104...v1.5.0-rc.105) (2026-10-31)
 
 
