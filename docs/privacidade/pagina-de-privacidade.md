@@ -23,7 +23,7 @@ Página pública `GET /privacidade` com a Política de Privacidade do UniEspaço
 | `resources/js/presentation/molecules/RegisterStepPersonal.tsx` | Link ao lado da finalidade do telefone no cadastro (`newTab`). |
 | `resources/js/presentation/templates/auth/AuthSplitLayout.tsx` | Link no rodapé das telas de autenticação. |
 | `resources/js/presentation/templates/app/AppSidebarLayout.tsx` | Link no rodapé das telas autenticadas. |
-| `resources/views/emails/layout.blade.php` | Link e contato no rodapé de todos os e-mails. Ver [notifications-and-channels.md](./notifications-and-channels.md#rodapé-comum-dos-e-mails-lgpd). |
+| `resources/views/emails/layout.blade.php` | Link e contato no rodapé de todos os e-mails. Ver [notificacoes.md](../arquitetura/notificacoes.md#rodapé-comum-dos-e-mails-lgpd). |
 | `.env.example` | Variável `PRIVACY_PAGE_ENABLED=true`. |
 
 ```mermaid
@@ -114,5 +114,5 @@ O namespace `privacidade` do dicionário organiza as seções que a página rend
 - Molécula: `resources/js/presentation/molecules/PrivacyLink.tsx`
 - Dicionários: `resources/js/i18n/locales/` (namespace `privacidade`)
 - Rodapé de e-mail: `resources/views/emails/layout.blade.php`
-- Notificações e e-mails: [notifications-and-channels.md](./notifications-and-channels.md)
-- Limites de taxa da rota: [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29)
+- Notificações e e-mails: [notificacoes.md](../arquitetura/notificacoes.md)
+- Limites de taxa da rota: [autorizacao.md](../regras-de-negocio/autorizacao.md#limites-de-taxa-throttling--t-29)

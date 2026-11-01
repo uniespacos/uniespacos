@@ -29,7 +29,7 @@ class UpdateReservaRequest extends FormRequest
      * são os novos horários (não a âncora histórica). Qualquer alteração de data para
      * trás será manual (autorizada pelo gestor/admin).
      *
-     * Vide: docs/plano-execucao-regras-reserva/fase-03-validacao-datas/INSTRUCOES.md (T3.2)
+     * Vide: docs/regras-de-negocio/validacao.md (validação de datas).
      *
      * @return array<string, array<int, mixed>>
      */
