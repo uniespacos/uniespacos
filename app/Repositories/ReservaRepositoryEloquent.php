@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Reserva;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -75,7 +76,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             'horarios' => function ($query) use ($weekStart, $weekEnd) {
                 $query->whereBetween('data', [$weekStart, $weekEnd])
                     ->orderBy('data')->orderBy('horario_inicio')
-                    ->with(['agenda.espaco.andar.modulo.unidade', 'agenda.user', 'avaliador:id,name']);
+                    ->with(['agenda.espaco.andar.modulo.unidade', 'agenda.user:id,name,email,setor_id', 'avaliador:id,name']);
             },
         ])->find($reservaId);
     }
@@ -150,6 +151,18 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
         $reserva->update($data);
 
         return $reserva;
+    }
+
+    /**
+     * @return Collection<int, Reserva>
+     */
+    public function getPendentesDoSolicitante(int $userId): Collection
+    {
+        return $this->reserva->newQuery()
+            ->where('user_id', $userId)
+            ->where('situacao', SituacaoReservaEnum::EM_ANALISE->value)
+            ->lockForUpdate()
+            ->get();
     }
 
     public function destroy(int|string $id): bool

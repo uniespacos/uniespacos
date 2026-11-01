@@ -49,7 +49,7 @@ final class ExceptionContext
         return $context + [
             'route' => Route::currentRouteName(),
             'method' => $request->method(),
-            'url' => $request->fullUrl(),
+            'url' => $request->url(),
             'ip' => $request->ip(),
         ];
     }

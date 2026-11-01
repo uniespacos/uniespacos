@@ -50,7 +50,7 @@ class ReservaController extends Controller
                 'exception' => $error,
             ]);
 
-            return back()->withErrors(['error' => 'Não foi possível enviar sua solicitação para processamento. Tente novamente.']);
+            return back()->withErrors(['error' => __('Could not send your request for processing. Please try again.')]);
         }
     }
 
@@ -81,7 +81,7 @@ class ReservaController extends Controller
             $this->service->update($reserva, $request->validated(), Auth::user());
 
             return redirect()->route('reservas.index')
-                ->with('success', 'Sua solicitação de alteração foi enviada para processamento.');
+                ->with('success', __('Your change request was sent for processing.'));
         } catch (\Exception $e) {
             Log::error('Erro ao despachar UpdateReservaJob', [
                 'reserva_id' => $reserva->id,
@@ -89,7 +89,7 @@ class ReservaController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Ocorreu um erro ao enviar a atualização para processamento.');
+            return back()->with('error', __('An error occurred while sending the update for processing.'));
         }
     }
 
@@ -98,13 +98,13 @@ class ReservaController extends Controller
         $this->authorize('delete', $reserva);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
             $this->service->cancel($reserva, Auth::user());
 
-            return back()->with('success', 'Reserva cancelada com sucesso!');
+            return back()->with('success', __('Reservation cancelled successfully!'));
         } catch (\Exception $error) {
             Log::error('Erro ao cancelar (inativar) reserva', [
                 'reserva_id' => $reserva->id,
@@ -112,7 +112,7 @@ class ReservaController extends Controller
                 'exception' => $error,
             ]);
 
-            return back()->with('error', 'Erro ao cancelar a reserva. Por favor, tente novamente.');
+            return back()->with('error', __('Error cancelling the reservation. Please try again.'));
         }
     }
 }

@@ -96,11 +96,7 @@ public function via(object $notifiable): array
 ```php
 public function toArray(object $notifiable): array
 {
-    return [
-        'titulo' => $this->titulo,
-        'descricao' => $this->descricao,
-        'url' => $this->url,
-    ];
+    return $this->payload();
 }
 ```
 
@@ -111,15 +107,42 @@ Insere linha em `notifications` table com json serializado.
 ```php
 public function toBroadcast(object $notifiable): BroadcastMessage
 {
-    return new BroadcastMessage([
-        'titulo' => $this->titulo,
-        'descricao' => $this->descricao,
-        'url' => $this->url,
-    ]);
+    return new BroadcastMessage($this->payload());
 }
 ```
 
 Transmite ao canal `App.User.{id}` em tempo real.
+
+#### `payload()` — Conteúdo persistido e transmitido
+
+`payload()` monta o mesmo array para `toArray()` (database) e `toBroadcast()` (WebSocket):
+
+```php
+[
+    'titulo' => $this->titulo,
+    'descricao' => $this->descricao,
+    'url' => $this->url,
+    ...$this->identificadores(),
+    ...$this->traducaoNoFront(),
+]
+```
+
+`identificadores()` é o gancho que cada notificação sobrescreve para expor IDs (ex.: `reserva_id`, `solicitante_id`, `cancelador_id`). **Regra LGPD (T-24):** `descricao` e os identificadores **não** podem conter nome de pessoa. O nome é lido ao vivo pelo e-mail (`toMail()`), que não é persistido. Texto livre da própria reserva (título) continua permitido nesta etapa; dados de terceiros, não.
+
+`traducaoNoFront()` é o segundo gancho: as notificações que têm texto traduzido no front expõem `chave` e `parametros` (ver "Internacionalização" abaixo). Notificações sem o gancho não gravam esses campos.
+
+#### Internacionalização (i18n) das notificações
+
+**Back (`titulo` e `descricao`):** são gerados com `__()` usando chave em inglês (`lang/pt.json`, `lang/pt_BR.json`, `lang/es.json`; `en` exibe a própria chave). O idioma é o locale em vigor no momento em que a notificação é construída: em request, o da sessão (`HandleLocale`); em job sem sessão (ex.: `ProcessarCriacaoReserva`), o locale padrão do worker (`APP_LOCALE`, hoje `pt`).
+
+**Front (`chave` + `parametros`):** para as notificações da T-24, o payload também grava:
+
+- `chave` — identificador estável que o front mapeia para as chaves tipadas do dicionário (`reservas.nova_solicitacao` → `reservas.notificacoes.nova_solicitacao.{titulo,descricao}`; `reservas.cancelada` → `reservas.notificacoes.cancelada.{titulo,descricao}`).
+- `parametros` — valores interpolados no texto (`{ titulo_reserva }`). Nunca contêm nome de pessoa.
+
+`resources/js/lib/utils/notificacao-texto.ts` (`resolverTextoNotificacao`) renderiza o texto no idioma de quem lê, com `t()`. Se `chave` não for conhecida ou não existir (notificações antigas), o front cai em `titulo` e `descricao` gravados. O mesmo vale para o item que chega por broadcast, em `NotificationDropdown`.
+
+**Limitação de idioma no `AvaliarReservaJob`:** o job roda na fila, sem sessão. O locale é capturado em `app()->getLocale()` no construtor (executado na request do gestor) e usado em `__('Conflict with another approved reservation at this time.', [], $this->locale)` no `handle()`, sem alterar o locale global do worker. Consequência: o texto de justificativa de conflito persistido em `horarios.justificativa` fica no idioma de quem avaliou; não é retraduzido na leitura. Não há coluna para guardar chave e parâmetros e não criamos migration para isso. Registros já gravados com o texto antigo em português permanecem como estão.
 
 #### `toMail()` — Notificação de Email
 
@@ -142,10 +165,14 @@ Implementado individualmente em cada notificação. Usa template customizado em 
 **Payload:**
 
 ```
-Título: "Nova Solicitação de Reserva"
-Descrição: "Uma nova solicitação de reserva para '{$reserva->titulo}' foi criada por '{$reserva->user->name}'."
+Título: __('New Reservation Request')  → "Nova Solicitação de Reserva" (pt)
+Descrição: __('A new reservation request for ":titulo_reserva" was submitted.', ['titulo_reserva' => $reserva->titulo])
 URL: route('gestor.reservas.show', $reserva->id)
+Identificadores (notifications.data): reserva_id, solicitante_id
+Tradução no front: chave 'reservas.nova_solicitacao', parametros { titulo_reserva }
 ```
+
+Sem nome do solicitante em `notifications.data` (T-24). O e-mail (`emails.reservations.new_reservation`) continua mostrando o nome, lido ao vivo.
 
 **Supressão de Email:** Não aplicável (nunca enviada para o solicitante — é loop exclusivamente para gestores)
 
@@ -235,13 +262,17 @@ Propriedades extras:
 **Payload:**
 
 ```
-Título: "Reserva Cancelada"
-Descrição: "O usuário {$canceler->name} cancelou a reserva '{$reserva->titulo}'."
+Título: __('Reservation Canceled')  → "Reserva Cancelada" (pt)
+Descrição: __('The reservation ":titulo_reserva" was canceled.', ['titulo_reserva' => $reserva->titulo])
 URL: route('gestor.reservas.index')
+Identificadores (notifications.data): reserva_id, cancelador_id
+Tradução no front: chave 'reservas.cancelada', parametros { titulo_reserva }
 
 Propriedades extras:
-- $canceler: User (quem cancelou)
+- $canceler: User (quem cancelou; usado só para o e-mail e para o `cancelador_id`)
 ```
+
+Sem nome de quem cancelou em `notifications.data` (T-24). O e-mail (`emails.reservations.reservation_canceled`) continua mostrando o nome, lido ao vivo.
 
 **Supressão de Email:** Não aplicável (cancellamento sempre é ação administrativa)
 
@@ -441,12 +472,16 @@ Propriedades extras:
   "data": {
     "titulo": "Sua reserva foi criada!",
     "descricao": "...",
-    "url": "..."
+    "url": "...",
+    "reserva_id": 42,
+    "solicitante_id": 7
   },
   "read_at": null,
   "created_at": "2026-08-22T10:30:00Z"
 }
 ```
+
+`data` contém `titulo`, `descricao` e `url`, mais os identificadores que a notificação expõe (`reserva_id`, `solicitante_id`, `cancelador_id`). Nas notificações da T-24 também entram `chave` e `parametros` (ex.: `"chave": "reservas.nova_solicitacao", "parametros": {"titulo_reserva": "Auditório"}`). Nenhum campo grava nome de pessoa (T-24).
 
 **Características:**
 
@@ -454,7 +489,9 @@ Propriedades extras:
 - Registra histórico completo (permite auditoria)
 - Usuário visualiza no painel ("Notificações")
 - Marca como lida quando clicada
-- Persiste indefinidamente (não expira)
+- Persiste indefinidamente (não expira) — exceto registros anteriores ao T-24, que serão expirados pela retenção (T-19, ainda não implementada)
+
+**Registros anteriores ao T-24:** linhas gravadas antes desta mudança ainda trazem o nome do solicitante ou de quem cancelou dentro de `descricao` (ex.: `"...foi enviada por '<nome>'."`). Não há migration que reescreva esses dados: a decisão é deixá-los expirar pela política de retenção (T-19). Até lá, o front continua exibindo `descricao` como está gravada, pois essas linhas não têm `chave` e caem fallback em `titulo`/`descricao`.
 
 **Quem Consulta:**
 
@@ -470,12 +507,10 @@ Propriedades extras:
 **Configuração:**
 ```php
 // BaseNotification::toBroadcast()
-return new BroadcastMessage([
-    'titulo' => $this->titulo,
-    'descricao' => $this->descricao,
-    'url' => $this->url,
-]);
+return new BroadcastMessage($this->payload());
 ```
+
+Mesmo conteúdo de `notifications.data` (ver `payload()`), portanto também sem nome de terceiros.
 
 **Canal de transmissão:** `App.User.{user_id}` (privado)
 
@@ -537,6 +572,19 @@ MAIL_PASSWORD=...
 - Reserva auto-aprovada (`ReservationCreatedNotification`)
 - Solicitante é o único gestor
 - Resultado: email não é enfileirado
+
+---
+
+### Rodapé comum dos e-mails (LGPD)
+
+**Arquivo:** `resources/views/emails/layout.blade.php`
+
+Todos os templates de e-mail do sistema estendem `emails.layout` (`@extends('emails.layout')`), então o rodapé aparece em todos eles. Ele traz:
+
+- Link para a Política de Privacidade: `url('/privacidade')`, com o rótulo `__('Privacy Policy')`.
+- Linha de contato provisório da Procuradoria Jurídica: `__('Questions about your personal data? Contact the UESB Legal Department (provisional channel):')`, seguida de `projur@uesb.edu.br`.
+
+O rodapé não consulta configuração: não há flag que o oculte. A página de destino pode ser desligada por `PRIVACY_PAGE_ENABLED`, caso em que o link leva a 404 (ver [privacy-page.md](./privacy-page.md)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`.
 
 ---
 

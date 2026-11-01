@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -40,28 +41,48 @@ class UserPolicy
     /**
      *  Atualizar usuários
      * - O próprio usuário pode atualizar o seu perfil
+     * - Conta anonimizada não é mais editável, nem por ela mesma nem pelo institucional
      */
-    public function update(User $user, User $model): bool
+    public function update(User $user, User $model): Response
     {
-        return $user->id === $model->id
-            || $user->hasPermissionTo('usuarios.atualizar');
+        if ($model->estaAnonimizado()) {
+            return $this->negarContaAnonimizada();
+        }
+
+        return $user->id === $model->id || $user->hasPermissionTo('usuarios.atualizar')
+            ? Response::allow()
+            : Response::deny();
     }
 
     /**
      *  Atualizar permissões de outro usuário
+     * Conta anonimizada não recebe papel nem permissão
      */
-    public function updatePermissions(User $user, User $model): bool
+    public function updatePermissions(User $user, User $model): Response
     {
-        return $user->hasPermissionTo('usuarios.gerenciar-permissoes');
+        if ($model->estaAnonimizado()) {
+            return $this->negarContaAnonimizada();
+        }
+
+        return $user->hasPermissionTo('usuarios.gerenciar-permissoes')
+            ? Response::allow()
+            : Response::deny();
     }
 
     /**
      *  Deletar usuários
      * Apenas Institucional (1) pode deletar
+     * Conta já anonimizada não é excluída de novo
      */
-    public function delete(User $user, User $model): bool
+    public function delete(User $user, User $model): Response
     {
-        return $user->hasPermissionTo('usuarios.deletar');
+        if ($model->estaAnonimizado()) {
+            return $this->negarContaAnonimizada();
+        }
+
+        return $user->hasPermissionTo('usuarios.deletar')
+            ? Response::allow()
+            : Response::deny();
     }
 
     /**
@@ -104,5 +125,10 @@ class UserPolicy
     public function isInstitucional(User $user): bool
     {
         return $user->hasPermissionTo('secao.dashboard-institucional');
+    }
+
+    private function negarContaAnonimizada(): Response
+    {
+        return Response::deny(__('This account is anonymized and can no longer be changed.'));
     }
 }

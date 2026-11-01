@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateSetorRequest;
 use App\Models\Setor;
 use App\Services\SetorService;
 use App\Services\UnidadeService;
+use App\Support\MensagemDeErro;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -67,7 +68,7 @@ class InstitucionalSetorController extends Controller
     public function create(): RedirectResponse
     {
         return redirect()->route('institucional.setors.index')
-            ->with('error', 'A criação de setores é a partir do painel administrativo de setores.');
+            ->with('error', __('Sector creation is done from the sectors administration panel.'));
     }
 
     public function store(StoreSetorRequest $request): RedirectResponse
@@ -78,16 +79,16 @@ class InstitucionalSetorController extends Controller
             $this->service->store($request->validated());
 
             return redirect()->route('institucional.setors.index')
-                ->with('success', 'Setor cadastrado com sucesso!');
+                ->with('success', __('Sector registered successfully!'));
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao cadastrar setor: '.$e->getMessage()])->withInput();
+            return back()->with(['error' => __('Error creating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
     public function edit(Setor $setor): RedirectResponse
     {
         return redirect()->route('institucional.setors.index')
-            ->with('error', 'A edição de setores é a partir do painel administrativo de setores.');
+            ->with('error', __('Sector editing is done from the sectors administration panel.'));
     }
 
     public function update(UpdateSetorRequest $request, Setor $setor): RedirectResponse
@@ -97,9 +98,9 @@ class InstitucionalSetorController extends Controller
         try {
             $this->service->update($setor, $request->validated());
 
-            return back()->with('success', 'Setor atualizado com sucesso!');
+            return back()->with('success', __('Sector updated successfully!'));
         } catch (\Exception $e) {
-            return back()->with(['error' => 'Erro ao atualizar setor: '.$e->getMessage()])->withInput();
+            return back()->with(['error' => __('Error updating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
         }
     }
 
@@ -108,15 +109,15 @@ class InstitucionalSetorController extends Controller
         $this->authorize('delete', $setor);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
             $this->service->delete($setor);
 
-            return back()->with('success', 'Setor removido com sucesso!');
+            return back()->with('success', __('Sector removed successfully!'));
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Erro ao remover setor: '.$e->getMessage()]);
+            return back()->withErrors(['error' => __('Error removing sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
         }
     }
 }

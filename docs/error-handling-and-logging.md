@@ -48,6 +48,10 @@ O envelope é aplicado apenas em requisições que esperam JSON (`Accept: applic
 - Preserva `error_code` já presente (evita sobrescrita intencional)
 - Define `details` a partir de `errors` se não houver valor
 
+### Limites de taxa (429)
+
+Respostas de throttling em requisições JSON recebem `error_code: TOO_MANY_REQUESTS` pelo mesmo envelope. Os limitadores, as chaves usadas (IP, e-mail, usuário) e o tratamento em visitas Inertia (o 429 vira `Errors/ErrorPage`) estão em [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29).
+
 ## ErrorCode Enum
 
 Mapeamento estável entre status HTTP e códigos de erro que o cliente reconhece.
@@ -116,6 +120,31 @@ Log::info('Atualização de perfil', [
 ]);
 ```
 
+## Mensagem de Erro ao Usuário
+
+**Arquivo:** `app/Support/MensagemDeErro.php`
+
+`MensagemDeErro::paraUsuario($e)` monta o texto que vai para flash ou resposta ao usuário:
+
+| Tipo de exceção | Texto devolvido | Log |
+|-----------------|-----------------|-----|
+| Exceção de domínio (regra de negócio) | A própria mensagem da exceção | Nenhum |
+| `QueryException` ou `PDOException` | Texto genérico traduzido via `__()`. A chave é `MensagemDeErro::GENERICA` ("an internal error occurred. Please try again."); em pt-BR sai "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
+
+`QueryException` e `PDOException` carregam SQL e valores. Por isso o detalhe vai só para o log.
+
+O parâmetro `registrar` (padrão `true`) evita log duplicado. Passe `registrar: false` quando o chamador já registrou a exceção:
+
+```php
+Log::error('Falha ao criar unidade', ['exception' => $th]);
+
+return back()->with('error', __('Error creating unit: :message', ['message' => MensagemDeErro::paraUsuario($th, registrar: false)]));
+```
+
+O prefixo é uma chave `__()` em inglês, e o detalhe entra como `:message`. Ver a seção de mensagens traduzíveis abaixo.
+
+**Regra:** nunca concatenar `$e->getMessage()` direto em flash ou resposta. Use sempre `MensagemDeErro::paraUsuario()`.
+
 ## Logging Estruturado
 
 Padrão uniforme de logging em todos os layers da aplicação.
@@ -151,6 +180,18 @@ Log::error('Descrição breve do que falhou', [
 | `Log::info()` | Evento importante (job iniciado, reserva criada, decisão de negócio) |
 | `Log::debug()` | Detalhes de depuração (valor de variável intermediária) |
 
+### Log de Consultas SQL
+
+Flag `DB_LOG_QUERIES` (config `logging.log_queries`, em `config/logging.php`). Registra cada SQL com seus valores (bindings).
+
+| Item | Valor |
+|------|-------|
+| Padrão | `false` |
+| Ambientes | Só `local` e `development` (`App\Support\LogDeConsulta`) |
+| Produção | Nunca ligar |
+
+A flag é aplicada em `AppServiceProvider::boot()`. Fora de `local` e `development`, ela é ignorada. Valores de consulta são dado pessoal, por isso a flag não deve ser ligada em produção.
+
 ### Exemplos Reais do Codebase
 
 #### Em Job — Logging com Try-Catch em Notificações
@@ -162,7 +203,6 @@ public function handle(ExpansaoHorariosService $expansao): void
 {
     Log::info('ProcessarCriacaoReserva started', [
         'solicitante_id' => $this->solicitante->id,
-        'titulo' => $this->dadosRequisicao['titulo'],
     ]);
 
     try {
@@ -193,7 +233,6 @@ public function handle(ExpansaoHorariosService $expansao): void
     } catch (Exception $e) {
         Log::error('ProcessarCriacaoReserva failed', [
             'solicitante_id' => $this->solicitante->id,
-            'titulo' => $this->dadosRequisicao['titulo'],
             'exception' => $e,
         ]);
         $this->fail($e);
@@ -266,10 +305,12 @@ Toda exceção não capturada (ou passada a `report()`) recebe contexto automát
     'user_id' => auth()->id(),           // Null se não autenticado
     'route' => 'reservas.show',          // Nome da rota
     'method' => 'GET',                   // Método HTTP
-    'url' => 'https://app.test/...',     // URL completa
+    'url' => 'https://app.test/reservas/123', // URL SEM query string
     'ip' => '192.168.1.100',             // IP do cliente
 ]
 ```
+
+**Sobre `url`:** é `$request->url()`, sem a query string. A query pode trazer e-mail, token, assinatura de URL ou termo de busca, por isso fica de fora do log.
 
 ### Âmbito de Aplicação
 
@@ -334,6 +375,7 @@ Apenas `user_id`. Incluir rota/URL seria dado enganoso (um job não faz requisi�
 3. `context()` anexa user_id, rota, etc. via `ExceptionContext::build()`
 4. `render()` converte AuthenticationException em redirect para login (Inertia)
 5. `respond()` aplica envelope se `expectsJson() === true`
+6. Para requisições não-JSON, os status 403, 404, 419, 429, 500 e 503 são trocados pela página de erro do Inertia (`Errors/ErrorPage`). Os demais seguem como a resposta padrão do Laravel
 
 ### Layer 2: Validação (`FormRequest`)
 
@@ -563,6 +605,23 @@ As duas últimas (3 e 4) existem porque, sem elas, o teste passaria verde mesmo 
 
 Esse teste previne que esse bug ressurja em futuras refatorações.
 
+## Mensagens Traduzíveis no Backend (`__()`)
+
+Texto exibido ao usuário no back usa `__('English source key')`, com a tradução em `lang/pt.json`, `lang/pt_BR.json` e `lang/es.json`. Em `en` a própria chave é exibida, por isso a chave é sempre em inglês. Interpolação via `:nome` (ex.: `__('... ":titulo_reserva" ...', ['titulo_reserva' => $t])`). Toda chave nova precisa existir nos três arquivos. `tests/Unit/LangJsonChavesTest.php` tem um teste por grupo de chaves e por arquivo (`pt.json`, `pt_BR.json`, `es.json`). Os grupos cobrem a T-24 e a T-25 (anonimização: mensagem de gestor de agenda, flash de sucesso, `Anonymized user` e `Unidentified requester`), a resposta neutra de recuperação de senha (T-29), o rodapé de privacidade do e-mail, os prefixos de erro institucionais, a notificação de falha na reserva e as mensagens flash dos controllers.
+
+**Mensagens flash dos controllers:**
+
+- Flash de sucesso ou erro usa `->with('success', __('<chave em inglês>'))` ou `->with('error', __(...))`.
+- Erro com detalhe técnico usa uma chave com `:message` (ex.: `Error updating unit: :message`) e passa o detalhe por `MensagemDeErro::paraUsuario()`.
+- Não concatenar prefixo em português com a mensagem (ex.: `'Erro ao ...: '.$msg`). O prefixo fica fixo no idioma de origem e não é traduzido em `en` e `es`.
+- `lang/pt.json` e `lang/pt_BR.json` têm o mesmo conteúdo. Ao criar chave nova, atualizar os dois e o `es.json`.
+
+Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado como marcador e traduzido na leitura por accessor no model, não no banco. Ver `models-business-rules.md`, seção de exclusão de conta. Logs (`Log::...`) não passam por `__()`: ficam em português ou inglês técnico.
+
+- Locale da request vem de `HandleLocale` (sessão). Em job da fila não há sessão: capture `app()->getLocale()` no construtor e passe `$this->locale` como terceiro argumento de `__()` no `handle()`, sem alterar o locale global do worker.
+- Textos que o front monta com `t()` (dicionários em `resources/js/i18n/locales/`) não passam pelo `lang/`. Notificações usam os dois: `titulo`/`descricao` via `__()` e `chave`/`parametros` para o front (ver `notifications-and-channels.md`).
+- Limitação: o que é persistido já traduzido (ex.: `horarios.justificativa`) fica no idioma de quem gravou.
+
 ## Diferença: Erros Esperados vs Inesperados
 
 | Tipo | Exemplos | Logging | Stack Trace |
@@ -588,47 +647,54 @@ try {
 
 ### Campos PII (Identificação Pessoal)
 
-Tratados como seguros para log:
+Permitidos em log, porque identificam sem expor a pessoa:
 
-- `user_id`, `email`, `nome`, `cpf`
+- Identificadores numéricos: `user_id`, `reserva_id`, `gestor_id`, `solicitante_id` e similares
+
+Dado pessoal direto não vai para log, porque o arquivo de log não tem controle de acesso por titular nem prazo de eliminação:
+
+- `email`, `nome`, `telefone`, `cpf`
 
 Tratados como sensíveis (nunca logar):
 
 - `password`, `password_confirmation`, `current_password`
 - `_token`, `token` (CSRF/auth tokens)
+- Cabeçalhos de requisição (cookie, token XSRF)
+- URL assinada de verificação de e-mail
+- Query string de qualquer URL
+- Valores de consulta SQL (`DB_LOG_QUERIES`, só em local/development)
+- Textos livres digitados por usuários (título e descrição de reserva, motivo de avaliação)
 - Conteúdo de requisição (`request()->all()`)
 
 ### Limpeza de Logs Antigos
 
-Laravel produz logs diários por padrão (config `config/logging.php`):
+Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/console.php`:
+
+- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**.
+- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
+- **Limpeza agendada:** não existe. `routes/console.php` não agenda nenhum comando de limpeza de logs.
 
 ```php
-'channels' => [
-    'stack' => [
-        'driver' => 'stack',
-        'channels' => ['single', 'daily'],
-    ],
-    'daily' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/laravel.log'),
-        'days' => 14,  // Retém últimos 14 dias
-    ],
-]
+// config/logging.php (trecho)
+'stack' => [
+    'driver' => 'stack',
+    'channels' => explode(',', env('LOG_STACK', 'single')),
+],
+'daily' => [
+    'driver' => 'daily',
+    'path' => storage_path('logs/laravel.log'),
+    'days' => env('LOG_DAILY_DAYS', 14),
+],
 ```
 
-**Em produção:** Cron job ou scheduler remove logs com mais de 30 dias (conforme política de retenção).
-
-```php
-// routes/console.php
-Schedule::command('logs:clear')->weekly();
-```
+**Planejado:** rotação diária com retenção de 14 dias em produção, e limpeza periódica de logs com mais de 30 dias, conforme a política de retenção. Nada disso existe no código hoje.
 
 ### Requisitos de Conformidade
 
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** Mínimo 14 dias (estendível via config)
+4. **Retenção:** Planejado (mínimo 14 dias). Hoje o arquivo padrão (`single`) não rotaciona; ver "Limpeza de Logs Antigos"
 
 **Campos recomendados para auditoria:**
 

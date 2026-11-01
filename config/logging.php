@@ -24,6 +24,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Log de consultas SQL
+    |--------------------------------------------------------------------------
+    |
+    | Grava cada consulta com seus valores. Os valores são dado pessoal, então
+    | isto só vale em local e development, e só com a flag ligada.
+    */
+
+    'log_queries' => (bool) env('DB_LOG_QUERIES', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Deprecations Log Channel
     |--------------------------------------------------------------------------
     |

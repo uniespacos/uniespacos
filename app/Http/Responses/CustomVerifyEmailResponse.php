@@ -24,16 +24,15 @@ class CustomVerifyEmailResponse implements VerifyEmailResponseContract
     public function toResponse($request)
     {
         Log::info('Verification hit', [
+            'user_id' => Auth::id(),
             'scheme' => $request->getScheme(),
             'is_secure' => $request->isSecure(),
-            'headers' => $request->headers->all(),
-            'url' => $request->fullUrl(),
         ]);
 
         // If the user is not authenticated when they hit the verification link,
         // store the full URL (including query params) in session and redirect to login.
         if (! Auth::check()) {
-            Log::info('Unauthenticated user hit verification link, redirecting to login', ['url' => $request->fullUrl()]);
+            Log::info('Unauthenticated user hit verification link, redirecting to login');
             Session::put('url.email-verification.intended', $request->fullUrl());
 
             return redirect()->guest(route('login'));

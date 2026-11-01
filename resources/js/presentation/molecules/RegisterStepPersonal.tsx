@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
-import { FormField } from '@/presentation/molecules/FormField';
 import { useTranslation } from '@/i18n';
+import { FormField } from '@/presentation/molecules/FormField';
+import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import type React from 'react';
 
 interface RegisterStepPersonalProps {
@@ -89,6 +90,9 @@ export function RegisterStepPersonal({ data, onInputChange, errors, processing }
                     className="h-11"
                 />
             </FormField>
+            <p className="text-muted-foreground text-xs">
+                {t('auth.register.telefone_finalidade')} <PrivacyLink newTab />
+            </p>
         </div>
     );
 }

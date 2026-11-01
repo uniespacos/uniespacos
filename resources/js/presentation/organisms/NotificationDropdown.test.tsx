@@ -1,10 +1,10 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { NotificationDropdown } from './NotificationDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNotificationAudio } from '@/hooks/useNotificationAudio';
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
 import { usePage } from '@inertiajs/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import { NotificationDropdown } from './NotificationDropdown';
 
 const mockRouterPost = jest.fn();
 
@@ -159,6 +159,100 @@ describe('NotificationDropdown', () => {
 
         expect(mockPlayFeedback).toHaveBeenCalled();
         expect(screen.getByTestId('notification-badge')).toHaveTextContent('2');
+    });
+
+    const notificacaoComChave = {
+        id: 'notif-chave-1',
+        type: 'App\\Notifications\\NewReservationNotification',
+        read_at: null,
+        created_at: '2026-08-25T10:00:00Z',
+        data: {
+            titulo: 'Titulo gravado',
+            descricao: 'Descricao gravada',
+            chave: 'reservas.nova_solicitacao',
+            parametros: { titulo_reserva: 'Sala 1' },
+            reserva_id: 11,
+            tipo: 'reserva_solicitada' as const,
+        },
+    };
+
+    const notificacaoAntiga = {
+        id: 'notif-legada-1',
+        type: 'App\\Notifications\\NewReservationNotification',
+        read_at: null,
+        created_at: '2026-08-25T10:00:00Z',
+        data: {
+            titulo: 'Titulo legado',
+            descricao: "Uma nova solicitação de reserva para 'Sala 0' foi enviada por 'Nome Antigo'.",
+            reserva_id: 12,
+            tipo: 'reserva_solicitada' as const,
+        },
+    };
+
+    it('renderiza a notificação pela chave em pt-BR, com os parâmetros, em vez do texto gravado', () => {
+        (usePage as jest.Mock).mockReturnValue({
+            props: { auth: { user: mockUser }, notifications: [notificacaoComChave], locale: 'pt-BR' },
+        });
+
+        render(<NotificationDropdown />);
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+
+        expect(screen.getByText('Nova Solicitação de Reserva')).toBeInTheDocument();
+        expect(screen.getByText("Uma nova solicitação de reserva para 'Sala 1' foi enviada.")).toBeInTheDocument();
+        expect(screen.queryByText('Titulo gravado')).not.toBeInTheDocument();
+    });
+
+    it('renderiza a notificação pela chave em inglês quando o idioma da página é en', () => {
+        (usePage as jest.Mock).mockReturnValue({
+            props: { auth: { user: mockUser }, notifications: [notificacaoComChave], locale: 'en' },
+        });
+
+        render(<NotificationDropdown />);
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+
+        expect(screen.getByText('New Reservation Request')).toBeInTheDocument();
+        expect(screen.getByText("A new reservation request for 'Sala 1' was submitted.")).toBeInTheDocument();
+    });
+
+    it('cai no titulo e na descricao gravados quando a notificação antiga não tem chave', () => {
+        (usePage as jest.Mock).mockReturnValue({
+            props: { auth: { user: mockUser }, notifications: [notificacaoAntiga], locale: 'en' },
+        });
+
+        render(<NotificationDropdown />);
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+
+        expect(screen.getByText('Titulo legado')).toBeInTheDocument();
+        expect(screen.getByText("Uma nova solicitação de reserva para 'Sala 0' foi enviada por 'Nome Antigo'.")).toBeInTheDocument();
+    });
+
+    it('renderiza pela chave a notificação que chega em tempo real via broadcast', () => {
+        let broadcastCallback: ((data: unknown) => void) | undefined;
+        mockChannel.notification.mockImplementation((cb: (data: unknown) => void) => {
+            broadcastCallback = cb;
+        });
+        (usePage as jest.Mock).mockReturnValue({
+            props: { auth: { user: mockUser }, notifications: [], locale: 'en' },
+        });
+
+        render(<NotificationDropdown />);
+
+        act(() => {
+            broadcastCallback?.({
+                id: 'notif-live-chave',
+                titulo: 'Reserva Cancelada',
+                descricao: 'A reserva "Sala 2" foi cancelada.',
+                chave: 'reservas.cancelada',
+                parametros: { titulo_reserva: 'Sala 2' },
+                url: '/gestor/reservas',
+                reserva_id: 9,
+            });
+        });
+
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+
+        expect(screen.getByText('Reservation Canceled')).toBeInTheDocument();
+        expect(screen.getByText('The reservation "Sala 2" was canceled.')).toBeInTheDocument();
     });
 
     it('cleans up Echo private channel listener on unmount', () => {

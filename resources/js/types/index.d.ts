@@ -72,6 +72,7 @@ export interface User {
     direct_permissions?: string[]; // Apenas permissões atribuídas diretamente ao usuário (model_has_permissions)
     setor_id: number | null;
     setor?: Setor; // Opcional, carregar com with('setor')
+    anonimizado?: boolean; // Preenchido pela listagem administrativa de usuários
     agendas?: Agenda[]; // Relação aninhada, array de agendas
     unread_notifications: []; // Adicionado no AppServiceProvider
     created_at: string;

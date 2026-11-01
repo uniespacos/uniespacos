@@ -22,6 +22,7 @@ class ListarUsuariosRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
             'setor_id' => ['nullable', 'integer', 'exists:setors,id'],
+            'anonimizados' => ['nullable', 'boolean'],
         ];
     }
 }

@@ -458,6 +458,10 @@ REVERB_HOST=reverb              # Hostname do container Reverb
 REVERB_PORT=8080
 ```
 
+### Limite de taxa do `/broadcasting/auth` (T-29)
+
+`bootstrap/app.php` registra o endpoint de autorização de canais com `['middleware' => ['web', 'throttle:broadcasting']]`. O limitador `broadcasting` (60 requisições por minuto, por usuário autenticado, com fallback para IP) está em `AppServiceProvider::boot()`. Quando o limite é excedido, a autorização do canal privado responde 429. Detalhes e demais limitadores em [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29).
+
 ### Frontend
 
 Variáveis lidas em `resources/js/app.tsx`: `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e `VITE_REVERB_SCHEME` (`https` força TLS).
@@ -642,6 +646,7 @@ docker restart uniespacos-queue-worker-1
 
 - **Backend Event:** `app/Events/ReservaEvent.php`
 - **Routes:** `routes/channels.php`
+- **Limite de taxa do canal (T-29):** `bootstrap/app.php` (`withBroadcasting`), `app/Providers/AppServiceProvider.php` (limitador `broadcasting`)
 - **Jobs:** `app/Jobs/ProcessarCriacaoReserva.php`, `AvaliarReservaJob.php`, `UpdateReservaJob.php`, `ValidateReservationConflictsJob.php`
 - **Hooks:** `resources/js/hooks/useReservationLiveUpdates.ts`, `useEspacoLiveUpdates.ts`
 - **Ciclo de vida do Echo:** `resources/js/app.tsx`

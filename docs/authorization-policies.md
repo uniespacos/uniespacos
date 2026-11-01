@@ -9,6 +9,7 @@ Este documento descreve o sistema de autorização de reservas: papéis, permiss
 - [ReservaPolicy — Métodos e Fluxos](#reservapolicy--métodos-e-fluxos)
 - [IDOR Prevention](#idor-prevention)
 - [Invariantes de Segurança](#invariantes-de-segurança)
+- [Limites de Taxa (Throttling) — T-29](#limites-de-taxa-throttling--t-29)
 
 ---
 
@@ -496,6 +497,71 @@ A intersecção garante que:
 - Um gestor não consegue "escapar" para avaliar agendas alheias
 - Não há forma de ser atribuído a uma agenda "secreta" sem explicitamente fazer `user->agendas()->attach()`
 - A listagem em `GestorReservaController::index()` e `viewForGestor()` se alinham
+
+---
+
+## Limites de Taxa (Throttling) — T-29
+
+Limites de requisições contra força bruta, enumeração de contas e abuso de envio de e-mail. Não são regra de autorização, mas ficam aqui porque protegem os mesmos endpoints de autenticação e de canal.
+
+### Limitadores
+
+| Limitador | Rota (nome) | Limite | Chave | Definido em |
+|-----------|-------------|--------|-------|-------------|
+| `register` | `register.store` | 10/min | IP | `FortifyServiceProvider` |
+| `forgot-password` | `password.email` | 5/min | IP | `FortifyServiceProvider` |
+| `forgot-password` | `password.email` | 3/min | E-mail informado (minúsculas, sem acento) | `FortifyServiceProvider` |
+| `reset-password` | `password.update` | 10/min | IP | `FortifyServiceProvider` |
+| `reset-password` | `password.update` | 5/min | E-mail informado (minúsculas, sem acento) | `FortifyServiceProvider` |
+| `confirm-password` | `password.confirm.store` | 5/min | Usuário autenticado (fallback: IP) | `FortifyServiceProvider` |
+| `locale` | `locale.update` | 60/min | IP | `AppServiceProvider` |
+| `broadcasting` | `/broadcasting/auth` | 60/min | Usuário autenticado (fallback: IP) | `AppServiceProvider` |
+
+**Arquivos:**
+- `app/Providers/FortifyServiceProvider.php`: `RateLimiter::for()` dos quatro limitadores do Fortify e mapeamento `LIMITADORES_DE_ROTA` (nome da rota → limitador).
+- `app/Providers/AppServiceProvider.php`: limitadores `locale` e `broadcasting`.
+- `bootstrap/app.php`: `withBroadcasting(..., ['middleware' => ['web', 'throttle:broadcasting']])`.
+
+**Como são anexados às rotas:** o `FortifyServiceProvider::boot()` registra um callback em `$this->app->booted()` que percorre as rotas pelo nome e acrescenta `throttle:<limitador>` a `register.store`, `password.email`, `password.update` e `password.confirm.store`. Como o vínculo é feito por nome dentro do `booted()`, ele sobrevive a `php artisan route:cache`. A rota `locale.update` declara `throttle:locale` diretamente em `routes/web.php`.
+
+### Chave por e-mail
+
+Nos limitadores `forgot-password` e `reset-password`, a chave por e-mail usa o valor informado no campo `email`, em minúsculas e transliterado (`Str::transliterate(Str::lower(...))`). A chave é o texto digitado, não a existência da conta. Por isso o 429 não revela se o e-mail está cadastrado.
+
+### O que não mudou
+
+- **Login** mantém o limite próprio de 5 tentativas por minuto, por e-mail e IP (`login`). **Two-factor** mantém 5 por minuto, por sessão de login (`two-factor`).
+- **Rotas de reserva** não declaram nenhum limitador. Teste: `LimitesDeTaxaReservaTest::test_rotas_de_reserva_nao_declaram_nenhum_limitador`.
+
+### Resposta neutra da recuperação de senha
+
+**Arquivo:** `app/Http/Responses/NeutralPasswordResetLinkResponse.php`
+
+A classe implementa os dois contratos do Fortify (`FailedPasswordResetLinkRequestResponse` e `SuccessfulPasswordResetLinkRequestResponse`), registrados como singleton no `FortifyServiceProvider::register()`. Assim, qualquer status do broker de senhas (link enviado, usuário inexistente ou throttled pelo broker) recebe a mesma resposta:
+
+- Requisição JSON: `{"message": "If an account exists with this email, we will send a link to reset your password."}`
+- Demais requisições: `back()->with('status', <mesma mensagem>)`
+
+A mensagem é a chave `__('If an account exists with this email, we will send a link to reset your password.')`, presente nos três arquivos de idioma (ver `error-handling-and-logging.md`, seção de mensagens traduzíveis).
+
+### Limitações conhecidas
+
+1. **Cadastro revela e-mail existente.** A validação `unique` do `CreateNewUser` responde diferente quando o e-mail já existe. O limitador `register` reduz a enumeração, mas não a elimina.
+2. **Tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir.
+
+**429 em requisições Inertia.** Fora de `local` e `testing`, o handler de `bootstrap/app.php` converte o 429 em `Errors/ErrorPage` (título e descrição de `TOO_MANY_REQUESTS`, nos três idiomas), como já fazia com 403, 404, 419, 500 e 503. Sem isso, um `useForm` receberia o HTML do Symfony e mostraria o modal de erro cru do Inertia. Coberto por `LimitesDeTaxaAuthTest::test_esqueci_a_senha_em_producao_mostra_a_pagina_de_erro_429_numa_visita_inertia`, que troca o ambiente para `production` dentro do teste.
+
+---
+
+## UserPolicy — Contas Anonimizadas
+
+Conta anonimizada (`User::estaAnonimizado()`, e-mail `anonimizado-*@invalid`) não pode mais ser alterada nem recebe papel. Três métodos de `UserPolicy` negam a ação com a mensagem `__('This account is anonymized and can no longer be changed.')` (`Response::deny()`):
+
+- `update()`: editar dados, redefinir senha e reenviar verificação (todas passam por `authorize('update', $usuario)`);
+- `updatePermissions()`: trocar papel e permissões direto, e abrir o contexto de permissões;
+- `delete()`: excluir de novo. A anonimização já é idempotente no serviço, então a negativa só afasta a ação da UI.
+
+Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAnonimizadosTest`.
 
 ---
 

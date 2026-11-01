@@ -171,6 +171,17 @@ export const ptBR = {
         },
     },
     reservas: {
+        conflito_outra_reserva_deferida: 'Conflito com outra reserva deferida neste horário.',
+        notificacoes: {
+            nova_solicitacao: {
+                titulo: 'Nova Solicitação de Reserva',
+                descricao: "Uma nova solicitação de reserva para '{{titulo_reserva}}' foi enviada.",
+            },
+            cancelada: {
+                titulo: 'Reserva Cancelada',
+                descricao: 'A reserva "{{titulo_reserva}}" foi cancelada.',
+            },
+        },
         titulo: 'Minhas Reservas',
         subtitulo: 'Acompanhe o status e histórico de todas as suas solicitações',
         gestor_titulo: 'Gerenciar Reservas',
@@ -402,6 +413,7 @@ export const ptBR = {
             step_personal_name_placeholder: 'Seu nome completo',
             step_personal_email_placeholder: 'usuario@example.com',
             step_personal_phone_placeholder: 'Exemplo: (77) 99999-9999',
+            telefone_finalidade: 'Usado só como contato de emergência sobre suas reservas; visível apenas ao gestor do espaço.',
             step_institution_title: 'Vínculo Institucional',
             step_institution_desc: 'Selecione a instituição e o setor aos quais você está vinculado',
             step_credentials_title: 'Credenciais de Acesso',
@@ -632,6 +644,8 @@ export const ptBR = {
         gerenciar_usuarios_desc: 'Visualize e gerencie os usuários cadastrados no sistema',
         buscar_placeholder: 'Buscar por nome, email ou telefone...',
         todos_setores: 'Todos os setores',
+        mostrar_apenas_anonimizadas: 'Mostrar apenas contas anonimizadas',
+        conta_anonimizada: 'Conta anonimizada',
         nenhum_usuario: 'Nenhum usuário encontrado',
         ajustar_busca: 'Tente ajustar sua busca ou filtros selecionados.',
         sem_setor_vinculado: 'Sem setor vinculado',
@@ -775,5 +789,78 @@ export const ptBR = {
         too_many_requests_desc: 'Você realizou muitas tentativas em um curto intervalo. Aguarde alguns instantes antes de tentar novamente.',
         server_error_title: 'Erro interno do servidor',
         server_error_desc: 'Algo deu errado do nosso lado. A equipe técnica foi notificada. Tente novamente em alguns instantes.',
+    },
+    privacidade: {
+        title: 'Política de Privacidade',
+        rascunho_titulo: 'Rascunho em revisão',
+        rascunho_texto:
+            'Este texto é um rascunho e aguarda aprovação do encarregado pelo tratamento de dados da {{sigla}}. Ele poderá ser alterado antes da versão definitiva.',
+        versao: 'Versão',
+        atualizado_em: 'Atualizado em',
+        entrar: 'Entrar',
+        link_rodape: 'Política de privacidade',
+        nova_aba: '(abre em nova aba)',
+        controlador: {
+            titulo: '1. Controlador',
+            texto: 'O controlador dos dados pessoais tratados por esta plataforma é a {{instituicao}}.',
+        },
+        encarregado: {
+            titulo: '2. Encarregado e contato',
+            texto: 'Até a designação formal do encarregado pelo tratamento de dados, o canal de contato é a Procuradoria Jurídica (Projur) da {{sigla}}.',
+            telefone_label: 'Telefone',
+            email_label: 'E-mail',
+            campi: 'Também é possível contatar as caixas de e-mail institucionais de cada campus.',
+        },
+        dados: {
+            titulo: '3. Dados coletados',
+            texto: 'Coletamos apenas os dados necessários ao funcionamento do serviço:',
+            item_nome: 'Nome completo.',
+            item_email: 'E-mail.',
+            item_telefone: 'Telefone.',
+            item_setor: 'Setor ou unidade de vínculo.',
+            item_foto: 'Foto de perfil (opcional).',
+            item_reservas: 'Reservas: título, descrição, horários e espaço solicitado.',
+            item_logs: 'Registros técnicos de segurança (logs de acesso e de operações).',
+        },
+        finalidades: {
+            titulo: '4. Finalidades e bases legais',
+            texto: 'Tratamos os dados para as finalidades abaixo. As bases legais estão indicadas em cada item.',
+            conta: 'Cadastro e acesso à conta: execução de políticas públicas e atribuição institucional da {{sigla}} (arts. 7º, III, e 23 da LGPD).',
+            reservas:
+                'Gestão de reservas de espaços: execução de políticas públicas e atribuição institucional da {{sigla}} (arts. 7º, III, e 23 da LGPD).',
+            notificacoes: 'Notificações por e-mail e em tempo real sobre suas reservas: mesma base legal da gestão de reservas.',
+            seguranca: 'Registros de segurança e prevenção de incidentes: segurança da informação (art. 46 da LGPD).',
+        },
+        telefone: {
+            titulo: '5. Uso do telefone',
+            texto: 'O telefone é usado como contato de emergência sobre a reserva e fica visível apenas ao gestor do espaço responsável pela reserva.',
+        },
+        agenda: {
+            titulo: '6. Agenda pública',
+            texto: 'A plataforma é aberta a qualquer pessoa com cadastro. O nome de quem solicita uma reserva aparece na agenda dos espaços para os demais usuários.',
+        },
+        compartilhamento: {
+            titulo: '7. Compartilhamento',
+            texto: 'Compartilhamos dados apenas com operadores necessários ao funcionamento do serviço, como hospedagem e envio de e-mails. Não vendemos dados nem os usamos para publicidade.',
+        },
+        retencao: {
+            titulo: '8. Prazos de guarda',
+            texto: 'Os prazos ainda estão em definição pela {{sigla}}. Enquanto a conta estiver ativa, os dados de cadastro são mantidos. Ao excluir a conta, os dados pessoais são anonimizados e o histórico de reservas é mantido sem identificar a pessoa.',
+        },
+        direitos: {
+            titulo: '9. Direitos do titular',
+            texto: 'Nos termos do art. 18 da LGPD, você pode solicitar:',
+            item_confirmacao: 'confirmação da existência de tratamento;',
+            item_acesso: 'acesso aos seus dados;',
+            item_correcao: 'correção de dados incompletos ou desatualizados;',
+            item_anonimizacao: 'anonimização, bloqueio ou eliminação de dados desnecessários;',
+            item_compartilhamento: 'informação sobre o compartilhamento dos seus dados;',
+            item_revogacao: 'revogação do consentimento, quando aplicável.',
+            como_exercer: 'Como exercer: pelo seu perfil (editar dados ou excluir a conta) ou pelo canal de contato do item 2.',
+        },
+        decisao: {
+            titulo: '10. Decisão automatizada',
+            texto: 'Quando duas reservas disputam o mesmo horário, a que conflita com outra já deferida é indeferida automaticamente. Para pedir revisão, procure o gestor do espaço ou use o canal de contato do item 2.',
+        },
     },
 } as const;

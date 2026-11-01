@@ -42,7 +42,7 @@ class EspacoController extends Controller
     {
         if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
-                ->with('error', 'Este espaço ainda não possui um gestor definido.');
+                ->with('error', __('This space does not have a manager defined yet.'));
         }
 
         $data = $this->service->getWithWeekSchedule($espaco, $request->input('semana', 'today'));
@@ -54,14 +54,14 @@ class EspacoController extends Controller
     {
         $this->service->addFavorite(Auth::user(), $espaco);
 
-        return back()->with('success', 'Espaço adicionado aos favoritos!');
+        return back()->with('success', __('Space added to favorites!'));
     }
 
     public function desfavoritar(Espaco $espaco): RedirectResponse
     {
         $this->service->removeFavorite(Auth::user(), $espaco);
 
-        return back()->with('success', 'Espaço removido dos favoritos!');
+        return back()->with('success', __('Space removed from favorites!'));
     }
 
     public function meusFavoritos(): Response

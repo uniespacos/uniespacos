@@ -60,7 +60,6 @@ class ProcessarCriacaoReserva implements ShouldQueue
     {
         Log::info('ProcessarCriacaoReserva started', [
             'solicitante_id' => $this->solicitante->id,
-            'titulo' => $this->dadosRequisicao['titulo'],
         ]);
 
         try {
@@ -211,7 +210,6 @@ class ProcessarCriacaoReserva implements ShouldQueue
         } catch (Exception $e) {
             Log::error('ProcessarCriacaoReserva failed', [
                 'solicitante_id' => $this->solicitante->id,
-                'titulo' => $this->dadosRequisicao['titulo'],
                 'exception' => $e,
             ]);
             $this->fail($e);
