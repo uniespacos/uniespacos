@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.108](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.107...v1.5.0-rc.108) (2026-11-01)
+
+
+### Bug Fixes
+
+* remover URL assinada do log de login e incluir setor dos gestores no dashboard ([9afc129](https://github.com/uniespacos/uniespacos/commit/9afc129e590045f19ef09b1662224a051030e10a))
+
 ## [1.5.0-rc.107](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.106...v1.5.0-rc.107) (2026-11-01)
 
 
