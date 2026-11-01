@@ -246,7 +246,12 @@ class PayloadsDePaginaPrivacidadeTest extends TestCase
 
         $gestorPayload = collect($props['gestores'])->firstWhere('id', $gestor->id);
         $this->assertNotNull($gestorPayload, 'O gestor deveria estar no dashboard');
-        $this->assertChavesExatas(['id', 'name', 'email'], $gestorPayload, 'gestores deveria ter só id, name e email');
+        $this->assertChavesExatas(
+            ['id', 'name', 'email', 'setor_id', 'setor'],
+            $gestorPayload,
+            'gestores deveria ter só id, name, email, setor_id e a relação setor'
+        );
+        $this->assertChavesExatas(['id', 'nome'], $gestorPayload['setor'], 'setor do gestor deveria ter só id e nome');
         $this->assertArrayNotHasKey('telefone', $gestorPayload);
 
         foreach ($props['users'] as $usuario) {
@@ -257,5 +262,40 @@ class PayloadsDePaginaPrivacidadeTest extends TestCase
         $this->assertNotNull($espacoPayload, 'O espaço deveria estar no dashboard');
         $this->assertChavesExatas(['id', 'espaco_id', 'turno', 'user_id', 'user'], $espacoPayload['agendas'][0]);
         $this->assertChavesExatas(['id', 'name'], $espacoPayload['agendas'][0]['user']);
+    }
+
+    #[Test]
+    public function dashboard_institucional_entrega_setor_nome_de_cada_gestor(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $admin = $this->admin($setor);
+        $admin->givePermissionTo('secao.dashboard-institucional');
+
+        $gestorComSetor = User::factory()->create(['setor_id' => $setor->id]);
+        $gestorComSetor->givePermissionTo('secao.gestao-reservas');
+
+        $gestorSemSetor = User::factory()->create(['setor_id' => null]);
+        $gestorSemSetor->givePermissionTo('secao.gestao-reservas');
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Dashboard/DashboardInstitucionalPage')
+            ->has('gestores')
+        );
+
+        $props = $response->viewData('page')['props'];
+
+        $comSetor = collect($props['gestores'])->firstWhere('id', $gestorComSetor->id);
+        $this->assertNotNull($comSetor, 'O gestor com setor deveria estar no dashboard');
+        $this->assertSame($setor->nome, $comSetor['setor']['nome']);
+        $this->assertSame($setor->id, $comSetor['setor_id']);
+
+        $semSetor = collect($props['gestores'])->firstWhere('id', $gestorSemSetor->id);
+        $this->assertNotNull($semSetor, 'O gestor sem setor deveria estar no dashboard');
+        $this->assertNull($semSetor['setor']);
+        $this->assertNull($semSetor['setor_id']);
+        $this->assertChavesExatas(['id', 'name', 'email', 'setor_id', 'setor'], $semSetor);
     }
 }
