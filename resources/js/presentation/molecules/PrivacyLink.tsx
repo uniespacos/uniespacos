@@ -1,3 +1,4 @@
+import { usePrivacidadeHabilitada } from '@/hooks/use-privacidade-habilitada';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
@@ -9,7 +10,12 @@ interface PrivacyLinkProps {
 
 export function PrivacyLink({ newTab = false, className }: PrivacyLinkProps) {
     const { t } = useTranslation();
+    const privacidadeHabilitada = usePrivacidadeHabilitada();
     const classes = cn('underline-offset-4 hover:underline', className);
+
+    if (!privacidadeHabilitada) {
+        return null;
+    }
 
     if (newTab) {
         return (

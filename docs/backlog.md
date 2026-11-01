@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `develop` @ `d2b0cb3` (1.5.0-rc.106, em staging) · produção: `main` v1.4.4 (30/10/2026).
+> **Base:** `develop` @ `629bdab` (1.5.0-rc.108, em staging) · produção: `main` v1.4.4 (30/10/2026).
 > **Atualizado em:** 2026-11-01.
 
 ## Como ler
@@ -14,8 +14,8 @@
 
 ## Agora
 
-- **Em staging:** 1.5.0-rc.106, com o lote LGPD (#489) e a congruência de UI/UX (#487). Produção segue na v1.4.4.
-- **Próximo passo:** Onda 1, nesta ordem: PR pequeno com o resíduo da T-04 e o setor no dashboard → validação manual em staging → decisão sobre a página de privacidade → release 1.5.0 → T-05.
+- **Em staging:** 1.5.0-rc.108, com o lote LGPD (#489), a congruência de UI/UX (#487) e o resíduo da Onda 1 (#494). Produção segue na v1.4.4.
+- **Próximo passo:** validação manual em staging, com o responsável → release 1.5.0 → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,19 +23,11 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **T-04** · Logs de autenticação sem parâmetros de acesso — `P0` · pequeno · segurança
-  Resíduo do lote LGPD: revisar os logs de autenticação para não registrar endereços com parâmetros de acesso. = A-03, B55, S13.
-  **Pronto quando:** teste de regressão cobre todos os fluxos de autenticação que gravam log.
-- [ ] **T-26 (c)** · Setor do gestor no dashboard institucional — `P1` · pequeno · bug · no mesmo PR da T-04
-  O dashboard institucional mostra "sem setor vinculado" para todo gestor, porque a consulta não carrega o setor. Defeito anterior ao lote, mas visível na validação.
-  **Pronto quando:** teste de payload cobre o setor e a tela mostra o setor real.
-- [ ] **Decisão** · A página de privacidade em rascunho vai ao ar? — `P0` · decisão do responsável
-  A flag `PRIVACY_PAGE_ENABLED` vem ligada por padrão; sem decisão, o texto-rascunho (versão 0.1, contato provisório) entra em produção no release. Opções: publicar marcado como rascunho, desligar a flag em produção até o texto final (T-10, T-17, T-18) ou aprovar o texto. = T-17, T-18.
-- [ ] **Validação em staging** · Roteiro manual na rc.106 — `P0` · pequeno · operação (responsável)
-  29 passos em 6 blocos: (1) telas com menos dados; (2) logout, botão "Voltar" e foto de perfil; (3) notificações sem nome de terceiros em pt/en/es e limite de 2000 caracteres; (4) anonimização de conta; (5) página de privacidade e rodapés; (6) recuperação de senha e limites de taxa. Comece pelo bloco 1 e pelo passo 15. No passo 2, "ou um traço" esconde o defeito do setor (T-26 (c)). Roteiro: plano LGPD local, arquivo 09.
+- [ ] **Validação em staging** · Roteiro manual na rc.108 — `P0` · pequeno · operação (responsável, em andamento)
+  29 passos em 6 blocos: (1) telas com menos dados; (2) logout, botão "Voltar" e foto de perfil; (3) notificações sem nome de terceiros em pt/en/es e limite de 2000 caracteres; (4) anonimização de conta; (5) página de privacidade desligada (404 em `/privacidade`, links ocultos nas telas e nos e-mails, contato da Projur presente no e-mail) e rodapés; (6) recuperação de senha e limites de taxa. Comece pelo bloco 1 e pelo passo 15. No passo 2, o setor do gestor deve aparecer: a T-26 (c) foi corrigida no #494, então um traço já é falha. Roteiro: plano LGPD local, arquivo 09.
   **Pronto quando:** os 29 passos passam.
 - [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação
-  Depende dos quatro itens acima. Sem migration. Checklist: backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
+  Depende da validação em staging acima. A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
 - [ ] **T-05** · Rotacionar e descartar logs antigos de produção — `P0` · pequeno · operação
   Logo depois do release, com a T-04 completa. Registrar a decisão sobre incidente no runbook (T-16). = A-03, R-P03, S13.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
@@ -78,6 +70,9 @@
 
 **Aguardando decisão institucional** (ver [Decisões pendentes](#decisões-pendentes-não-é-código))
 
+- [ ] **T-17, T-18 (retomada)** · Retomar a página de privacidade: levantamento de design e redesenho — `P2` · médio · produto/UI · depende do texto final (T-10, T-17, T-18 / F-01)
+  Página em standby desde 01/11, por decisão do responsável: os termos estão minimamente adequados, mas a UI/UX ficou desarmônica com o design do sistema. Detalhe e condição de retomada em [`privacidade/pagina-de-privacidade.md`](./privacidade/pagina-de-privacidade.md). Primeiro passo, antes de qualquer redesenho: levantar o que já existe no projeto (tokens Catppuccin do `@theme`, átomos, moléculas e templates em `resources/js/presentation`, primitivos shadcn em `resources/js/components/ui`, e os padrões de anatomia de página e estado vazio do #487) e redesenhar a partir desse levantamento.
+  **Pronto quando:** o levantamento de design está registrado no documento da área; a página está redesenhada com o texto final aprovado; com `PRIVACY_PAGE_ENABLED=true` em staging, a página, os links e o e-mail passam nos testes e no roteiro.
 - [ ] **T-30** · Reforçar a autenticação de perfis administrativos — `P2` · médio · segurança · depende da F-12
   = A-10, P-13, P-18.
 - [ ] **T-14, T-16** · Versionar o inventário de dados e o runbook de incidente em `docs/privacidade/` — `P2` · pequeno · docs
@@ -298,7 +293,6 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 
 | Decisão | Destrava |
 | --- | --- |
-| Página de privacidade em rascunho no release (ver Onda 1) | release 1.5.0 |
 | D-EST-13 e DT-10 · Backup: destino, retenção, cifragem e staging para o ensaio (com a TI) | T-23 |
 | D-EST-23 e D-EST-24 · Efeitos do backup parado; liberar a S34 e a S41 a S43 com backup manual | Ondas 3 e 4 |
 | D-EST-01 · Rastreador de erros | S45 |
@@ -342,7 +336,9 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 - **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
 - **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
 - **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
-- **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (falta o resíduo da Onda 1), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
+- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) segue na Onda 2.
+- **Página de privacidade no release 1.5.0** · decidida em 01/11 pelo responsável: standby, fora do 1.5.0, desligada por padrão (`PRIVACY_PAGE_ENABLED=false`) no #496. A retomada é o item T-17, T-18 da Onda 2.
+- **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (o resíduo saiu no #494), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
 - **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
 - **Recorrência "personalizado"** (auditoria de regras de reserva, H1) · falso positivo: comportamento projetado, documentado em [`regras-de-negocio/recorrencia.md`](./regras-de-negocio/recorrencia.md).
 - **Deprecar o `ValidateReservationConflictsJob`** · cancelado: o job continua em uso.
@@ -354,6 +350,9 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
+- **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
+- **01/11** · #492 sincronização da documentação e do backlog.
 - **01/11** · #491 consolidação da documentação (novo índice, roadmap, docs de domínio alinhados e backlog consolidado).
 - **31/10** · #489 LGPD: payloads e logs mínimos, anonimização de conta, limites de taxa, página de privacidade (rascunho) e mensagens traduzíveis. Em staging.
 - **30–31/10** · #481, #483 e #487: fronteiras de camadas, correções de UX, acessibilidade, estado vazio e anatomia de página.

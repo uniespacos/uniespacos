@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
             'sidebarOpen' => $request->cookie('sidebar_state') === 'true',
+            'privacidadeHabilitada' => (bool) config('privacidade.pagina_habilitada'),
             'locale' => fn () => app()->getLocale(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
