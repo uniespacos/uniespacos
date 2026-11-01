@@ -4,7 +4,7 @@
 
 O `conflict_cache` é um **snapshot histórico** de conflitos detectados no momento em que `ValidateReservationConflictsJob` processa uma reserva. É uma coluna `json` nullable na tabela `reservas` (migration `2025_09_14_235335_add_validation_fields_to_reservas_table.php`), exposta na interface do gestor como informação secundária de auditoria — **nunca é fonte de verdade**.
 
-**Contraste crítico:** A fonte de verdade atual é `ConflictDetectionService::findConflictsFor()`, chamada ao vivo dentro de `ReservaService::getForGestorReview()` a cada carregamento da página do gestor, cujo resultado é consumido como prop `todosOsConflitos` no componente `ConflictAlertBox` (que bloqueia/informa as ações do gestor).
+**Contraste crítico:** A fonte de verdade atual é `ConflictDetectionService::findConflictsFor()`, chamada ao vivo dentro de `ReservaService::getForGestorReview()` a cada carregamento da página do gestor, cujo resultado é consumido como prop `todosOsConflitos` no componente `ConflictAlertBox`, que apenas informa o gestor. O bloqueio dos horários conflitantes é automático no backend, feito por `AvaliarReservaJob` (marca como `indeferida`).
 
 ## Origem e Escritura
 
@@ -121,7 +121,7 @@ Arquivo: `resources/js/presentation/organisms/ConflictCacheSnapshotPanel.tsx`
 Arquivo: `resources/js/presentation/pages/Reservas/Gestor/AvaliarReservaPage.tsx`
 
 ```tsx
-// Conflitos ao vivo (fonte de verdade, bloqueia ações)
+// Conflitos ao vivo (fonte de verdade, apenas informativo)
 <ConflictAlertBox conflictCache={todosOsConflitos} />
 
 // Snapshot histórico (informativo, não bloqueia)
@@ -147,7 +147,7 @@ Três locales: `pt-BR`, `en`, `es`
 
 **Isto é esperado e não é bug.** O snapshot é um histórico do que foi detectado naquele momento.
 
-**Ação recomendada para o usuário/gestor:** Confiar em `todosOsConflitos` (exibido em `ConflictAlertBox`) para tomar decisões. O `ConflictCacheSnapshotPanel` é puramente informativo — ajuda a entender "o que havia no backend quando processou?", útil em auditorias ou investigação de comportamento passado.
+**Ação recomendada para o usuário/gestor:** Confiar em `todosOsConflitos` (exibido em `ConflictAlertBox`) para entender o estado atual de conflitos. O `ConflictCacheSnapshotPanel` é puramente informativo — ajuda a entender "o que havia no backend quando processou?", útil em auditorias ou investigação de comportamento passado.
 
 ## Harmonização do Filtro de Revalidação no Cancelamento
 
@@ -157,7 +157,7 @@ Quando uma reserva é **cancelada**, seus horários são liberados (marcados `in
 
 ### Filtro Anterior (Incompleto)
 
-Antes da fase 04, o filtro de revalidação era:
+Versão anterior do filtro, que considerava somente `indeferida`:
 
 ```php
 private function revalidateConflictedReservations(Collection $horariosLiberados): void
@@ -177,7 +177,7 @@ private function revalidateConflictedReservations(Collection $horariosLiberados)
 
 ### Filtro Harmonizado (Atual)
 
-A partir da fase 04 (linha 274-276 em `ReservaService.php`):
+Filtro atual, no método `revalidateConflictedReservations()` de `app/Services/ReservaService.php`:
 
 ```php
 private function revalidateConflictedReservations(Collection $horariosLiberados): void
@@ -227,13 +227,13 @@ Novo teste: `test_cancelamento_revalida_reservas_parcialmente_deferidas_que_comp
 | **Consumo frontend** | Componente `ConflictCacheSnapshotPanel` renderiza o snapshot em painel colapsável |
 | **Fonte de verdade** | `ConflictDetectionService::findConflictsFor()` recalculado ao vivo em `todosOsConflitos` |
 | **Divergência esperada** | Sim; snapshot pode estar desatualizado se reservas foram criadas/canceladas após o snapshot |
-| **Impacto em decisões do gestor** | Zero — gestor confia em `ConflictAlertBox` (que usa `todosOsConflitos`) para bloquear/aprovar |
+| **Impacto em decisões do gestor** | Nenhum bloqueio: `ConflictAlertBox` (que usa `todosOsConflitos`) é informativo. O bloqueio dos conflitos é aplicado por `AvaliarReservaJob` |
 | **Propósito do snapshot** | Auditoria, investigação histórica, transparência do que o backend viu naquele momento |
 
 ---
 
 ## Referências Cruzadas
 
-- [`docs/models-business-rules.md`](./models-business-rules.md) — Seção `Reserva`, campos `validation_status` e `conflict_cache`
-- [`docs/core-workflow-report.md`](./core-workflow-report.md) — Fluxo de avaliação e cascata de situações
-- [`docs/validation-rules.md`](./validation-rules.md) — Regras de validação de disponibilidade
+- [`modelos-eloquent.md`](../arquitetura/modelos-eloquent.md) — Seção `Reserva`, campos `validation_status` e `conflict_cache`
+- [`fluxo-de-reservas.md`](./fluxo-de-reservas.md) — Fluxo de avaliação e cascata de situações
+- [`validacao.md`](./validacao.md) — Regras de validação de disponibilidade

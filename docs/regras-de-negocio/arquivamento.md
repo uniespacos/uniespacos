@@ -409,7 +409,7 @@ Usuário que ainda gere alguma agenda não é anonimizado. Enquanto `agendas.use
 
 ### Filtro de Contas Anonimizadas na Listagem
 
-A lista de usuários do institucional esconde contas anonimizadas por padrão. O parâmetro `anonimizados=1` mostra somente elas (não é aditivo: é uma visão separada, para auditoria). O filtro roda no banco, antes da paginação, e é preservado nos links e na busca. Ver [`docs/models-business-rules.md`](./models-business-rules.md#user) para as regras completas da `User`.
+A lista de usuários do institucional esconde contas anonimizadas por padrão. O parâmetro `anonimizados=1` mostra somente elas (não é aditivo: é uma visão separada, para auditoria). O filtro roda no banco, antes da paginação, e é preservado nos links e na busca. Ver [`modelos-eloquent.md`](../arquitetura/modelos-eloquent.md#user) para as regras completas da `User`.
 
 ## Resumo Executivo
 

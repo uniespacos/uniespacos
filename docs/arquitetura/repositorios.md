@@ -2,6 +2,25 @@
 
 Este documento descreve o padrão Repository + Interface do projeto: como encapsular queries de dados, evitar N+1 queries, e quando especializar cada método versus manter um contrato genérico.
 
+## Repositórios Registrados
+
+Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre apenas `ReservaRepositoryInterface` e `AgendaRepositoryInterface`, os dois principais.
+
+| Interface | Implementação Eloquent | Detalhado aqui |
+|-----------|------------------------|----------------|
+| `RoleRepositoryInterface` | `RoleRepositoryEloquent` | Não |
+| `PermissionRepositoryInterface` | `PermissionRepositoryEloquent` | Não |
+| `AgendaRepositoryInterface` | `AgendaRepositoryEloquent` | [Sim](#agendarepositoryinterface) |
+| `AndarRepositoryInterface` | `AndarRepositoryEloquent` | Não |
+| `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | Não |
+| `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | Não |
+| `InstituicaoRepositoryInterface` | `InstituicaoRepositoryEloquent` | Não |
+| `ModuloRepositoryInterface` | `ModuloRepositoryEloquent` | Não |
+| `ReservaRepositoryInterface` | `ReservaRepositoryEloquent` | [Sim](#reservarepositoryinterface) |
+| `SetorRepositoryInterface` | `SetorRepositoryEloquent` | Não |
+| `UnidadeRepositoryInterface` | `UnidadeRepositoryEloquent` | Não |
+| `UserRepositoryInterface` | `UserRepositoryEloquent` | Não |
+
 ## Sumário
 
 - [Arquitetura do Padrão](#arquitetura-do-padrão)
@@ -728,7 +747,7 @@ Ao adicionar novo método a um Repository:
 - [ ] **Teste**: Chamar método em teste para validar query (quer mock, quer integration)
 - [ ] **Inspecionar com Telescope**: Contar queries, garantir sem N+1
 - [ ] **Reusar em lugar de criar novo?** Se similar a método existente, considerar unificar
-- [ ] **Documentar em `docs/repositories-pattern.md`**: Seção do seu repository + contexto de uso
+- [ ] **Documentar neste arquivo**: seção do seu repositório + contexto de uso
 
 ---
 

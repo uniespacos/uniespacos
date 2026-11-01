@@ -98,19 +98,24 @@ Após a conclusão de tarefas de código (`backend` ou `frontend`), avalie se pr
 
 | Mudança realizada | Documento a atualizar em `docs/` |
 |---|---|
-| Nova regra de negócio / fluxo de reserva | `core-workflow-report.md` |
-| Nova permissão, role, ou mudança de policy | `authorization-policies.md` |
-| Nova regra de validação em FormRequest | `validation-rules.md` |
-| Nova notificação (mail/broadcast) ou evento Reverb | `notifications-and-channels.md` / `realtime-websocket-channels.md` |
-| Novo enum ou constante de domínio | `enums-and-constants.md` |
-| Novo model, scope, accessor com cache | `models-business-rules.md` |
-| Novo repository ou interface | `repositories-pattern.md` |
-| Ajuste em auto-aprovação de reserva | `auto-approval-rule.md` |
-| Ajuste em arquivamento / soft-delete | `archive-soft-delete-flow.md` |
-| Novo envelope de erro ou logging | `error-handling-and-logging.md` |
-| Novo contrato SSOT (`@/contracts`) | `models-business-rules.md` ou documento de arquitetura frontend |
+| Nova regra de negócio / fluxo de reserva | `regras-de-negocio/fluxo-de-reservas.md` |
+| Nova permissão, role, ou mudança de policy | `regras-de-negocio/autorizacao.md` |
+| Nova regra de validação em FormRequest | `regras-de-negocio/validacao.md` |
+| Nova notificação (mail/broadcast) ou evento Reverb | `arquitetura/notificacoes.md` / `arquitetura/tempo-real.md` |
+| Novo enum ou constante de domínio | `arquitetura/enums-e-constantes.md` |
+| Novo model, scope, accessor com cache | `arquitetura/modelos-eloquent.md` |
+| Novo repository ou interface | `arquitetura/repositorios.md` |
+| Ajuste em auto-aprovação de reserva | `regras-de-negocio/auto-aprovacao.md` |
+| Ajuste em arquivamento / soft-delete | `regras-de-negocio/arquivamento.md` |
+| Novo envelope de erro ou logging | `arquitetura/erros-e-logs.md` |
+| Novo contrato SSOT (`@/contracts`) | `arquitetura/enums-e-constantes.md` e a lista de contratos da skill `frontend-conventions` |
 | Nova chave/namespace de i18n | (avaliar se há documento de i18n; se não, não criar novo) |
-| Nova permission PBAC | `authorization-policies.md` |
+| Nova permission PBAC | `regras-de-negocio/autorizacao.md` |
+| Mudança em relatórios (escopo, cache, exportação) | `regras-de-negocio/relatorios.md` |
+| Mudança em recorrência (tipos, expansão de horários) | `regras-de-negocio/recorrencia.md` |
+| Mudança em cache de conflitos (`conflict_cache`, revalidação) | `regras-de-negocio/cache-de-conflitos.md` |
+| Página de privacidade / LGPD | `privacidade/pagina-de-privacidade.md` |
+| Item concluído ou nova pendência | `backlog.md` |
 
 Ao delegar para `docs`, forneça o contexto estruturado:
 ```
@@ -120,7 +125,7 @@ contexto_de_mudanças:
   - "<Classe/Componente>": o que faz / o que mudou
   - "<Método/Prop>": comportamento novo
 arquivos:
-  - /docs/<documento-alvo>.md
+  - docs/<pasta>/<documento>.md
 passos:
   - <onde mexer no doc>
 pronto quando: Documento reflete fielmente o código implementado

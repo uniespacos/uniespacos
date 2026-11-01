@@ -111,7 +111,7 @@ public function toBroadcast(object $notifiable): BroadcastMessage
 }
 ```
 
-Transmite ao canal `App.User.{id}` em tempo real.
+Transmite ao canal `App.Models.User.{id}` em tempo real.
 
 #### `payload()` — Conteúdo persistido e transmitido
 
@@ -253,7 +253,7 @@ Propriedades extras:
 
 **Namespace:** `App\Notifications\ReservationCanceledNotification`
 
-**Disparada por:** `ReservaService::cancelar()` (linhas 228–233)
+**Disparada por:** `ReservaService::cancel()`
 
 **Destinatário:** Todos os gestores de agendas envolvidas na reserva
 
@@ -512,7 +512,7 @@ return new BroadcastMessage($this->payload());
 
 Mesmo conteúdo de `notifications.data` (ver `payload()`), portanto também sem nome de terceiros.
 
-**Canal de transmissão:** `App.User.{user_id}` (privado)
+**Canal de transmissão:** `App.Models.User.{id}` (privado; nome vindo de `User::receivesBroadcastNotificationsOn()`)
 
 **Características:**
 
@@ -565,7 +565,7 @@ MAIL_PASSWORD=...
 2. `via()` é chamado — verifica supressão
 3. Se `'mail'` está no array, Laravel enfileira
 4. Job de email retira da fila e envia via SMTP
-5. Se falhar, retry automático (até 3x por padrão)
+5. Se falhar, nova tentativa automática: até `$tries = 5` tentativas, com intervalos de 30, 60, 120 e 300 segundos (`BaseNotification::backoff()`)
 
 **Quando é Suprimido:**
 
@@ -584,7 +584,7 @@ Todos os templates de e-mail do sistema estendem `emails.layout` (`@extends('ema
 - Link para a Política de Privacidade: `url('/privacidade')`, com o rótulo `__('Privacy Policy')`.
 - Linha de contato provisório da Procuradoria Jurídica: `__('Questions about your personal data? Contact the UESB Legal Department (provisional channel):')`, seguida de `projur@uesb.edu.br`.
 
-O rodapé não consulta configuração: não há flag que o oculte. A página de destino pode ser desligada por `PRIVACY_PAGE_ENABLED`, caso em que o link leva a 404 (ver [privacy-page.md](./privacy-page.md)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`.
+O rodapé não consulta configuração: não há flag que o oculte. A página de destino pode ser desligada por `PRIVACY_PAGE_ENABLED`, caso em que o link leva a 404 (ver [página de privacidade](../privacidade/pagina-de-privacidade.md)). As duas chaves de rodapé estão em `lang/` e são cobertas por `LangJsonChavesTest`. Teste do layout: `EmailLayoutPrivacidadeTest`.
 
 ---
 
@@ -671,7 +671,7 @@ ProcessarCriacaoReserva::handle()
 │  └─ via() retorna ['database', 'broadcast', 'mail']
 │     │
 │     ├─ database: inserir em tabela `notifications`
-│     ├─ broadcast: transmitir via Reverb ao canal App.User.{gestor_id}
+│     ├─ broadcast: transmitir via Reverb ao canal App.Models.User.{gestor_id}
 │     └─ mail: enfileirar envio SMTP
 │
 ├─ try { $solicitante->notify(ReservationCreatedNotification) }
@@ -753,14 +753,9 @@ Para histório confiável, use a notificação de `database` — sempre persiste
 
 ### 4. Retry Automático em Falha
 
-Se `notify()` falhar (ex: serialização):
+Se o envio falha depois de enfileirado, o worker tenta de novo até `$tries` (5 tentativas), com backoff de 30, 60, 120 e 300 segundos.
 
-```
-Tentativa 1: Falha (exception capturada, logged)
-Tentativa 2: Falha
-Tentativa 3: Falha
-Resultado: Notificação nunca é enviada, mas log regista tentativas
-```
+Se `notify()` lança exceção de forma síncrona (ex.: serialização), o try-catch do job captura, registra log e não há nova tentativa.
 
 ---
 

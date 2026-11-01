@@ -9,9 +9,9 @@ Este documento descreve todos os enums e constantes de domínio do UniEspaços, 
 - [OrdenacaoReservaEnum — Critérios de Ordenação](#ordenacaoreservaenum--critérios-de-ordenação)
 - [AgendaEnum — Turnos de Gestão](#agendaenum--turnos-de-gestão)
 - [CampusEnum — Campi da Universidade](#campusenum--campi-da-universidade)
-- [DiasSemanaEnum — Dias da Semana](#diassemanadaenum--dias-da-semana)
+- [DiasSemanaEnum — Dias da Semana](#diassemanaenum--dias-da-semana)
 - [RecorrenciaReservaEnum — Tipos de Recorrência](#recorrenciareservaenum--tipos-de-recorrência)
-- [FormatoRelatorioEnum — Formatos de Exportação](#formatorelatoriouenum--formatos-de-exportação)
+- [FormatoRelatorioEnum — Formatos de Exportação](#formatorelatorioenum--formatos-de-exportação)
 - [TipoRelatorioEnum — Tipos de Relatório](#tiporelatorioenum--tipos-de-relatório)
 - [ErrorCode — Códigos de Erro HTTP](#errorcode--códigos-de-erro-http)
 - [Tabela de Transições de Situação](#tabela-de-transições-de-situação)
@@ -289,7 +289,7 @@ Define como um padrão de horários (agenda + dia da semana + faixa horária) se
 
 ### Por Que Consultar
 
-Para entender como uma reserva com `recorrencia='personalizado'` gera múltiplos horários, ou para compreender a diferença entre os tipos de recorrência suportados, consulte **`docs/recorrencia-semantica.md`** (documentação completa com exemplos reais, reclassificação de falsos positivos e justificativa de design).
+Para entender como uma reserva com `recorrencia='personalizado'` gera múltiplos horários, ou para compreender a diferença entre os tipos de recorrência suportados, consulte **[recorrência](../regras-de-negocio/recorrencia.md)** (documentação completa com exemplos reais, reclassificação de falsos positivos e justificativa de design).
 
 ---
 
@@ -416,7 +416,7 @@ ErrorCode::fromStatus(400)  // Retorna: ErrorCode::BAD_REQUEST (fallback para 4x
 
 ## Tabela de Transições de Situação
 
-Este diagrama mostra as transições **válidas** de `Reserva.situacao`, sem contar as causas (avaliação, cancelamento, auto-aprovação).
+Transições de `Reserva.situacao` com o gatilho de cada uma. O diagrama de estados e a regra de auto-aprovação estão em [fluxo de reservas, seção 3](../regras-de-negocio/fluxo-de-reservas.md#estados).
 
 | De | Para | Gatilho | Quem Dispara | Notas |
 |----|------|---------|--------------|-------|
@@ -475,6 +475,6 @@ A permissão `reservas.avaliar` permite que um gestor reavaliar horários quanta
 
 ## Referências Cruzadas
 
-- **Models:** Ver `docs/models-business-rules.md` para detalhes de `Reserva`, `Horario`, `Agenda`, etc.
+- **Models:** Ver [modelos Eloquent](./modelos-eloquent.md) para detalhes de `Reserva`, `Horario`, `Agenda`, etc.
 - **Testing:** Veja `tests/` para exemplos de uso em testes.
 - **Migrações:** Ver `database/migrations/` para esquemas de tabelas.

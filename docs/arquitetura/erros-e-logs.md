@@ -50,7 +50,7 @@ O envelope é aplicado apenas em requisições que esperam JSON (`Accept: applic
 
 ### Limites de taxa (429)
 
-Respostas de throttling em requisições JSON recebem `error_code: TOO_MANY_REQUESTS` pelo mesmo envelope. Os limitadores, as chaves usadas (IP, e-mail, usuário) e o tratamento em visitas Inertia (o 429 vira `Errors/ErrorPage`) estão em [authorization-policies.md](./authorization-policies.md#limites-de-taxa-throttling--t-29).
+Respostas de throttling em requisições JSON recebem `error_code: TOO_MANY_REQUESTS` pelo mesmo envelope. Os limitadores, as chaves usadas (IP, e-mail, usuário) e o tratamento em visitas Inertia (o 429 vira `Errors/ErrorPage`) estão em [autorização](../regras-de-negocio/autorizacao.md#limites-de-taxa-throttling--t-29).
 
 ## ErrorCode Enum
 
@@ -242,7 +242,7 @@ public function handle(ExpansaoHorariosService $expansao): void
 
 **Pontos-chave:**
 
-- `notify()` sempre em `try-catch` (rule #3 em CLAUDE.md)
+- `notify()` sempre em `try-catch` (regra 4 em [CLAUDE.md](../../CLAUDE.md))
 - Falha de notificação não derruba o job
 - `Log::warning()` para notificação falha, `Log::error()` para falha crítica
 - `exception` adicionado ao contexto para rastreabilidade
@@ -616,10 +616,10 @@ Texto exibido ao usuário no back usa `__('English source key')`, com a traduç�
 - Não concatenar prefixo em português com a mensagem (ex.: `'Erro ao ...: '.$msg`). O prefixo fica fixo no idioma de origem e não é traduzido em `en` e `es`.
 - `lang/pt.json` e `lang/pt_BR.json` têm o mesmo conteúdo. Ao criar chave nova, atualizar os dois e o `es.json`.
 
-Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado como marcador e traduzido na leitura por accessor no model, não no banco. Ver `models-business-rules.md`, seção de exclusão de conta. Logs (`Log::...`) não passam por `__()`: ficam em português ou inglês técnico.
+Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado como marcador e traduzido na leitura por accessor no model, não no banco. Ver [modelos Eloquent](./modelos-eloquent.md#user), seção de exclusão de conta. Logs (`Log::...`) não passam por `__()`: ficam em português ou inglês técnico.
 
 - Locale da request vem de `HandleLocale` (sessão). Em job da fila não há sessão: capture `app()->getLocale()` no construtor e passe `$this->locale` como terceiro argumento de `__()` no `handle()`, sem alterar o locale global do worker.
-- Textos que o front monta com `t()` (dicionários em `resources/js/i18n/locales/`) não passam pelo `lang/`. Notificações usam os dois: `titulo`/`descricao` via `__()` e `chave`/`parametros` para o front (ver `notifications-and-channels.md`).
+- Textos que o front monta com `t()` (dicionários em `resources/js/i18n/locales/`) não passam pelo `lang/`. Notificações usam os dois: `titulo`/`descricao` via `__()` e `chave`/`parametros` para o front (ver [notificações](./notificacoes.md)).
 - Limitação: o que é persistido já traduzido (ex.: `horarios.justificativa`) fica no idioma de quem gravou.
 
 ## Diferença: Erros Esperados vs Inesperados
@@ -670,7 +670,7 @@ Tratados como sensíveis (nunca logar):
 
 Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/console.php`:
 
-- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**.
+- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e não define `LOG_DAILY_DAYS` (o padrão do código é 14).
 - **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
 - **Limpeza agendada:** não existe. `routes/console.php` não agenda nenhum comando de limpeza de logs.
 
@@ -687,14 +687,14 @@ Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/consol
 ],
 ```
 
-**Planejado:** rotação diária com retenção de 14 dias em produção, e limpeza periódica de logs com mais de 30 dias, conforme a política de retenção. Nada disso existe no código hoje.
+**Planejado (não existe no código):** rotação diária com 14 dias e nível `info` em produção, com `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` ([T-20](../backlog.md)). As rotinas de retenção e o scheduler (ainda inexistente: `routes/console.php` não agenda nenhum comando) estão em [T-19](../backlog.md).
 
 ### Requisitos de Conformidade
 
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** Planejado (mínimo 14 dias). Hoje o arquivo padrão (`single`) não rotaciona; ver "Limpeza de Logs Antigos"
+4. **Retenção:** planejada ([T-20](../backlog.md) e [T-19](../backlog.md)). Hoje o canal `single` não rotaciona nem expira; ver "Limpeza de Logs Antigos"
 
 **Campos recomendados para auditoria:**
 

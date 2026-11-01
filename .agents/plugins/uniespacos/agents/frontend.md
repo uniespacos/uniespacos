@@ -14,11 +14,11 @@ prompt — sua parte é implementar e verificar, não redesenhar o escopo.
 ## Antes de implementar
 
 1. **Consulte a documentação de regras de negócio** em `/docs/`:
-   - Fluxo de reserva / visualização de agenda? Leia `core-workflow-report.md`
-   - Autorização, roles e botões condicionais? Leia `authorization-policies.md`
-   - Regras de validação de formulários? Leia `validation-rules.md`
-   - Enums e status visuais (`SituacaoReservaEnum`, `ModoArquivoEnum`)? Leia `enums-and-constants.md`
-   - Dúvidas sobre models ou campos serializados? Leia `models-business-rules.md`
+   - Fluxo de reserva / visualização de agenda? Leia `regras-de-negocio/fluxo-de-reservas.md`
+   - Autorização, roles e botões condicionais? Leia `regras-de-negocio/autorizacao.md`
+   - Regras de validação de formulários? Leia `regras-de-negocio/validacao.md`
+   - Enums e status visuais (`SituacaoReservaEnum`, `ModoArquivoEnum`)? Leia `arquitetura/enums-e-constantes.md`
+   - Dúvidas sobre models ou campos serializados? Leia `arquitetura/modelos-eloquent.md`
 
 2. **Consulte a skill `frontend-conventions` e reuso de componentes**:
    - Diálogos com interação ou formulário: use obrigatoriamente `<ResponsiveModal>` (`@/presentation/molecules/ResponsiveModal`).

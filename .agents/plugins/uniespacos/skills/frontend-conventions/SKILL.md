@@ -20,9 +20,9 @@ Só mexe se o motivo for consertar o primitivo em si para todo mundo — não pa
 
 Fora de `presentation/`, três diretórios canônicos que toda tela nova deve considerar antes de escrever tipo, string ou assinatura de canal do zero:
 
-- `resources/js/contracts/` — SSOT de tipos/enums de domínio (`situacao-reserva.contract.ts`, `roles.contract.ts`, etc.). Nunca duplicar union type localmente.
+- `resources/js/contracts/` — SSOT de tipos/enums de domínio (`situacao-reserva.contract.ts`, `roles.contract.ts`, etc.). Nunca duplicar union type localmente. Arquivos e exports principais: `situacao-reserva` (`SituacaoReserva`, `SituacaoHorario`), `modo-arquivo` (`ModoArquivo`), `ordenacao-reserva` (`OrdenacaoReserva`), `validation-status` (`ValidationStatus`), `turnos` (`Turno`), `recorrencia` (`RecorrenciaReserva`), `roles` (`SystemRole`, `RoleType`), `relatorios` (`TipoRelatorio`, `FormatoRelatorio`) e `error-codes` (`ErrorCode`).
 - `resources/js/i18n/` — motor de i18n próprio (`useTranslation()`, dicionários em `locales/pt-BR.ts` e derivados). Zero string hardcoded em PT-BR num componente.
-- `resources/js/lib/auth-can.tsx` (PBAC: `<Can>`, `useCan()`) e `resources/js/lib/echo-channel-registry.ts` (registry de canais Reverb com reference-counting: `acquirePrivateChannel`/`releasePrivateChannel`).
+- `resources/js/lib/auth-can.tsx` (PBAC: `<Can>`, `useCan()`) e `resources/js/lib/echo-channel-registry.ts` (registry de canais Reverb com reference-counting: `acquirePrivateChannel`/`releasePrivateChannel`). Fora de componente, use `hasPermission(user, ...)` e `hasAnyPermission(user, [...])` de `resources/js/lib/auth.ts`. A UI decide por permissão, nunca por nome de papel; quando o papel for inevitável, use as constantes de `@/constants/permissions` (`ROLE_INSTITUCIONAL`, `ROLE_GESTOR`, `ROLE_COMUM`; o papel comum é `'comum'`, nunca `'usuario'`).
 
 ## Anatomia de página
 
@@ -93,6 +93,7 @@ Sempre `resolveStorageUrl` (`resources/js/lib/storage-url.ts`). Nunca montar `/s
 
 - `SidebarInset` (`resources/js/components/ui/sidebar.tsx`) já tem `min-w-0 w-full`.
 - Conteúdo largo, como tabelas, rola no próprio container com `overflow-x-auto`. Nunca `overflow-x-hidden` no `body`.
+- Elementos fixos acima da barra inferior mobile (`DataTableBulkActions`, `ReservaStickySummaryBar`, `InstallPwaBanner`) usam `bottom-20 right-4 left-4` no mobile, 16px acima da `MobileBottomBar` (`h-15`, fixa em `bottom-0`, `md:hidden`). No desktop usam `md:bottom-4` ou `md:bottom-6`.
 
 ### Verificação visual
 
@@ -169,7 +170,15 @@ A estilização utiliza o **Tailwind v4 (CSS-First)** com a diretiva `@theme` e 
 - **Nota de Acessibilidade e Racional Técnico:**
   - **WCAG 1.4.1 (Use of Color):** Ícone + texto explícito sempre, nunca só cor. Ambas as indicações visuais devem ser claras.
   - **Contraste WCAG 1.4.3:** `text-destructive` sobre o fundo da variante `outline` FALHA no tema escuro (Frappé: 3.52:1 < 4.5:1 exigido). `text-destructive-accent` é o token semântico de maior contraste que passa em ambos os temas: Latte 8.57:1, Frappé 6.15:1 — ambos ≥ 4.5:1.
-  - **Racional de Design:** Baseado em Material Design 3 (uma ação de alta ênfase/preenchida por tela), Apple HIG (cor semântica reservada ao seu papel), Nielsen Norman Group (confirmação protege a ação, não o gatilho) e Fitts's Law (tamanho de alvo de toque `min-h-[44px]` preservado independente da cor). Referência completa: `docs/auditoria-ux-hierarquia-visual/03-benchmark-padroes-externos.md`, seção 7.
+  - **Racional de Design:** Baseado em Material Design 3 (uma ação de alta ênfase/preenchida por tela), Apple HIG (cor semântica reservada ao seu papel), Nielsen Norman Group (confirmação protege a ação, não o gatilho) e Fitts's Law (tamanho de alvo de toque `min-h-[44px]` preservado independente da cor).
+
+## Listagens: `DataTable`
+
+Listagens administrativas e de gestão com paginação ou ordenação usam `DataTable` (`resources/js/presentation/molecules/DataTable.tsx`):
+
+- `viewMode?: 'table' | 'grid'` alterna a visualização. Com `autoCardViewOnMobile` (padrão `true`), o mobile mostra cards. `renderCard(item, index, isSelected, toggle)` substitui o card padrão.
+- `bulkActions` só aparece com `selectable` ativo; a barra de ações em lote é `DataTableBulkActions`.
+- `enableColumnVisibility` (padrão `false`) mostra o controle de colunas (`DataTableViewOptions`).
 
 ## Datas e Horários: Padrão `date-fns ^4.4.0`
 
