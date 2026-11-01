@@ -31,7 +31,9 @@ Route::get('/', function () {
 })->name('home');
 
 // Troca de idioma da interface (acessível por autenticados e não autenticados)
-Route::post('/locale/{locale}', [LocaleController::class, 'update'])->name('locale.update');
+Route::post('/locale/{locale}', [LocaleController::class, 'update'])
+    ->middleware('throttle:locale')
+    ->name('locale.update');
 
 Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
 

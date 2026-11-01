@@ -13,5 +13,20 @@
     "User account anonymized successfully.": "La cuenta del usuario fue anonimizada correctamente.",
     "Anonymized user": "Usuario anonimizado",
     "This account is anonymized and can no longer be changed.": "Esta cuenta fue anonimizada y ya no puede modificarse.",
-    "Unidentified requester": "Solicitante no identificado"
+    "Unidentified requester": "Solicitante no identificado",
+    "If an account exists with this email, we will send a link to reset your password.": "Si existe una cuenta con este correo electrónico, le enviaremos un enlace para restablecer su contraseña.",
+    "Error creating module: :message": "Error al crear el módulo: :message",
+    "Error updating module: :message": "Error al actualizar el módulo: :message",
+    "Error removing module: :message": "Error al eliminar el módulo: :message",
+    "Error updating institution: :message": "Error al actualizar la institución: :message",
+    "Error updating permissions: :message": "Error al actualizar los permisos: :message",
+    "Error creating unit: :message": "Error al crear la unidad: :message",
+    "Error updating unit: :message": "Error al actualizar la unidad: :message",
+    "Error deleting unit: :message": "Error al eliminar la unidad: :message",
+    "Error creating sector: :message": "Error al crear el sector: :message",
+    "Error updating sector: :message": "Error al actualizar el sector: :message",
+    "Error removing sector: :message": "Error al eliminar el sector: :message",
+    "Failed to Update Reservation": "Error al actualizar la reserva",
+    "Failed to Update Reservation: :titulo": "Error al actualizar la reserva: :titulo",
+    "An error occurred while processing the update of your reservation ':titulo'. Please try again.": "Ocurrió un error al procesar la actualización de su reserva ':titulo'. Por favor, inténtelo de nuevo."
 }
