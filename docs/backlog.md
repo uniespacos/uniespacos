@@ -25,8 +25,9 @@
 
 - [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
   A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
-- [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · escopo revisto, plano aguardando aprovação
-  Logo depois do release, com a T-04 completa. Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa. = A-03, R-P03, S13.
+- [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · plano aprovado em 01/11, executa logo depois do release 1.5.0
+  Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. A cópia preservada fica pelo prazo mínimo: a LGPD não fixa mínimo para log e manda eliminar quando a finalidade termina, então vale o prazo da P-16, de 14 dias. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa; a consulta à TI sobre a guarda delas não bloqueia (vai para a T-23). = A-03, R-P03, S13.
+  **Pronto quando:** o log ativo não tem mais registro com credencial, a versão nova comprovadamente não grava credencial (teste real), os tokens de longa duração foram invalidados e a data de eliminação da cópia preservada está anotada.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Pode correr em paralelo à validação. Destrava T-20 e T-35. = H-01 a H-03.
 
@@ -59,7 +60,7 @@
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
-  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
