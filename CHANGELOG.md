@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.0-rc.109](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.108...v1.5.0-rc.109) (2026-11-01)
+
+
+### Bug Fixes
+
+* deixar a página de privacidade em standby, desligada por padrão ([132c703](https://github.com/uniespacos/uniespacos/commit/132c703dc553c72b712210dd3114e570cb4259da))
+* deixar a página de privacidade em standby, desligada por padrão ([4775924](https://github.com/uniespacos/uniespacos/commit/477592452226ca12bcb25208b238db77401e047c))
+
+
+### Miscellaneous Chores
+
+* versionar a skill lgpd-audit e instituir o backlog reativo nos agentes ([b2d41c2](https://github.com/uniespacos/uniespacos/commit/b2d41c2dac291fa4943ea1a9ed2ea7228a402e94))
+* versionar a skill lgpd-audit e instituir o backlog reativo nos agentes ([f2911f9](https://github.com/uniespacos/uniespacos/commit/f2911f9ee1821888939cc6326774f58eac081065))
+
 ## [1.5.0-rc.108](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.107...v1.5.0-rc.108) (2026-11-01)
 
 
