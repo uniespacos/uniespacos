@@ -10,7 +10,7 @@ describe('NAV_REGISTRY', () => {
         email_verified_at: '2026-01-01',
         telefone: '77999999999',
         setor_id: null,
-        unread_notifications: [],
+        unread_notifications_count: 0,
         created_at: '2026-01-01',
         updated_at: '2026-01-01',
         roles: [],

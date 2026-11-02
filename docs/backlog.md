@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** a Onda 2 está em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) tem o código pronto; faltam os passos manuais em staging e produção, com autorização. A T-26 (a, b) vem em seguida. Em paralelo: T-05b (destruir os logs brutos em 16/11) e a conversa sobre cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (#507: T-26 (a, b)) está aberta. Em paralelo: T-05b (destruir os logs brutos e a cópia cifrada do servidor em 16/11) e a conversa com a TI sobre a guarda e as cópias externas (T-23).
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -24,8 +24,8 @@
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
 - [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
-  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em guarda privada, por **prazo indeterminado, por decisão dele**. Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa data, também se decide se a cópia cifrada do snapshot que ficou no servidor fica lá ou é destruída. Prazo e finalidade formais do snapshot entram na conversa sobre cópias externas (T-23).
-  **Pronto quando:** os logs brutos foram destruídos com remoção segura, a cópia cifrada do servidor teve destino decidido e o espaço em disco foi liberado.
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em armazenamento privado. A finalidade é provar o que havia nos logs antigos, caso um titular, a ANPD ou a UESB questione a limpeza feita em 02/11. O prazo é até 02/05/2027: nessa data, o responsável renova com justificativa anotada ou destrói (T-23). Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa mesma data, também é destruída a cópia cifrada do snapshot que ficou no servidor.
+  **Pronto quando:** os logs brutos e a cópia cifrada do servidor foram destruídos com remoção segura, e o espaço em disco foi liberado.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
 
@@ -47,11 +47,14 @@
   Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
-  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).** Staging usa `stack` hoje; para o teste valer, igualar a produção (canal diário, 14 dias, `warning`), com autorização.
+  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`).
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
-  Decidido em 02/11: lista branca de campos na prop `notifications` e badge pela contagem real de não lidas.
+- [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
+  A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
+  **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
+- [ ] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
+  O payload em tempo real ainda leva identificadores internos que a tela não usa (ex.: `solicitante_id` e `cancelador_id`). O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
+  **Pronto quando:** o payload de broadcast tem só os campos usados pelo front, com teste.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -60,7 +63,7 @@
 - [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
   Recusa rodar em produção. Prepara a T-01 e a T-03.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
-  Depende da T-26 completa.
+  Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
 - [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
   Tabelas fora da rotina da T-19. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
 
@@ -69,7 +72,9 @@
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
-  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la). Entra aqui também a guarda do snapshot de auditoria da T-05: hoje está cifrado, com o responsável e em armazenamento em nuvem privado dele, com prazo indeterminado por decisão do responsável (02/11). Falta definir finalidade, prazo, lugar institucional e o operador de armazenamento (T-13) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
+  **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
+  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
@@ -87,6 +92,7 @@
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
+  Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). No snapshot, ela é mitigada pela cifragem do lado do responsável; no backup manual, a cifragem antes do envio está a confirmar.
 
 **Diferidas pelo responsável**
 
@@ -286,10 +292,10 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | F-03 · Prazos de guarda (proposta DT-11: 30, 90, 7 e 7 dias) e eliminar ou anonimizar | encarregado e CPAD | T-12, T-19 (valores finais), T-23 |
 | F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
 | F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
-| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade institucional (T-26) |
+| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
-| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; a cifragem do backup manual está a confirmar) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
@@ -343,7 +349,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 - **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
 - **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
 - **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
-- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) segue na Onda 2.
+- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) foi feita no #507.
 - **Página de privacidade no release 1.5.0** · decidida em 01/11 pelo responsável: standby, fora do 1.5.0, desligada por padrão (`PRIVACY_PAGE_ENABLED=false`) no #496. A retomada é o item T-17, T-18 da Onda 2.
 - **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (o resíduo saiu no #494), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
 - **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
@@ -357,6 +363,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
 - **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
 - **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.

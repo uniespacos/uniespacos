@@ -589,6 +589,36 @@ Com a flag desligada, `/privacidade` responde 404 e o rodapé traz só o contato
 
 ---
 
+## Prop compartilhada e badge
+
+**Prop `notifications`** (`HandleInertiaRequests::share()`): as 15 notificações mais recentes do usuário logado. A relação `notifications()` do Laravel já ordena por `latest()`, então a ordem é por data de criação, da mais nova para a mais antiga.
+
+Cada item sai em formato enxuto, filtrado por lista branca (`CAMPOS_NOTIFICACAO` e `CAMPOS_DADOS_NOTIFICACAO` em `HandleInertiaRequests`):
+
+| Campo | Sai na prop? | Observação |
+| --- | --- | --- |
+| `id`, `type`, `read_at`, `created_at` | sim | Campos do próprio registro. |
+| `data.titulo`, `data.descricao`, `data.chave`, `data.parametros`, `data.reserva_id`, `data.url` | sim | Usados pelo painel. Chave ausente é omitida. |
+| `data.mensagem`, `data.tipo` | sim | Mantidos para as notificações gravadas antes do formato atual. |
+| `notifiable_type`, `notifiable_id`, `updated_at` | não | Não são usados pelo painel. |
+| IDs internos em `data` (ex.: `solicitante_id`, `cancelador_id`) | não | Continuam gravados no banco; só saem da prop. |
+
+Para o front receber um campo novo, ele precisa entrar na lista branca. Não há passagem automática do modelo.
+
+**Contagem de não lidas:** `auth.user.unread_notifications_count` é o total real de não lidas do usuário, calculado no servidor (`formatAuthUser()`). Não depende da lista de 15 itens. O tipo `User` do front usa esse campo (o antigo `unread_notifications` foi removido).
+
+**Badge do `NotificationDropdown`:**
+
+- Começa com `unread_notifications_count`. Se a prop faltar, conta as não lidas da própria lista.
+- Soma 1 a cada notificação recebida em tempo real, pelo canal privado `App.Models.User.{id}`.
+- Zera em "Marcar todas como lidas", depois que o POST para `notifications.markAsRead` tem sucesso.
+- Ressincroniza com as props a cada navegação Inertia.
+- Acima de 9, mostra `9+`.
+
+**Pendências:** o broadcast ainda leva o payload completo, com os identificadores (ver a seção de canal `broadcast`); o corte para o que o front usa é a T-26 (e) do backlog. A rota `GET /notifications` (`NotificationController::index`) ainda devolve o modelo inteiro e não tem consumidor no front; é a T-26 (d).
+
+---
+
 ## Padrão Try-Catch Obrigatório
 
 Toda chamada a `.notify()` em jobs e services **deve estar envolvida em try-catch**.

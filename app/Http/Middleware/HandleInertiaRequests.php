@@ -6,11 +6,26 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Arr;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
+    private const CAMPOS_NOTIFICACAO = ['id', 'type', 'read_at', 'created_at'];
+
+    private const CAMPOS_DADOS_NOTIFICACAO = [
+        'titulo',
+        'mensagem',
+        'descricao',
+        'chave',
+        'parametros',
+        'reserva_id',
+        'url',
+        'tipo',
+    ];
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -65,7 +80,22 @@ class HandleInertiaRequests extends Middleware
             ],
             'notifications' => fn () => $request->user()
                 ? $request->user()->notifications()->limit(15)->get()
+                    ->map(fn (DatabaseNotification $notification): array => $this->formatNotification($notification))
+                    ->all()
                 : [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatNotification(DatabaseNotification $notification): array
+    {
+        $atributos = $notification->toArray();
+
+        return [
+            ...Arr::only($atributos, self::CAMPOS_NOTIFICACAO),
+            'data' => Arr::only((array) ($atributos['data'] ?? []), self::CAMPOS_DADOS_NOTIFICACAO),
         ];
     }
 
