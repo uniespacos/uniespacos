@@ -42,6 +42,8 @@
   **Pronto quando:** a rotação de 14 dias comprovadamente apaga os arquivos antigos (testada em staging), o nível continua `warning` ou mais restritivo, e o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
   Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
+  Decidido em 02/11: lista branca de campos na prop `notifications` e badge pela contagem real de não lidas.
+  **Em andamento:** branch `refactor/lgpd-t26-props-compartilhadas-minimas` (PR B da Onda 2).
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
