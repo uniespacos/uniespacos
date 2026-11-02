@@ -1,8 +1,8 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `develop` @ `9027acc` (1.5.0-rc.109, em staging) · produção: `main` v1.4.4 (30/10/2026).
-> **Atualizado em:** 2026-11-01.
+> **Base:** `main` e `develop` na 1.5.0 (`main` @ `38225b7`) · produção: v1.5.0 (02/11/2026).
+> **Atualizado em:** 2026-11-02.
 
 ## Como ler
 
@@ -14,8 +14,8 @@
 
 ## Agora
 
-- **Em staging:** 1.5.0-rc.109, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496). Validação manual concluída em 01/11: os 29 passos passaram. Produção segue na v1.4.4.
-- **Próximo passo:** release 1.5.0 (em andamento) → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
+- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11).
+- **Próximo passo:** fechar o release (reinício do queue worker e smoke por papel em produção) → T-05.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,8 +23,8 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
-  A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
+- [ ] **Release 1.5.0** · Fechar o release em produção — `P0` · pequeno · operação · deploy concluído em 02/11
+  O `CI/CD - Production` da `v1.5.0` passou (testes, build e deploy). A recuperação de senha em produção foi testada pelo responsável: OK. Falta: reiniciar o queue worker (o lote mexe em Job e Notification) e fechar o smoke por papel. Sem migration.
 - [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · plano aprovado em 01/11, executa logo depois do release 1.5.0
   Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. A cópia preservada fica pelo prazo mínimo: a LGPD não fixa mínimo para log e manda eliminar quando a finalidade termina, então vale o prazo da P-16, de 14 dias. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa; a consulta à TI sobre a guarda delas não bloqueia (vai para a T-23). = A-03, R-P03, S13.
   **Pronto quando:** o log ativo não tem mais registro com credencial, a versão nova comprovadamente não grava credencial (teste real), os tokens de longa duração foram invalidados e a data de eliminação da cópia preservada está anotada.
@@ -348,6 +348,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1); sincronização `main` → `develop`: #PR-SYNC.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
 - **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
