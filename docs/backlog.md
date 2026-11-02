@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11).
-- **Próximo passo:** T-05b (eliminar a cópia dos logs antigos em 16/11) e a Onda 2.
+- **Próximo passo:** T-05b (destruir os logs brutos em 16/11, após o teste do snapshot), a conversa sobre cópias externas (T-23) e a Onda 2.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,9 +23,9 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **T-05b** · Eliminar a cópia preservada dos logs antigos de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
-  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. A cópia fica só até 16/11 (prazo da P-16, 14 dias). Nessa data, decidir com o responsável o que, se algo, tem finalidade própria (por exemplo, os registros de erro) e destruir o resto com remoção segura. Prorrogar só com justificativa anotada.
-  **Pronto quando:** a cópia foi destruída ou a prorrogação está justificada, e o espaço em disco foi liberado.
+- [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026, e só depois do teste de abertura do snapshot
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em guarda privada, por **prazo indeterminado, por decisão dele**. Em 16/11 (prazo da P-16), os logs brutos no servidor são destruídos com remoção segura, **desde que** o responsável tenha conferido o checksum e aberto o snapshot com a senha. Prazo e finalidade formais do snapshot entram na conversa sobre cópias externas (T-23).
+  **Pronto quando:** o snapshot foi aberto e conferido pelo responsável, os logs brutos foram destruídos e o espaço em disco foi liberado.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
 
@@ -59,7 +59,7 @@
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
-  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la). Entra aqui também a guarda do snapshot de auditoria da T-05: hoje está cifrado, com o responsável e em armazenamento em nuvem privado dele, com prazo indeterminado por decisão do responsável (02/11). Falta definir finalidade, prazo, lugar institucional e o operador de armazenamento (T-13) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
