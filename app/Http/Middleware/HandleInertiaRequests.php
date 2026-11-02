@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\CamposPublicosNotificacao;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -13,19 +14,6 @@ use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
-    private const CAMPOS_NOTIFICACAO = ['id', 'type', 'read_at', 'created_at'];
-
-    private const CAMPOS_DADOS_NOTIFICACAO = [
-        'titulo',
-        'mensagem',
-        'descricao',
-        'chave',
-        'parametros',
-        'reserva_id',
-        'url',
-        'tipo',
-    ];
-
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -94,8 +82,8 @@ class HandleInertiaRequests extends Middleware
         $atributos = $notification->toArray();
 
         return [
-            ...Arr::only($atributos, self::CAMPOS_NOTIFICACAO),
-            'data' => Arr::only((array) ($atributos['data'] ?? []), self::CAMPOS_DADOS_NOTIFICACAO),
+            ...Arr::only($atributos, CamposPublicosNotificacao::REGISTRO),
+            'data' => CamposPublicosNotificacao::dadosPublicos((array) ($atributos['data'] ?? [])),
         ];
     }
 

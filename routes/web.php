@@ -48,9 +48,6 @@ Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function (
     // ---------------------------
     Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-    // Rota para buscar as notificações do usuário logado
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-
     // Rota para marcar notificações como lidas
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
