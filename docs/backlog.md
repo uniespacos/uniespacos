@@ -358,7 +358,6 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
 - **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
-
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
 - **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
