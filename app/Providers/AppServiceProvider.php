@@ -39,6 +39,8 @@ use App\Repositories\PermissionRepositoryEloquent;
 use App\Repositories\PermissionRepositoryInterface;
 use App\Repositories\ReservaRepositoryEloquent;
 use App\Repositories\ReservaRepositoryInterface;
+use App\Repositories\RetencaoRepositoryDb;
+use App\Repositories\RetencaoRepositoryInterface;
 use App\Repositories\RoleRepositoryEloquent;
 use App\Repositories\RoleRepositoryInterface;
 use App\Repositories\SetorRepositoryEloquent;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SetorRepositoryInterface::class, SetorRepositoryEloquent::class);
         $this->app->bind(UnidadeRepositoryInterface::class, UnidadeRepositoryEloquent::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepositoryEloquent::class);
+        $this->app->bind(RetencaoRepositoryInterface::class, RetencaoRepositoryDb::class);
 
         if ($this->app->environment('development') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
