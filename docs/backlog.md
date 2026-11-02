@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (T-26 (a, b)) tem o código pronto. Em paralelo: T-05b (destruir os logs brutos e a cópia cifrada do servidor em 16/11) e a conversa com a TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (#507: T-26 (a, b)) está aberta. Em paralelo: T-05b (destruir os logs brutos e a cópia cifrada do servidor em 16/11) e a conversa com a TI sobre a guarda e as cópias externas (T-23).
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -49,8 +49,6 @@
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
   **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`).
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [x] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  **Feita na branch `refactor/lgpd-t26-props-compartilhadas-minimas`** (PR B da Onda 2, ainda sem PR): a prop `notifications` sai com lista branca de campos e o badge usa a contagem real de não lidas (`unread_notifications_count`). = S61, F1, E2-O.1.
 - [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
   A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
   **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
@@ -351,7 +349,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 - **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
 - **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
 - **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
-- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) está feita na branch da PR B (Onda 2), sem PR ainda.
+- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) foi feita no #507.
 - **Página de privacidade no release 1.5.0** · decidida em 01/11 pelo responsável: standby, fora do 1.5.0, desligada por padrão (`PRIVACY_PAGE_ENABLED=false`) no #496. A retomada é o item T-17, T-18 da Onda 2.
 - **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (o resíduo saiu no #494), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
 - **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
@@ -365,6 +363,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
 - **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
 - **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
