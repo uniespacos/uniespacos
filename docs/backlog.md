@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `main` na 1.5.0 · `develop` na rc.111, com o #507 mergeado e a rc.112 a caminho · produção: v1.5.0 (02/11/2026).
+> **Base:** `main` na 1.5.0 · `develop` na rc.111, com o #507 e o #508 mergeados e ainda sem release candidata · produção: v1.5.0 (02/11/2026).
 > **Atualizado em:** 2026-11-02.
 
 ## Como ler
@@ -15,14 +15,14 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. Depois: a rc.112 (com o #507), o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. O #507 ainda não está em staging: só entra na próxima release candidata, que sai com o próximo `feat` ou `fix`. Depois: o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
   | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
   | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Quando o release-please abrir a rc.112 | Aprovar e mergear a PR de release com o #507 (só o responsável) | Responsável | T-26 (a, b) |
+  | Com o próximo `feat` ou `fix` em `develop` | Aprovar e mergear a PR de release candidata, que leva o #507 a staging (o release-please não gera versão só com `refactor` e `docs`) | Responsável | T-26 (a, b) |
   | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`; deploy durante o dia; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
@@ -379,7 +379,7 @@ Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
 - **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
 - **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
-- **02/11** · #506 release candidata rc.111 (`develop`, com o #505 e o agendador) em staging; a rc.112 sai com o #507.
+- **02/11** · #506 release candidata rc.111 (`develop`, com o #505 e o agendador) em staging. O #507 entra na próxima release candidata.
 - **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
 - **02/11** · #504 backlog: registro do snapshot de auditoria e da guarda da T-05 (T-05b, T-13 e T-23).
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
