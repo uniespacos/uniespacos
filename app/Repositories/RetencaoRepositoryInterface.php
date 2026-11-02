@@ -19,4 +19,14 @@ interface RetencaoRepositoryInterface
     public function contarSessoesInativasAntesDe(int $corteUnix): int;
 
     public function apagarSessoesInativasAntesDe(int $corteUnix): int;
+
+    /**
+     * @return list<array{id: int, justificativa: string}>
+     */
+    public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array;
+
+    /**
+     * @param  list<int>  $ids
+     */
+    public function substituirJustificativas(array $ids, string $texto): int;
 }

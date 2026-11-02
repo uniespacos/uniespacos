@@ -13,6 +13,10 @@ class RetencaoService
 {
     private const PADRAO_LOG_DIARIO = '/^laravel-(\d{4})-(\d{2})-(\d{2})\.log\z/';
 
+    private const PADRAO_JUSTIFICATIVA_CONFLITO_ANTIGA = "/\\AConflito com a reserva '.+' de [^.,]*\\.\\z/su";
+
+    private const TAMANHO_LOTE_JUSTIFICATIVAS = 500;
+
     public function __construct(
         protected RetencaoRepositoryInterface $repo,
     ) {}
@@ -108,6 +112,37 @@ class RetencaoService
         }
 
         return $removidos;
+    }
+
+    /**
+     * Troca em `horarios.justificativa` o texto antigo de conflito (título e nome de terceiros) pelo neutro.
+     * Só casa o formato gerado automaticamente antes da T-24; motivos digitados pelo gestor não casam.
+     */
+    public function neutralizarJustificativasDeConflito(string $textoNeutro, bool $simular = false): int
+    {
+        $total = 0;
+        $ultimoId = 0;
+
+        do {
+            $lote = $this->repo->justificativasDeConflitoAposId($ultimoId, self::TAMANHO_LOTE_JUSTIFICATIVAS);
+            $ids = [];
+
+            foreach ($lote as $linha) {
+                $ultimoId = $linha['id'];
+
+                if (preg_match(self::PADRAO_JUSTIFICATIVA_CONFLITO_ANTIGA, $linha['justificativa']) === 1) {
+                    $ids[] = $linha['id'];
+                }
+            }
+
+            if (! $simular && $ids !== []) {
+                $this->repo->substituirJustificativas($ids, $textoNeutro);
+            }
+
+            $total += count($ids);
+        } while (count($lote) === self::TAMANHO_LOTE_JUSTIFICATIVAS);
+
+        return $total;
     }
 
     /**

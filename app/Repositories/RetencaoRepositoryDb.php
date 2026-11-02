@@ -46,6 +46,35 @@ class RetencaoRepositoryDb implements RetencaoRepositoryInterface
         return $this->sessoesInativasAntesDe($corteUnix)->delete();
     }
 
+    public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array
+    {
+        $linhas = [];
+
+        $consulta = DB::table('horarios')
+            ->select(['id', 'justificativa'])
+            ->where('id', '>', $aposId)
+            ->where('justificativa', 'like', 'Conflito com a reserva %')
+            ->orderBy('id')
+            ->limit($tamanho)
+            ->get();
+
+        foreach ($consulta as $linha) {
+            $linhas[] = [
+                'id' => (int) $linha->id,
+                'justificativa' => (string) $linha->justificativa,
+            ];
+        }
+
+        return $linhas;
+    }
+
+    public function substituirJustificativas(array $ids, string $texto): int
+    {
+        return DB::table('horarios')
+            ->whereIn('id', $ids)
+            ->update(['justificativa' => $texto]);
+    }
+
     private function notificacoesLidasAntesDe(CarbonInterface $corte): Builder
     {
         return DB::table('notifications')
