@@ -508,10 +508,16 @@ Propriedades extras:
 **Configuração:**
 ```php
 // BaseNotification::toBroadcast()
-return new BroadcastMessage($this->payload());
+return new BroadcastMessage(CamposPublicosNotificacao::dadosPublicos($this->payload()));
 ```
 
-Mesmo conteúdo de `notifications.data` (ver `payload()`), portanto também sem nome de terceiros.
+O broadcast leva só os campos da lista branca `CamposPublicosNotificacao::DADOS` (`titulo`, `mensagem`, `descricao`, `chave`, `parametros`, `reserva_id`, `url`, `tipo`). Identificadores internos como `solicitante_id` e `cancelador_id` **não saem** no broadcast. O Laravel acrescenta `id` (da notificação) e `type` (a classe) ao payload.
+
+**Broadcast × banco:** o que vai pelo WebSocket é um subconjunto do que é gravado em `notifications.data`. O método `toArray()` não mudou: a linha gravada continua com todos os identificadores (`reserva_id`, `solicitante_id`, `cancelador_id`), para uso interno (auditoria e rastreio). A tela recebe só o subconjunto público.
+
+Vale para as 10 Notifications que herdam `BaseNotification`. `VerifyEmailQueued` e `ResetPasswordQueued` são só e-mail, sem canal `broadcast`.
+
+**Deploy:** a classe da notificação é executada pelo queue worker. Após mudar uma Notification, reinicie o worker (`docker restart uniespacos-queue-worker-1` em desenvolvimento; em staging e produção, reinicie o serviço do worker depois do deploy). Sem isso, o broadcast segue com o código antigo.
 
 **Canal de transmissão:** `App.Models.User.{id}` (privado; nome vindo de `User::receivesBroadcastNotificationsOn()`)
 
@@ -593,17 +599,17 @@ Com a flag desligada, `/privacidade` responde 404 e o rodapé traz só o contato
 
 **Prop `notifications`** (`HandleInertiaRequests::share()`): as 15 notificações mais recentes do usuário logado. A relação `notifications()` do Laravel já ordena por `latest()`, então a ordem é por data de criação, da mais nova para a mais antiga.
 
-Cada item sai em formato enxuto, filtrado por lista branca (`CAMPOS_NOTIFICACAO` e `CAMPOS_DADOS_NOTIFICACAO` em `HandleInertiaRequests`):
+Cada item sai em formato enxuto, filtrado pela lista branca de `App\Support\CamposPublicosNotificacao` (fonte única dos campos públicos, usada pela prop e pelo broadcast). `HandleInertiaRequests::formatNotification()` monta o item com `REGISTRO` (campos do registro) e `dadosPublicos()` sobre `data`, que filtra por `DADOS`. O formato da prop não muda com a fonte única.
 
 | Campo | Sai na prop? | Observação |
 | --- | --- | --- |
-| `id`, `type`, `read_at`, `created_at` | sim | Campos do próprio registro. |
+| `id`, `type`, `read_at`, `created_at` (`REGISTRO`) | sim | Campos do próprio registro. |
 | `data.titulo`, `data.descricao`, `data.chave`, `data.parametros`, `data.reserva_id`, `data.url` | sim | Usados pelo painel. Chave ausente é omitida. |
 | `data.mensagem`, `data.tipo` | sim | Mantidos para as notificações gravadas antes do formato atual. |
 | `notifiable_type`, `notifiable_id`, `updated_at` | não | Não são usados pelo painel. |
-| IDs internos em `data` (ex.: `solicitante_id`, `cancelador_id`) | não | Continuam gravados no banco; só saem da prop. |
+| IDs internos em `data` (ex.: `solicitante_id`, `cancelador_id`) | não | Continuam gravados no banco; só saem da prop e do broadcast. |
 
-Para o front receber um campo novo, ele precisa entrar na lista branca. Não há passagem automática do modelo.
+Para o front receber um campo novo, ele precisa entrar em `CamposPublicosNotificacao::DADOS` (ou `REGISTRO`). Não há passagem automática do modelo. Como `DADOS` também filtra o broadcast, um campo novo ali passa a sair pelo WebSocket; `REGISTRO` não entra no broadcast (o Laravel já acrescenta `id` e `type`).
 
 **Contagem de não lidas:** `auth.user.unread_notifications_count` é o total real de não lidas do usuário, calculado no servidor (`formatAuthUser()`). Não depende da lista de 15 itens. O tipo `User` do front usa esse campo (o antigo `unread_notifications` foi removido).
 
@@ -615,7 +621,7 @@ Para o front receber um campo novo, ele precisa entrar na lista branca. Não há
 - Ressincroniza com as props a cada navegação Inertia.
 - Acima de 9, mostra `9+`.
 
-**Pendências:** o broadcast ainda leva o payload completo, com os identificadores (ver a seção de canal `broadcast`); o corte para o que o front usa é a T-26 (e) do backlog. A rota `GET /notifications` (`NotificationController::index`) ainda devolve o modelo inteiro e não tem consumidor no front; é a T-26 (d).
+**Rotas de notificações:** só existe `POST /notifications/mark-as-read` (`notifications.markAsRead`, em `NotificationController::markAsRead`). Não há rota JSON de listagem: a lista do painel vem da prop `notifications` do Inertia, e a contagem, de `auth.user.unread_notifications_count`. A antiga rota `GET /notifications` foi removida por não ter consumidor no front.
 
 ---
 

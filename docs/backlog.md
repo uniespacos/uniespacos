@@ -15,15 +15,15 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. O #507 ainda não está em staging: só entra na próxima release candidata, que sai com o próximo `feat` ou `fix`. Depois: o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. O #507 ainda não está em staging: só entra na próxima release candidata. A T-26 (d, e) está feita na branch `fix/lgpd-t26-d-e-notificacoes`; a PR dela é o gatilho da rc.112 (primeiro `fix` desde a rc.111), que leva o #507 e a T-26 (d, e) a staging. Depois: o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
   | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
   | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Com o próximo `feat` ou `fix` em `develop` | Aprovar e mergear a PR de release candidata, que leva o #507 a staging (o release-please não gera versão só com `refactor` e `docs`) | Responsável | T-26 (a, b) |
-  | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`; deploy durante o dia; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | Quando a PR da T-26 (d, e) for mergeada | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
+  | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
@@ -61,13 +61,11 @@
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
   **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). Falta: a poda com arquivos falsos, conferida depois da rodada de 03/11, e a produção, com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
-  A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
-  **Em andamento:** branch `fix/lgpd-t26-d-e-notificacoes` (iniciada em 02/11). O merge gera a próxima release candidata, que leva também o #507 a staging.
+- [x] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
+  Feita na branch `fix/lgpd-t26-d-e-notificacoes`: a rota `GET /notifications` foi removida (sem consumidor no front), junto com `NotificationController::index` e `NotificationService::getLatest`. Fica só `POST /notifications/mark-as-read`.
   **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
-- [ ] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
-  O payload em tempo real ainda leva identificadores internos que a tela não usa (ex.: `solicitante_id` e `cancelador_id`). O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
-  **Em andamento:** branch `fix/lgpd-t26-d-e-notificacoes` (iniciada em 02/11). O merge gera a próxima release candidata, que leva também o #507 a staging.
+- [x] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
+  Feita na branch `fix/lgpd-t26-d-e-notificacoes`: o broadcast envia só os campos públicos (`CamposPublicosNotificacao::dadosPublicos`), sem `solicitante_id` nem `cancelador_id`. O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
   **Pronto quando:** o payload de broadcast tem só os campos usados pelo front, com teste.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
