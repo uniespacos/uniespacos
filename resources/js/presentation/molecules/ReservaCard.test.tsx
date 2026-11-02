@@ -93,7 +93,7 @@ describe('ReservaCard', () => {
                 email_verified_at: null,
                 telefone: '',
                 setor_id: null,
-                unread_notifications: [],
+                unread_notifications_count: 0,
                 created_at: '',
                 updated_at: '',
                 roles: [],

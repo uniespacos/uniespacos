@@ -89,7 +89,7 @@ describe('ReservasGestorPage', () => {
         roles: ['gestor'],
         permissions: [],
         setor_id: 1,
-        unread_notifications: [],
+        unread_notifications_count: 0,
         created_at: '2024-01-01',
         updated_at: '2024-01-01',
     };

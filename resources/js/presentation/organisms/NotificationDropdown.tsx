@@ -11,30 +11,33 @@ import { User } from '@/types';
 import { DatabaseNotificationItem, NotificationType } from '@/types/notification';
 import { router, usePage } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const countUnread = (items: DatabaseNotificationItem[]) => items.filter((n) => n.read_at === null).length;
 
 export function NotificationDropdown() {
     const { props } = usePage<{
         auth: {
-            user: User;
+            user: Omit<User, 'unread_notifications_count'> & { unread_notifications_count?: number };
         };
         notifications?: DatabaseNotificationItem[];
     }>();
     const user = props.auth.user;
+    const serverUnreadCount = user.unread_notifications_count;
     const [notifications, setNotifications] = useState<DatabaseNotificationItem[]>(props.notifications ?? []);
+    const [unreadCount, setUnreadCount] = useState<number>(() => serverUnreadCount ?? countUnread(props.notifications ?? []));
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const isMobile = useIsMobile();
     const { playNotificationFeedback } = useNotificationAudio();
 
-    // Sincroniza se as props de notificações mudarem via navegação Inertia
+    // Sincroniza lista e contagem quando as props mudam via navegação Inertia
     useEffect(() => {
         if (props.notifications !== undefined) {
             setNotifications(props.notifications);
         }
-    }, [props.notifications]);
-
-    const unreadCount = useMemo(() => notifications.filter((n) => n.read_at === null).length, [notifications]);
+        setUnreadCount(serverUnreadCount ?? countUnread(props.notifications ?? []));
+    }, [props.notifications, serverUnreadCount]);
 
     const markAllAsRead = () => {
         if (unreadCount === 0) return;
@@ -52,6 +55,7 @@ export function NotificationDropdown() {
                             read_at: n.read_at ?? new Date().toISOString(),
                         })),
                     );
+                    setUnreadCount(0);
                 },
                 onFinish: () => {
                     setIsLoading(false);
@@ -96,6 +100,7 @@ export function NotificationDropdown() {
                 };
 
                 setNotifications((prev) => [newItem, ...prev]);
+                setUnreadCount((prev) => prev + 1);
                 playNotificationFeedback();
             },
         );

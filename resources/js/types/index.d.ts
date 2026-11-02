@@ -75,7 +75,7 @@ export interface User {
     setor?: Setor; // Opcional, carregar com with('setor')
     anonimizado?: boolean; // Preenchido pela listagem administrativa de usuários
     agendas?: Agenda[]; // Relação aninhada, array de agendas
-    unread_notifications: []; // Adicionado no AppServiceProvider
+    unread_notifications_count: number;
     created_at: string;
     updated_at: string;
 }

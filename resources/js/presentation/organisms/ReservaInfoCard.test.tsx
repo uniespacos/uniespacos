@@ -28,7 +28,7 @@ const baseUser = {
     roles: [],
     permissions: [],
     setor_id: null,
-    unread_notifications: [],
+    unread_notifications_count: 0,
     created_at: '2024-01-01',
     updated_at: '2024-01-01',
 } as User;

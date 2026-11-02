@@ -53,7 +53,7 @@ describe('NotificationDropdown', () => {
         roles: ['comum'],
         permissions: [],
         setor_id: null,
-        unread_notifications: [],
+        unread_notifications_count: 1,
         created_at: '2026-08-01T00:00:00Z',
         updated_at: '2026-08-01T00:00:00Z',
         email_verified_at: null,
@@ -253,6 +253,87 @@ describe('NotificationDropdown', () => {
 
         expect(screen.getByText('Reservation Canceled')).toBeInTheDocument();
         expect(screen.getByText('The reservation "Sala 2" was canceled.')).toBeInTheDocument();
+    });
+
+    const criarNotificacoesNaoLidas = (quantidade: number) =>
+        Array.from({ length: quantidade }, (_, indice) => ({
+            id: `notif-massa-${String(indice)}`,
+            type: 'App\\Notifications\\ReservationEvaluatedNotification',
+            read_at: null,
+            created_at: '2026-08-25T10:00:00Z',
+            data: {
+                titulo: `Notificação ${String(indice)}`,
+                tipo: 'sistema' as const,
+            },
+        }));
+
+    const mockPageComContagem = (contagem: number | undefined, notifications: unknown[]) => ({
+        props: {
+            auth: { user: { ...mockUser, unread_notifications_count: contagem } },
+            notifications,
+        },
+    });
+
+    it('mostra a contagem real do backend, mesmo quando há mais não lidas do que as 15 carregadas', () => {
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(20, criarNotificacoesNaoLidas(15)));
+
+        render(<NotificationDropdown />);
+
+        expect(screen.getByTestId('notification-badge')).toHaveTextContent('9+');
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+        expect(screen.getByText('Notificações (20)')).toBeInTheDocument();
+    });
+
+    it('soma 1 à contagem do backend quando chega uma notificação em tempo real', () => {
+        let broadcastCallback: ((data: unknown) => void) | undefined;
+        mockChannel.notification.mockImplementation((cb: (data: unknown) => void) => {
+            broadcastCallback = cb;
+        });
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(20, criarNotificacoesNaoLidas(15)));
+
+        render(<NotificationDropdown />);
+
+        act(() => {
+            broadcastCallback?.({ id: 'notif-live-massa', titulo: 'Aviso do sistema', tipo: 'sistema' });
+        });
+
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+        expect(screen.getByText('Notificações (21)')).toBeInTheDocument();
+    });
+
+    it('zera a contagem ao marcar todas como lidas com sucesso', () => {
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(20, criarNotificacoesNaoLidas(15)));
+
+        render(<NotificationDropdown />);
+        fireEvent.click(screen.getByTestId('notification-trigger'));
+        fireEvent.click(screen.getByTestId('mark-all-read-btn'));
+
+        const opcoes = (mockRouterPost.mock.calls as unknown[][])[0]?.[2] as { onSuccess: () => void };
+        act(() => {
+            opcoes.onSuccess();
+        });
+
+        expect(screen.queryByTestId('notification-badge')).not.toBeInTheDocument();
+    });
+
+    it('ressincroniza a contagem quando a prop muda numa navegação Inertia', () => {
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(20, criarNotificacoesNaoLidas(15)));
+
+        const { rerender } = render(<NotificationDropdown />);
+        expect(screen.getByTestId('notification-badge')).toHaveTextContent('9+');
+
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(3, criarNotificacoesNaoLidas(3)));
+        rerender(<NotificationDropdown />);
+
+        expect(screen.getByTestId('notification-badge')).toHaveTextContent('3');
+    });
+
+    it('usa a contagem da lista quando o backend não envia unread_notifications_count', () => {
+        (usePage as jest.Mock).mockReturnValue(mockPageComContagem(undefined, initialNotifications));
+
+        render(<NotificationDropdown />);
+
+        expect(screen.getByTestId('notification-badge')).toHaveTextContent('1');
     });
 
     it('cleans up Echo private channel listener on unmount', () => {
