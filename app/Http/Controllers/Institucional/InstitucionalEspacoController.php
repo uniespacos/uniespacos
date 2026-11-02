@@ -14,6 +14,7 @@ use App\Models\Espaco;
 use App\Services\EspacoService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -66,26 +67,26 @@ class InstitucionalEspacoController extends Controller
             );
 
             return redirect()->route('institucional.espacos.index')
-                ->with('success', 'Espaço cadastrado com sucesso!');
+                ->with('success', __('Space created successfully!'));
         } catch (\Exception $e) {
             Log::error('Erro ao criar espaço', ['exception' => $e]);
 
             return redirect()->back()
-                ->with('error', 'Ocorreu um erro inesperado ao criar o espaço.')
+                ->with('error', __('An unexpected error occurred while creating the space.'))
                 ->withInput();
         }
     }
 
-    public function show(Espaco $espaco): Response|RedirectResponse
+    public function show(Request $request, Espaco $espaco): Response|RedirectResponse
     {
-        try {
-            $data = $this->service->getWithAgendaData($espaco);
-
-            return Inertia::render('Espacos/VisualizarEspacoPage', $data);
-        } catch (\Exception $th) {
+        if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
-                ->with('error', 'Espaço sem gestor cadastrado - Aguardando cadastro');
+                ->with('error', __('This space does not have a manager defined yet.'));
         }
+
+        $data = $this->service->getWithWeekSchedule($espaco, $request->string('semana', 'today')->toString());
+
+        return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }
 
     public function edit(Espaco $espaco): Response
@@ -112,7 +113,7 @@ class InstitucionalEspacoController extends Controller
                 $request->validated('images_to_delete', [])
             );
 
-            return back()->with('success', 'Espaço atualizado com sucesso!');
+            return back()->with('success', __('Space updated successfully!'));
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar espaço', [
                 'espaco_id' => $espaco->id,
@@ -120,7 +121,7 @@ class InstitucionalEspacoController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Ocorreu um erro inesperado ao atualizar o espaço.')
+                ->with('error', __('An unexpected error occurred while updating the space.'))
                 ->withInput();
         }
     }
@@ -130,15 +131,15 @@ class InstitucionalEspacoController extends Controller
         $this->authorize('delete', $espaco);
 
         if (! $request->passwordMatches()) {
-            return back()->with('error', 'A senha fornecida está incorreta.');
+            return back()->with('error', __('The password provided is incorrect.'));
         }
 
         try {
             $this->service->delete($espaco);
 
-            return back()->with('success', 'Espaço excluído com sucesso!');
+            return back()->with('success', __('Space deleted successfully!'));
         } catch (\Exception $error) {
-            return redirect()->back()->with('error', 'Erro ao excluir, favor tentar novamente.');
+            return redirect()->back()->with('error', __('Error deleting, please try again.'));
         }
     }
 
@@ -149,7 +150,7 @@ class InstitucionalEspacoController extends Controller
         try {
             $this->service->updateGestores($espaco, $request->validated());
 
-            return back()->with('success', 'Gestores atualizados com sucesso!');
+            return back()->with('success', __('Managers updated successfully!'));
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar gestores do espaço', [
                 'espaco_id' => $espaco->id,
@@ -157,7 +158,7 @@ class InstitucionalEspacoController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Ocorreu um erro ao atualizar os gestores do espaço.');
+                ->with('error', __('An error occurred while updating the space managers.'));
         }
     }
 }

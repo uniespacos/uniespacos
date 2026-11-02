@@ -1,11 +1,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
 import { router } from '@inertiajs/react';
-import { useCallback } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 interface HeaderEspacoProps {
     titulo: string;
-    descricao: string;
+    descricao?: string;
     canSeeButton?: boolean;
     buttonText?: string;
     ButtonIcon?: React.ComponentType<{ className?: string }>;
@@ -16,6 +17,8 @@ interface HeaderEspacoProps {
      *  com o usuário comum (Minhas Reservas), quase idênticas em layout. */
     badge?: string;
     BadgeIcon?: React.ComponentType<{ className?: string }>;
+    /** Ações extras à direita do cabeçalho (ex.: botão de exportação), exibidas após o botão padrão. */
+    actions?: ReactNode;
 }
 
 export default function GenericHeader({
@@ -28,7 +31,10 @@ export default function GenericHeader({
     buttonOnClick,
     badge,
     BadgeIcon,
+    actions,
 }: HeaderEspacoProps) {
+    const { t } = useTranslation();
+
     const handleOnClick = useCallback(() => {
         if (buttonOnClick) {
             buttonOnClick();
@@ -50,14 +56,15 @@ export default function GenericHeader({
                         </Badge>
                     )}
                 </div>
-                <p className="text-muted-foreground">{descricao}</p>
+                {descricao && <p className="text-muted-foreground">{descricao}</p>}
             </div>
             {canSeeButton && (
                 <Button className="flex items-center gap-2" onClick={handleOnClick}>
                     {ButtonIcon && <ButtonIcon className="h-4 w-4" />}
-                    {buttonText || 'N/A'}
+                    {buttonText ?? t('common.actions.create')}
                 </Button>
             )}
+            {actions && <div className="flex items-center gap-2 self-start sm:self-auto">{actions}</div>}
         </header>
     );
 }

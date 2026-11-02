@@ -9,6 +9,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import type { BulkAction } from '@/types/data-table';
 import { CheckSquare, X } from 'lucide-react';
@@ -24,6 +25,7 @@ export interface DataTableBulkActionsProps<T> {
 
 export function DataTableBulkActions<T>({ selectedCount, actions, selectedItems, onClearSelection, className }: DataTableBulkActionsProps<T>) {
     const [actionToConfirm, setActionToConfirm] = useState<BulkAction<T> | null>(null);
+    const { t } = useTranslation();
 
     if (selectedCount === 0 || actions.length === 0) return null;
 
@@ -50,7 +52,7 @@ export function DataTableBulkActions<T>({ selectedCount, actions, selectedItems,
                     className,
                 )}
                 role="region"
-                aria-label="Ações em massa"
+                aria-label={t('common.a11y.bulkActions')}
             >
                 <div className="flex items-center gap-2">
                     <CheckSquare className="text-primary h-4 w-4" />
@@ -83,7 +85,7 @@ export function DataTableBulkActions<T>({ selectedCount, actions, selectedItems,
                         size="icon"
                         onClick={onClearSelection}
                         className="text-muted-foreground hover:text-foreground h-11 w-11 md:h-7 md:w-7"
-                        aria-label="Limpar seleção"
+                        aria-label={t('common.a11y.clearSelection')}
                     >
                         <X className="h-3.5 w-3.5" />
                     </Button>
@@ -106,14 +108,14 @@ export function DataTableBulkActions<T>({ selectedCount, actions, selectedItems,
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={handleConfirmAction}
                                 className={cn(
                                     actionToConfirm.variant === 'destructive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
                                 )}
                             >
-                                Confirmar
+                                {t('common.actions.confirm')}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

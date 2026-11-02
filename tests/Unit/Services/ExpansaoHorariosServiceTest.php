@@ -229,7 +229,7 @@ class ExpansaoHorariosServiceTest extends TestCase
         // Blindagem da Fase 05: 'personalizado' = periodo customizado pelo
         // usuario, mas com a MESMA semantica semanal de '15dias'/'1mes' -- nao
         // e selecao livre de datas avulsas (H1 da auditoria foi reclassificada
-        // como falso positivo; ver docs/recorrencia-semantica.md).
+        // como falso positivo; ver docs/regras-de-negocio/recorrencia.md).
         $slots = [
             $this->slot('2026-09-01', '10:00:00', '11:00:00'), // terca
             $this->slot('2026-09-03', '14:00:00', '15:00:00'), // quinta

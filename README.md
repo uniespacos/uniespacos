@@ -120,11 +120,13 @@ docker exec -e APP_ENV=testing uniespacos-workspace-1 php artisan test   # Backe
 
 Comprehensive technical documentation is available in the [`docs/`](docs/) directory:
 
-- **[Core Workflow & Lifecycle](docs/core-workflow-report.md):** Reservation workflows and system architecture.
-- **[Authorization Policies](docs/authorization-policies.md):** Spatie permissions and route protection.
-- **[Models & Business Rules](docs/models-business-rules.md):** Eloquent models, accessors, and lifecycle scopes.
-- **[Realtime & WebSockets](docs/realtime-websocket-channels.md):** Laravel Reverb channels and Echo event bindings.
-- **[Roadmap](docs/ROADMAP.md):** Strategic milestones and planned capabilities.
+- **[Documentation Index](docs/README.md):** Navigation guide and overview of all project documents.
+- **[Backlog](docs/backlog.md):** Historical issue tracking and deliveries.
+- **[Core Workflow & Lifecycle](docs/regras-de-negocio/fluxo-de-reservas.md):** Reservation workflows and system architecture.
+- **[Authorization Policies](docs/regras-de-negocio/autorizacao.md):** Spatie permissions and route protection.
+- **[Models & Business Rules](docs/arquitetura/modelos-eloquent.md):** Eloquent models, accessors, and lifecycle scopes.
+- **[Realtime & WebSockets](docs/arquitetura/tempo-real.md):** Laravel Reverb channels and Echo event bindings.
+- **[Roadmap](docs/roadmap.md):** Strategic milestones and planned capabilities.
 
 ---
 

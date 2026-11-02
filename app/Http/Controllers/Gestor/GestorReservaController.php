@@ -56,7 +56,7 @@ class GestorReservaController extends Controller
             $this->service->evaluate($reserva, $request->validated(), Auth::user());
 
             return redirect()->route('gestor.reservas.index')
-                ->with('success', 'Avaliação enviada para processamento em segundo plano. Você será notificado quando concluir.');
+                ->with('success', __('Assessment sent for background processing. You will be notified when it is complete.'));
         } catch (\Exception $e) {
             Log::error('Erro ao despachar AvaliarReservaJob', [
                 'reserva_id' => $reserva->id,
@@ -64,7 +64,7 @@ class GestorReservaController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Ocorreu um erro ao enviar a avaliação para processamento.');
+            return back()->with('error', __('An error occurred while sending the assessment for processing.'));
         }
     }
 }

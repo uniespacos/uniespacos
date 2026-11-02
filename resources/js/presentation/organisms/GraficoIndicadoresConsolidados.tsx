@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { DadosRelatorio } from '@/types';
-import { Building, CalendarCheck, Users } from 'lucide-react';
+import { BarChart3, Building, CalendarCheck, Users } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 
 interface Props {
@@ -22,6 +24,8 @@ function numero(valor: unknown): number {
 }
 
 function GraficoIndicadoresConsolidados({ dados }: Props) {
+    const { t } = useTranslation();
+
     if (dados.linhas.length === 0) {
         return (
             <Card>
@@ -29,7 +33,7 @@ function GraficoIndicadoresConsolidados({ dados }: Props) {
                     <CardTitle>{dados.titulo}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-sm">Nenhum indicador para os filtros selecionados.</p>
+                    <EmptyState size="compact" icon={BarChart3} title={t('relatorios.empty_chart.indicadores')} />
                 </CardContent>
             </Card>
         );

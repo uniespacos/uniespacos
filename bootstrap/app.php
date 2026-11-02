@@ -24,8 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
-        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+    )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['middleware' => ['web', 'throttle:broadcasting']],
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
@@ -81,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return $response;
             }
 
-            if (! in_array($response->getStatusCode(), [403, 404, 419, 500, 503], true)) {
+            if (! in_array($response->getStatusCode(), [403, 404, 419, 429, 500, 503], true)) {
                 return $response;
             }
 

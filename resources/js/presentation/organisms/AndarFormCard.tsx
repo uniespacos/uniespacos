@@ -3,17 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
 import { getMensagemBloqueioRemocao, nivelParaLabel, podeRemoverAndar } from '@/lib/utils/andars/AndarHelpers';
 import { FormField } from '@/presentation/molecules/FormField';
+import { type AndarFormData } from '@/types/admin-forms';
 import { AlertTriangle, Lock, Trash2 } from 'lucide-react';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- useForm<T> do Inertia exige um index signature que `interface` não satisfaz.
-export type AndarFormData = {
-    id: string;
-    nome: string;
-    nivel: number;
-    tipo_acesso: string[];
-};
+export type { AndarFormData };
 
 interface AndarCardProps {
     andar: AndarFormData;
@@ -32,6 +29,7 @@ const tiposDeAcesso = [
 ];
 
 export default function AndarFormCard({ andar, onUpdate, onRemove, todosAndares, errors }: AndarCardProps) {
+    const { t } = useTranslation();
     const handleTipoAcessoChange = (tipoId: string, checked: boolean) => {
         const novosTipos = checked ? [...andar.tipo_acesso, tipoId] : andar.tipo_acesso.filter((t) => t !== tipoId);
 
@@ -82,7 +80,11 @@ export default function AndarFormCard({ andar, onUpdate, onRemove, todosAndares,
                                             onRemove(andar.id);
                                         }}
                                         disabled={!podeRemover}
-                                        className={!podeRemover ? 'cursor-not-allowed opacity-50' : 'text-destructive-accent hover:text-destructive-accent'}
+                                        aria-label={t('common.a11y.removeFloor', { nome: nivelParaLabel(andar.nivel) })}
+                                        className={cn(
+                                            'min-h-11 min-w-11 md:min-h-8 md:min-w-8',
+                                            !podeRemover ? 'cursor-not-allowed opacity-50' : 'text-destructive-accent hover:text-destructive-accent',
+                                        )}
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>

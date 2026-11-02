@@ -23,14 +23,43 @@ concurrency:
 
 permissions:
   contents: read
+  # Necessário para o paths-filter listar os arquivos da PR via API (sem precisar de fetch-depth: 0).
+  pull-requests: read
 
 env:
   # Em `schedule` o GITHUB_REF é a branch padrão; testamos sempre o develop.
   CHECKOUT_REF: ${{ github.event_name == 'schedule' && 'develop' || '' }}
 
 jobs:
+  # Decide se a PR mexe em código. A PR do release-please só toca CHANGELOG.md e o manifest de
+  # versão: o código é byte a byte o mesmo que acabou de passar na PR da feature, então rodar a
+  # suíte inteira de novo é puro desperdício. Fora de pull_request (schedule/dispatch) roda sempre.
+  changes:
+    name: 🔎 Detectar mudanças
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code }}
+    steps:
+      - name: Filtrar arquivos alterados
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          # `every`: um arquivo só conta como "código" se casar com TODOS os padrões abaixo,
+          # ou seja, se não for nenhuma das exclusões.
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!.release-please-manifest*.json'
+              - '!docs/**'
+
   test-backend:
     name: 🐘 Backend Tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -53,32 +82,19 @@ jobs:
         with:
           ref: ${{ env.CHECKOUT_REF }}
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
-          coverage: none
-          tools: composer:v2
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
       - name: Setup Environment
         run: |
           cp .env.testing .env
           sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/g' .env
           sed -i 's/DB_DATABASE=uniespacos/DB_DATABASE=uniespacos_test/g' .env
-          composer install --no-interaction --no-progress --prefer-dist
-          php artisan key:generate
+
+      - name: Setup PHP + vendor
+        uses: ./.github/actions/setup-php-deps
+        with:
+          extensions: mbstring, dom, fileinfo, pdo_pgsql, pgsql, bcmath, intl, zip, gd, redis
+
+      - name: Generate App Key
+        run: php artisan key:generate
 
       - name: Run Migrations
         env:
@@ -102,6 +118,8 @@ jobs:
 
   test-frontend:
     name: ⚛️ Frontend Tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -110,14 +128,8 @@ jobs:
         with:
           ref: ${{ env.CHECKOUT_REF }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci --prefer-offline
+      - name: Setup Node + node_modules
+        uses: ./.github/actions/setup-node-deps
 
       - name: Run Tests
         run: npm test -- --ci --maxWorkers=2
@@ -126,17 +138,29 @@ jobs:
   # independente de como os jobs de teste são divididos. `if: always()` é essencial: sem ele,
   # uma falha em test-backend/test-frontend deixaria este job como "skipped", e o GitHub trata
   # check obrigatório pulado como aprovado.
+  # Quando `changes` conclui que a PR não mexe em código (ex.: PR do release-please), os jobs de
+  # teste ficam "skipped" de propósito e o agregador aprova — mas só se o próprio `changes` passou.
   tests:
     name: ✅ Tests
     if: always()
-    needs: [test-backend, test-frontend]
+    needs: [changes, test-backend, test-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - name: Verificar resultado dos jobs de teste
         env:
-          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          HAS_CODE: ${{ needs.changes.outputs.code }}
+          RESULTADOS: ${{ needs.test-backend.result }} ${{ needs.test-frontend.result }}
         run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "::error::Detecção de mudanças falhou ($CHANGES_RESULT)"
+            exit 1
+          fi
+          if [ "$HAS_CODE" != "true" ]; then
+            echo "Nenhuma mudança de código (só docs/changelog/manifest) — testes dispensados."
+            exit 0
+          fi
           echo "Resultados dos jobs de teste: $RESULTADOS"
           for resultado in $RESULTADOS; do
             if [ "$resultado" != "success" ]; then

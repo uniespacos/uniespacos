@@ -35,6 +35,6 @@ class NotificationController extends Controller
 
         $this->service->markAsRead($user, $validated['ids'] ?? null);
 
-        return back()->with('success', 'Notificações marcadas como lidas.');
+        return back()->with('success', __('Notifications marked as read.'));
     }
 }

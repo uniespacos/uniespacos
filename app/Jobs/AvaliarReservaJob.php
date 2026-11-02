@@ -29,11 +29,15 @@ class AvaliarReservaJob implements ShouldQueue
 
     public int $tries = 3;
 
+    protected string $locale = 'pt';
+
     public function __construct(
         protected Reserva $reserva,
         protected array $validatedData,
         protected User $gestor,
-    ) {}
+    ) {
+        $this->locale = app()->getLocale();
+    }
 
     /**
      * Execute the job — evaluates each horario based on the gestor's decisions and conflict state.
@@ -77,9 +81,8 @@ class AvaliarReservaJob implements ShouldQueue
                         $justificativaFinal = $motivoDoGestor;
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
-                            $conflito = $conflitosMap->get($horarioId);
                             $statusFinal = SituacaoReservaEnum::INDEFERIDA->value;
-                            $justificativaFinal = "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}.";
+                            $justificativaFinal = $this->justificativaDeConflito();
                         }
 
                         Horario::where('id', $horarioId)
@@ -93,14 +96,9 @@ class AvaliarReservaJob implements ShouldQueue
                 } else {
                     if ($horariosConflitantesIds->isNotEmpty()) {
                         foreach ($horariosConflitantesIds as $id) {
-                            $conflito = $conflitosMap->get($id);
-                            $justificativa = $conflito
-                                ? "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}."
-                                : 'Conflito com outra reserva.';
-
                             Horario::where('id', $id)->whereIn('agenda_id', $agendasDoGestorIds)->update([
                                 'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
-                                'justificativa' => $justificativa,
+                                'justificativa' => $this->justificativaDeConflito(),
                                 'user_id' => $this->gestor->id,
                             ]);
                         }
@@ -172,17 +170,21 @@ class AvaliarReservaJob implements ShouldQueue
                 $this->triggerConflictRevalidation($horariosRecemAprovados);
             }
 
-            try {
-                $this->reserva->user->notify(new ReservationEvaluatedNotification(
-                    $this->reserva,
-                    $this->reserva->situacao_formatada,
-                    $this->gestor
-                ));
-            } catch (Exception $e) {
-                Log::warning('Falha ao enviar notificação de avaliação da reserva', [
-                    'reserva_id' => $this->reserva->id,
-                    'exception' => $e,
-                ]);
+            $solicitante = $this->reserva->user;
+
+            if ($solicitante !== null) {
+                try {
+                    $solicitante->notify(new ReservationEvaluatedNotification(
+                        $this->reserva,
+                        $this->reserva->situacao_formatada,
+                        $this->gestor
+                    ));
+                } catch (Exception $e) {
+                    Log::warning('Falha ao enviar notificação de avaliação da reserva', [
+                        'reserva_id' => $this->reserva->id,
+                        'exception' => $e,
+                    ]);
+                }
             }
 
         } catch (Exception $e) {
@@ -193,6 +195,11 @@ class AvaliarReservaJob implements ShouldQueue
             ]);
             $this->fail($e);
         }
+    }
+
+    private function justificativaDeConflito(): string
+    {
+        return (string) __('Conflict with another approved reservation at this time.', [], $this->locale);
     }
 
     /**

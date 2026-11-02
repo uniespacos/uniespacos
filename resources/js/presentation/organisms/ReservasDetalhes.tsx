@@ -170,32 +170,14 @@ export default function ReservaDetalhes({
                     </Button>
 
                     {isGestor ? (
-                        <Can
-                            permission={PERMISSION_RESERVAS_AVALIAR}
-                            fallback={
-                                <Button
-                                    type="button"
-                                    variant="default"
-                                    size="default"
-                                    className="min-h-[44px] gap-1.5 text-xs font-semibold"
-                                    onClick={() => {
-                                        router.get(`/gestor/reservas/${String(selectedReserva.id)}`);
-                                    }}
-                                >
-                                    <Edit className="h-4 w-4" />
-                                    {selectedReserva.situacao === SituacaoReserva.EM_ANALISE
-                                        ? t('reservas.acoes.avaliar')
-                                        : t('reservas.avaliacao.reavaliacao_titulo')}
-                                </Button>
-                            }
-                        >
+                        <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
                             <Button
                                 type="button"
                                 variant="default"
                                 size="default"
                                 className="min-h-[44px] gap-1.5 text-xs font-semibold"
                                 onClick={() => {
-                                    router.get(`/gestor/reservas/${String(selectedReserva.id)}`);
+                                    router.get(route('gestor.reservas.show', selectedReserva.id));
                                 }}
                             >
                                 <Edit className="h-4 w-4" />
@@ -225,12 +207,12 @@ export default function ReservaDetalhes({
                                     type="button"
                                     variant="outline"
                                     size="default"
-                                    className="min-h-[44px] flex-1 gap-1.5 text-xs font-semibold text-destructive-accent hover:text-destructive-accent sm:flex-initial"
+                                    className="text-destructive-accent hover:text-destructive-accent min-h-[44px] flex-1 gap-1.5 text-xs font-semibold sm:flex-initial"
                                     onClick={() => {
                                         setRemoverReserva(selectedReserva);
                                     }}
                                 >
-                                    <XCircle className="h-4 w-4 text-destructive-accent" />
+                                    <XCircle className="text-destructive-accent h-4 w-4" />
                                     {t('reservas.acoes.cancelar')}
                                 </Button>
                             )}

@@ -1,12 +1,12 @@
-import * as UseReservationLiveUpdatesModule from '@/hooks/use-reservation-live-updates';
-import * as UseReservaRefreshOnEventModule from '@/hooks/use-reserva-refresh-on-event';
 import { ValidationStatus } from '@/contracts';
 import { Turno } from '@/contracts/turnos.contract';
+import * as UseReservaRefreshOnEventModule from '@/hooks/use-reserva-refresh-on-event';
+import * as UseReservationLiveUpdatesModule from '@/hooks/use-reservation-live-updates';
 import { __resetEchoChannelRegistryForTests } from '@/lib/echo-channel-registry';
-import AvaliarReservaPage from './AvaliarReservaPage';
 import type { Reserva } from '@/types';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import AvaliarReservaPage from './AvaliarReservaPage';
 
 jest.mock('@inertiajs/react', () => ({
     Head: ({ title }: { title: string }) => <title>{title}</title>,
@@ -146,36 +146,21 @@ describe('AvaliarReservaPage', () => {
     });
 
     it('should render the page without crashing', () => {
-        const { getByTestId } = render(
-            <AvaliarReservaPage
-                reserva={mockReserva}
-                semana={mockSemana}
-            />
-        );
+        const { getByTestId } = render(<AvaliarReservaPage reserva={mockReserva} semana={mockSemana} />);
 
         expect(getByTestId('reserva-info-card')).toBeInTheDocument();
         expect(getByTestId('evaluation-form')).toBeInTheDocument();
     });
 
     it('should call useReservationLiveUpdates hook', () => {
-        render(
-            <AvaliarReservaPage
-                reserva={mockReserva}
-                semana={mockSemana}
-            />
-        );
+        render(<AvaliarReservaPage reserva={mockReserva} semana={mockSemana} />);
 
         const mockUseReservationLiveUpdates = jest.mocked(UseReservationLiveUpdatesModule.useReservationLiveUpdates);
         expect(mockUseReservationLiveUpdates).toHaveBeenCalled();
     });
 
     it('should call useReservaRefreshOnEvent with correct only parameter', () => {
-        render(
-            <AvaliarReservaPage
-                reserva={mockReserva}
-                semana={mockSemana}
-            />
-        );
+        render(<AvaliarReservaPage reserva={mockReserva} semana={mockSemana} />);
 
         const mockUseReservaRefreshOnEvent = jest.mocked(UseReservaRefreshOnEventModule.useReservaRefreshOnEvent);
         expect(mockUseReservaRefreshOnEvent).toHaveBeenCalled();
@@ -185,12 +170,7 @@ describe('AvaliarReservaPage', () => {
 
     it('should render ConflictAlertBox and ConflictCacheSnapshotPanel', () => {
         const { getByTestId } = render(
-            <AvaliarReservaPage
-                reserva={mockReserva}
-                semana={mockSemana}
-                todosOsConflitos={{}}
-                conflictCacheSnapshot={null}
-            />
+            <AvaliarReservaPage reserva={mockReserva} semana={mockSemana} todosOsConflitos={{}} conflictCacheSnapshot={null} />,
         );
 
         expect(getByTestId('conflict-alert-box')).toBeInTheDocument();
@@ -203,13 +183,15 @@ describe('AvaliarReservaPage', () => {
             validation_status: ValidationStatus.PROCESSING,
         };
 
-        const { queryByTestId } = render(
-            <AvaliarReservaPage
-                reserva={processingReserva}
-                semana={mockSemana}
-            />
-        );
+        const { queryByTestId } = render(<AvaliarReservaPage reserva={processingReserva} semana={mockSemana} />);
 
         expect(queryByTestId('generic-header')).not.toBeInTheDocument();
+    });
+
+    it('renderiza_titulo_da_avaliacao_como_unico_h1', () => {
+        render(<AvaliarReservaPage reserva={mockReserva} semana={mockSemana} />);
+
+        expect(screen.getByRole('heading', { level: 1, name: 'reservas.avaliacao.titulo' })).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     });
 });

@@ -1,18 +1,18 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { SelectContent, SelectItem, SelectTrigger, Select as SelectUI, SelectValue } from '@/components/ui/select';
+import { useTranslation } from '@/i18n';
 import { criarTerreoInicial, garantirTerreo, nivelParaNome } from '@/lib/utils/andars/AndarHelpers';
 import { isEditMode, transformModuloToFormData } from '@/lib/utils/andars/ModuloDataFormTransformer';
 import { FormField } from '@/presentation/molecules/FormField';
-import { AndarFormData } from '@/presentation/organisms/AndarFormCard';
 import AndaresManager from '@/presentation/organisms/AndarManager';
 import AndarStickFormActions from '@/presentation/organisms/AndarStickFormActions';
-import { CadastrarModuloForm } from '@/presentation/pages/Administrativo/Modulos/CadastrarModulo';
 import { Instituicao, Modulo, Unidade } from '@/types';
-import { useForm } from '@inertiajs/react';
+import { type AndarFormData, type CadastrarModuloForm } from '@/types/admin-forms';
+import { router, useForm } from '@inertiajs/react';
 import type React from 'react';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 export interface ModuloFormProps {
     data: CadastrarModuloForm;
@@ -20,30 +20,15 @@ export interface ModuloFormProps {
     submit: (e: React.SyntheticEvent) => void;
     errors: Record<string, string>;
     processing: boolean;
-    title: string;
-    description: string;
     instituicao: Instituicao;
     unidades: Unidade[];
     modulo?: Modulo;
 }
 
-export default function ModuloForm({
-    data,
-    setData,
-    submit,
-    errors,
-    processing,
-    title,
-    description,
-    instituicao,
-    unidades,
-    modulo,
-}: ModuloFormProps) {
+export default function ModuloForm({ data, setData, submit, errors, processing, instituicao, unidades, modulo }: ModuloFormProps) {
+    const { t } = useTranslation();
     const topRef = useRef<HTMLDivElement>(null);
     const andaresRef = useRef<HTMLDivElement>(null);
-
-    const AndaresCard = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => <Card ref={ref}>{children}</Card>);
-    AndaresCard.displayName = 'AndaresCard';
 
     useEffect(() => {
         if (modulo && isEditMode(modulo)) {
@@ -54,9 +39,7 @@ export default function ModuloForm({
                 andares: andaresComTerreo.map((andar) => ({ ...andar, nome: nivelParaNome(andar.nivel) })),
             });
         } else {
-            setData((prev: CadastrarModuloForm) =>
-                prev.andares.length === 0 ? { ...prev, andares: [criarTerreoInicial()] } : prev,
-            );
+            setData((prev: CadastrarModuloForm) => (prev.andares.length === 0 ? { ...prev, andares: [criarTerreoInicial()] } : prev));
         }
     }, [modulo, setData]);
 
@@ -113,17 +96,13 @@ export default function ModuloForm({
         <div ref={topRef}>
             <form onSubmit={submit} className="space-y-6 pb-20">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                        {editMode && <div className="text-muted-foreground text-sm">ID do Módulo: {modulo?.id}</div>}
-                    </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField label="Instituição" htmlFor="instituicao">
+                        {editMode && <div className="text-muted-foreground text-sm">{t('admin.modulos.form.idLabel', { id: modulo?.id ?? '' })}</div>}
+                        <FormField label={t('admin.modulos.form.instituicao')} htmlFor="instituicao">
                             <Input id="instituicao" value={instituicao.nome} disabled />
                         </FormField>
 
-                        <FormField label="Unidade" htmlFor="unidade_id" error={errors.unidade_id} required>
+                        <FormField label={t('admin.modulos.form.unidade')} htmlFor="unidade_id" error={errors.unidade_id} required>
                             <SelectUI
                                 value={data.unidade_id}
                                 onValueChange={(value) => {
@@ -132,7 +111,7 @@ export default function ModuloForm({
                                 disabled={processing}
                             >
                                 <SelectTrigger id="unidade_id">
-                                    <SelectValue placeholder="Selecione uma unidade" />
+                                    <SelectValue placeholder={t('admin.modulos.form.selecioneUnidade')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {unidadesFiltradas.map((unidade) => (
@@ -144,26 +123,24 @@ export default function ModuloForm({
                             </SelectUI>
                         </FormField>
 
-                        <FormField label="Nome do módulo" htmlFor="nome" error={errors.nome} required>
+                        <FormField label={t('admin.modulos.form.nome')} htmlFor="nome" error={errors.nome} required>
                             <Input
                                 id="nome"
                                 value={data.nome}
                                 onChange={(e) => {
                                     setData((prev: CadastrarModuloForm) => ({ ...prev, nome: e.target.value }));
                                 }}
-                                placeholder="Ex: Bloco Administrativo"
+                                placeholder={t('admin.modulos.form.nomePlaceholder')}
                                 disabled={processing}
                             />
                         </FormField>
                     </CardContent>
                 </Card>
 
-                <AndaresCard ref={andaresRef}>
+                <Card ref={andaresRef}>
                     <CardHeader>
-                        <CardTitle>Andares do Módulo</CardTitle>
-                        <CardDescription>
-                            Todo módulo possui térreo obrigatório. Adicione andares superiores ou subsolos conforme necessário.
-                        </CardDescription>
+                        <CardTitle>{t('admin.modulos.form.andaresTitulo')}</CardTitle>
+                        <CardDescription>{t('admin.modulos.form.andaresDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <AndaresManager
@@ -175,15 +152,23 @@ export default function ModuloForm({
                             processing={processing}
                         />
                     </CardContent>
-                </AndaresCard>
-
-                <Card>
-                    <CardFooter className="flex justify-end space-x-2">
-                        <Button type="submit" disabled={processing}>
-                            {processing ? 'Salvando...' : editMode ? 'Atualizar Módulo' : 'Salvar Módulo'}
-                        </Button>
-                    </CardFooter>
                 </Card>
+
+                <div className="flex justify-end gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            router.get(route('institucional.modulos.index'));
+                        }}
+                        disabled={processing}
+                    >
+                        {t('common.actions.cancel')}
+                    </Button>
+                    <Button type="submit" disabled={processing}>
+                        {processing ? t('common.actions.saving') : editMode ? t('common.actions.update') : t('common.actions.save')}
+                    </Button>
+                </div>
             </form>
 
             <AndarStickFormActions processing={processing} isEditMode={editMode} onScrollToTop={scrollToTop} andaresCount={data.andares.length} />

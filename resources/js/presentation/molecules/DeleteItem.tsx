@@ -1,12 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import HeadingSmall from '@/presentation/atoms/HeadingSmall';
 import InputError from '@/presentation/atoms/InputError';
-import { Modal } from '@/presentation/molecules/Modal';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { useForm } from '@inertiajs/react';
-import { SyntheticEvent, useRef, useState } from 'react';
+import { SyntheticEvent, useId, useRef, useState } from 'react';
 
 interface DeleteItemProps {
     itemName: string;
@@ -17,6 +16,8 @@ interface DeleteItemProps {
 }
 
 export default function DeleteItem({ isOpen, route, itemName, showHeading = false, variant = 'modal' }: DeleteItemProps) {
+    const formId = useId();
+    const passwordInputId = `${formId}-password`;
     const [open, setOpen] = useState(variant === 'modal');
     const passwordInput = useRef<HTMLInputElement>(null);
     const {
@@ -61,20 +62,31 @@ export default function DeleteItem({ isOpen, route, itemName, showHeading = fals
     };
 
     const modalContent = (
-        <Modal
+        <ResponsiveModal
             open={open}
             onOpenChange={handleOpenChange}
             title={`Tem certeza que deseja excluir o(a) ${itemName}?`}
             description={`Uma vez que o(a) ${itemName} for excluído, todos os dados serão permanentemente removidos. Por favor, digite sua senha para confirmar que deseja excluir permanentemente o(a) ${itemName}.`}
+            footer={
+                <>
+                    <Button type="button" variant="outline" onClick={closeModal} disabled={processing}>
+                        Cancelar
+                    </Button>
+
+                    <Button variant="destructive" type="submit" form={formId} disabled={processing}>
+                        {processing ? 'Excluindo...' : `Excluir ${itemName}`}
+                    </Button>
+                </>
+            }
         >
-            <form className="space-y-6" onSubmit={deleteItem}>
+            <form id={formId} className="space-y-4" onSubmit={deleteItem}>
                 <div className="grid gap-2">
-                    <Label htmlFor="delete-item-password" className="sr-only">
+                    <Label htmlFor={passwordInputId} className="sr-only">
                         Senha
                     </Label>
 
                     <Input
-                        id="delete-item-password"
+                        id={passwordInputId}
                         type="password"
                         name="password"
                         ref={passwordInput}
@@ -89,18 +101,8 @@ export default function DeleteItem({ isOpen, route, itemName, showHeading = fals
 
                     <InputError message={errors.password} />
                 </div>
-
-                <DialogFooter className="gap-2">
-                    <Button type="button" variant="outline" onClick={closeModal} disabled={processing}>
-                        Cancelar
-                    </Button>
-
-                    <Button variant="destructive" type="submit" disabled={processing}>
-                        {processing ? 'Excluindo...' : `Excluir ${itemName}`}
-                    </Button>
-                </DialogFooter>
             </form>
-        </Modal>
+        </ResponsiveModal>
     );
 
     if (variant === 'card') {
@@ -115,7 +117,9 @@ export default function DeleteItem({ isOpen, route, itemName, showHeading = fals
                     </div>
 
                     <Button
-                        variant="destructive"
+                        type="button"
+                        variant="outline"
+                        className="border-destructive-accent/30 text-destructive-accent hover:bg-destructive-subtle"
                         onClick={() => {
                             setOpen(true);
                         }}

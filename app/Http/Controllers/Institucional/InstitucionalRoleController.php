@@ -36,7 +36,7 @@ class InstitucionalRoleController extends Controller
         $role = $this->roleService->create($request->validated());
 
         return redirect()->route('institucional.roles.index')
-            ->with('success', "Papel '{$role->name}' criado com sucesso.");
+            ->with('success', __("Role ':nome' created successfully.", ['nome' => $role->name]));
     }
 
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
@@ -45,7 +45,7 @@ class InstitucionalRoleController extends Controller
 
         $this->roleService->update($role, $request->validated());
 
-        return back()->with('success', "Papel '{$role->name}' atualizado com sucesso.");
+        return back()->with('success', __("Role ':nome' updated successfully.", ['nome' => $role->name]));
     }
 
     public function destroy(Role $role): RedirectResponse
@@ -55,7 +55,7 @@ class InstitucionalRoleController extends Controller
         $name = $role->name;
         $this->roleService->delete($role);
 
-        return back()->with('success', "Papel '{$name}' removido com sucesso.");
+        return back()->with('success', __("Role ':nome' removed successfully.", ['nome' => $name]));
     }
 
     public function syncPermissions(SyncRolePermissionsRequest $request, Role $role): RedirectResponse
@@ -64,6 +64,6 @@ class InstitucionalRoleController extends Controller
 
         $this->roleService->syncPermissions($role, $request->validated()['permissions']);
 
-        return back()->with('success', "Permissões do papel '{$role->name}' atualizadas com sucesso.");
+        return back()->with('success', __("Permissions of role ':nome' updated successfully.", ['nome' => $role->name]));
     }
 }

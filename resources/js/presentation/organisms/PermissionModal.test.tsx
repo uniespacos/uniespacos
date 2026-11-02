@@ -1,6 +1,6 @@
+import type { User } from '@/types';
 import { render, screen, waitFor } from '@testing-library/react';
 import { PermissionModal } from './PermissionModal';
-import type { User } from '@/types';
 
 const mockOnClose = jest.fn();
 const mockOnUpdate = jest.fn();
@@ -21,8 +21,8 @@ jest.mock('@inertiajs/react', () => ({
     }),
 }));
 
-jest.mock('@/presentation/molecules/Modal', () => ({
-    Modal: ({ children, open }: { children: React.ReactNode; open: boolean; [key: string]: unknown }) =>
+jest.mock('@/presentation/molecules/ResponsiveModal', () => ({
+    ResponsiveModal: ({ children, open }: { children: React.ReactNode; open: boolean; [key: string]: unknown }) =>
         open ? <div data-testid="modal">{children}</div> : null,
 }));
 

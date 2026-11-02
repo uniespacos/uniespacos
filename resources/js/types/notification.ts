@@ -2,10 +2,14 @@ export type NotificationPeriodCategory = 'hoje' | 'ontem' | 'esta_semana' | 'mai
 
 export type NotificationType = 'reserva_deferida' | 'reserva_indeferida' | 'reserva_solicitada' | 'sistema';
 
+export type ChaveNotificacao = 'reservas.nova_solicitacao' | 'reservas.cancelada';
+
 export interface NotificationPayloadData {
     titulo: string;
     mensagem?: string;
     descricao?: string;
+    chave?: string;
+    parametros?: Record<string, string | number>;
     reserva_id?: number;
     url?: string;
     tipo?: NotificationType;

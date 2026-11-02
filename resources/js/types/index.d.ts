@@ -41,6 +41,7 @@ export interface SharedData {
     ziggy: Config & { location: string };
     flash: FlashMessages;
     sidebarOpen: boolean;
+    privacidadeHabilitada?: boolean;
     locale?: SupportedLocale;
     name?: string;
     quote?: {
@@ -72,6 +73,7 @@ export interface User {
     direct_permissions?: string[]; // Apenas permissões atribuídas diretamente ao usuário (model_has_permissions)
     setor_id: number | null;
     setor?: Setor; // Opcional, carregar com with('setor')
+    anonimizado?: boolean; // Preenchido pela listagem administrativa de usuários
     agendas?: Agenda[]; // Relação aninhada, array de agendas
     unread_notifications: []; // Adicionado no AppServiceProvider
     created_at: string;
@@ -175,7 +177,7 @@ export interface Instituicao {
     id: number;
     nome: string;
     sigla: string;
-    endereco: string;
+    endereco: string | null;
     unidades?: Unidade[]; // Relação aninhada, array de unidades
     setors?: Setor[]; // Relação aninhada, array de setores
 }
@@ -183,7 +185,7 @@ export interface Instituicao {
 export interface Unidade {
     id: number;
     nome: string;
-    sigla: string;
+    sigla: string | null;
     instituicao?: Instituicao; // Relação aninhada
     modulos?: Modulo[]; // Relação aninhada, array de módulos
     setors?: Setor[]; // Relação aninhada
@@ -209,7 +211,7 @@ export interface Modulo {
 export interface Andar {
     id: number;
     nome: string;
-    tipo_acesso: [];
+    tipo_acesso: string[];
     modulo?: Modulo; // Relação aninhada
     modulo_id: number; // Adicionado para facilitar o filtro no frontend
     espacos?: Espaco[]; // Relação aninhada, array de espaços
@@ -292,15 +294,7 @@ export interface Reserva {
 /**
  * Tipo para o formulário de criação/edição de uma reserva.
  */
-export interface ReservaFormData {
-    titulo: string;
-    descricao: string;
-    data_inicial: Date | null;
-    data_final: Date | null;
-    recorrencia: ValorOcorrenciaType; // Tipo de recorrência selecionada
-    horarios_solicitados: Partial<Horario>[]; // Horários que o usuário seleciona
-    [key: string]: unknown;
-}
+export type { ReservaFormData } from './reserva-stepper';
 
 /**
  * Tipo para o painel de controle que mostra o resumo dos status.
@@ -347,7 +341,7 @@ export interface OpcoesRecorrencia {
 
 
 // Define a estrutura de um único link da paginação do Laravel
-interface PaginatorLink {
+export interface PaginatorLink {
     url: string | null;
     label: string;
     active: boolean;
@@ -355,7 +349,7 @@ interface PaginatorLink {
 
 // Define a estrutura completa do objeto paginador do Laravel
 // O <T> o torna genérico, para que possamos usá-lo para Reservas, Espaços, etc.
-interface Paginator<T> {
+export interface Paginator<T> {
     data: T[];
     links: PaginatorLink[];
     current_page: number;
@@ -403,7 +397,7 @@ export interface SelectedAgenda {
     instituicao: Instituicao;
 }
 
-interface ReservaAvaliadaNotificationPayload {
+export interface ReservaAvaliadaNotificationPayload {
     type: string; // 'App\\Notifications\\ReservaAvaliadaNotification'
     reserva_id: number;
     status_avaliacao: string;

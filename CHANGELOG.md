@@ -1,5 +1,132 @@
 # Changelog
 
+## [1.5.0-rc.109](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.108...v1.5.0-rc.109) (2026-11-01)
+
+
+### Bug Fixes
+
+* deixar a página de privacidade em standby, desligada por padrão ([132c703](https://github.com/uniespacos/uniespacos/commit/132c703dc553c72b712210dd3114e570cb4259da))
+* deixar a página de privacidade em standby, desligada por padrão ([4775924](https://github.com/uniespacos/uniespacos/commit/477592452226ca12bcb25208b238db77401e047c))
+
+
+### Miscellaneous Chores
+
+* versionar a skill lgpd-audit e instituir o backlog reativo nos agentes ([b2d41c2](https://github.com/uniespacos/uniespacos/commit/b2d41c2dac291fa4943ea1a9ed2ea7228a402e94))
+* versionar a skill lgpd-audit e instituir o backlog reativo nos agentes ([f2911f9](https://github.com/uniespacos/uniespacos/commit/f2911f9ee1821888939cc6326774f58eac081065))
+
+## [1.5.0-rc.108](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.107...v1.5.0-rc.108) (2026-11-01)
+
+
+### Bug Fixes
+
+* remover URL assinada do log de login e incluir setor dos gestores no dashboard ([9afc129](https://github.com/uniespacos/uniespacos/commit/9afc129e590045f19ef09b1662224a051030e10a))
+
+## [1.5.0-rc.107](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.106...v1.5.0-rc.107) (2026-11-01)
+
+
+### Miscellaneous Chores
+
+* ignorar rascunhos de LGPD não aprovados e PDFs soltos em docs/ ([0bcc836](https://github.com/uniespacos/uniespacos/commit/0bcc836beec4a1f12f66e984039b115782bc2928))
+
+## [1.5.0-rc.106](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.105...v1.5.0-rc.106) (2026-11-01)
+
+
+### Features
+
+* **lgpd:** adequação à LGPD (minimização, anonimização, limites de taxa e página de privacidade) ([e71d5dc](https://github.com/uniespacos/uniespacos/commit/e71d5dcd090430cdc2361f539c8b01ec7aa56d2d))
+* **lgpd:** adiciona links para a política de privacidade no cadastro e nos rodapés ([bff6c6c](https://github.com/uniespacos/uniespacos/commit/bff6c6cc055b1fac56fe3785e6d5a530006170ba))
+* **lgpd:** adiciona página pública da política de privacidade ([436a0dd](https://github.com/uniespacos/uniespacos/commit/436a0ddb7780dc78df400d108809b99d9f09011a))
+* **lgpd:** adiciona página pública de privacidade e rodapé de e-mail, e internacionaliza mensagens flash legadas ([5933e95](https://github.com/uniespacos/uniespacos/commit/5933e95149b2c2e2874c6bad20db17edf1998618))
+* **lgpd:** anonimiza a conta em vez de excluir, num serviço único (T-25) ([efe4484](https://github.com/uniespacos/uniespacos/commit/efe44847c3d3e1d093f143e5362e42bcdd6c068d))
+* **lgpd:** cancela reservas pendentes ao anonimizar e filtra contas anonimizadas na lista (T-25) ([ce59195](https://github.com/uniespacos/uniespacos/commit/ce59195b314d2dd00880af5cf6c60b32d43c0676))
+* **lgpd:** limita taxa de cadastro, recuperação de senha, locale e broadcasting e neutraliza o "esqueci a senha" (T-29) ([e4262fd](https://github.com/uniespacos/uniespacos/commit/e4262fd0f799bf9f04dede701a1c879973b44434))
+
+
+### Bug Fixes
+
+* **lgpd:** cifra o histórico do navegador e limpa no logout e na autoexclusão ([5095aa0](https://github.com/uniespacos/uniespacos/commit/5095aa09a225b8c4bf89fe691b638e0b207aa194))
+* **lgpd:** internacionaliza a mensagem de erro da foto de perfil (pt-BR, en, es) ([aff66e4](https://github.com/uniespacos/uniespacos/commit/aff66e46b685e0aec39ad73a582f7e4becc47427))
+* **lgpd:** internacionaliza os prefixos "Erro ao" dos módulos institucionais e a notificação de falha na reserva ([1d53bc2](https://github.com/uniespacos/uniespacos/commit/1d53bc229aeed05207ecc73440189cbf1492c9ff))
+* **lgpd:** internacionaliza os textos novos da T-24 (pt-BR, en, es) ([4656fc4](https://github.com/uniespacos/uniespacos/commit/4656fc410e9d6625fdfa36dd1664f993d960906e))
+* **lgpd:** internacionaliza os textos novos da T-25 (pt-BR, en, es) ([1976e42](https://github.com/uniespacos/uniespacos/commit/1976e42b8ec92305264cd138a5fcb5ada163b425))
+* **lgpd:** internacionaliza os textos novos de minimização e validação (pt-BR, en, es) ([930ef1c](https://github.com/uniespacos/uniespacos/commit/930ef1ce65e2a402ecd86ff5b3ad645b67f5f907))
+* **lgpd:** mostra a página de erro 429 em visitas Inertia fora de local e testing ([fd40bba](https://github.com/uniespacos/uniespacos/commit/fd40bbaffee9940536c33e15b176f3a154236d80))
+* **lgpd:** processa a foto de perfil sem estourar a memória (A-19) ([fc5f555](https://github.com/uniespacos/uniespacos/commit/fc5f555c82f067fc6eea71e24352614163c555e7))
+* **lgpd:** reduz os payloads de página às colunas que a tela usa ([c7758f1](https://github.com/uniespacos/uniespacos/commit/c7758f1ba59836594dfabacd25645c6d548da369))
+* **lgpd:** reprocessa a foto de perfil e remove EXIF e GPS antes de gravar ([cc6f3ae](https://github.com/uniespacos/uniespacos/commit/cc6f3ae3526824e49d8bd890db4a8f6423a44a07))
+* **lgpd:** tira o nome de terceiros de notifications.data e da justificativa de conflito (T-24) ([4b1a5c2](https://github.com/uniespacos/uniespacos/commit/4b1a5c2f0ee0f3f6ea119d5c3707c285689ba23b))
+* limita e tipa campos de texto livre de reserva e avaliação ([4a53969](https://github.com/uniespacos/uniespacos/commit/4a53969549aaa3c34a8de7682269d7e9de8383ee))
+* mantém o log de qualquer exceção ao atualizar permissões de usuário ([fd2c311](https://github.com/uniespacos/uniespacos/commit/fd2c311cf926a9ecab9d5606525264ba483306a7))
+* registra SQL com valores só com flag explícita em local/development ([178224e](https://github.com/uniespacos/uniespacos/commit/178224e8edc9af0a0d3084f2d067a9bce1260a4a))
+* remove cabeçalhos e URL assinada do log de verificação de e-mail ([2efdede](https://github.com/uniespacos/uniespacos/commit/2efdede686524cc0ac2fe2c3bbf95f39a84640a1))
+* seeders de desenvolvimento só rodam em local, development e testing ([2a876cf](https://github.com/uniespacos/uniespacos/commit/2a876cf982429f56ca5bf31af8a9da7e4437ecb7))
+* tira dado pessoal de logs e mensagens de erro exibidas ao usuário ([f5eb589](https://github.com/uniespacos/uniespacos/commit/f5eb58970d070ca148f1a1be0b0091b8e7618e37))
+
+
+### Miscellaneous Chores
+
+* **dev:** publica Adminer e Mailpit só em 127.0.0.1 ([6024312](https://github.com/uniespacos/uniespacos/commit/6024312ef04dbf414bc8c764a9ef50e3923fbd6b))
+* **docker:** tira dumps, backups, logs e uploads do contexto de build ([57888af](https://github.com/uniespacos/uniespacos/commit/57888afbd1525c82466b39532e2015e876f88d41))
+
+## [1.5.0-rc.105](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.104...v1.5.0-rc.105) (2026-10-31)
+
+
+### Features
+
+* **frontend:** congruência de UI/UX — acessibilidade, estado vazio e anatomia de página ([6d33289](https://github.com/uniespacos/uniespacos/commit/6d33289298629ca752bc1503131456225908bace))
+
+
+### Miscellaneous Chores
+
+* remover do baseline do PHPStan entradas do método getWithAgendaData removido ([3941603](https://github.com/uniespacos/uniespacos/commit/3941603ba78e02dd898fad0163a6f9044c506f08))
+
+## [1.5.0-rc.104](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.103...v1.5.0-rc.104) (2026-10-31)
+
+
+### Features
+
+* **frontend:** padronizar telas de cadastro e edição de instituição, unidade e espaço ([12a511f](https://github.com/uniespacos/uniespacos/commit/12a511ffda9ce73fd4d96a0ae1567d4208848a6f))
+
+
+### Bug Fixes
+
+* corrigir tela de espaço institucional e barra dupla em URL de storage ([8e6bb54](https://github.com/uniespacos/uniespacos/commit/8e6bb54fa3fedf55e669be6c01734e8748558942))
+* **frontend:** corrigir títulos e layout de cadastro/edição de módulo ([5a7a7b8](https://github.com/uniespacos/uniespacos/commit/5a7a7b8f3a0045c4dc1d5e7a0d938fcf7acc4e7f))
+* **frontend:** garantir título de aba e h1 coerentes em todas as telas ([cbf0ba3](https://github.com/uniespacos/uniespacos/commit/cbf0ba3aee4f43fdff4528b7f70be94eaee36eb8))
+* **frontend:** impedir overflow horizontal do conteúdo com sidebar recolhida ([8d7b577](https://github.com/uniespacos/uniespacos/commit/8d7b577be6afd83922f4c6f724709ce0064f81e0))
+* **frontend:** unificar montagem de URL de imagens de storage ([195cd55](https://github.com/uniespacos/uniespacos/commit/195cd55599a9739c810bcc7624e8a6f71db7dbfd))
+
+## [1.5.0-rc.103](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.102...v1.5.0-rc.103) (2026-10-31)
+
+
+### Bug Fixes
+
+* **frontend:** ReservaCard não quebra com horários parciais do dashboard ([72b5009](https://github.com/uniespacos/uniespacos/commit/72b50093e11d388eef6e6cc4151d2d5c8477df4b))
+* **frontend:** ReservaCard não quebra com horários parciais do dashboard ([4ba03ba](https://github.com/uniespacos/uniespacos/commit/4ba03bab8986c19d6145ae971cfa38530f0f8d31))
+
+## [1.5.0-rc.102](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.101...v1.5.0-rc.102) (2026-10-31)
+
+
+### Features
+
+* **frontend:** aprimorar ergonomia e clareza dos fluxos nas telas existentes ([559e976](https://github.com/uniespacos/uniespacos/commit/559e9764afc485bbeb53325cad9d75e4a235cd21))
+
+
+### Bug Fixes
+
+* **frontend:** corrigir permissão do Avaliar, rotas relativas, rótulos e fuso horário ([2e28136](https://github.com/uniespacos/uniespacos/commit/2e281363202ead5bf63631d995ed8551bd573f1b))
+* **frontend:** trocar a recorrência não sobrescreve a data inicial escolhida ([f28ad2d](https://github.com/uniespacos/uniespacos/commit/f28ad2d8bf577efa870dffe339ff7143585f9363))
+
+## [1.5.0-rc.101](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.100...v1.5.0-rc.101) (2026-10-31)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.4.4 ([1face34](https://github.com/uniespacos/uniespacos/commit/1face349a2f3df9af1aa45bf0ebbe3f93fcdfc9a))
+* **main:** release 1.4.4 ([db2b651](https://github.com/uniespacos/uniespacos/commit/db2b651029a6c4d907d7a7db93326aeff43b4a2a))
+* release de produção com patches de segurança (Laravel 12.70 e dependências) ([3ef15a1](https://github.com/uniespacos/uniespacos/commit/3ef15a13984e8271de90f282473ae32e06104df9))
+* sincronizar main em develop após release 1.4.4 ([f188d8d](https://github.com/uniespacos/uniespacos/commit/f188d8d4d2d664a580dd3ae5dbb6c645453f1967))
+
 ## [1.4.4](https://github.com/uniespacos/uniespacos/compare/v1.4.3...v1.4.4) (2026-10-30)
 
 

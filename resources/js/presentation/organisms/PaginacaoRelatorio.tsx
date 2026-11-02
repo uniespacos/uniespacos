@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginacaoRelatorioProps {
@@ -9,6 +10,7 @@ interface PaginacaoRelatorioProps {
 }
 
 export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPageChange }: PaginacaoRelatorioProps) {
+    const { t } = useTranslation();
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     if (totalPages <= 1) {
@@ -51,6 +53,8 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
                     key={i}
                     variant={i === currentPage ? 'default' : 'outline'}
                     size="icon"
+                    aria-label={t('common.a11y.goToPage', { page: i })}
+                    aria-current={i === currentPage ? 'page' : undefined}
                     onClick={() => {
                         handlePageChange(i);
                     }}
@@ -67,7 +71,7 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
     return (
         <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
             <div className="text-muted-foreground text-sm">Total de {totalItems} item(s) encontrado(s).</div>
-            <nav aria-label="Paginação do relatório" className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <nav aria-label={t('common.a11y.paginationNav')} className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <Button
                     variant="outline"
                     className="hidden h-11 min-h-[44px] w-11 min-w-[44px] p-0 md:h-9 md:min-h-9 md:w-9 md:min-w-9 lg:flex"
@@ -76,7 +80,7 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
                     }}
                     disabled={currentPage === 1}
                 >
-                    <span className="sr-only">Primeira página</span>
+                    <span className="sr-only">{t('common.a11y.firstPage')}</span>
                     <ChevronsLeft className="h-4 w-4" />
                 </Button>
                 <Button
@@ -87,7 +91,7 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
                     }}
                     disabled={currentPage === 1}
                 >
-                    <span className="sr-only">Página anterior</span>
+                    <span className="sr-only">{t('common.a11y.previousPage')}</span>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
 
@@ -101,7 +105,7 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
                     }}
                     disabled={currentPage === totalPages}
                 >
-                    <span className="sr-only">Próxima página</span>
+                    <span className="sr-only">{t('common.a11y.nextPage')}</span>
                     <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button
@@ -112,7 +116,7 @@ export function PaginacaoRelatorio({ totalItems, itemsPerPage, currentPage, onPa
                     }}
                     disabled={currentPage === totalPages}
                 >
-                    <span className="sr-only">Última página</span>
+                    <span className="sr-only">{t('common.a11y.lastPage')}</span>
                     <ChevronsRight className="h-4 w-4" />
                 </Button>
             </nav>

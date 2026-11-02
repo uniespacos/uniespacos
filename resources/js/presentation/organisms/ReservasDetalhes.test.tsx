@@ -1,4 +1,5 @@
 import type { Horario, Reserva, User } from '@/types';
+import { usePage } from '@inertiajs/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import ReservaDetalhes from './ReservasDetalhes';
 
@@ -60,6 +61,20 @@ const mockReserva: Reserva = {
 };
 
 describe('ReservaDetalhes', () => {
+    afterEach(() => {
+        (usePage as jest.Mock).mockReset();
+        (usePage as jest.Mock).mockImplementation(() => ({
+            props: {
+                auth: { user: null },
+                errors: {},
+                flash: {},
+            },
+            url: '/',
+            component: '',
+            version: null,
+        }));
+    });
+
     it('renderiza detalhes na visão do solicitante (Minhas Reservas)', () => {
         render(
             <ReservaDetalhes
@@ -82,7 +97,24 @@ describe('ReservaDetalhes', () => {
         expect(screen.getByRole('button', { name: /Cancelar/i })).toBeInTheDocument();
     });
 
-    it('renderiza detalhes na visão do gestor (Gerir Reservas)', () => {
+    it('renderiza detalhes na visão do gestor (Gerir Reservas) quando possui permissão reservas.avaliar', () => {
+        (usePage as jest.Mock).mockImplementation(() => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 2,
+                        name: 'Gestor Manhã',
+                        email: 'gestor@example.com',
+                        roles: ['gestor'],
+                        permissions: ['reservas.avaliar'],
+                    },
+                },
+            },
+            url: '/gestor/reservas',
+            component: '',
+            version: null,
+        }));
+
         render(
             <ReservaDetalhes
                 isOpen={true}
@@ -98,6 +130,21 @@ describe('ReservaDetalhes', () => {
         expect(screen.getByText('Carlos Silva')).toBeInTheDocument();
         expect(screen.getByText('carlos@uesb.edu.br')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Avaliar/i })).toBeInTheDocument();
+    });
+
+    it('oculta botão Avaliar na visão do gestor quando não possui permissão reservas.avaliar', () => {
+        render(
+            <ReservaDetalhes
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                selectedReserva={mockReserva}
+                isGestor={true}
+                setRemoverReserva={jest.fn()}
+                routeName="gestor.reservas.index"
+            />,
+        );
+
+        expect(screen.queryByRole('button', { name: /Avaliar/i })).not.toBeInTheDocument();
     });
 
     it('chama setRemoverReserva ao clicar em Cancelar na visão do solicitante', () => {

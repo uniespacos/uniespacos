@@ -96,10 +96,21 @@ describe('EspacoCard', () => {
         render(<EspacoCard espaco={mockEspaco} user={null} />);
 
         expect(screen.getByText('Auditório Central')).toBeInTheDocument();
+        expect(screen.getByText('Auditório principal para eventos e palestras')).toBeInTheDocument();
         expect(screen.getByText('JQ')).toBeInTheDocument();
         expect(screen.getByText('Módulo II • 1º Andar')).toBeInTheDocument();
         expect(screen.getByText('100 pessoas')).toBeInTheDocument();
         expect(screen.getByText('Consultar horários')).toBeInTheDocument();
+    });
+
+    it('dispara callback ao pressionar tecla Espaço no card clicável', () => {
+        const handleSolicitarReserva = jest.fn();
+        render(<EspacoCard espaco={mockEspaco} user={null} handleSolicitarReserva={handleSolicitarReserva} />);
+
+        const cardButton = screen.getByRole('button', { name: /Auditório Central/i });
+        fireEvent.keyDown(cardButton, { key: ' ' });
+
+        expect(handleSolicitarReserva).toHaveBeenCalledWith('10');
     });
 
     it('dispara callback ao clicar no card de usuário comum', () => {

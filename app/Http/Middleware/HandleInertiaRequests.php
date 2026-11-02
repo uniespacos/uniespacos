@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
             'sidebarOpen' => $request->cookie('sidebar_state') === 'true',
+            'privacidadeHabilitada' => (bool) config('privacidade.pagina_habilitada'),
             'locale' => fn () => app()->getLocale(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -70,10 +71,10 @@ class HandleInertiaRequests extends Middleware
 
     private function formatAuthUser($user): array
     {
-        $user->load(['setor', 'unreadNotifications']);
+        $user->load('setor');
 
         return array_merge($user->toArray(), [
-            'unread_notifications_count' => $user->unreadNotifications->count(),
+            'unread_notifications_count' => $user->unreadNotifications()->count(),
             'roles' => $user->getRoleNames(),
             'permissions' => $user->getAllPermissions()->pluck('name'),
             'direct_permissions' => $user->getDirectPermissions()->pluck('name'),

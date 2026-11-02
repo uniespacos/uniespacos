@@ -237,14 +237,38 @@ class ReservaService
             return;
         }
 
-        $agendaIds = $reserva->horarios->pluck('agenda_id')->unique()->values()->all();
+        $horariosLiberados = DB::transaction(fn () => $this->inativar($reserva));
 
-        $horariosParaLibertar = $reserva->horarios()->get(['id', 'data', 'agenda_id']);
+        $this->notificarCancelamento($reserva, $user, $horariosLiberados);
+    }
 
-        DB::transaction(function () use ($reserva) {
-            $reserva->horarios()->update(['situacao' => 'inativa']);
-            $reserva->update(['situacao' => 'inativa']);
-        });
+    /**
+     * Marca a reserva e seus horarios como inativos, sem efeitos colaterais.
+     * Deve rodar dentro de uma transação; notificarCancelamento só pode ser
+     * chamado depois que ela for commitada.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Horario>
+     */
+    public function inativar(Reserva $reserva): \Illuminate\Database\Eloquent\Collection
+    {
+        $horariosLiberados = $reserva->horarios()->get(['id', 'data', 'agenda_id']);
+
+        $reserva->horarios()->update(['situacao' => 'inativa']);
+        $reserva->update(['situacao' => 'inativa']);
+
+        return $horariosLiberados;
+    }
+
+    /**
+     * Efeitos externos de um cancelamento já persistido: avisa os gestores,
+     * revalida reservas em conflito nos horarios liberados e emite o evento que
+     * invalida o cache de relatorios. Nunca chamar dentro da transação.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Horario>  $horariosLiberados
+     */
+    public function notificarCancelamento(Reserva $reserva, User $canceler, \Illuminate\Database\Eloquent\Collection $horariosLiberados): void
+    {
+        $agendaIds = $horariosLiberados->pluck('agenda_id')->unique()->values()->all();
 
         $gestores = $this->repoAgenda->getWithUserByIds($agendaIds)
             ->pluck('user')
@@ -253,7 +277,7 @@ class ReservaService
 
         foreach ($gestores as $gestor) {
             try {
-                $gestor->notify(new ReservationCanceledNotification($reserva, $user));
+                $gestor->notify(new ReservationCanceledNotification($reserva, $canceler));
             } catch (\Exception $e) {
                 Log::warning('Falha ao notificar gestor sobre cancelamento de reserva', [
                     'gestor_id' => $gestor->id,
@@ -263,11 +287,22 @@ class ReservaService
             }
         }
 
-        $this->revalidateConflictedReservations($horariosParaLibertar);
+        $this->revalidateConflictedReservations($horariosLiberados);
 
         $espacoId = $reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
         $horariosCount = $reserva->horarios()->count();
         ReservaEvent::dispatch('canceled', $reserva->id, $espacoId, $horariosCount);
+    }
+
+    /**
+     * Reservas do solicitante ainda em análise, travadas para atualização.
+     * Deve ser chamado dentro de uma transação.
+     *
+     * @return Collection<int, Reserva>
+     */
+    public function pendentesDoSolicitante(User $solicitante): Collection
+    {
+        return $this->repoReserva->getPendentesDoSolicitante($solicitante->id);
     }
 
     /**
@@ -376,9 +411,8 @@ class ReservaService
         foreach ($horariosDaSemana as $horario) {
             $horario->is_conflicted = false;
             if ($conflitosMap->has($horario->id)) {
-                $conflito = $conflitosMap->get($horario->id);
                 $horario->is_conflicted = true;
-                $horario->conflict_details = "Conflito com a reserva '{$conflito->conflito_reserva_titulo}' de {$conflito->conflito_user_name}.";
+                $horario->conflict_details = (string) __('Conflict with another approved reservation at this time.');
             }
         }
 

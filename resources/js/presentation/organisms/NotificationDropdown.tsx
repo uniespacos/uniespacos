@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useNotificationAudio } from '@/hooks/useNotificationAudio';
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
+import { NotificationGroupList } from '@/presentation/molecules/NotificationGroupList';
 import { User } from '@/types';
 import { DatabaseNotificationItem, NotificationType } from '@/types/notification';
 import { router, usePage } from '@inertiajs/react';
 import { Bell } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useNotificationAudio } from '@/hooks/useNotificationAudio';
-import { NotificationGroupList } from '@/presentation/molecules/NotificationGroupList';
+import { useEffect, useMemo, useState } from 'react';
 
 export function NotificationDropdown() {
     const { props } = usePage<{
@@ -72,6 +72,8 @@ export function NotificationDropdown() {
                 titulo?: string;
                 descricao?: string;
                 mensagem?: string;
+                chave?: string;
+                parametros?: Record<string, string | number>;
                 url?: string;
                 reserva_id?: number;
                 tipo?: NotificationType;
@@ -85,6 +87,8 @@ export function NotificationDropdown() {
                         titulo: notification.titulo ?? 'Nova Notificação',
                         mensagem: notification.mensagem,
                         descricao: notification.descricao,
+                        chave: notification.chave,
+                        parametros: notification.parametros,
                         url: notification.url,
                         reserva_id: notification.reserva_id,
                         tipo: notification.tipo,

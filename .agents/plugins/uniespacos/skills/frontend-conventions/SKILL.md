@@ -20,9 +20,84 @@ Só mexe se o motivo for consertar o primitivo em si para todo mundo — não pa
 
 Fora de `presentation/`, três diretórios canônicos que toda tela nova deve considerar antes de escrever tipo, string ou assinatura de canal do zero:
 
-- `resources/js/contracts/` — SSOT de tipos/enums de domínio (`situacao-reserva.contract.ts`, `roles.contract.ts`, etc.). Nunca duplicar union type localmente.
+- `resources/js/contracts/` — SSOT de tipos/enums de domínio (`situacao-reserva.contract.ts`, `roles.contract.ts`, etc.). Nunca duplicar union type localmente. Arquivos e exports principais: `situacao-reserva` (`SituacaoReserva`, `SituacaoHorario`), `modo-arquivo` (`ModoArquivo`), `ordenacao-reserva` (`OrdenacaoReserva`), `validation-status` (`ValidationStatus`), `turnos` (`Turno`), `recorrencia` (`RecorrenciaReserva`), `roles` (`SystemRole`, `RoleType`), `relatorios` (`TipoRelatorio`, `FormatoRelatorio`) e `error-codes` (`ErrorCode`).
 - `resources/js/i18n/` — motor de i18n próprio (`useTranslation()`, dicionários em `locales/pt-BR.ts` e derivados). Zero string hardcoded em PT-BR num componente.
-- `resources/js/lib/auth-can.tsx` (PBAC: `<Can>`, `useCan()`) e `resources/js/lib/echo-channel-registry.ts` (registry de canais Reverb com reference-counting: `acquirePrivateChannel`/`releasePrivateChannel`).
+- `resources/js/lib/auth-can.tsx` (PBAC: `<Can>`, `useCan()`) e `resources/js/lib/echo-channel-registry.ts` (registry de canais Reverb com reference-counting: `acquirePrivateChannel`/`releasePrivateChannel`). Fora de componente, use `hasPermission(user, ...)` e `hasAnyPermission(user, [...])` de `resources/js/lib/auth.ts`. A UI decide por permissão, nunca por nome de papel; quando o papel for inevitável, use as constantes de `@/constants/permissions` (`ROLE_INSTITUCIONAL`, `ROLE_GESTOR`, `ROLE_COMUM`; o papel comum é `'comum'`, nunca `'usuario'`).
+
+## Anatomia de página
+
+Toda tela renderizada pelo Inertia segue a mesma estrutura, para que título, cabeçalho, espaçamento e nomes acessíveis sejam iguais em todos os perfis. Referências: `pages/Administrativo/Modulos/CadastrarModulo.tsx` e `EditarModulo.tsx` (listas e formulários admin) e `pages/Gestor/Relatorios/RelatoriosGestorPage.tsx` (relatório com ações no cabeçalho).
+
+```tsx
+<AppLayout breadcrumbs={breadcrumbs}>
+    <Head title={t('admin.modulos.cadastrar')} />
+    <div className="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
+        <GenericHeader titulo={t('admin.modulos.cadastrar')} descricao={t('admin.modulos.cadastrarDesc')} />
+        {/* formulário, tabela ou cards */}
+    </div>
+</AppLayout>
+```
+
+| Elemento | Regra |
+|---|---|
+| `AppLayout` | Recebe `breadcrumbs` (lista de `title`/`href`, montada com `useMemo`). |
+| `<Head title>` | Usa a mesma chave de tradução do `h1`. Título da aba e título da página nunca divergem. |
+| Wrapper da página | Um único `div` com `flex h-full flex-1 flex-col p-4 md:p-6`. `gap-4` em listas e formulários administrativos; `gap-6` em dashboards, vitrines e relatórios. |
+| `GenericHeader` | Contém o único `h1` da página. |
+
+- **Nunca aninhar dois wrappers com padding.** O padding vem apenas do wrapper da página.
+
+### Cabeçalho: `GenericHeader`
+
+`resources/js/presentation/molecules/GenericHeader.tsx`:
+
+- `titulo` vira o `h1`; `descricao` é opcional e aparece abaixo, em `text-muted-foreground`.
+- Prop opcional `actions?: ReactNode` para ações extras à direita (ex.: `ExportarRelatorio`, badges). Renderiza após o botão padrão e, no mobile, fica alinhado à esquerda.
+
+### Configurações (`settings`)
+
+- O `h1` "Configurações" vem de `templates/settings/Layout.tsx`, via o atom `Heading` (`h1`). As páginas de configuração não criam outro `h1`.
+- As seções internas usam `HeadingSmall` (`h2`).
+
+### Formulários de recurso
+
+Aplica-se a `InstituicaoForm`, `UnidadesForm`, `ModuloForm` e `SetorForm` (este último ainda não segue o padrão; ver nota abaixo).
+
+- **Sem título duplicado.** O título da tela já está no `GenericHeader`; o formulário não repete.
+- **Rodapé** `flex justify-end gap-2` com:
+  - "Cancelar": `variant="outline"`, `type="button"`, volta à listagem.
+  - Submit: `common.actions.save` ao criar; `common.actions.update` ao editar (prop `editMode`); `common.actions.saving` enquanto `processing`.
+- **Campos nullable do banco** são normalizados para `''` no `useForm`, evitando `input` controlado com `value={null}`.
+- Mecanismo: `useForm` do Inertia, conforme a seção de formulário acima.
+
+> Nota: `SetorForm.tsx` ainda usa textos fixos ("Cancelar", "Criar Setor", "Atualizar") e `pt-4` no rodapé. Corrigir antes de usá-lo como referência.
+
+### Estado vazio
+
+- **Dentro de `DataTable`:** prop `emptyState={{ title: t('admin.<x>.nenhum'), description: t('common.empty.adjustFilter'), action }}`.
+- **Fora de `DataTable`:** molécula `EmptyState` (`resources/js/presentation/molecules/EmptyState.tsx`), com `icon`, `title`, `description`, `action` e `size` (`'default' | 'compact'`).
+- `ReservasEmpty` é específico do `ReservasWorkspace`; não reutilizar fora dele.
+
+### Imagens de storage
+
+Sempre `resolveStorageUrl` (`resources/js/lib/storage-url.ts`). Nunca montar `/storage/${x}` à mão.
+
+### Acessibilidade na página
+
+- Botão só com ícone exige `aria-label` via `t()`, usando as chaves `common.a11y.*`.
+- Toggles usam `aria-pressed`. Link da página atual na paginação usa `aria-current="page"`.
+- Inputs se associam ao `Label` por `useId` + `htmlFor`. Busca sem label visível recebe `aria-label`.
+- Alvo de toque mínimo de 44px no mobile. Padrão: `h-11 w-11 md:h-6 md:w-6` (ex.: `ImageUpload.tsx`). Ações de linha de tabela usam `h-11 w-11 md:h-8 md:w-8` (ex.: `Usuarios.tsx`).
+
+### Layout e overflow
+
+- `SidebarInset` (`resources/js/components/ui/sidebar.tsx`) já tem `min-w-0 w-full`.
+- Conteúdo largo, como tabelas, rola no próprio container com `overflow-x-auto`. Nunca `overflow-x-hidden` no `body`.
+- Elementos fixos acima da barra inferior mobile (`DataTableBulkActions`, `ReservaStickySummaryBar`, `InstallPwaBanner`) usam `bottom-20 right-4 left-4` no mobile, 16px acima da `MobileBottomBar` (`h-15`, fixa em `bottom-0`, `md:hidden`). No desktop usam `md:bottom-4` ou `md:bottom-6`.
+
+### Verificação visual
+
+Prática recomendada antes de considerar uma tela pronta: varredura com Playwright (Edge headless) por perfil × desktop/mobile × claro/escuro, checando `title`/`h1`, erros de página, overflow horizontal e nomes acessíveis.
 
 ## Modais e Diálogos: Padrão Ergonômico `<ResponsiveModal>`
 
@@ -95,7 +170,15 @@ A estilização utiliza o **Tailwind v4 (CSS-First)** com a diretiva `@theme` e 
 - **Nota de Acessibilidade e Racional Técnico:**
   - **WCAG 1.4.1 (Use of Color):** Ícone + texto explícito sempre, nunca só cor. Ambas as indicações visuais devem ser claras.
   - **Contraste WCAG 1.4.3:** `text-destructive` sobre o fundo da variante `outline` FALHA no tema escuro (Frappé: 3.52:1 < 4.5:1 exigido). `text-destructive-accent` é o token semântico de maior contraste que passa em ambos os temas: Latte 8.57:1, Frappé 6.15:1 — ambos ≥ 4.5:1.
-  - **Racional de Design:** Baseado em Material Design 3 (uma ação de alta ênfase/preenchida por tela), Apple HIG (cor semântica reservada ao seu papel), Nielsen Norman Group (confirmação protege a ação, não o gatilho) e Fitts's Law (tamanho de alvo de toque `min-h-[44px]` preservado independente da cor). Referência completa: `docs/auditoria-ux-hierarquia-visual/03-benchmark-padroes-externos.md`, seção 7.
+  - **Racional de Design:** Baseado em Material Design 3 (uma ação de alta ênfase/preenchida por tela), Apple HIG (cor semântica reservada ao seu papel), Nielsen Norman Group (confirmação protege a ação, não o gatilho) e Fitts's Law (tamanho de alvo de toque `min-h-[44px]` preservado independente da cor).
+
+## Listagens: `DataTable`
+
+Listagens administrativas e de gestão com paginação ou ordenação usam `DataTable` (`resources/js/presentation/molecules/DataTable.tsx`):
+
+- `viewMode?: 'table' | 'grid'` alterna a visualização. Com `autoCardViewOnMobile` (padrão `true`), o mobile mostra cards. `renderCard(item, index, isSelected, toggle)` substitui o card padrão.
+- `bulkActions` só aparece com `selectable` ativo; a barra de ações em lote é `DataTableBulkActions`.
+- `enableColumnVisibility` (padrão `false`) mostra o controle de colunas (`DataTableViewOptions`).
 
 ## Datas e Horários: Padrão `date-fns ^4.4.0`
 

@@ -92,35 +92,42 @@ Passe contexto completo e fechado:
 - Arquivos relevantes (onde mexer, onde consultar como referência)
 - Critério de pronto (comando de teste, lint, verificação visual)
 - Restrições específicas (não mexer em X, preservar comportamento Y)
+- IDs do backlog afetados e o status novo (ex.: `T-04` → concluído), para o executor os reportar de volta
 
 ### 4. Quando Chamar o Agente de Documentação (`docs`)
 Após a conclusão de tarefas de código (`backend` ou `frontend`), avalie se precisa documentar:
 
 | Mudança realizada | Documento a atualizar em `docs/` |
 |---|---|
-| Nova regra de negócio / fluxo de reserva | `core-workflow-report.md` |
-| Nova permissão, role, ou mudança de policy | `authorization-policies.md` |
-| Nova regra de validação em FormRequest | `validation-rules.md` |
-| Nova notificação (mail/broadcast) ou evento Reverb | `notifications-and-channels.md` / `realtime-websocket-channels.md` |
-| Novo enum ou constante de domínio | `enums-and-constants.md` |
-| Novo model, scope, accessor com cache | `models-business-rules.md` |
-| Novo repository ou interface | `repositories-pattern.md` |
-| Ajuste em auto-aprovação de reserva | `auto-approval-rule.md` |
-| Ajuste em arquivamento / soft-delete | `archive-soft-delete-flow.md` |
-| Novo envelope de erro ou logging | `error-handling-and-logging.md` |
-| Novo contrato SSOT (`@/contracts`) | `models-business-rules.md` ou documento de arquitetura frontend |
+| Nova regra de negócio / fluxo de reserva | `regras-de-negocio/fluxo-de-reservas.md` |
+| Nova permissão, role, ou mudança de policy | `regras-de-negocio/autorizacao.md` |
+| Nova regra de validação em FormRequest | `regras-de-negocio/validacao.md` |
+| Nova notificação (mail/broadcast) ou evento Reverb | `arquitetura/notificacoes.md` / `arquitetura/tempo-real.md` |
+| Novo enum ou constante de domínio | `arquitetura/enums-e-constantes.md` |
+| Novo model, scope, accessor com cache | `arquitetura/modelos-eloquent.md` |
+| Novo repository ou interface | `arquitetura/repositorios.md` |
+| Ajuste em auto-aprovação de reserva | `regras-de-negocio/auto-aprovacao.md` |
+| Ajuste em arquivamento / soft-delete | `regras-de-negocio/arquivamento.md` |
+| Novo envelope de erro ou logging | `arquitetura/erros-e-logs.md` |
+| Novo contrato SSOT (`@/contracts`) | `arquitetura/enums-e-constantes.md` e a lista de contratos da skill `frontend-conventions` |
 | Nova chave/namespace de i18n | (avaliar se há documento de i18n; se não, não criar novo) |
-| Nova permission PBAC | `authorization-policies.md` |
+| Nova permission PBAC | `regras-de-negocio/autorizacao.md` |
+| Mudança em relatórios (escopo, cache, exportação) | `regras-de-negocio/relatorios.md` |
+| Mudança em recorrência (tipos, expansão de horários) | `regras-de-negocio/recorrencia.md` |
+| Mudança em cache de conflitos (`conflict_cache`, revalidação) | `regras-de-negocio/cache-de-conflitos.md` |
+| Página de privacidade / LGPD | `privacidade/pagina-de-privacidade.md` |
+| Qualquer mudança de status de item do backlog (iniciado, bloqueado, adiado, decidido, concluído) ou nova pendência importante | `backlog.md` (regra em `docs/processo/auditorias-e-planos.md`, seção Backlog reativo) |
 
 Ao delegar para `docs`, forneça o contexto estruturado:
 ```
 executor: docs
 objetivo: Atualizar <arquivo em docs/> com <o que mudou>
+backlog: <IDs e status novo, se houver>
 contexto_de_mudanças:
   - "<Classe/Componente>": o que faz / o que mudou
   - "<Método/Prop>": comportamento novo
 arquivos:
-  - /docs/<documento-alvo>.md
+  - docs/<pasta>/<documento>.md
 passos:
   - <onde mexer no doc>
 pronto quando: Documento reflete fielmente o código implementado
@@ -133,20 +140,23 @@ Quando o executor devolver:
   mock que engole erro, ou asserção afrouxada, isso não é a tarefa concluída — devolva a tarefa
   pedindo a causa raiz.
 - Se uma falha aparecer em algo que a tarefa não tocou, confirme se é determinística ou probabilística antes de rotular como pré-existente.
+- **Backlog reflete o novo status?** Antes de commitar ou pushar, confira em `docs/backlog.md` que cada ID afetado está com o status novo e que as pendências novas do relatório viraram item. Se não estiver, delegue ao `docs` antes de seguir.
 
 ### 6. Coordenação de PR
 
 **Para qualquer PR (código, documentação, agentes):**
-- Deixe branch **commitada e pushada**
+- Deixe branch **commitada e pushada**, com `docs/backlog.md` no mesmo branch e os itens afetados já com o status novo
 - Reporte:
   - ✅ Validações rodadas (`npx tsc --noEmit`, `npx jest`, `artisan test`, `npx eslint resources/js`)
   - 📝 Documentação atualizada (sim/não, qual arquivo)
+  - 📋 Backlog: IDs afetados e status novo (ou "nenhum item afetado")
   - ⚠️ O que falta validar (se houver)
 - **NUNCA rode `gh pr create` por conta própria.** Aguarde que o usuário valide o trabalho e peça explicitamente para criar a PR naquele momento.
 - **Apenas quando o usuário pedir explicitamente** ("cria a PR agora"): `gh pr create + reporte URL`
 
 **Fluxo pós-merge:**
 - Após merge em develop, release-please dispara automaticamente
+- O backlog já deve chegar ao merge atualizado: o item concluído entra em "Entregas recentes" com o nº da PR num commit na própria branch, logo depois de abrir a PR
 - **PR do release-please é SEMPRE aprovada/mergeada manualmente pelo usuário** — não mexa nela
 
 ### 7. Memória e Otimização de Contexto (ai-memory)

@@ -167,6 +167,7 @@ export function ReservasFilters({
                             <Input
                                 id="reservas-busca"
                                 type="search"
+                                aria-label={t('common.a11y.search')}
                                 placeholder={t('reservas.filtros.busca_placeholder')}
                                 className="w-full pl-9"
                                 value={searchTerm}
@@ -216,6 +217,7 @@ export function ReservasFilters({
                         <Input
                             id="reservas-busca"
                             type="search"
+                            aria-label={t('common.a11y.search')}
                             placeholder={t('reservas.filtros.busca_placeholder')}
                             className="w-full pl-9"
                             value={searchTerm}

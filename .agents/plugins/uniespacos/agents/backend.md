@@ -14,16 +14,16 @@ prompt — sua parte é implementar e verificar, não redesenhar o escopo.
 ## Antes de implementar
 
 1. **Consulte a documentação de regras de negócio** em `/docs/`:
-   - Fluxo de reservas e conflitos? Leia `core-workflow-report.md`
-   - Autorização, Policies e Spatie? Leia `authorization-policies.md`
-   - Regras de validação FormRequest? Leia `validation-rules.md`
-   - Notificações por e-mail e WebSocket? Leia `notifications-and-channels.md` e `realtime-websocket-channels.md`
-   - Enums e transições de status? Leia `enums-and-constants.md`
-   - Scopes, accessors e casts em models? Leia `models-business-rules.md`
-   - Repositórios e bindings de injeção? Leia `repositories-pattern.md`
-   - Auto-aprovação de reservas? Leia `auto-approval-rule.md`
-   - Arquivamento vs exclusão? Leia `archive-soft-delete-flow.md`
-   - Envelopes e logging uniforme? Leia `error-handling-and-logging.md`
+   - Fluxo de reservas e conflitos? Leia `regras-de-negocio/fluxo-de-reservas.md`
+   - Autorização, Policies e Spatie? Leia `regras-de-negocio/autorizacao.md`
+   - Regras de validação FormRequest? Leia `regras-de-negocio/validacao.md`
+   - Notificações por e-mail e WebSocket? Leia `arquitetura/notificacoes.md` e `arquitetura/tempo-real.md`
+   - Enums e transições de status? Leia `arquitetura/enums-e-constantes.md`
+   - Scopes, accessors e casts em models? Leia `arquitetura/modelos-eloquent.md`
+   - Repositórios e bindings de injeção? Leia `arquitetura/repositorios.md`
+   - Auto-aprovação de reservas? Leia `regras-de-negocio/auto-aprovacao.md`
+   - Arquivamento vs exclusão? Leia `regras-de-negocio/arquivamento.md`
+   - Envelopes e logging uniforme? Leia `arquitetura/erros-e-logs.md`
 
 2. **Consulte a skill `backend-conventions`**:
    - Camadas: Controller fino → Service de Domínio → Repository Interface + Eloquent (com binding registrado em `app/Providers/AppServiceProvider.php`).
@@ -147,6 +147,13 @@ docker exec uniespacos-workspace-1 composer analyse
 ```
 
 > ⚠️ **PHPStan Baseline:** Código novo ou alterado não pode gerar novos erros. Se o PHPStan acusar caminho órfão no baseline (`phpstan-baseline.neon`), consulte a skill `known-pitfalls`.
+
+## Relatório Final e Backlog
+
+Ao concluir, o relatório para o `master` inclui:
+- **Backlog:** IDs de `docs/backlog.md` afetados pela tarefa e o status novo (ex.: `T-04` → concluído). Se nenhum, escreva "nenhum".
+- **Pendências novas:** bug, débito ou decisão pendente encontrado fora do escopo, com descrição curta e sugestão de prioridade e esforço. O `master` registra no backlog.
+- Não reescreva `docs/backlog.md` por conta própria. Só o faça se a tarefa pedir explicitamente, para evitar conflito entre agentes em paralelo.
 
 ## Regras de Qualidade
 - **Testes:** NUNCA masque falhas de teste com `skip()`, `markTestIncomplete()` ou blocos `try-catch` vazios.

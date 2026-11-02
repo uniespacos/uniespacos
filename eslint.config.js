@@ -47,6 +47,103 @@ export default typescript.config(
         },
     },
     {
+        files: [
+            'resources/js/lib/**/*.{ts,tsx}',
+            'resources/js/hooks/**/*.{ts,tsx}',
+            'resources/js/contracts/**/*.{ts,tsx}',
+            'resources/js/constants/**/*.{ts,tsx}',
+            'resources/js/i18n/**/*.{ts,tsx}',
+            'resources/js/components/ui/**/*.{ts,tsx}',
+        ],
+        ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@/presentation/*'],
+                            message: 'Camadas de infraestrutura/domínio e primitivos UI não podem importar de presentation/.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ['resources/js/presentation/atoms/**/*.{ts,tsx}'],
+        ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: [
+                                '@/presentation/molecules/*',
+                                '@/presentation/organisms/*',
+                                '@/presentation/templates/*',
+                                '@/presentation/pages/*',
+                            ],
+                            message: 'Atoms não podem importar de camadas superiores (molecules, organisms, templates ou pages).',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ['resources/js/presentation/molecules/**/*.{ts,tsx}'],
+        ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@/presentation/organisms/*', '@/presentation/templates/*', '@/presentation/pages/*'],
+                            message: 'Molecules não podem importar de camadas superiores (organisms, templates ou pages).',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ['resources/js/presentation/organisms/**/*.{ts,tsx}'],
+        ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@/presentation/templates/*', '@/presentation/pages/*'],
+                            message: 'Organisms não podem importar de camadas superiores (templates ou pages).',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ['resources/js/presentation/templates/**/*.{ts,tsx}'],
+        ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@/presentation/pages/*'],
+                            message: 'Templates não podem importar de pages/.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
         ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js', 'docs'],
     },
     prettier, // Turn off all rules that might conflict with Prettier

@@ -1,10 +1,13 @@
-import React from 'react';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+import { resolverTextoNotificacao } from '@/lib/utils/notificacao-texto';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { DatabaseNotificationItem, NotificationPeriodCategory } from '@/types/notification';
 import { Link } from '@inertiajs/react';
-import { isToday, isYesterday, isThisWeek, parseISO, isValid, format } from 'date-fns';
+import { format, isThisWeek, isToday, isValid, isYesterday, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, XCircle, Clock, Bell, Circle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bell, CheckCircle2, Circle, Clock, XCircle } from 'lucide-react';
+import React from 'react';
 
 export interface NotificationGroupListProps {
     notifications: DatabaseNotificationItem[];
@@ -13,13 +16,10 @@ export interface NotificationGroupListProps {
 }
 
 export const NotificationGroupList: React.FC<NotificationGroupListProps> = ({ notifications, onItemClick, className }) => {
+    const { t } = useTranslation();
+
     if (notifications.length === 0) {
-        return (
-            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
-                <Bell className="h-8 w-8 opacity-40" />
-                <p>Nenhuma notificação por aqui.</p>
-            </div>
-        );
+        return <EmptyState icon={Bell} size="compact" title={t('common.empty.noNotifications')} />;
     }
 
     // Agrupamento temporal
@@ -88,7 +88,7 @@ export const NotificationGroupList: React.FC<NotificationGroupListProps> = ({ no
                                 const isUnread = item.read_at === null;
                                 const targetUrl =
                                     item.data.url ?? (item.data.reserva_id !== undefined ? `/reservas/${String(item.data.reserva_id)}` : '#');
-                                const mensagem = item.data.mensagem ?? item.data.descricao ?? '';
+                                const { titulo, mensagem } = resolverTextoNotificacao(item.data, t);
                                 const timeStr = formatNotificationTime(item.created_at);
 
                                 return (
@@ -107,7 +107,7 @@ export const NotificationGroupList: React.FC<NotificationGroupListProps> = ({ no
                                         <div className="mt-0.5 shrink-0">{getIcon(item.data.tipo)}</div>
                                         <div className="min-w-0 flex-1 space-y-0.5">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="text-foreground truncate font-semibold">{item.data.titulo}</span>
+                                                <span className="text-foreground truncate font-semibold">{titulo}</span>
                                                 <div className="flex shrink-0 items-center gap-1.5">
                                                     {timeStr ? (
                                                         <span className="text-muted-foreground text-[10px] font-normal">{timeStr}</span>

@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useTranslation } from '@/i18n';
 import { TrendIndicatorBadge } from '@/presentation/atoms/TrendIndicatorBadge';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { TabelaDetalhamento } from '@/presentation/organisms/TabelaDetalhamento';
 import { DadosRelatorio } from '@/types';
 import { CalendarCheck, CircleCheck, CircleX, Clock } from 'lucide-react';
@@ -18,6 +20,8 @@ function numero(valor: unknown): number {
 }
 
 function GraficoReservasPeriodo({ dados }: Props) {
+    const { t } = useTranslation();
+
     if (dados.linhas.length === 0) {
         return (
             <Card>
@@ -25,7 +29,7 @@ function GraficoReservasPeriodo({ dados }: Props) {
                     <CardTitle>{dados.titulo}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-sm">Nenhuma reserva para os filtros selecionados.</p>
+                    <EmptyState size="compact" icon={CalendarCheck} title={t('relatorios.empty_chart.reservas')} />
                 </CardContent>
             </Card>
         );

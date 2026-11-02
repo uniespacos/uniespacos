@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Settings;
 
+use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteProfileRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\Instituicao;
+use App\Services\ExclusaoDeContaService;
+use App\Services\ProcessadorDeFotoDePerfil;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,7 +33,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, ProcessadorDeFotoDePerfil $processadorDeFoto): RedirectResponse
     {
         $user = $request->user();
         $validated = $request->validated();
@@ -44,13 +50,22 @@ class ProfileController extends Controller
         }
 
         $currentPhotoPath = $user->getRawOriginal('profile_pic');
+        $foto = $request->file('photo');
 
-        if ($request->hasFile('photo')) {
+        if ($foto instanceof UploadedFile) {
+            $novaFotoPath = $processadorDeFoto->armazenar($foto);
+
+            if ($novaFotoPath === null) {
+                throw ValidationException::withMessages([
+                    'photo' => __('The uploaded image could not be processed. Please send another file.'),
+                ]);
+            }
+
             if ($currentPhotoPath) {
                 Storage::disk('public')->delete($currentPhotoPath);
             }
 
-            $user->profile_pic = $request->file('photo')->store('avatars', 'public');
+            $user->profile_pic = $novaFotoPath;
         } elseif ($request->boolean('remove_photo')) {
             if ($currentPhotoPath) {
                 Storage::disk('public')->delete($currentPhotoPath);
@@ -64,16 +79,21 @@ class ProfileController extends Controller
         return to_route('settings.profile.edit');
     }
 
-    public function destroy(DeleteProfileRequest $request): RedirectResponse
+    public function destroy(DeleteProfileRequest $request, ExclusaoDeContaService $exclusaoDeConta): RedirectResponse
     {
-        $user = $request->user();
+        $user = $request->user() ?? throw new AuthenticationException;
+
+        try {
+            $exclusaoDeConta->anonimizar($user);
+        } catch (ContaNaoPodeSerAnonimizadaException $e) {
+            return back()->withErrors(['password' => $e->getMessage()]);
+        }
 
         Auth::logout();
 
-        $user->delete();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        Inertia::clearHistory();
 
         return redirect('/');
     }

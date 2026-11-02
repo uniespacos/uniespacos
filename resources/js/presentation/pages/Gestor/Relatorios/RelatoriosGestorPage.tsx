@@ -1,17 +1,20 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TipoRelatorio, type FormatoRelatorioType, type TipoRelatorioType } from '@/contracts';
 import { useDadosRelatorio } from '@/hooks/use-dados-relatorio';
 import { useGerarRelatorio } from '@/hooks/use-gerar-relatorio';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
+import GenericHeader from '@/presentation/molecules/GenericHeader';
 import { ExportarRelatorio } from '@/presentation/organisms/ExportarRelatorio';
 import { FiltrosInventarioEspacos } from '@/presentation/organisms/FiltrosInventarioEspacos';
 import { FiltrosOcupacaoEspacos } from '@/presentation/organisms/FiltrosOcupacaoEspacos';
 import { FiltrosReservasPeriodo } from '@/presentation/organisms/FiltrosReservasPeriodo';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { FiltrosRelatorio, OpcoesInventario, TipoRelatorioOption } from '@/types';
+import { Head } from '@inertiajs/react';
 import { AlertCircle, BarChart3, Filter, SlidersHorizontal } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
@@ -39,19 +42,13 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
 
     return (
         <AppLayout breadcrumbs={[{ title: t('nav.relatorios'), href: '/gestor/relatorios' }]}>
+            <Head title={t('relatorios.gestor_titulo')} />
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
-                {/* Header do Gestor com Botão de Exportação */}
-                <div className="border-border/40 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-foreground text-2xl font-bold tracking-tight">{t('relatorios.gestor_titulo')}</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">
-                            {t('relatorios.gestor_subtitulo')}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <ExportarRelatorio onExport={handleExport} estaGerando={estaGerando} disabled={!tipoSelecionado} />
-                    </div>
-                </div>
+                <GenericHeader
+                    titulo={t('relatorios.gestor_titulo')}
+                    descricao={t('relatorios.gestor_subtitulo')}
+                    actions={<ExportarRelatorio onExport={handleExport} estaGerando={estaGerando} disabled={!tipoSelecionado} />}
+                />
 
                 {/* Seleção de Tipo de Relatório */}
                 <div className="space-y-2">
@@ -78,19 +75,11 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
 
                 {/* Estado Inicial Vazio */}
                 {!tipoSelecionado && (
-                    <Card className="bg-muted/20 border-2 border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                            <div className="bg-primary/10 text-primary rounded-full p-3">
-                                <BarChart3 className="h-8 w-8" />
-                            </div>
-                            <div className="max-w-md">
-                                <h3 className="text-foreground text-base font-semibold">{t('relatorios.empty_institucional_title')}</h3>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                    {t('relatorios.empty_institucional_desc')}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        icon={BarChart3}
+                        title={t('relatorios.empty_institucional_title')}
+                        description={t('relatorios.empty_institucional_desc')}
+                    />
                 )}
 
                 {/* Área de Filtros e Resultados */}
@@ -105,8 +94,12 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
                                 <CardDescription className="text-xs">{t('relatorios.filtros_card_desc')}</CardDescription>
                             </CardHeader>
                             <CardContent className="pt-4">
-                                {tipoSelecionado === TipoRelatorio.RESERVAS_PERIODO && <FiltrosReservasPeriodo filtros={filtros} onChange={setFiltros} />}
-                                {tipoSelecionado === TipoRelatorio.OCUPACAO_ESPACOS && <FiltrosOcupacaoEspacos filtros={filtros} onChange={setFiltros} />}
+                                {tipoSelecionado === TipoRelatorio.RESERVAS_PERIODO && (
+                                    <FiltrosReservasPeriodo filtros={filtros} onChange={setFiltros} />
+                                )}
+                                {tipoSelecionado === TipoRelatorio.OCUPACAO_ESPACOS && (
+                                    <FiltrosOcupacaoEspacos filtros={filtros} onChange={setFiltros} />
+                                )}
                                 {tipoSelecionado === TipoRelatorio.INVENTARIO_ESPACOS && (
                                     <FiltrosInventarioEspacos filtros={filtros} opcoes={opcoes_inventario} onChange={setFiltros} />
                                 )}
@@ -134,15 +127,11 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
                             )}
 
                             {status === 'empty' && (
-                                <Card className="bg-muted/10 border-2 border-dashed">
-                                    <CardContent className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-16 text-center text-sm">
-                                        <Filter className="text-muted-foreground/60 mb-1 h-6 w-6" />
-                                        <p className="text-foreground font-medium">{t('relatorios.empty_results_title')}</p>
-                                        <p className="max-w-sm text-xs">
-                                            {t('relatorios.empty_results_desc')}
-                                        </p>
-                                    </CardContent>
-                                </Card>
+                                <EmptyState
+                                    icon={Filter}
+                                    title={t('relatorios.empty_results_title')}
+                                    description={t('relatorios.empty_results_desc')}
+                                />
                             )}
 
                             {status === 'success' && dados && (

@@ -220,7 +220,7 @@ export default function RolesPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t('common.empty.noResults')}</SelectItem>
+                                    <SelectItem value="all">{t('common.filters.all')}</SelectItem>
                                     <SelectItem value="system">Sistema</SelectItem>
                                     <SelectItem value="custom">Customizadas</SelectItem>
                                 </SelectContent>

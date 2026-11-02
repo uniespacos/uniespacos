@@ -50,6 +50,9 @@ npx prettier --write <arquivo>
   obrigatório na proteção de branch é ação do responsável.
 - **A PR do `release-please` é aprovada e mergeada manualmente pelo usuário.** Não aprove, não
   aprove-e-mergeie, não faça squash/merge nela por conta própria.
+- **Backlog reativo:** `docs/backlog.md` é atualizado no mesmo branch/PR de cada mudança de status de um
+  item (iniciado, bloqueado, adiado, decidido, concluído), e pendência importante vira item na hora. Regra
+  completa em [`docs/processo/auditorias-e-planos.md`](docs/processo/auditorias-e-planos.md#backlog-reativo).
 
 ## Arquitetura
 
@@ -59,12 +62,13 @@ npx prettier --write <arquivo>
   Primitivos shadcn ficam em `resources/js/components/ui`.
 - **Linter & Qualidade:** ESLint 9 Flat Config (`strict-type-checked`). **Tolerância Zero a Suppressions**:
   Tolerância zero a novas supressões. Débito existente (medido em 2026-09-01, reconferido em
-  2026-09-02): 92 supressões em 43 arquivos no `eslint-suppressions.json`, mais 9 ocorrências
+  2026-11-01): 73 supressões em 33 arquivos no `eslint-suppressions.json`, mais 6 ocorrências
   inline. Verificação pura: `npm run lint:check` (nunca `npm run lint`, que aplica `--fix` e altera
   o código-fonte). Débito: `npm run lint:debt`.
 
 Detalhe de convenção mora nas skills (carregam sob demanda, não pesam no contexto):
-`backend-conventions`, `frontend-conventions`, `testing-and-env`.
+`backend-conventions`, `frontend-conventions`, `testing-and-env`. Para auditoria de privacidade e dados
+pessoais contra a LGPD, com plano de adequação, use `lgpd-audit` (método somente leitura, com evidência).
 
 ## Agentes
 

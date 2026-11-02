@@ -1,8 +1,10 @@
+import { usePrivacidadeHabilitada } from '@/hooks/use-privacidade-habilitada';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import { Link } from '@inertiajs/react';
 import { CalendarCheck, ShieldCheck } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
-import { cn } from '@/lib/utils';
-import { useTranslation } from '@/i18n';
 
 interface AuthLayoutProps {
     title?: string;
@@ -12,6 +14,7 @@ interface AuthLayoutProps {
 
 export default function AuthSplitLayout({ children, title, description, maxWidth = 'md' }: PropsWithChildren<AuthLayoutProps>) {
     const { t } = useTranslation();
+    const privacidadeHabilitada = usePrivacidadeHabilitada();
     const maxWidthClass = {
         sm: 'sm:max-w-sm',
         md: 'sm:max-w-md',
@@ -85,6 +88,12 @@ export default function AuthSplitLayout({ children, title, description, maxWidth
 
                     {/* Conteúdo do Formulário — com animação de entrada */}
                     <div className="animate-fade-in-up animation-delay-300">{children}</div>
+
+                    {privacidadeHabilitada && (
+                        <footer className="text-muted-foreground text-center text-xs">
+                            <PrivacyLink />
+                        </footer>
+                    )}
                 </div>
             </div>
         </div>

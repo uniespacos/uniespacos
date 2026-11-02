@@ -1,10 +1,13 @@
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import PaginacaoListas from '@/presentation/molecules/PaginacaoListas';
 import EspacoCard from '@/presentation/organisms/EspacoCard';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, User } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Star } from 'lucide-react';
 
 const breadcrumbs = [
     {
@@ -44,12 +47,16 @@ export default function FavoritosPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-muted-foreground py-10 text-center">
-                        <p>{t('espacos.sem_favoritos_desc')}</p>
-                        <Link href={route('espacos.index')} className="text-primary mt-4 block hover:underline">
-                            {t('espacos.consultar_espacos')}
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon={Star}
+                        title={t('espacos.sem_favoritos')}
+                        description={t('espacos.sem_favoritos_desc')}
+                        action={
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={route('espacos.index')}>{t('espacos.consultar_espacos')}</Link>
+                            </Button>
+                        }
+                    />
                 )}
 
                 {espacosFavoritos.length > 0 && links.length > 1 && <PaginacaoListas links={links} />}

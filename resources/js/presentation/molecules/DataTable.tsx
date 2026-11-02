@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import DataTableBulkActions from '@/presentation/molecules/DataTableBulkActions';
 import DataTableViewOptions from '@/presentation/molecules/DataTableViewOptions';
@@ -47,6 +48,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
     const tableId = useId();
     const isMobile = useIsMobile();
+    const { t } = useTranslation();
 
     // --- Gerenciamento de Visibilidade de Colunas ---
     const allColumnIds = useMemo(() => {
@@ -213,7 +215,7 @@ export function DataTable<T>({
                                     onCheckedChange={() => {
                                         handleToggleItem(item, index);
                                     }}
-                                    aria-label={`Selecionar item ${String(index + 1)}`}
+                                    aria-label={t('common.a11y.selectItem', { n: index + 1 })}
                                     className="mt-0.5 shrink-0"
                                 />
                             )}
@@ -256,7 +258,7 @@ export function DataTable<T>({
                                 <Checkbox
                                     checked={isAllPageSelected ? true : isSomePageSelected ? 'indeterminate' : false}
                                     onCheckedChange={handleToggleSelectAll}
-                                    aria-label="Selecionar todos os itens da página"
+                                    aria-label={t('common.a11y.selectAllPage')}
                                 />
                             </TableHead>
                         )}
@@ -330,7 +332,7 @@ export function DataTable<T>({
                                                 onCheckedChange={() => {
                                                     handleToggleItem(item, index);
                                                 }}
-                                                aria-label={`Selecionar linha ${String(index + 1)}`}
+                                                aria-label={t('common.a11y.selectRow', { n: index + 1 })}
                                             />
                                         </TableCell>
                                     )}

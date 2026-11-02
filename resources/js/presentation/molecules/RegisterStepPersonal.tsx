@@ -1,6 +1,8 @@
 import { Input } from '@/components/ui/input';
-import { FormField } from '@/presentation/molecules/FormField';
+import { usePrivacidadeHabilitada } from '@/hooks/use-privacidade-habilitada';
 import { useTranslation } from '@/i18n';
+import { FormField } from '@/presentation/molecules/FormField';
+import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import type React from 'react';
 
 interface RegisterStepPersonalProps {
@@ -16,6 +18,7 @@ interface RegisterStepPersonalProps {
 
 export function RegisterStepPersonal({ data, onInputChange, errors, processing }: RegisterStepPersonalProps) {
     const { t } = useTranslation();
+    const privacidadeHabilitada = usePrivacidadeHabilitada();
 
     const formatPhoneNumber = (value: string) => {
         const cleaned = value.replace(/\D/g, '');
@@ -89,6 +92,15 @@ export function RegisterStepPersonal({ data, onInputChange, errors, processing }
                     className="h-11"
                 />
             </FormField>
+            <p className="text-muted-foreground text-xs">
+                {t('auth.register.telefone_finalidade')}
+                {privacidadeHabilitada && (
+                    <>
+                        {' '}
+                        <PrivacyLink newTab />
+                    </>
+                )}
+            </p>
         </div>
     );
 }

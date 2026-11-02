@@ -7,6 +7,7 @@ import { PERMISSION_SECAO_RELATORIOS } from '@/constants/permissions';
 import { useDadosRelatorio } from '@/hooks/use-dados-relatorio';
 import { useTranslation } from '@/i18n';
 import { hasPermission } from '@/lib/auth';
+import { EmptyState } from '@/presentation/molecules/EmptyState';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Agenda, Espaco, User, type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -78,7 +79,10 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
             descricao: t('reservas.gestor_subtitulo'),
             Icone: Eye,
             href: route('gestor.reservas.index'),
-            badge: statusDasReservas.pendentes > 0 ? `${String(statusDasReservas.pendentes)} ${t('dashboard.stats.pendentes').toLowerCase()}` : undefined,
+            badge:
+                statusDasReservas.pendentes > 0
+                    ? `${String(statusDasReservas.pendentes)} ${t('dashboard.stats.pendentes').toLowerCase()}`
+                    : undefined,
             highlight: statusDasReservas.pendentes > 0,
         },
         {
@@ -110,15 +114,18 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
                                     {t('usuarios.roles.gestor')}
                                 </Badge>
                                 {statusDasReservas.pendentes > 0 && (
-                                    <Badge variant="outline" className="border-warning-accent/30 bg-warning/10 text-warning-accent text-xs font-medium">
+                                    <Badge
+                                        variant="outline"
+                                        className="border-warning-accent/30 bg-warning/10 text-warning-accent text-xs font-medium"
+                                    >
                                         {statusDasReservas.pendentes} {t('dashboard.stats.pendentes').toLowerCase()}
                                     </Badge>
                                 )}
                             </div>
-                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">{t('dashboard.welcome', { name: user.name })}</h1>
-                            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
-                                {t('reservas.gestor_subtitulo')}
-                            </p>
+                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                                {t('dashboard.welcome', { name: user.name })}
+                            </h1>
+                            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">{t('reservas.gestor_subtitulo')}</p>
                         </div>
                         <div className="flex flex-col gap-2.5 sm:flex-row">
                             <Button
@@ -164,7 +171,7 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
                                         <div className="flex items-center gap-2">
                                             <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
                                             {badge && (
-                                                <Badge variant="secondary" className="shrink-0 bg-primary/15 text-primary text-xs font-semibold">
+                                                <Badge variant="secondary" className="bg-primary/15 text-primary shrink-0 text-xs font-semibold">
                                                     {badge}
                                                 </Badge>
                                             )}
@@ -177,7 +184,6 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
                         </Card>
                     ))}
                 </div>
-
 
                 {/* Visão Geral com Gráfico Carregado Sob Demanda */}
                 {podeVerRelatorios && (
@@ -206,7 +212,12 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
                                 </Alert>
                             )}
                             {status === 'empty' && (
-                                <p className="text-muted-foreground py-10 text-center text-sm">{t('relatorios.empty_results_desc')}</p>
+                                <EmptyState
+                                    icon={BarChart3}
+                                    size="compact"
+                                    title={t('relatorios.empty_results_title')}
+                                    description={t('relatorios.empty_results_desc')}
+                                />
                             )}
                             {status === 'success' && dados && (
                                 <Suspense fallback={<Skeleton className="h-[260px] w-full rounded-xl" />}>

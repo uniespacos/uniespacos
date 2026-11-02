@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
+import { resolveStorageUrl } from '@/lib/storage-url';
 import { type User } from '@/types';
 import { useState } from 'react';
 
@@ -19,7 +20,7 @@ export function UserAvatar({ user, className = 'h-8 w-8', fallbackClassName }: U
             : 'avatar' in user && typeof (user as { avatar: unknown }).avatar === 'string'
               ? (user as { avatar: string }).avatar
               : undefined;
-    const profilePic = rawProfilePic && rawProfilePic.trim() !== '' ? rawProfilePic : undefined;
+    const profilePic = resolveStorageUrl(rawProfilePic);
 
     return (
         <Avatar className={`overflow-hidden rounded-full ${className}`}>

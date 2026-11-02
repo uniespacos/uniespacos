@@ -112,4 +112,34 @@ describe('EspacoFiltroBusca', () => {
 
         expect(mockGet).toHaveBeenCalledWith('https://localhost/espacos', {}, expect.any(Object));
     });
+
+    it('mantém seletor de módulo habilitado mesmo sem unidade filtrada e sincroniza filtros externos', () => {
+        const { rerender } = render(
+            <EspacoFiltroBusca
+                route="https://localhost/espacos"
+                filters={{ modulo: '1' }}
+                unidades={mockUnidades}
+                modulos={mockModulos}
+                andares={mockAndares}
+                capacidadeEspacos={[20, 50]}
+            />,
+        );
+
+        const moduloTrigger = document.getElementById('desktop-espacos-modulo');
+        expect(moduloTrigger).not.toBeDisabled();
+        expect(screen.getByText('Módulo: Módulo 1')).toBeInTheDocument();
+
+        rerender(
+            <EspacoFiltroBusca
+                route="https://localhost/espacos"
+                filters={{}}
+                unidades={mockUnidades}
+                modulos={mockModulos}
+                andares={mockAndares}
+                capacidadeEspacos={[20, 50]}
+            />,
+        );
+
+        expect(screen.queryByText('Módulo: Módulo 1')).not.toBeInTheDocument();
+    });
 });

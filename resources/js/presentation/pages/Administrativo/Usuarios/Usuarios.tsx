@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { ROLE_COMUM } from '@/constants/permissions';
 import { getRoleBadgeClass, roleLabel } from '@/constants/role-labels';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
@@ -30,6 +31,18 @@ const breadcrumbs = [
     },
 ];
 
+type Traducao = ReturnType<typeof useTranslation>['t'];
+
+const statusDaConta = (user: User, t: Traducao) => {
+    if (user.anonimizado) {
+        return { rotulo: t('usuarios.conta_anonimizada'), classeIndicador: 'bg-muted-foreground' };
+    }
+
+    return user.email_verified_at
+        ? { rotulo: t('common.status.verified'), classeIndicador: 'bg-success' }
+        : { rotulo: t('common.status.notVerified'), classeIndicador: 'bg-destructive' };
+};
+
 export default function UsuariosPage() {
     const { t } = useTranslation();
     const { users, setores, filters } = usePage<{
@@ -39,7 +52,7 @@ export default function UsuariosPage() {
             meta: object;
         };
         setores: Setor[];
-        filters?: { search: string | null; setor_id: string | null };
+        filters?: { search: string | null; setor_id: string | null; anonimizados?: boolean };
     }>().props;
 
     const [selectedUser, setSelectedUser] = useState<User | undefined>();
@@ -48,6 +61,7 @@ export default function UsuariosPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [selectedSetorId, setSelectedSetorId] = useState<string>(filters?.setor_id ?? 'all');
+    const [apenasAnonimizados, setApenasAnonimizados] = useState<boolean>(filters?.anonimizados ?? false);
     const [viewMode, setViewMode] = useState<ViewMode>('table');
 
     const { searchTerm, setSearchTerm } = useDebouncedSearch({
@@ -55,22 +69,33 @@ export default function UsuariosPage() {
         initialSearch: filters?.search ?? '',
         extraParams: {
             setor_id: selectedSetorId !== 'all' ? selectedSetorId : undefined,
+            anonimizados: apenasAnonimizados ? '1' : undefined,
         },
     });
 
-    const handleSetorChange = (setorId: string) => {
-        setSelectedSetorId(setorId);
+    const visitarListagem = (setorId: string, somenteAnonimizados: boolean) => {
         router.get(
             route('institucional.usuarios.index'),
             {
                 search: searchTerm || undefined,
                 setor_id: setorId !== 'all' ? setorId : undefined,
+                anonimizados: somenteAnonimizados ? '1' : undefined,
             },
             {
                 preserveState: true,
                 preserveScroll: true,
             },
         );
+    };
+
+    const handleSetorChange = (setorId: string) => {
+        setSelectedSetorId(setorId);
+        visitarListagem(setorId, apenasAnonimizados);
+    };
+
+    const handleAnonimizadosChange = (checked: boolean) => {
+        setApenasAnonimizados(checked);
+        visitarListagem(selectedSetorId, checked);
     };
 
     const handleOpenPermissionModal = (user: User) => {
@@ -102,34 +127,53 @@ export default function UsuariosPage() {
         });
     };
 
-    const renderUserActions = (user: User) => (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { handleOpenEditModal(user); }}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { handleOpenPermissionModal(user); }}>
-                    <Key className="mr-2 h-4 w-4" />
-                    Permissões
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    className="text-destructive-accent focus:text-destructive-accent"
-                    onClick={() => {
-                        setRemoverUsuario(user);
-                    }}
-                >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
+    const renderUserActions = (user: User) => {
+        if (user.anonimizado) {
+            return null;
+        }
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 md:h-8 md:w-8"
+                        aria-label={t('common.a11y.rowActions', { nome: user.name })}
+                    >
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                        onClick={() => {
+                            handleOpenEditModal(user);
+                        }}
+                    >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={() => {
+                            handleOpenPermissionModal(user);
+                        }}
+                    >
+                        <Key className="mr-2 h-4 w-4" />
+                        Permissões
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className="text-destructive-accent focus:text-destructive-accent"
+                        onClick={() => {
+                            setRemoverUsuario(user);
+                        }}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
 
     const columns: ColumnDef<User>[] = useMemo(
         () => [
@@ -168,51 +212,57 @@ export default function UsuariosPage() {
             {
                 id: 'status',
                 header: t('usuarios.colunas.status'),
-                cell: (user) => (
-                    <div className="flex items-center space-x-2">
-                        <div className={cn('h-2 w-2 shrink-0 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
-                        <span className="text-muted-foreground text-xs whitespace-nowrap">
-                            {user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}
-                        </span>
-                    </div>
-                ),
+                cell: (user) => {
+                    const status = statusDaConta(user, t);
+
+                    return (
+                        <div className="flex items-center space-x-2">
+                            <div className={cn('h-2 w-2 shrink-0 rounded-full', status.classeIndicador)} />
+                            <span className="text-muted-foreground text-xs whitespace-nowrap">{status.rotulo}</span>
+                        </div>
+                    );
+                },
             },
         ],
         [t],
     );
 
-    const renderUserCard = (user: User) => (
-        <Card key={user.id} className="border-border transition-shadow hover:shadow-md">
-            <CardContent className="space-y-4 p-4">
-                <div className="flex items-center space-x-3">
-                    <Avatar className="h-11 w-11 shrink-0">
-                        <AvatarFallback>
-                            {user.name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')
-                                .toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-base font-semibold">{user.name}</h3>
-                        <p className="text-muted-foreground truncate text-sm">{user.email}</p>
-                        {user.telefone ? <p className="text-muted-foreground text-xs">{user.telefone}</p> : null}
-                    </div>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-                    <div className="flex items-center gap-2">
-                        <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{roleLabel(t, user.roles[0] ?? ROLE_COMUM)}</Badge>
-                        <div className="flex items-center space-x-1.5">
-                            <div className={cn('h-2 w-2 rounded-full', user.email_verified_at ? 'bg-success' : 'bg-destructive')} />
-                            <span className="text-muted-foreground text-xs">{user.email_verified_at ? t('common.status.verified') : t('common.status.notVerified')}</span>
+    const renderUserCard = (user: User) => {
+        const status = statusDaConta(user, t);
+
+        return (
+            <Card key={user.id} className="border-border transition-shadow hover:shadow-md">
+                <CardContent className="space-y-4 p-4">
+                    <div className="flex items-center space-x-3">
+                        <Avatar className="h-11 w-11 shrink-0">
+                            <AvatarFallback>
+                                {user.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="truncate text-base font-semibold">{user.name}</h3>
+                            <p className="text-muted-foreground truncate text-sm">{user.email}</p>
+                            {user.telefone ? <p className="text-muted-foreground text-xs">{user.telefone}</p> : null}
                         </div>
                     </div>
-                    <div>{renderUserActions(user)}</div>
-                </div>
-            </CardContent>
-        </Card>
-    );
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                        <div className="flex items-center gap-2">
+                            <Badge className={getRoleBadgeClass(user.roles[0] ?? ROLE_COMUM)}>{roleLabel(t, user.roles[0] ?? ROLE_COMUM)}</Badge>
+                            <div className="flex items-center space-x-1.5">
+                                <div className={cn('h-2 w-2 rounded-full', status.classeIndicador)} />
+                                <span className="text-muted-foreground text-xs">{status.rotulo}</span>
+                            </div>
+                        </div>
+                        <div>{renderUserActions(user)}</div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -253,6 +303,10 @@ export default function UsuariosPage() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div className="flex items-center gap-2 sm:h-9">
+                                <Switch id="apenas-anonimizados" checked={apenasAnonimizados} onCheckedChange={handleAnonimizadosChange} />
+                                <Label htmlFor="apenas-anonimizados">{t('usuarios.mostrar_apenas_anonimizadas')}</Label>
                             </div>
                             <div className="shrink-0 self-end sm:self-auto">
                                 <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />

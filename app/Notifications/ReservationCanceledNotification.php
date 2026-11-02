@@ -17,12 +17,34 @@ class ReservationCanceledNotification extends BaseNotification
     public function __construct(Reserva $reserva, User $canceler)
     {
         parent::__construct(
-            'Reserva Cancelada',
-            'O usuário '.$canceler->name.' cancelou a reserva "'.$reserva->titulo.'".',
+            (string) __('Reservation Canceled'),
+            (string) __('The reservation ":titulo_reserva" was canceled.', ['titulo_reserva' => $reserva->titulo]),
             route('gestor.reservas.index')
         );
         $this->reserva = $reserva;
         $this->canceler = $canceler;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    protected function identificadores(): array
+    {
+        return [
+            'reserva_id' => $this->reserva->id,
+            'cancelador_id' => $this->canceler->id,
+        ];
+    }
+
+    /**
+     * @return array{chave: string, parametros: array<string, string>}
+     */
+    protected function traducaoNoFront(): array
+    {
+        return [
+            'chave' => 'reservas.cancelada',
+            'parametros' => ['titulo_reserva' => $this->reserva->titulo],
+        ];
     }
 
     /**

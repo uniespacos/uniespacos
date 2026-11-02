@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Notifications\Auth\ResetPasswordQueued;
 use App\Notifications\Auth\VerifyEmailQueued;
+use App\Services\ExclusaoDeContaService;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -26,8 +27,14 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
+    public const PREFIXO_EMAIL_ANONIMIZADO = 'anonimizado-';
+
+    public const DOMINIO_EMAIL_ANONIMIZADO = '@invalid';
+
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable;
+    use HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable {
+        notify as protected notificarTitular;
+    }
 
     /**
      * @var list<string>
@@ -104,6 +111,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Horario::class, 'user_id');
     }
 
+    public static function emailAnonimizado(int $id): string
+    {
+        return self::PREFIXO_EMAIL_ANONIMIZADO.$id.self::DOMINIO_EMAIL_ANONIMIZADO;
+    }
+
+    public function estaAnonimizado(): bool
+    {
+        return str_starts_with($this->email, self::PREFIXO_EMAIL_ANONIMIZADO)
+            && str_ends_with($this->email, self::DOMINIO_EMAIL_ANONIMIZADO);
+    }
+
+    public function notify(mixed $instance): void
+    {
+        if ($this->estaAnonimizado()) {
+            return;
+        }
+
+        $this->notificarTitular($instance);
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new VerifyEmailQueued);
@@ -120,6 +147,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'App.Models.User.'.$this->getKey();
+    }
+
+    /**
+     * O banco guarda o marcador NOME_ANONIMIZADO; a tradução é feita na leitura, no idioma de quem lê.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value): string {
+                if ($value === ExclusaoDeContaService::NOME_ANONIMIZADO) {
+                    return (string) __('Anonymized user');
+                }
+
+                return is_string($value) ? $value : '';
+            },
+        );
     }
 
     /**

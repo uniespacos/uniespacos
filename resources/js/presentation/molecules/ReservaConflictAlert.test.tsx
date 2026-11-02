@@ -1,7 +1,6 @@
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { ReservaConflictAlert } from './ReservaConflictAlert';
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
+import { act, render, screen } from '@testing-library/react';
+import { ReservaConflictAlert } from './ReservaConflictAlert';
 
 jest.mock('@/lib/echo-channel-registry', () => ({
     acquirePrivateChannel: jest.fn(),
@@ -72,6 +71,31 @@ describe('ReservaConflictAlert', () => {
 
         expect(screen.getByText(/Conflito em Tempo Real/i)).toBeInTheDocument();
         expect(screen.getByText(/O horário das 08:00 em 2026-08-25 acabou de ser reservado/i)).toBeInTheDocument();
+        expect(handleConflict).toHaveBeenCalledWith(true);
+    });
+
+    it('matches Date objects using local calendar date instead of UTC date shift', () => {
+        const handleConflict = jest.fn();
+        let capturedCallback: ((event: { data: string; horario_inicio: string }) => void) | undefined;
+        mockChannel.listen.mockImplementation((_eventName: string, cb: (event: { data: string; horario_inicio: string }) => void) => {
+            capturedCallback = cb;
+        });
+
+        render(
+            <ReservaConflictAlert
+                espacoId={10}
+                selectedSlots={[{ data: new Date(2026, 7, 25, 22, 0, 0), horario_inicio: '22:00:00', horario_fim: '23:00:00' }]}
+                onConflictDetected={handleConflict}
+            />,
+        );
+
+        act(() => {
+            capturedCallback?.({
+                data: '2026-08-25',
+                horario_inicio: '22:00:00',
+            });
+        });
+
         expect(handleConflict).toHaveBeenCalledWith(true);
     });
 

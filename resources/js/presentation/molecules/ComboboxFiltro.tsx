@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -32,6 +33,7 @@ export function ComboboxFiltro({
     id,
 }: Props) {
     const [aberto, setAberto] = useState(false);
+    const { t } = useTranslation();
 
     const selecionada = useMemo(() => opcoes.find((opcao) => opcao.id === value), [opcoes, value]);
 
@@ -57,7 +59,7 @@ export function ComboboxFiltro({
                         {selecionada && (
                             <span
                                 role="button"
-                                aria-label="Limpar seleção"
+                                aria-label={t('common.a11y.clearSelection')}
                                 className="hover:bg-muted flex h-4 w-4 items-center justify-center rounded"
                                 onClick={(event) => {
                                     event.stopPropagation();

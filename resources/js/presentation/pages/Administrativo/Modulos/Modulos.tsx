@@ -223,9 +223,7 @@ export default function Modulos() {
                                                     className="bg-card flex items-center justify-between gap-2 rounded-md border p-2.5 text-xs"
                                                 >
                                                     <div>
-                                                        <div className="text-foreground font-medium">
-                                                            {nivelParaLabel(nomeParaNivel(andar.nome))}
-                                                        </div>
+                                                        <div className="text-foreground font-medium">{nivelParaLabel(nomeParaNivel(andar.nome))}</div>
                                                         <div className="text-muted-foreground">Nível: {String(nomeParaNivel(andar.nome))}</div>
                                                     </div>
                                                     <div className="flex flex-wrap gap-1">
@@ -285,7 +283,7 @@ export default function Modulos() {
                                     <SelectValue placeholder={t('espacos.filtros.unidade')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t('common.empty.noResults')}</SelectItem>
+                                    <SelectItem value="all">{t('espacos.filtros.todas_unidades')}</SelectItem>
                                     {unidades.map((unidade) => (
                                         <SelectItem key={unidade.id} value={unidade.id.toString()}>
                                             {unidade.nome} ({unidade.sigla})
@@ -323,9 +321,9 @@ export default function Modulos() {
                                 onClick={() => {
                                     setRemoverModulo(modulo);
                                 }}
-                                className="gap-1 text-xs text-destructive-accent hover:text-destructive-accent"
+                                className="text-destructive-accent hover:text-destructive-accent gap-1 text-xs"
                             >
-                                <Trash2 className="h-3 w-3 text-destructive-accent" />
+                                <Trash2 className="text-destructive-accent h-3 w-3" />
                                 {t('common.actions.delete')}
                             </Button>
                         </div>

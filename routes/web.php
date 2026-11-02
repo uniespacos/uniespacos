@@ -17,10 +17,12 @@ use App\Http\Controllers\Institucional\InstitucionalUnidadeController;
 use App\Http\Controllers\Institucional\InstitucionalUsuarioController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PrivacidadeController;
 use App\Http\Controllers\ReservaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Middleware\EncryptHistory;
 
 // Página inicial: redireciona para dashboard se autenticado, senão para login
 Route::get('/', function () {
@@ -30,9 +32,16 @@ Route::get('/', function () {
 })->name('home');
 
 // Troca de idioma da interface (acessível por autenticados e não autenticados)
-Route::post('/locale/{locale}', [LocaleController::class, 'update'])->name('locale.update');
+Route::post('/locale/{locale}', [LocaleController::class, 'update'])
+    ->middleware('throttle:locale')
+    ->name('locale.update');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Política de Privacidade pública (guest e autenticados, sem exigir verificação de e-mail)
+Route::get('/privacidade', PrivacidadeController::class)
+    ->middleware('throttle:60,1')
+    ->name('privacidade');
+
+Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
 
     // ---------------------------
     // Painel Geral

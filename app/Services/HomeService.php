@@ -38,9 +38,14 @@ class HomeService
     {
         $reservas = $this->buildRecentReservasQuery($user)->get();
         $espacosFavoritos = $user->favoritos()->with('andar.modulo')->get();
-        $users = User::latest()->take(5)->with(['agendas'])->get();
-        $espacos = Espaco::latest()->take(5)->with(['andar.modulo.unidade', 'agendas.user'])->get();
-        $gestores = User::permission('secao.gestao-reservas')->latest()->take(5)->get();
+        $users = User::select(['id', 'name'])->latest()->take(5)->get();
+        $espacos = Espaco::latest()->take(5)->with(['andar.modulo.unidade', 'agendas:id,espaco_id,turno,user_id', 'agendas.user:id,name'])->get();
+        $gestores = User::permission('secao.gestao-reservas')
+            ->select(['id', 'name', 'email', 'setor_id'])
+            ->with('setor:id,nome')
+            ->latest()
+            ->take(5)
+            ->get();
         $unidades = Unidade::latest()->take(5)->with('modulos.andars.espacos')->get();
 
         $estatisticasPainel = [

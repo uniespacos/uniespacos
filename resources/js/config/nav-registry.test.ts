@@ -1,6 +1,6 @@
-import { NAV_REGISTRY } from './nav-registry';
 import { PERMISSION_RELATORIOS_RESERVAS_PERIODO } from '@/constants/permissions';
 import type { User } from '@/types';
+import { NAV_REGISTRY } from './nav-registry';
 
 describe('NAV_REGISTRY', () => {
     const baseUser: User = {
@@ -41,5 +41,12 @@ describe('NAV_REGISTRY', () => {
         };
 
         expect(relatoriosEntry?.resolveHref?.(gestorUser)).toBe('/gestor/relatorios');
+    });
+
+    it('includes Espaços Favoritos in the painel navigation group', () => {
+        const favoritosEntry = NAV_REGISTRY.find((entry) => entry.href === '/espacos/favoritos');
+        expect(favoritosEntry).toBeDefined();
+        expect(favoritosEntry?.group).toBe('painel');
+        expect(favoritosEntry?.titleKey).toBe('nav.espacos_favoritos');
     });
 });
