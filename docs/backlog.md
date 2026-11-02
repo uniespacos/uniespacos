@@ -14,8 +14,8 @@
 
 ## Agora
 
-- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11).
-- **Próximo passo:** T-05b (destruir os logs brutos em 16/11, após o teste do snapshot), a conversa sobre cópias externas (T-23) e a Onda 2.
+- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
+- **Próximo passo:** T-05b (destruir os logs brutos em 16/11), a conversa sobre cópias externas (T-23) e a Onda 2.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,9 +23,9 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026, e só depois do teste de abertura do snapshot
-  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em guarda privada, por **prazo indeterminado, por decisão dele**. Em 16/11 (prazo da P-16), os logs brutos no servidor são destruídos com remoção segura, **desde que** o responsável tenha conferido o checksum e aberto o snapshot com a senha. Prazo e finalidade formais do snapshot entram na conversa sobre cópias externas (T-23).
-  **Pronto quando:** o snapshot foi aberto e conferido pelo responsável, os logs brutos foram destruídos e o espaço em disco foi liberado.
+- [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em guarda privada, por **prazo indeterminado, por decisão dele**. Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa data, também se decide se a cópia cifrada do snapshot que ficou no servidor fica lá ou é destruída. Prazo e finalidade formais do snapshot entram na conversa sobre cópias externas (T-23).
+  **Pronto quando:** os logs brutos foram destruídos com remoção segura, a cópia cifrada do servidor teve destino decidido e o espaço em disco foi liberado.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
 
