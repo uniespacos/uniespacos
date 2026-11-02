@@ -22,7 +22,7 @@
   | --- | --- | --- | --- |
   | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
   | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Quando a PR da T-26 (d, e) for mergeada | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
+  | Quando o #509 (T-26 (d, e)) for mergeada | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
   | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
@@ -61,12 +61,6 @@
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
   **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). Falta: a poda com arquivos falsos, conferida depois da rodada de 03/11, e a produção, com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [x] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
-  Feita na branch `fix/lgpd-t26-d-e-notificacoes`: a rota `GET /notifications` foi removida (sem consumidor no front), junto com `NotificationController::index` e `NotificationService::getLatest`. Fica só `POST /notifications/mark-as-read`.
-  **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
-- [x] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
-  Feita na branch `fix/lgpd-t26-d-e-notificacoes`: o broadcast envia só os campos públicos (`CamposPublicosNotificacao::dadosPublicos`), sem `solicitante_id` nem `cancelador_id`. O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
-  **Pronto quando:** o payload de broadcast tem só os campos usados pelo front, com teste.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -377,6 +371,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · #509 T-26 (d, e): broadcast de notificações só com campos públicos (sem IDs internos) e remoção da rota JSON sem uso. Reiniciar o queue worker depois do deploy.
 - **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
 - **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
 - **02/11** · #506 release candidata rc.111 (`develop`, com o #505 e o agendador) em staging. O #507 entra na próxima release candidata.
