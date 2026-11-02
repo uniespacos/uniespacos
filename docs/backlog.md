@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (T-26 (a, b)) tem o código pronto. Em paralelo: T-05b (destruir os logs brutos em 16/11) e a conversa sobre cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (T-26 (a, b)) tem o código pronto. Em paralelo: T-05b (destruir os logs brutos e a cópia cifrada do servidor em 16/11) e a conversa com a TI sobre a guarda e as cópias externas (T-23).
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -24,8 +24,8 @@
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
 - [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
-  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em guarda privada, por **prazo indeterminado, por decisão dele**. Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa data, também se decide se a cópia cifrada do snapshot que ficou no servidor fica lá ou é destruída. Prazo e finalidade formais do snapshot entram na conversa sobre cópias externas (T-23).
-  **Pronto quando:** os logs brutos foram destruídos com remoção segura, a cópia cifrada do servidor teve destino decidido e o espaço em disco foi liberado.
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em armazenamento privado. A finalidade é provar o que havia nos logs antigos, caso um titular, a ANPD ou a UESB questione a limpeza feita em 02/11. O prazo é até 02/05/2027: nessa data, o responsável renova com justificativa anotada ou destrói (T-23). Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa mesma data, também é destruída a cópia cifrada do snapshot que ficou no servidor.
+  **Pronto quando:** os logs brutos e a cópia cifrada do servidor foram destruídos com remoção segura, e o espaço em disco foi liberado.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
 
@@ -74,7 +74,9 @@
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
-  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la). Entra aqui também a guarda do snapshot de auditoria da T-05: hoje está cifrado, com o responsável e em armazenamento em nuvem privado dele, com prazo indeterminado por decisão do responsável (02/11). Falta definir finalidade, prazo, lugar institucional e o operador de armazenamento (T-13) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
+  **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
+  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
@@ -92,6 +94,7 @@
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
+  Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). No snapshot, ela é mitigada pela cifragem do lado do responsável; no backup manual, a cifragem antes do envio está a confirmar.
 
 **Diferidas pelo responsável**
 
@@ -294,7 +297,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
-| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; a cifragem do backup manual está a confirmar) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
