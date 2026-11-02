@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0-rc.110](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.109...v1.5.0-rc.110) (2026-11-02)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.5.0 ([38225b7](https://github.com/uniespacos/uniespacos/commit/38225b73d75515e20ec6cec8f5fc61bf2e765ea2))
+* **main:** release 1.5.0 ([d0f3f75](https://github.com/uniespacos/uniespacos/commit/d0f3f753caff9a2b1f0e21301f2f74ea287b2b6b))
+* release 1.5.0 com o lote LGPD ([2e05ad1](https://github.com/uniespacos/uniespacos/commit/2e05ad1b792c780019906f950b6136f529989577))
+* sincronizar main em develop após release 1.5.0 ([ed71ef2](https://github.com/uniespacos/uniespacos/commit/ed71ef21dcaf4b4c8037dcd852b0d2a3dc1f89c6))
+* sincronizar main em develop após release 1.5.0 ([f75d194](https://github.com/uniespacos/uniespacos/commit/f75d194248b10e18d15c738b02759c4b783f5b46))
+
 ## [1.5.0](https://github.com/uniespacos/uniespacos/compare/v1.4.4...v1.5.0) (2026-11-02)
 
 
