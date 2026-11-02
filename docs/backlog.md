@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** T-05b (destruir os logs brutos em 16/11), a conversa sobre cópias externas (T-23) e a Onda 2.
+- **Próximo passo:** a Onda 2 está em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) tem o código pronto; faltam os passos manuais em staging e produção, com autorização. A T-26 (a, b) vem em seguida. Em paralelo: T-05b (destruir os logs brutos em 16/11) e a conversa sobre cópias externas (T-23).
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -34,14 +34,24 @@
 **Código**
 
 - [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
-  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. Também limpa registros antigos que ainda têm nome de terceiros (anteriores à T-24). = S52, DT-11, B23, A-06.
+  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
+  **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
+  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).**
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
-- [ ] **T-20** · Log diário com 14 dias e nível `info` em produção — `P1` · pequeno · lgpd
-  Prazo decidido (P-16). Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
-  **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`: **não subir o nível**. Falta a rotação funcionar: os arquivos de setembro e outubro passam de 14 dias, porque a poda só roda quando um novo arquivo é criado. Rever o texto original antes de executar.
-  **Pronto quando:** a rotação de 14 dias comprovadamente apaga os arquivos antigos (testada em staging), o nível continua `warning` ou mais restritivo, e o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
+- [ ] **T-19b** · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
+  Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
+  **Limite conhecido:** nomes de terceiros com ponto ou vírgula não casam com o critério e ficam como estão.
+  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).**
+  **Pronto quando:** comando com `--dry-run` coberto por teste; executado em produção com autorização do responsável.
+- [ ] **T-20** · Poda dos logs diários sem depender de escrita nova, e limite dos logs dos containers — `P1` · pequeno · lgpd
+  Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
+  **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
+  **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
+  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).** Staging usa `stack` hoje; para o teste valer, igualar a produção (canal diário, 14 dias, `warning`), com autorização.
+  **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
   Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
+  Decidido em 02/11: lista branca de campos na prop `notifications` e badge pela contagem real de não lidas.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -51,8 +61,8 @@
   Recusa rodar em produção. Prepara a T-01 e a T-03.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
   Depende da T-26 completa.
-- [ ] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
-  Atualizar [`arquitetura/erros-e-logs.md`](./arquitetura/erros-e-logs.md) depois da T-19 e da T-20.
+- [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
+  Tabelas fora da rotina da T-19. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
 
 **Operação de produção (um arquivo por vez)**
 
@@ -347,6 +357,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
 - **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
