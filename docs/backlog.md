@@ -63,9 +63,11 @@
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
   A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
+  **Em andamento:** branch `fix/lgpd-t26-d-e-notificacoes` (iniciada em 02/11). O merge gera a próxima release candidata, que leva também o #507 a staging.
   **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
 - [ ] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
   O payload em tempo real ainda leva identificadores internos que a tela não usa (ex.: `solicitante_id` e `cancelador_id`). O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
+  **Em andamento:** branch `fix/lgpd-t26-d-e-notificacoes` (iniciada em 02/11). O merge gera a próxima release candidata, que leva também o #507 a staging.
   **Pronto quando:** o payload de broadcast tem só os campos usados pelo front, com teste.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
