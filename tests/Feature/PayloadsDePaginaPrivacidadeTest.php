@@ -298,4 +298,94 @@ class PayloadsDePaginaPrivacidadeTest extends TestCase
         $this->assertNull($semSetor['setor_id']);
         $this->assertChavesExatas(['id', 'name', 'email', 'setor_id', 'setor'], $semSetor);
     }
+
+    #[Test]
+    public function notificacao_compartilhada_expoe_so_os_campos_da_lista_branca(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $usuario = User::factory()->create(['setor_id' => $setor->id, 'email_verified_at' => now()]);
+
+        $notificacao = $usuario->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\ReservationCanceledNotification',
+            'data' => [
+                'titulo' => 'Reserva cancelada',
+                'descricao' => 'A reserva foi cancelada.',
+                'url' => 'https://exemplo-teste.local/reservas/1',
+                'reserva_id' => 1,
+                'cancelador_id' => $usuario->id,
+                'solicitante_id' => $usuario->id,
+                'chave' => 'reservas.cancelada',
+                'parametros' => ['titulo_reserva' => 'Sala'],
+                'interno' => 'nao-deve-vazar',
+            ],
+            'read_at' => null,
+        ]);
+
+        $response = $this->actingAs($usuario)->get(route('dashboard'));
+
+        $response->assertOk();
+        $item = collect($response->viewData('page')['props']['notifications'])->firstWhere('id', $notificacao->id);
+
+        $this->assertNotNull($item, 'A notificação deveria estar na prop compartilhada');
+        $this->assertChavesExatas(['id', 'type', 'data', 'read_at', 'created_at'], $item);
+        $this->assertChavesExatas(['titulo', 'descricao', 'url', 'reserva_id', 'chave', 'parametros'], $item['data']);
+        $this->assertArrayNotHasKey('solicitante_id', $item['data']);
+        $this->assertArrayNotHasKey('cancelador_id', $item['data']);
+        $this->assertArrayNotHasKey('interno', $item['data']);
+        $this->assertNull($item['read_at']);
+        $this->assertSame($notificacao->toArray()['created_at'], $item['created_at'], 'created_at deve manter o formato do modelo');
+    }
+
+    #[Test]
+    public function notificacao_antiga_sem_chave_continua_valida_na_prop_compartilhada(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $usuario = User::factory()->create(['setor_id' => $setor->id, 'email_verified_at' => now()]);
+
+        $antiga = $usuario->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\Teste',
+            'data' => [
+                'titulo' => 'Aviso antigo',
+                'mensagem' => 'Texto legado',
+                'tipo' => 'sistema',
+                'solicitante_id' => $usuario->id,
+            ],
+            'read_at' => now(),
+        ]);
+
+        $response = $this->actingAs($usuario)->get(route('dashboard'));
+
+        $response->assertOk();
+        $item = collect($response->viewData('page')['props']['notifications'])->firstWhere('id', $antiga->id);
+
+        $this->assertNotNull($item, 'A notificação antiga deveria estar na prop compartilhada');
+        $this->assertChavesExatas(['id', 'type', 'data', 'read_at', 'created_at'], $item);
+        $this->assertChavesExatas(['titulo', 'mensagem', 'tipo'], $item['data']);
+        $this->assertArrayNotHasKey('chave', $item['data']);
+        $this->assertArrayNotHasKey('parametros', $item['data']);
+        $this->assertNotNull($item['read_at']);
+    }
+
+    #[Test]
+    public function prop_compartilhada_de_notificacoes_mantem_o_limite_de_15(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $usuario = User::factory()->create(['setor_id' => $setor->id, 'email_verified_at' => now()]);
+
+        foreach (range(1, 17) as $indice) {
+            $usuario->notifications()->create([
+                'id' => (string) Str::uuid(),
+                'type' => 'App\\Notifications\\Teste',
+                'data' => ['titulo' => 'Aviso '.$indice],
+                'read_at' => null,
+            ]);
+        }
+
+        $response = $this->actingAs($usuario)->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertCount(15, $response->viewData('page')['props']['notifications']);
+    }
 }
