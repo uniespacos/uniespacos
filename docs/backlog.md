@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** a Onda 2 está em andamento. A PR A (T-19, T-19b, T-20 e T-21) está na branch `feat/lgpd-t19-t20-retencao-e-scheduler`; a T-26 (a, b) vem em seguida. Em paralelo: T-05b (destruir os logs brutos em 16/11) e a conversa sobre cópias externas (T-23).
+- **Próximo passo:** a Onda 2 está em andamento. A PR A (T-19, T-19b, T-20 e T-21) tem o código pronto na branch `feat/lgpd-t19-t20-retencao-e-scheduler`; faltam os passos manuais em staging e produção, com autorização. A T-26 (a, b) vem em seguida. Em paralelo: T-05b (destruir os logs brutos em 16/11) e a conversa sobre cópias externas (T-23).
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -36,17 +36,18 @@
 - [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
   Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
   **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
-  **Em andamento:** branch `feat/lgpd-t19-t20-retencao-e-scheduler` (PR A da Onda 2).
+  **Código pronto na branch `feat/lgpd-t19-t20-retencao-e-scheduler`; faltam os passos manuais em staging e produção (com autorização).**
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
 - [ ] **T-19b** · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
-  Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido.
-  **Em andamento:** branch `feat/lgpd-t19-t20-retencao-e-scheduler` (PR A da Onda 2).
+  Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
+  **Limite conhecido:** nomes de terceiros com ponto ou vírgula não casam com o critério e ficam como estão.
+  **Código pronto na branch `feat/lgpd-t19-t20-retencao-e-scheduler`; faltam os passos manuais em staging e produção (com autorização).**
   **Pronto quando:** comando com `--dry-run` coberto por teste; executado em produção com autorização do responsável.
 - [ ] **T-20** · Poda dos logs diários sem depender de escrita nova, e limite dos logs dos containers — `P1` · pequeno · lgpd
   Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
-  **Em andamento:** branch `feat/lgpd-t19-t20-retencao-e-scheduler` (PR A da Onda 2). O teste da poda em staging depende de confirmar se o `.env` de staging usa o canal diário.
+  **Código pronto na branch `feat/lgpd-t19-t20-retencao-e-scheduler`; faltam os passos manuais em staging e produção (com autorização).** Staging usa `stack` hoje; para o teste valer, igualar a produção (canal diário, 14 dias, `warning`), com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
   Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
@@ -60,9 +61,9 @@
   Recusa rodar em produção. Prepara a T-01 e a T-03.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
   Depende da T-26 completa.
-- [ ] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
+- [x] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
   Atualizar [`arquitetura/erros-e-logs.md`](./arquitetura/erros-e-logs.md) depois da T-19 e da T-20.
-  **Em andamento:** branch `feat/lgpd-t19-t20-retencao-e-scheduler` (PR A da Onda 2).
+  **Feita nesta branch** (`feat/lgpd-t19-t20-retencao-e-scheduler`). Passa para Entregas recentes quando a PR existir.
 - [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
   Tabelas fora da rotina da T-19. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
 

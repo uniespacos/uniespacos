@@ -4,7 +4,7 @@ Este documento descreve o padrão Repository + Interface do projeto: como encaps
 
 ## Repositórios Registrados
 
-Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre apenas `ReservaRepositoryInterface` e `AgendaRepositoryInterface`, os dois principais.
+Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface` e `RetencaoRepositoryInterface`.
 
 | Interface | Implementação Eloquent | Detalhado aqui |
 |-----------|------------------------|----------------|
@@ -17,6 +17,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 | `InstituicaoRepositoryInterface` | `InstituicaoRepositoryEloquent` | Não |
 | `ModuloRepositoryInterface` | `ModuloRepositoryEloquent` | Não |
 | `ReservaRepositoryInterface` | `ReservaRepositoryEloquent` | [Sim](#reservarepositoryinterface) |
+| `RetencaoRepositoryInterface` | `RetencaoRepositoryDb` (query builder, sem model) | [Sim](#retencaorepositoryinterface) |
 | `SetorRepositoryInterface` | `SetorRepositoryEloquent` | Não |
 | `UnidadeRepositoryInterface` | `UnidadeRepositoryEloquent` | Não |
 | `UserRepositoryInterface` | `UserRepositoryEloquent` | Não |
@@ -27,6 +28,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 - [Por Que Usar Repository?](#por-que-usar-repository)
 - [ReservaRepositoryInterface](#reservarepositoryinterface)
 - [AgendaRepositoryInterface](#agendarepositoryinterface)
+- [RetencaoRepositoryInterface](#retencaorepositoryinterface)
 - [Trade-off: Especialização vs. Generalização](#trade-off-especialização-vs-generalização)
 - [Evitando N+1 Queries](#evitando-n1-queries)
 - [Testing com Repositories](#testing-com-repositories)
@@ -530,6 +532,47 @@ foreach ($gestores as $gestor) {
     }
 }
 ```
+
+---
+
+## RetencaoRepositoryInterface
+
+Usado só pela rotina de retenção: `RetencaoService`, chamado pelo `retencao:aplicar` e pelo `retencao:neutralizar-justificativas`. A implementação é `RetencaoRepositoryDb`, registrada no `AppServiceProvider`.
+
+### Por que `Db` e não `Eloquent`
+
+Os demais repositórios se chamam `...Eloquent` porque cada um encapsula um model. A rotina de retenção mexe em dados que não têm model:
+
+- **Cache e locks:** tabelas `cache` e `cache_locks` do store `database`. Nomes e conexões vêm de `config/cache.php`.
+- **Sessões:** tabela `sessions`. Nome e conexão vêm de `config/session.php`.
+- **Notificações e justificativas:** lidas e alteradas por query builder (`DB::table`), sem passar pelos models. Assim a rotina não dispara eventos nem altera `updated_at`.
+
+`Db` nomeia a implementação pelo que ela é: consultas diretas ao banco pelo query builder, sem model.
+
+### Métodos
+
+```php
+public function contarNotificacoesLidasAntesDe(CarbonInterface $corte): int;
+public function apagarNotificacoesLidasAntesDe(CarbonInterface $corte): int;
+public function contarCacheExpiradoAntesDe(int $corteUnix): int;
+public function apagarCacheExpiradoAntesDe(int $corteUnix): int;
+public function contarSessoesInativasAntesDe(int $corteUnix): int;
+public function apagarSessoesInativasAntesDe(int $corteUnix): int;
+public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array;
+public function substituirJustificativas(array $ids, string $texto): int;
+```
+
+| Método | Consulta | Uso |
+|--------|----------|-----|
+| `contar…` / `apagar…` (notificações) | `notifications` com `read_at` anterior ao corte | Só notificações lidas |
+| `contar…` / `apagar…` (cache) | `cache` e `cache_locks` com `expiration` anterior ao corte, somados | Entradas já expiradas |
+| `contar…` / `apagar…` (sessões) | `sessions` com `last_activity` anterior ao corte | Sessões inativas |
+| `justificativasDeConflitoAposId` | `horarios` com `id` maior que `$aposId` e `justificativa` começando por `Conflito com a reserva` | Lotes de 500, por `id` (paginação por chave) |
+| `substituirJustificativas` | `update` por lista de `id` | Troca o texto, sem tocar em `updated_at` |
+
+**Padrão contar e apagar:** a simulação (`--dry-run`) chama o método `contar…` e a execução chama `apagar…`, com o mesmo critério. Assim o número simulado é o que seria removido.
+
+**Filtro estrito no service:** `justificativasDeConflitoAposId` traz candidatos por prefixo. `RetencaoService` confirma cada linha com uma expressão regular do formato antigo, em português, antes de trocar. Motivos digitados pelo gestor não casam com esse formato.
 
 ---
 
