@@ -22,7 +22,7 @@
   | --- | --- | --- | --- |
   | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
   | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Quando o #509 (T-26 (d, e)) for mergeada | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
+  | Quando o #509 (T-26 (d, e)) for mergeado | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
   | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
