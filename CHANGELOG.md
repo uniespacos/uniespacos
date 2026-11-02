@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0-rc.111](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.110...v1.5.0-rc.111) (2026-11-02)
+
+
+### Features
+
+* **infra:** adicionar scheduler e limite de tamanho dos logs dos containers ([61efa38](https://github.com/uniespacos/uniespacos/commit/61efa388fbd0b8bbe3c5f11666f40441c31ac876))
+* **lgpd:** adicionar comando para neutralizar justificativas de conflito anteriores à T-24 ([82f7bbb](https://github.com/uniespacos/uniespacos/commit/82f7bbb2fdac52eb802a55ad5789dd38943a2fec))
+* **lgpd:** adicionar o comando retencao:aplicar com prazos configuráveis e poda dos logs diários ([76bb31d](https://github.com/uniespacos/uniespacos/commit/76bb31d6d6f5b8576e86d43865f36cbe30964fa1))
+* **lgpd:** agendar a retenção diária às 03:30 UTC ([b83f4e7](https://github.com/uniespacos/uniespacos/commit/b83f4e743500b4f6546bd1444cd07a59cea1bce9))
+* **lgpd:** retenção de dados agendada e poda dos logs diários (T-19, T-19b, T-20, T-21) ([d40f359](https://github.com/uniespacos/uniespacos/commit/d40f35939607132ba63d6edb00048e359510c0bc))
+
 ## [1.5.0-rc.110](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.109...v1.5.0-rc.110) (2026-11-02)
 
 
