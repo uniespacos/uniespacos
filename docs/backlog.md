@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `main` e `develop` na 1.5.0 (`main` @ `38225b7`) · produção: v1.5.0 (02/11/2026).
+> **Base:** `main` na 1.5.0 · `develop` na rc.111, com o #507 mergeado e a rc.112 a caminho · produção: v1.5.0 (02/11/2026).
 > **Atualizado em:** 2026-11-02.
 
 ## Como ler
@@ -15,7 +15,19 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A PR A (#505: T-19, T-19b, T-20 e T-21) está em `develop` e em staging (rc.111); faltam as conferências em staging e os passos em produção, com autorização. A PR B (#507: T-26 (a, b)) está aberta. Em paralelo: T-05b (destruir os logs brutos e a cópia cifrada do servidor em 16/11) e a conversa com a TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. Depois: a rc.112 (com o #507), o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
+
+  | Data ou gatilho | O que fazer | Quem | ID |
+  | --- | --- | --- | --- |
+  | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
+  | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
+  | Quando o release-please abrir a rc.112 | Aprovar e mergear a PR de release com o #507 (só o responsável) | Responsável | T-26 (a, b) |
+  | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`; deploy durante o dia; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
+  | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
+  | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
+
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -36,18 +48,18 @@
 - [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
   Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
   **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
-  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).**
+  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (rc.111, 02/11): agendador de pé; a rotina aparece no agendamento das 03:30 UTC; simulação com 2.880 notificações lidas há mais de 90 dias, 0 de cache, 0 sessões e 0 logs. Falta: a rodada de 03/11 com os arquivos falsos (T-20), a conferência depois dela e a produção, com autorização.
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
 - [ ] **T-19b** · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
   Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
   **Limite conhecido:** nomes de terceiros com ponto ou vírgula não casam com o critério e ficam como estão.
-  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).**
+  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (02/11): simulação com 0 justificativas a trocar. Falta: a execução em produção, com autorização, depois de a simulação ser revisada pelo responsável.
   **Pronto quando:** comando com `--dry-run` coberto por teste; executado em produção com autorização do responsável.
 - [ ] **T-20** · Poda dos logs diários sem depender de escrita nova, e limite dos logs dos containers — `P1` · pequeno · lgpd
   Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
-  **Código pronto no #505; faltam os passos manuais em staging e produção (com autorização).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`).
+  **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). Falta: a poda com arquivos falsos, conferida depois da rodada de 03/11, e a produção, com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
   A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
@@ -74,6 +86,8 @@
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
   Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
   **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
+  **Cifragem confirmada (02/11):** o responsável confirmou que o backup manual anterior à 1.5.0 foi cifrado antes de sair do servidor. Os dois arquivos (snapshot e backup manual) vão cifrados do lado do responsável.
+  **Status (02/11):** a mensagem com as três perguntas à TI foi entregue ao responsável para envio. Aguarda resposta.
   **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
@@ -92,7 +106,7 @@
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
-  Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). No snapshot, ela é mitigada pela cifragem do lado do responsável; no backup manual, a cifragem antes do envio está a confirmar.
+  Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). Snapshot de auditoria e backup manual vão cifrados do lado do responsável, o que mitiga a transferência.
 
 **Diferidas pelo responsável**
 
@@ -209,7 +223,7 @@
 
 ## Onda 6 — Internacionalização (`P2`–`P4`)
 
-Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e critérios em `docs/plano-i18n/` (local; uma pasta por fase), auditoria em `docs/auditoria-i18n-2026-10-31/`. Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
+Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais (ver [Origem dos itens](#origem-dos-itens)). Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
 
 - [ ] **I18N-F0** · Fundação de locale: idioma salvo no usuário e formato único — `P2` · médio
   Enum de locale único; `users.locale` com `HasLocalePreference`; a prop `locale` do Inertia sempre em `pt-BR`/`en`/`es`; remove a prop `quote`, que não é usada; `<html lang>` acompanha a troca de idioma; cria `docs/arquitetura/internacionalizacao.md` com a convenção decidida.
@@ -295,7 +309,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
-| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; a cifragem do backup manual está a confirmar) | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
@@ -364,7 +378,9 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
 - **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
+- **02/11** · #506 release candidata rc.111 (`develop`, com o #505 e o agendador) em staging; a rc.112 sai com o #507.
 - **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
+- **02/11** · #504 backlog: registro do snapshot de auditoria e da guarda da T-05 (T-05b, T-13 e T-23).
 - **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
 - **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
