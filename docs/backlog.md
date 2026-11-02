@@ -1,8 +1,8 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `develop` @ `9027acc` (1.5.0-rc.109, em staging) · produção: `main` v1.4.4 (30/10/2026).
-> **Atualizado em:** 2026-11-01.
+> **Base:** `main` e `develop` na 1.5.0 (`main` @ `38225b7`) · produção: v1.5.0 (02/11/2026).
+> **Atualizado em:** 2026-11-02.
 
 ## Como ler
 
@@ -14,8 +14,8 @@
 
 ## Agora
 
-- **Em staging:** 1.5.0-rc.109, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496). Validação manual concluída em 01/11: os 29 passos passaram. Produção segue na v1.4.4.
-- **Próximo passo:** release 1.5.0 (em andamento) → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
+- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11).
+- **Próximo passo:** T-05b (eliminar a cópia dos logs antigos em 16/11) e a Onda 2.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -23,13 +23,11 @@
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
-  A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
-- [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · plano aprovado em 01/11, executa logo depois do release 1.5.0
-  Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. A cópia preservada fica pelo prazo mínimo: a LGPD não fixa mínimo para log e manda eliminar quando a finalidade termina, então vale o prazo da P-16, de 14 dias. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa; a consulta à TI sobre a guarda delas não bloqueia (vai para a T-23). = A-03, R-P03, S13.
-  **Pronto quando:** o log ativo não tem mais registro com credencial, a versão nova comprovadamente não grava credencial (teste real), os tokens de longa duração foram invalidados e a data de eliminação da cópia preservada está anotada.
+- [ ] **T-05b** · Eliminar a cópia preservada dos logs antigos de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. A cópia fica só até 16/11 (prazo da P-16, 14 dias). Nessa data, decidir com o responsável o que, se algo, tem finalidade própria (por exemplo, os registros de erro) e destruir o resto com remoção segura. Prorrogar só com justificativa anotada.
+  **Pronto quando:** a cópia foi destruída ou a prorrogação está justificada, e o espaço em disco foi liberado.
 - [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
-  Pode correr em paralelo à validação. Destrava T-20 e T-35. = H-01 a H-03.
+  Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
 
 ## Onda 2 — LGPD: próximo lote (`P1`–`P3`)
 
@@ -39,8 +37,9 @@
   Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. Também limpa registros antigos que ainda têm nome de terceiros (anteriores à T-24). = S52, DT-11, B23, A-06.
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
 - [ ] **T-20** · Log diário com 14 dias e nível `info` em produção — `P1` · pequeno · lgpd
-  Prazo decidido (P-16). Depende da T-08. Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
-  **Pronto quando:** `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` em produção, com arquivos rotacionados em staging.
+  Prazo decidido (P-16). Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
+  **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`: **não subir o nível**. Falta a rotação funcionar: os arquivos de setembro e outubro passam de 14 dias, porque a poda só roda quando um novo arquivo é criado. Rever o texto original antes de executar.
+  **Pronto quando:** a rotação de 14 dias comprovadamente apaga os arquivos antigos (testada em staging), o nível continua `warning` ou mais restritivo, e o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
   Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
@@ -348,6 +347,8 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
+- **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
 - **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
