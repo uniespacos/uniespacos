@@ -15,7 +15,7 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** T-05b (destruir os logs brutos em 16/11), a conversa sobre cópias externas (T-23) e a Onda 2.
+- **Próximo passo:** T-05b (destruir os logs brutos em 16/11), a conversa sobre cópias externas (T-23) e a Onda 2. Na Onda 2, a PR B (T-26 (a, b)) já tem o código pronto na branch `refactor/lgpd-t26-props-compartilhadas-minimas`, aguardando a abertura da PR.
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
@@ -40,10 +40,14 @@
   Prazo decidido (P-16). Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`: **não subir o nível**. Falta a rotação funcionar: os arquivos de setembro e outubro passam de 14 dias, porque a poda só roda quando um novo arquivo é criado. Rever o texto original antes de executar.
   **Pronto quando:** a rotação de 14 dias comprovadamente apaga os arquivos antigos (testada em staging), o nível continua `warning` ou mais restritivo, e o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
-  Decidido em 02/11: lista branca de campos na prop `notifications` e badge pela contagem real de não lidas.
-  **Em andamento:** branch `refactor/lgpd-t26-props-compartilhadas-minimas` (PR B da Onda 2).
+- [x] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
+  **Feita na branch `refactor/lgpd-t26-props-compartilhadas-minimas`** (PR B da Onda 2, ainda sem PR): a prop `notifications` sai com lista branca de campos e o badge usa a contagem real de não lidas (`unread_notifications_count`). = S61, F1, E2-O.1.
+- [ ] **T-26 (d)** · Rota JSON de notificações com o mesmo filtro de campos, ou removida se não tiver uso — `P2` · pequeno · lgpd
+  A rota `GET /notifications` devolve o modelo inteiro, com `notifiable_type`, `notifiable_id` e `data` sem filtro, e não há consumidor no front: o front só usa a rota de marcar como lidas.
+  **Pronto quando:** a rota foi removida ou passa a usar a mesma lista branca, com teste.
+- [ ] **T-26 (e)** · Broadcast de notificações sem IDs internos — `P2` · pequeno · lgpd
+  O payload em tempo real ainda leva identificadores internos que a tela não usa (ex.: `solicitante_id` e `cancelador_id`). O dado gravado no banco não muda. Exige reiniciar o queue worker no deploy.
+  **Pronto quando:** o payload de broadcast tem só os campos usados pelo front, com teste.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -52,7 +56,7 @@
 - [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
   Recusa rodar em produção. Prepara a T-01 e a T-03.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
-  Depende da T-26 completa.
+  Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
 - [ ] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
   Atualizar [`arquitetura/erros-e-logs.md`](./arquitetura/erros-e-logs.md) depois da T-19 e da T-20.
 
@@ -278,7 +282,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | F-03 · Prazos de guarda (proposta DT-11: 30, 90, 7 e 7 dias) e eliminar ou anonimizar | encarregado e CPAD | T-12, T-19 (valores finais), T-23 |
 | F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
 | F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
-| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade institucional (T-26) |
+| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
 | F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes | TI e gestão da UESB | T-13, T-23, T-38 |
@@ -335,7 +339,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 - **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
 - **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
 - **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
-- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) segue na Onda 2.
+- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) está feita na branch da PR B (Onda 2), sem PR ainda.
 - **Página de privacidade no release 1.5.0** · decidida em 01/11 pelo responsável: standby, fora do 1.5.0, desligada por padrão (`PRIVACY_PAGE_ENABLED=false`) no #496. A retomada é o item T-17, T-18 da Onda 2.
 - **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (o resíduo saiu no #494), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
 - **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
