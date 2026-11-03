@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `main` na 1.5.0 · `develop` na rc.111, com o #507 e o #508 mergeados e ainda sem release candidata · produção: v1.5.0 (02/11/2026).
+> **Base:** `main` na 1.5.0 · `develop` e staging na rc.112 (com o #505, o #507 e o #509) · produção: v1.5.0 (02/11/2026).
 > **Atualizado em:** 2026-11-02.
 
 ## Como ler
@@ -15,14 +15,13 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. O #505 (T-19, T-19b, T-20 e T-21) está em `develop` desde 02/11, às 16:39 UTC, e em staging (rc.111), com a conferência inicial de 02/11 feita. Faltam a rodada de staging de 03/11 e a conferência depois dela. O #507 (T-26 (a, b)) está em `develop` desde 02/11, às 17:30 UTC. O #507 ainda não está em staging: só entra na próxima release candidata. A T-26 (d, e) está feita na branch `fix/lgpd-t26-d-e-notificacoes`; a PR dela é o gatilho da rc.112 (primeiro `fix` desde a rc.111), que leva o #507 e a T-26 (d, e) a staging. Depois: o release do #505 para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. Falta a conferência da primeira rodada de retenção em staging (03/11, depois das 03:30 UTC). Depois: o release para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
   | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
   | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Quando o #509 (T-26 (d, e)) for mergeado | Aprovar e mergear a PR de release candidata (rc.112), que leva o #507 e a T-26 (d, e) a staging; depois do deploy em staging, reiniciar o queue worker | Responsável | T-26 (a, b), (d), (e) |
   | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
@@ -371,6 +370,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **03/11** · #510 release candidata rc.112 em staging (#507 e #509), com deploy e teste feitos pelo responsável.
 - **02/11** · #509 T-26 (d, e): broadcast de notificações só com campos públicos (sem IDs internos) e remoção da rota JSON sem uso. Reiniciar o queue worker depois do deploy.
 - **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
 - **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
