@@ -68,7 +68,7 @@ class NotificacaoSemNomeDeTerceirosTest extends TestCase
         $payload = json_encode($notification->toBroadcast($this->gestor)->data, JSON_THROW_ON_ERROR);
         $this->assertStringNotContainsString(self::NOME_SOLICITANTE, $payload);
         $this->assertSame($this->reserva->id, $notification->toBroadcast($this->gestor)->data['reserva_id']);
-        $this->assertSame($this->solicitante->id, $notification->toBroadcast($this->gestor)->data['solicitante_id']);
+        $this->assertArrayNotHasKey('solicitante_id', $notification->toBroadcast($this->gestor)->data);
     }
 
     public function test_notificacao_cancelamento_grava_ids_e_nao_o_nome_do_cancelador_em_notifications_data(): void
@@ -91,7 +91,7 @@ class NotificacaoSemNomeDeTerceirosTest extends TestCase
         $data = (new ReservationCanceledNotification($this->reserva, $cancelador))->toBroadcast($this->gestor)->data;
 
         $this->assertStringNotContainsString(self::NOME_CANCELADOR, json_encode($data, JSON_THROW_ON_ERROR));
-        $this->assertSame($cancelador->id, $data['cancelador_id']);
+        $this->assertArrayNotHasKey('cancelador_id', $data);
     }
 
     public function test_notificacao_nova_reserva_grava_chave_e_parametros_sem_nome_do_solicitante(): void

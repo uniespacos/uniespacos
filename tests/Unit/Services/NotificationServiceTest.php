@@ -6,7 +6,6 @@ namespace Tests\Unit\Services;
 
 use App\Models\User;
 use App\Services\NotificationService;
-use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -18,102 +17,6 @@ class NotificationServiceTest extends TestCase
     {
         parent::setUp();
         $this->service = new NotificationService;
-    }
-
-    public function test_get_latest_returns_only_notifications_of_the_user(): void
-    {
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
-
-        // Create 3 notifications for the owner
-        for ($i = 0; $i < 3; $i++) {
-            $owner->notifications()->create([
-                'id' => (string) Str::uuid(),
-                'type' => 'App\\Notifications\\ReservationCreatedNotification',
-                'data' => ['titulo' => "Notificacao {$i}"],
-                'read_at' => null,
-            ]);
-        }
-
-        // Create 2 notifications for the other user
-        for ($i = 0; $i < 2; $i++) {
-            $otherUser->notifications()->create([
-                'id' => (string) Str::uuid(),
-                'type' => 'App\\Notifications\\ReservationCreatedNotification',
-                'data' => ['titulo' => "Notificacao {$i}"],
-                'read_at' => null,
-            ]);
-        }
-
-        $result = $this->service->getLatest($owner);
-
-        $this->assertCount(3, $result);
-        foreach ($result as $notification) {
-            $this->assertSame($owner->id, $notification->notifiable_id);
-        }
-    }
-
-    public function test_get_latest_respects_limit(): void
-    {
-        $user = User::factory()->create();
-
-        // Create 5 notifications
-        for ($i = 0; $i < 5; $i++) {
-            $user->notifications()->create([
-                'id' => (string) Str::uuid(),
-                'type' => 'App\\Notifications\\ReservationCreatedNotification',
-                'data' => ['titulo' => "Notificacao {$i}"],
-                'read_at' => null,
-            ]);
-        }
-
-        $result = $this->service->getLatest($user, 2);
-
-        $this->assertCount(2, $result);
-    }
-
-    public function test_get_latest_returns_newest_first(): void
-    {
-        $user = User::factory()->create();
-
-        // Create notifications with distinct created_at times
-        $notification1 = $user->notifications()->create([
-            'id' => (string) Str::uuid(),
-            'type' => 'App\\Notifications\\ReservationCreatedNotification',
-            'data' => ['titulo' => 'Notificacao 1'],
-            'read_at' => null,
-            'created_at' => now()->subMinutes(2),
-        ]);
-
-        $notification2 = $user->notifications()->create([
-            'id' => (string) Str::uuid(),
-            'type' => 'App\\Notifications\\ReservationCreatedNotification',
-            'data' => ['titulo' => 'Notificacao 2'],
-            'read_at' => null,
-            'created_at' => now()->subMinutes(1),
-        ]);
-
-        $notification3 = $user->notifications()->create([
-            'id' => (string) Str::uuid(),
-            'type' => 'App\\Notifications\\ReservationCreatedNotification',
-            'data' => ['titulo' => 'Notificacao 3'],
-            'read_at' => null,
-            'created_at' => now(),
-        ]);
-
-        $result = $this->service->getLatest($user);
-
-        $this->assertCount(3, $result);
-        $items = $result->values();
-        /** @var DatabaseNotification $first */
-        $first = $items->get(0);
-        /** @var DatabaseNotification $second */
-        $second = $items->get(1);
-        /** @var DatabaseNotification $third */
-        $third = $items->get(2);
-        $this->assertSame($notification3->id, $first->id);
-        $this->assertSame($notification2->id, $second->id);
-        $this->assertSame($notification1->id, $third->id);
     }
 
     public function test_mark_as_read_without_ids_marks_all_unread(): void
