@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.112](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.111...v1.5.0-rc.112) (2026-11-03)
+
+
+### Bug Fixes
+
+* **lgpd:** broadcast de notificações só com campos públicos e remoção da rota JSON sem uso (T-26 d, e) ([1fe3729](https://github.com/uniespacos/uniespacos/commit/1fe372982fae45fbfce6593b972376c5a069b593))
+* **lgpd:** enviar só campos públicos no broadcast de notificações e remover a rota JSON sem uso ([2e5ddb2](https://github.com/uniespacos/uniespacos/commit/2e5ddb26655f069016576f4b38a6665abad36737))
+
 ## [1.5.0-rc.111](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.110...v1.5.0-rc.111) (2026-11-02)
 
 
