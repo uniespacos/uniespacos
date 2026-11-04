@@ -1,5 +1,5 @@
 import type { User } from '@/types';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { PermissionModal } from './PermissionModal';
 
 const mockOnClose = jest.fn();
@@ -14,7 +14,7 @@ jest.mock('@inertiajs/react', () => ({
                     name: 'Admin User',
                     email: 'admin@test.local',
                     roles: ['institucional'],
-                    permissions: ['usuarios.avaliar', 'usuarios.gerenciar_permissoes_diretas'],
+                    permissions: ['usuarios.avaliar', 'usuarios.gerenciar-permissoes-diretas'],
                 },
             },
         },
@@ -47,20 +47,26 @@ describe('PermissionModal', () => {
         updated_at: '2026-01-01T00:00:00Z',
     };
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        jest.useFakeTimers({ now: new Date('2026-10-05T12:00:00-03:00') });
+    const usuarioComPapeis = (roles: string[]): User => ({ ...mockUser, roles });
+
+    const mockFetchContexto = (usuario: User) => {
         global.fetch = jest.fn(() =>
             Promise.resolve({
                 ok: true,
                 json: () =>
                     Promise.resolve({
-                        user: mockUser,
+                        user: usuario,
                         instituicoes: [],
                         permissionCatalog: {},
                     }),
             }),
         ) as jest.Mock;
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.useFakeTimers({ now: new Date('2026-10-05T12:00:00-03:00') });
+        mockFetchContexto(mockUser);
         (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string) => `/test/${name}`);
     });
 
@@ -83,5 +89,70 @@ describe('PermissionModal', () => {
         const selectOptions = screen.getAllByText(/Gestor/);
         const gestorOption = selectOptions.find((el) => el.textContent === 'Gestor de Reserva');
         expect(gestorOption).toBeInTheDocument();
+    });
+
+    it('com um único papel mantém o seletor de papel e não mostra o aviso', async () => {
+        render(<PermissionModal user={mockUser} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        expect(await screen.findByRole('combobox')).toBeInTheDocument();
+        expect(screen.queryByText('Este usuário tem mais de um papel; os papéis não podem ser alterados aqui.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Papéis atuais')).not.toBeInTheDocument();
+    });
+
+    it('com um único papel envia o papel atual ao salvar', async () => {
+        render(<PermissionModal user={mockUser} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        fireEvent.click(await screen.findByText('Salvar Permissões'));
+
+        expect(mockOnUpdate).toHaveBeenCalledWith(2, 'gestor', [], []);
+    });
+
+    it('com dois papéis oculta o seletor e mostra os papéis atuais com aviso', async () => {
+        const usuario = usuarioComPapeis(['comum', 'gestor']);
+        mockFetchContexto(usuario);
+        render(<PermissionModal user={usuario} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        expect(await screen.findByText('Papéis atuais')).toBeInTheDocument();
+        expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+        expect(screen.getByText('Gestor de Reserva')).toBeInTheDocument();
+        expect(screen.getByText('Usuário Comum')).toBeInTheDocument();
+        expect(screen.getByText('Este usuário tem mais de um papel; os papéis não podem ser alterados aqui.')).toBeInTheDocument();
+    });
+
+    it('com dois papéis incluindo gestor mostra a seção de agendas', async () => {
+        const usuario = usuarioComPapeis(['comum', 'gestor']);
+        mockFetchContexto(usuario);
+        render(<PermissionModal user={usuario} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        expect(await screen.findByText('Filtro Busca Permission')).toBeInTheDocument();
+    });
+
+    it('com dois papéis sem gestor não mostra a seção de agendas', async () => {
+        const usuario = usuarioComPapeis(['comum', 'institucional']);
+        mockFetchContexto(usuario);
+        render(<PermissionModal user={usuario} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        expect(await screen.findByText('Papéis atuais')).toBeInTheDocument();
+        expect(screen.queryByText('Filtro Busca Permission')).not.toBeInTheDocument();
+    });
+
+    it('com dois papéis incluindo gestor envia role_name gestor ao salvar', async () => {
+        const usuario = usuarioComPapeis(['comum', 'gestor']);
+        mockFetchContexto(usuario);
+        render(<PermissionModal user={usuario} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        fireEvent.click(await screen.findByText('Salvar Permissões'));
+
+        expect(mockOnUpdate).toHaveBeenCalledWith(2, 'gestor', [], []);
+    });
+
+    it('com dois papéis sem gestor envia o primeiro papel ao salvar', async () => {
+        const usuario = usuarioComPapeis(['comum', 'institucional']);
+        mockFetchContexto(usuario);
+        render(<PermissionModal user={usuario} isOpen={true} onClose={mockOnClose} onUpdate={mockOnUpdate} processing={false} />);
+
+        fireEvent.click(await screen.findByText('Salvar Permissões'));
+
+        expect(mockOnUpdate).toHaveBeenCalledWith(2, 'comum', [], []);
     });
 });

@@ -669,6 +669,8 @@ export const en = {
             atribuir_gestor: 'Assign as Manager',
             remover_gestor: 'Remove from Management',
             permissoes: 'User Permissions',
+            papeis_atuais: 'Current roles',
+            papeis_acumulados_aviso: 'This user has more than one role; roles cannot be changed here.',
         },
     },
     admin: {
