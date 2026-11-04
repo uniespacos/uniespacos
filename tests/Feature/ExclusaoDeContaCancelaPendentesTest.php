@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Events\ReservaEvent;
+use App\Events\ReservaAlterada;
 use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
 use App\Models\Agenda;
 use App\Models\Espaco;
@@ -138,21 +138,21 @@ class ExclusaoDeContaCancelaPendentesTest extends TestCase
 
     public function test_cancelamento_dispara_o_evento_que_invalida_os_relatorios(): void
     {
-        Event::fake([ReservaEvent::class]);
+        Event::fake([ReservaAlterada::class]);
         $reserva = $this->criarReserva($this->titular);
 
         app(ExclusaoDeContaService::class)->anonimizar($this->titular);
 
         Event::assertDispatched(
-            ReservaEvent::class,
-            fn (ReservaEvent $evento): bool => $evento->action === 'canceled' && $evento->reservaId === $reserva->id,
+            ReservaAlterada::class,
+            fn (ReservaAlterada $evento): bool => $evento->acao === 'canceled' && $evento->reservaId === $reserva->id,
         );
     }
 
     public function test_falha_no_meio_da_anonimizacao_desfaz_o_cancelamento_e_nao_notifica(): void
     {
         Notification::fake();
-        Event::fake([ReservaEvent::class]);
+        Event::fake([ReservaAlterada::class]);
         $reserva = $this->criarReserva($this->titular);
 
         $repo = Mockery::mock(UserRepositoryEloquent::class)->makePartial();
@@ -170,7 +170,7 @@ class ExclusaoDeContaCancelaPendentesTest extends TestCase
         $this->assertSame(['em_analise'], $reserva->horarios()->pluck('situacao')->unique()->values()->all());
         $this->assertDatabaseHas('users', ['id' => $this->titular->id, 'name' => self::NOME_TITULAR]);
         Notification::assertNothingSent();
-        Event::assertNotDispatched(ReservaEvent::class);
+        Event::assertNotDispatched(ReservaAlterada::class);
     }
 
     public function test_titular_gestor_de_agenda_bloqueia_antes_de_cancelar_pendentes(): void

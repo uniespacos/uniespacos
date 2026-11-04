@@ -91,11 +91,11 @@ relatorio:{tipo}:{usuario_id}:v{versao_global}.{versao_usuario}:{sha256_dos_filt
 
 | Gatilho | Quem invalida | Tipos invalidados |
 |---|---|---|
-| `ReservaEvent` com ação `created`, `updated`, `evaluated` ou `canceled` | [`InvalidarCacheRelatoriosAoAtualizarReserva`](../../app/Listeners/InvalidarCacheRelatoriosAoAtualizarReserva.php) (`ShouldQueue`, registrado em `AppServiceProvider::boot()`) | `reservas_periodo`, `ocupacao_espacos`, `indicadores_consolidados` |
-| `ReservaEvent` com ação `validated` | Nenhum listener de relatório | Nenhum |
+| `ReservaAlterada` com ação `created`, `updated`, `evaluated` ou `canceled` (despachado por `ReservaBroadcaster::publicar()`) | [`InvalidarCacheRelatoriosAoAtualizarReserva`](../../app/Listeners/InvalidarCacheRelatoriosAoAtualizarReserva.php) (`ShouldQueue`, escuta `ReservaAlterada`, registrado em `AppServiceProvider::boot()`) | `reservas_periodo`, `ocupacao_espacos`, `indicadores_consolidados` |
+| Ação `validated` (não despacha `ReservaAlterada`) | Nenhum | Nenhum: validar conflitos não invalida relatórios |
 | Espaço criado, atualizado, gestores atualizados ou excluído (exclusão só se a remoção ocorreu) | [`EspacoService`](../../app/Services/EspacoService.php), síncrono | `inventario_espacos` |
 
-Como o listener roda na fila, a invalidação de reservas só acontece quando o worker processa o job.
+Como o listener roda na fila, a invalidação de reservas só acontece quando o worker processa o job. `ReservaAlterada` é despachado antes da publicação em tempo real (`ReservaEvent`), então uma falha do Reverb não impede a invalidação ([tempo-real.md](../arquitetura/tempo-real.md#ponto-único-de-publicação-reservabroadcaster)).
 
 ## 4. Exportação
 

@@ -247,6 +247,40 @@ public function handle(ExpansaoHorariosService $expansao): void
 - `Log::warning()` para notificação falha, `Log::error()` para falha crítica
 - `exception` adicionado ao contexto para rastreabilidade
 
+#### Broadcast em tempo real: falha tolerada
+
+**Arquivo:** `app/Services/ReservaBroadcaster.php`
+
+```php
+try {
+    $espacoId = $reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
+    $horariosCount = $reserva->horarios()->count();
+
+    ReservaEvent::dispatch($acao, $reserva->id, $espacoId, $horariosCount);
+} catch (Throwable $e) {
+    Log::warning('Falha ao publicar evento de reserva em tempo real', [
+        'reserva_id' => $reserva->id,
+        'acao' => $acao,
+        'exception_class' => $e::class,
+    ]);
+}
+```
+
+**Campos registrados:**
+
+| Campo | Conteúdo |
+|-------|----------|
+| `reserva_id` | Identificador da reserva |
+| `acao` | Ação publicada: `created`, `updated`, `evaluated`, `canceled` ou `validated` |
+| `exception_class` | Classe da exceção capturada, sem a mensagem |
+
+**Pontos-chave:**
+
+- Nível `warning`: a falha do Reverb é esperada e não interrompe o fluxo. O job e a request seguem normalmente.
+- A **mensagem** da exceção não é gravada. Ela pode conter host, porta ou payload. Por isso o contexto leva só a classe, e não o objeto `exception` como nos outros warnings deste documento.
+- Não há `user_id` no contexto: o publicador roda dentro de jobs e services, e `reserva_id` já identifica o caso.
+- Falha do broadcast não reverte a reserva nem a notificação, e não impede a invalidação do cache de relatórios (despachada antes, ver [tempo-real.md](./tempo-real.md#ponto-único-de-publicação-reservabroadcaster)).
+
 #### Novo Modo de Falha — Conflito Detectado Sob Lock
 
 Além de falhas de notificação, o `ProcessarCriacaoReserva` pode falhar por um conflito detectado **durante a transação**, entre a montagem das linhas de horário e a sua inserção no banco.
