@@ -49,6 +49,22 @@ class ProcessadorDeFotoDePerfil
             return null;
         }
 
+        $imagem = $this->reprocessar($bytes);
+
+        if ($imagem === null) {
+            return null;
+        }
+
+        [$conteudo, $extensao] = $imagem;
+
+        return $this->gravar($conteudo, $extensao);
+    }
+
+    /**
+     * @return array{string, string}|null
+     */
+    public function reprocessar(string $bytes): ?array
+    {
         $info = getimagesizefromstring($bytes);
 
         if ($info === false || $info[0] * $info[1] > self::PIXELS_MAXIMOS) {
@@ -78,8 +94,11 @@ class ProcessadorDeFotoDePerfil
             return null;
         }
 
-        [$conteudo, $extensao] = $this->codificar($orientada, $info[2]);
+        return $this->codificar($orientada, $info[2]);
+    }
 
+    public function gravar(string $conteudo, string $extensao): string
+    {
         $caminho = self::PASTA.'/'.Str::random(self::COMPRIMENTO_NOME).'.'.$extensao;
 
         Storage::disk(self::DISCO)->put($caminho, $conteudo);
