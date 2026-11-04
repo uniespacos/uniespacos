@@ -139,11 +139,15 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   **Pronto quando:** com um broadcaster que lança exceção, criar e avaliar reserva não gera `failed_jobs` e o solicitante é notificado.
 - [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
   Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S26 e da S17. = B15, B61, E1-18.
-- [ ] **S14** · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
+- [ ] **S14** · 🔧 em andamento (código pronto na integração) · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
   Salvar o modal de quem tem dois papéis (comum e gestor) pode apagar as agendas dessa pessoa. Mitigação em vigor: os institucionais foram orientados a não salvar o modal desses usuários (I4). = B56, E2-14, A-15; decisão relacionada: B44.
-  **Plano pronto (04/11/2026); começa depois da S26.** Sai sem depender da B44: preserva papéis e agendas de quem tem mais de um papel, sem mudar a regra para quem tem um só. O próprio sistema produz o acúmulo de papéis ao vincular gestor a um espaço, por isso a B44 é decisão de modelo. As notificações de gestor são reenviadas a cada salvamento do modal; a correção entra junto com a S14.
+  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Branch `fix/estab-s14-permissoes-papeis-acumulados`. Sem depender da B44: quem tem mais de um papel não tem papel trocado nem removido ao salvar o modal, e as agendas só mudam no que foi tirado ou incluído (nunca em massa); para papel único, a regra continua a mesma. O modal mostra os papéis acumulados só para leitura, com aviso. As notificações de gestor passam a sair só em transição real e depois do commit (antes, a todo salvamento). Teste HTTP cobre os dois casos. O próprio sistema produz o acúmulo de papéis ao vincular gestor a um espaço, por isso a B44 é decisão de modelo. A mitigação I4 pode ser retirada depois do deploy da Onda 3. As notificações de gestor são reenviadas a cada salvamento do modal; a correção entra junto com a S14.
   **Objetivo de segurança:** a tela de permissões não pode alterar papéis nem agendas de quem tem dois papéis ao ser salva.
   **Pronto quando:** um teste HTTP de `updatePermissions` preserva papéis e agendas de usuário com dois papéis.
+- [ ] **S14b** · Conferir o dono atual antes de reatribuir uma agenda a outro gestor — `P3` · pequeno · segurança
+  Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026.
+- [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
+  Isso deixava testes de permissão instáveis (o usuário do teste ganhava gestor antes da requisição). Isolar o efeito para quem precisa dele. Achado em 04/11/2026.
 - [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
   Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
 
@@ -351,7 +355,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | D-1 · Multi-instituição | v2 |
 | D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
 | D-7 e D-EST-05 · Destino do PR #397 | v2 |
-| B44 · Papéis acumulados comum e gestor | S14 |
+| B44 · Papéis acumulados comum e gestor. Pontos levantados na S14 (04/11/2026): o acúmulo é estado válido ou deve ser normalizado; o modal vira seleção múltipla; quem acumula papéis sem gestor pode virar gestor pelo modal; quem é comum e gestor e perde todas as agendas continua gestor | S14 (o código preserva o estado atual até a decisão) |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
