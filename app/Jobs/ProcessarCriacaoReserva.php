@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
-use App\Events\ReservaEvent;
 use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
@@ -15,6 +14,7 @@ use App\Notifications\ReservationCreatedNotification;
 use App\Notifications\ReservationFailedNotification;
 use App\Services\AutoAprovacaoService;
 use App\Services\ExpansaoHorariosService;
+use App\Services\ReservaBroadcaster;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -56,7 +56,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
      * O servico e injetado aqui, e nao no construtor: o job e serializado para a
      * fila e so as propriedades do construtor viajam junto.
      */
-    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao): void
+    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
         Log::info('ProcessarCriacaoReserva started', [
             'solicitante_id' => $this->solicitante->id,
@@ -193,10 +193,6 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
             Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
 
-            $espacoId = $reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
-            $horariosCount = $reserva->horarios()->count();
-            ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount);
-
             try {
                 $this->solicitante->notify(new ReservationCreatedNotification($reserva));
             } catch (Exception $e) {
@@ -206,6 +202,8 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     'exception' => $e,
                 ]);
             }
+
+            $broadcaster->publicar($reserva, 'created');
 
         } catch (Exception $e) {
             Log::error('ProcessarCriacaoReserva failed', [
