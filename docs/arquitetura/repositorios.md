@@ -4,7 +4,7 @@ Este documento descreve o padrão Repository + Interface do projeto: como encaps
 
 ## Repositórios Registrados
 
-Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface` e `RetencaoRepositoryInterface`.
+Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface`, `RetencaoRepositoryInterface` e `FotoPerfilRepositoryInterface`.
 
 | Interface | Implementação Eloquent | Detalhado aqui |
 |-----------|------------------------|----------------|
@@ -13,6 +13,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 | `AgendaRepositoryInterface` | `AgendaRepositoryEloquent` | [Sim](#agendarepositoryinterface) |
 | `AndarRepositoryInterface` | `AndarRepositoryEloquent` | Não |
 | `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | Não |
+| `FotoPerfilRepositoryInterface` | `FotoPerfilRepositoryEloquent` | [Sim](#fotoperfilrepositoryinterface) |
 | `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | Não |
 | `InstituicaoRepositoryInterface` | `InstituicaoRepositoryEloquent` | Não |
 | `ModuloRepositoryInterface` | `ModuloRepositoryEloquent` | Não |
@@ -29,6 +30,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 - [ReservaRepositoryInterface](#reservarepositoryinterface)
 - [AgendaRepositoryInterface](#agendarepositoryinterface)
 - [RetencaoRepositoryInterface](#retencaorepositoryinterface)
+- [FotoPerfilRepositoryInterface](#fotoperfilrepositoryinterface)
 - [Trade-off: Especialização vs. Generalização](#trade-off-especialização-vs-generalização)
 - [Evitando N+1 Queries](#evitando-n1-queries)
 - [Testing com Repositories](#testing-com-repositories)
@@ -573,6 +575,30 @@ public function substituirJustificativas(array $ids, string $texto): int;
 **Padrão contar e apagar:** a simulação (`--dry-run`) chama o método `contar…` e a execução chama `apagar…`, com o mesmo critério. Assim o número simulado é o que seria removido.
 
 **Filtro estrito no service:** `justificativasDeConflitoAposId` traz candidatos por prefixo. `RetencaoService` confirma cada linha com uma expressão regular do formato antigo, em português, antes de trocar. Motivos digitados pelo gestor não casam com esse formato.
+
+---
+
+## FotoPerfilRepositoryInterface
+
+Usado só pelo reprocessamento das fotos de perfil antigas: `ReprocessamentoDeFotosDePerfilService`, chamado pelo comando `fotos:reprocessar`. A implementação é `FotoPerfilRepositoryEloquent`, registrada no `AppServiceProvider`.
+
+O repositório só lê e troca o caminho da foto. O critério de reprocessamento, a ordem de gravação e a remoção do arquivo antigo ficam no service (ver [modelos-eloquent.md](modelos-eloquent.md), item 6).
+
+### Métodos
+
+```php
+public function percorrerFotosDeUsuarios(int $tamanhoLote, callable $porLote): void;
+public function caminhosReferenciados(): array;
+public function trocarFoto(int $id, string $caminhoAtual, string $novoCaminho): bool;
+```
+
+| Método | Consulta | Uso |
+|--------|----------|-----|
+| `percorrerFotosDeUsuarios` | `users` com `profile_pic` não vazio, por `chunkById` (lotes de 200 no service); entrega `id` e o caminho bruto da coluna | Varredura sem carregar a tabela inteira de uma vez |
+| `caminhosReferenciados` | Valores distintos e não vazios de `profile_pic` | Conta as órfãs: arquivos em `avatars/` que nenhum usuário referencia |
+| `trocarFoto` | `update` de `profile_pic` só quando a linha ainda tem `$caminhoAtual` | Troca condicional. Devolve `false` se o usuário trocou a foto durante o reprocessamento |
+
+**Troca condicional:** a condição no `where` impede que o reprocessamento sobrescreva uma foto enviada pelo próprio usuário no meio da execução. Nesse caso o service apaga a foto nova gerada e conta a linha como "alteradas em paralelo".
 
 ---
 

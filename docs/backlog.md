@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
 > **Base:** `main` na 1.5.0 · `develop` na rc.111, com o #507 e o #508 mergeados e ainda sem release candidata · produção: v1.5.0 (02/11/2026).
-> **Atualizado em:** 2026-11-02.
+> **Atualizado em:** 2026-11-04.
 
 ## Como ler
 
@@ -26,6 +26,7 @@
   | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
+  | Depois do release que levar o #PR_T31 (sem data) | Cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução do reprocessamento das fotos antigas | Responsável | T-31 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
@@ -61,9 +62,6 @@
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
   **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). Falta: a poda com arquivos falsos, conferida depois da rodada de 03/11, e a produção, com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
-- [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
-  O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
-  **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
 - [ ] **T-35** · Validar na inicialização se a configuração de produção está segura — `P2` · pequeno · segurança
   Comando `app:check-env`. Depende da T-08. = S53, A-18.
 - [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
@@ -371,6 +369,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **04/11** · #PR_T31 T-31 (resíduo): comando `fotos:reprocessar` com `--dry-run` reprocessa as fotos de perfil antigas sem metadados (nome novo, critério estrito, órfãs só contadas). Execução em produção pendente, com autorização, depois do release que levar o comando.
 - **02/11** · #509 T-26 (d, e): broadcast de notificações só com campos públicos (sem IDs internos) e remoção da rota JSON sem uso. Reiniciar o queue worker depois do deploy.
 - **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
 - **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
