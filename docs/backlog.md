@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
 > **Base:** `main` na 1.5.0 · `develop` e staging na rc.112 (com o #505, o #507 e o #509) · produção: v1.5.0 (02/11/2026).
-> **Atualizado em:** 2026-11-02.
+> **Atualizado em:** 2026-11-04.
 
 ## Como ler
 
@@ -15,14 +15,12 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. Falta a conferência da primeira rodada de retenção em staging (03/11, depois das 03:30 UTC). Depois: o release para produção (com autorização) e a T-05b em 16/11. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. A conferência da primeira rodada de retenção em staging foi feita pelo responsável, com resultado OK (informado em 04/11/2026), e o queue worker de staging foi reiniciado depois do deploy. Próximo: o release para produção (com autorização), na ordem da tabela abaixo, e a T-05b em 16/11/2026. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
-  | 02/11, antes de 03/11 às 03:30 UTC | Preparar em staging os arquivos de log falsos datados além do prazo, para a rodada de teste da poda | Responsável | T-19, T-20 |
-  | 03/11, depois das 03:30 UTC | Conferir a primeira rodada em staging: o arquivo falso mais antigo sumiu, o mais recente ficou, a simulação mostra 0 notificações lidas antigas e os logs do agendador não têm erro | Responsável; o master pede a conferência | T-19, T-20 |
-  | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, que também leva o #507 e a T-26 (d, e); deploy durante o dia, seguido de reinício do queue worker; revisão da simulação de retenção antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | Com autorização do responsável (sem data) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, na versão esperada 1.6.0 (o lote tem `feat`), que também leva o #507 e a T-26 (d, e). O deploy dispara sozinho com a tag, então o merge da PR do release-please é feito durante o dia. Depois do deploy, reinício do queue worker e conferência de que o serviço do agendador subiu e de que a listagem do agendamento mostra a rotina às 03:30 UTC. Revisão da simulação de retenção pelo responsável antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
@@ -47,7 +45,7 @@
 - [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
   Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
   **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
-  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (rc.111, 02/11): agendador de pé; a rotina aparece no agendamento das 03:30 UTC; simulação com 2.880 notificações lidas há mais de 90 dias, 0 de cache, 0 sessões e 0 logs. Falta: a rodada de 03/11 com os arquivos falsos (T-20), a conferência depois dela e a produção, com autorização.
+  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (rc.111, 02/11): agendador de pé; a rotina aparece no agendamento das 03:30 UTC; simulação com 2.880 notificações lidas há mais de 90 dias, 0 de cache, 0 sessões e 0 logs. A primeira rodada de retenção em staging foi conferida pelo responsável, com resultado OK (informado em 04/11/2026), e o serviço do agendador subiu normal em staging. Falta: a produção, com autorização.
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
 - [ ] **T-19b** · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
   Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
@@ -58,7 +56,7 @@
   Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
   **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
   **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
-  **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). Falta: a poda com arquivos falsos, conferida depois da rodada de 03/11, e a produção, com autorização.
+  **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). A poda com arquivos falsos foi conferida em staging pelo responsável, com resultado OK (informado em 04/11/2026). Falta: a produção, com autorização.
   **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
