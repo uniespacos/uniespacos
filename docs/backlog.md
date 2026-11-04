@@ -133,9 +133,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **S17** · Congelar o relógio nos testes que dependem da data real — `P2` · médio · teste
   Habilita a S26, a S33 e a S36. 18 arquivos de teste PHP usam `now()` ou `today()` sem congelar (contagem de 04/11/2026); o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
   **Pronto quando:** existe um trait de congelamento em `tests/Concerns/` e a suíte passa em duas datas simuladas (dia 31 e dia 1).
-- [ ] **S26** · 🔧 em andamento · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
+- [ ] **S26** · 🔧 em andamento (código pronto na integração) · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
   Uma falha do Reverb pode marcar o job como falho e pular a notificação. Decisão tomada: broadcast depois do commit, num ponto único com `try/catch` (D-EST-14). = B15, B59, B60, E1-17.
-  **Em andamento (branch `fix/estab-s26-broadcast-pos-commit` (entra pela branch de integração `feat/onda-3-estabilidade`), iniciada em 04/11/2026).** O diagnóstico confirmou 5 pontos de envio com o mesmo trecho copiado (4 jobs e o cancelamento). Num deles, a validação de conflitos, uma falha do envio regrava o status como falho depois de já concluído: isso corrompe o estado, não só gera alerta falso. Exige reiniciar o queue worker no deploy.
+  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Ponto único de publicação, chamado por último e depois do commit nos 5 pontos (4 jobs e o cancelamento); falha do broadcaster vira aviso no log e não falha o job, não pula notificação nem regrava a validação de conflitos como falha. A invalidação do cache de relatórios saiu do evento de tempo real para um evento de domínio próprio: no Laravel o broadcast roda antes dos listeners, e uma falha deixaria o cache desatualizado em silêncio. Suíte completa verde (614). Exige reiniciar o queue worker no deploy (staging e produção).
   **Pronto quando:** com um broadcaster que lança exceção, criar e avaliar reserva não gera `failed_jobs` e o solicitante é notificado.
 - [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
   Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S26 e da S17. = B15, B61, E1-18.
@@ -171,6 +171,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **S46 → S48–S50** · Isolamento por instituição nas operações de escrita: ADR e implementação — `P2` · grande · segurança
   Hoje há uma instituição ativa; é requisito do gate da v2. Depende da decisão E1-16 (quem edita instituições alheias). = B6, E1-16, E2-A, A-16, A-26.
 - [ ] **S39** · Atualizações em tempo real de reservas só por canais privados autenticados — `P3` · médio · segurança
+  Relacionado (achado em 04/11/2026): o hook do canal público só recarrega as listas para `created`, `validated` e `evaluated`; `updated` e `canceled` são publicados pelo backend, mas não atualizam a tela. Decidir junto com a troca do canal.
   Remove o canal público `reserva-channel` e o listener morto. Decisão tomada: canal privado por usuário. Depende da S26. = B14, E1-15, B66.
 - [ ] **B76** · Sanitizar o conteúdo das células nas exportações de planilha — `P3` · pequeno · segurança
   Depois do teste de exportação (S24).
@@ -187,6 +188,8 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 - [ ] **B26** · Testes de caracterização dos módulos que a v2 vai alterar — `P2` · grande · teste
   `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24; hoje só existe um teste mínimo de exportação em PDF), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
+- [ ] **S26c** · Teste de registro do listener de cache de relatórios quase nunca falha — `P4` · pequeno · teste
+  A asserção aceita qualquer listener registrado no evento. Trocar por uma que confira o listener de cache no evento de domínio. Achado na S26 (04/11/2026).
 - [ ] **AF-6.3b** · Testes de conteúdo dos 4 tipos de relatório — `P3` · médio · teste · depende da S38
 - [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
   Desde 31/10 (#489), os seeders de desenvolvimento só rodam em local, development e testing. A CI ainda roda os seeders de desenvolvimento.
