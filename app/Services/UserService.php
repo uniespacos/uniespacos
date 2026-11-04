@@ -123,57 +123,135 @@ class UserService
 
     /**
      * Updates the permission type and agenda assignments for a user.
-     * Notifies the user based on whether they were assigned or removed as a manager.
+     *
+     * Usuário com mais de um papel (ex.: comum + gestor) não perde papéis: o acúmulo
+     * depende da decisão B44 pendente, então só as agendas são tratadas quando ele é gestor.
+     * Notificações de gestor saem só em transição real, depois do commit.
      *
      * @param  array<string, mixed>  $data
      */
     public function updatePermissions(User $user, array $data): void
     {
-        $newRole = $data['role_name'];
-        $agendaIds = $data['agendas'] ?? [];
+        $agendaIds = array_values((array) ($data['agendas'] ?? []));
 
-        DB::transaction(function () use ($user, $newRole, $agendaIds, $data) {
-            $user->syncRoles([$newRole]);
+        $transicao = DB::transaction(function () use ($user, $data, $agendaIds): array {
+            $papeisAtuais = $user->roles()->pluck('name')->all();
+            $agendasAtuais = Agenda::where('user_id', $user->id)->pluck('id')->all();
+
+            $resultado = count($papeisAtuais) > 1
+                ? $this->atualizarAgendasDeUsuarioComPapeisAcumulados($user, $papeisAtuais, $agendasAtuais, $agendaIds)
+                : $this->atualizarPapelUnico($user, $data['role_name'], $papeisAtuais, $agendasAtuais, $agendaIds);
 
             if (array_key_exists('direct_permissions', $data)) {
                 $user->syncPermissions($data['direct_permissions']);
             }
 
-            if ($newRole === 'gestor') {
-                $currentAgendaIds = Agenda::where('user_id', $user->id)->pluck('id')->toArray();
-
-                $toUnlink = array_diff($currentAgendaIds, $agendaIds);
-                if (! empty($toUnlink)) {
-                    Agenda::whereIn('id', $toUnlink)->update(['user_id' => null]);
-                }
-
-                if (! empty($agendaIds)) {
-                    Agenda::whereIn('id', $agendaIds)->update(['user_id' => $user->id]);
-                }
-
-                try {
-                    $user->notify(new UserAssignedAsManagerNotification($user));
-                } catch (\Exception $e) {
-                    Log::warning('Falha ao notificar usuário sobre atribuição como gestor', [
-                        'user_id' => $user->id,
-                        'exception' => $e,
-                    ]);
-                }
-            } else {
-                Agenda::where('user_id', $user->id)->update(['user_id' => null]);
-
-                try {
-                    $user->notify(new UserRemovedAsManagerNotification($user));
-                } catch (\Exception $e) {
-                    Log::warning('Falha ao notificar usuário sobre remoção como gestor', [
-                        'user_id' => $user->id,
-                        'exception' => $e,
-                    ]);
-                }
-            }
-
             app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+            return $resultado;
         });
+
+        if ($transicao['atribuido']) {
+            $this->notificarAtribuicaoComoGestor($user);
+        }
+
+        if ($transicao['removido']) {
+            $this->notificarRemocaoComoGestor($user);
+        }
+    }
+
+    /**
+     * @param  array<int, mixed>  $papeisAtuais
+     * @param  array<int, mixed>  $agendasAtuais
+     * @param  array<int, mixed>  $agendaIds
+     * @return array{atribuido: bool, removido: bool}
+     */
+    private function atualizarPapelUnico(User $user, mixed $novoPapel, array $papeisAtuais, array $agendasAtuais, array $agendaIds): array
+    {
+        $eraGestor = in_array('gestor', $papeisAtuais, true) || $agendasAtuais !== [];
+
+        $user->syncRoles([$novoPapel]);
+
+        if ($novoPapel !== 'gestor') {
+            Agenda::where('user_id', $user->id)->update(['user_id' => null]);
+
+            return ['atribuido' => false, 'removido' => $eraGestor];
+        }
+
+        $ganhouAgenda = $this->possuiAgendaNova($agendaIds, $agendasAtuais);
+        $virouGestor = ! in_array('gestor', $papeisAtuais, true);
+
+        $this->sincronizarAgendasDoGestor($user, $agendasAtuais, $agendaIds);
+
+        return ['atribuido' => $virouGestor || $ganhouAgenda, 'removido' => false];
+    }
+
+    /**
+     * @param  array<int, mixed>  $papeisAtuais
+     * @param  array<int, mixed>  $agendasAtuais
+     * @param  array<int, mixed>  $agendaIds
+     * @return array{atribuido: bool, removido: bool}
+     */
+    private function atualizarAgendasDeUsuarioComPapeisAcumulados(User $user, array $papeisAtuais, array $agendasAtuais, array $agendaIds): array
+    {
+        if (! in_array('gestor', $papeisAtuais, true)) {
+            return ['atribuido' => false, 'removido' => false];
+        }
+
+        $ganhouAgenda = $this->possuiAgendaNova($agendaIds, $agendasAtuais);
+
+        $this->sincronizarAgendasDoGestor($user, $agendasAtuais, $agendaIds);
+
+        return ['atribuido' => $ganhouAgenda, 'removido' => false];
+    }
+
+    /**
+     * @param  array<int, mixed>  $agendasAtuais
+     * @param  array<int, mixed>  $agendaIds
+     */
+    private function sincronizarAgendasDoGestor(User $user, array $agendasAtuais, array $agendaIds): void
+    {
+        $desvincular = array_filter($agendasAtuais, fn (mixed $id): bool => ! in_array($id, $agendaIds));
+        if ($desvincular !== []) {
+            Agenda::whereIn('id', $desvincular)->update(['user_id' => null]);
+        }
+
+        if ($agendaIds !== []) {
+            Agenda::whereIn('id', $agendaIds)->update(['user_id' => $user->id]);
+        }
+    }
+
+    /**
+     * @param  array<int, mixed>  $agendaIds
+     * @param  array<int, mixed>  $agendasAtuais
+     */
+    private function possuiAgendaNova(array $agendaIds, array $agendasAtuais): bool
+    {
+        return array_filter($agendaIds, fn (mixed $id): bool => ! in_array($id, $agendasAtuais)) !== [];
+    }
+
+    private function notificarAtribuicaoComoGestor(User $user): void
+    {
+        try {
+            $user->notify(new UserAssignedAsManagerNotification($user));
+        } catch (\Exception $e) {
+            Log::warning('Falha ao notificar usuário sobre atribuição como gestor', [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    private function notificarRemocaoComoGestor(User $user): void
+    {
+        try {
+            $user->notify(new UserRemovedAsManagerNotification($user));
+        } catch (\Exception $e) {
+            Log::warning('Falha ao notificar usuário sobre remoção como gestor', [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**
