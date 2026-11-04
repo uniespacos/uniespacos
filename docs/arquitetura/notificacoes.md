@@ -676,6 +676,27 @@ Mesmo em `failed()`, o try-catch protege para que a falha de notificação não 
 
 ---
 
+## Ordem nos Jobs: Notificação Antes do Broadcast
+
+Em todo job ou service que altera reserva, as notificações (banco, e-mail e canal `broadcast` do Laravel) saem **antes** da publicação em tempo real. A publicação é feita por `ReservaBroadcaster::publicar()` e despacha o `ReservaEvent`, que é o evento de tela, não uma notificação. Detalhes em [tempo-real.md](./tempo-real.md#ponto-único-de-publicação-reservabroadcaster).
+
+| Conceito | Classe | Canal | Papel |
+|----------|--------|-------|-------|
+| Notificação do usuário | `BaseNotification` (`database`, `broadcast`, `mail`) | `App.Models.User.{id}` | Aviso ao usuário |
+| Evento de reserva | `ReservaEvent` (`ShouldBroadcastNow`) | `reserva-channel`, `App.Models.Espaco.{id}` | Atualização de tela |
+
+**Regra:** o broadcast de reserva nunca substitui nem pula a notificação. Se `publicar()` falhar, a notificação já foi enfileirada e o job segue. A falha vira `Log::warning` (ver [erros-e-logs.md](./erros-e-logs.md#broadcast-em-tempo-real-falha-tolerada)).
+
+| Job / service | Ordem depois do commit |
+|---------------|------------------------|
+| `ProcessarCriacaoReserva` | `NewReservationNotification` (gestores) → dispatch de `ValidateReservationConflictsJob` → `ReservationCreatedNotification` (solicitante) → `publicar('created')` |
+| `UpdateReservaJob` | `ReservationUpdatedNotification` (solicitante) → dispatch de `ValidateReservationConflictsJob` → `publicar('updated')` |
+| `AvaliarReservaJob` | Revalidação de conflitos → `ReservationEvaluatedNotification` (solicitante) → `publicar('evaluated')` |
+| `ValidateReservationConflictsJob` | Grava `conflict_cache` e `completed` → `publicar('validated')` (sem notificação) |
+| `ReservaService::notificarCancelamento()` | `ReservationCanceledNotification` (gestores) → revalidação de conflitos → `publicar('canceled')` |
+
+---
+
 ## Fluxo Completo de Uma Notificação
 
 ### Cenário: Criação de Reserva

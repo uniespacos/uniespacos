@@ -22,7 +22,7 @@ namespace App\Jobs;
 
 class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
 {
-    public function handle(ConflictDetectionService $conflictService): void
+    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
         // Marca como "processing"
         $this->reserva->update(['validation_status' => 'processing']);
@@ -30,14 +30,14 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
         // Recalcula conflitos ao vivo neste momento
         $conflitos = $conflictService->findConflictsFor($this->reserva->id);
         
-        // Grava snapshot na coluna conflict_cache
+        // Grava snapshot na coluna conflict_cache (commit do resultado)
         $this->reserva->update([
             'conflict_cache' => $conflitos,
             'validation_status' => 'completed',
         ]);
         
-        // Dispara evento para UI (broadcast, etc.)
-        ReservaEvent::dispatch('validated', $this->reserva->id, ...);
+        // Último passo: publica para a tela. Falha de broadcast não regrava 'failed'
+        $broadcaster->publicar($this->reserva, 'validated');
     }
 }
 ```
@@ -46,6 +46,8 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
 - Job é único por reserva ID (`uniqueId()` = `"validate-conflicts-{$reserva->id}"`) — evita duplicação na fila.
 - TTL de unicidade: 1 hora (`uniqueFor()` = 3600 segundos) — suficiente para completar, evita chave orfã.
 - Em caso de falha, marca `validation_status = 'failed'` e reloga erro.
+- A publicação `validated` vem depois do commit de `completed`. Se o broadcast falhar, o `ReservaBroadcaster` registra `warning` e não lança exceção: o job não cai no `catch` e o status permanece `completed`. Falha de tempo real não regrava `failed`.
+- `validated` **não** invalida o cache de relatórios. Só a ação de alteração (`created`, `updated`, `evaluated`, `canceled`) despacha `ReservaAlterada`, que é o gatilho do listener (ver [relatorios.md](./relatorios.md#3-cache)).
 
 ## Consumo (Leitura)
 
