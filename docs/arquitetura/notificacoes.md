@@ -367,7 +367,7 @@ Propriedades extras:
 **Disparada por:**
 
 - `EspacoService::updateGestores()`: ao designar um novo gestor para um turno do espaço, quando ele ainda não tem `reservas.avaliar`
-- `UserService::updatePermissions()`: quando o papel informado é `gestor`
+- `UserService::updatePermissions()`: só em transição real, depois do commit. Dispara quando o usuário passa a ser gestor (papel único que vira `gestor`) ou quando, já sendo gestor, ganha uma agenda nova. Salvar sem mudança não reenvia. Usuário com mais de um papel só dispara se ganhar agenda nova
 
 **Destinatário:** Usuário recém-designado como gestor
 
@@ -401,7 +401,7 @@ Propriedades extras:
 **Disparada por:**
 
 - `EspacoService::updateGestores()`: ao trocar o gestor de um turno, quando o usuário anterior não gerencia mais nenhuma agenda
-- `UserService::updatePermissions()`: quando o papel informado não é `gestor` (o usuário perde as agendas que gerenciava)
+- `UserService::updatePermissions()`: só em transição real, depois do commit. Dispara quando o usuário deixa de ser gestor (perde o papel ou as agendas) e antes era gestor (papel ou agenda). Salvar sem mudança não reenvia. Usuário com mais de um papel não recebe esta notificação pelo modal, porque o papel `gestor` não é removido por ele
 
 **Destinatário:** Usuário removido de gestão
 
