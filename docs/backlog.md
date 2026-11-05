@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main` na 1.5.0 · `develop` e staging na rc.112 (com o #505, o #507 e o #509) · produção: v1.5.0 (02/11/2026).
-> **Atualizado em:** 2026-11-04.
+> **Atualizado em:** 2026-11-05.
 
 ## Como ler
 
@@ -16,12 +16,12 @@
 ## Agora
 
 - **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. A conferência da primeira rodada de retenção em staging foi feita pelo responsável, com resultado OK (informado em 04/11/2026), e o queue worker de staging foi reiniciado depois do deploy. Próximo: o release para produção (1.6.0), previsto para o turno noturno de 04/11/2026, com autorização, na ordem da tabela abaixo, e a T-05b em 16/11/2026. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. A conferência da primeira rodada de retenção em staging foi feita pelo responsável, com resultado OK (informado em 04/11/2026), e o queue worker de staging foi reiniciado depois do deploy. Próximo: o release para produção (1.6.0), com autorização (previsto para o turno noturno de 04/11/2026, que passou sem o release; data a definir), na ordem da tabela abaixo, e a T-05b em 16/11/2026. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
-  | Turno noturno de 04/11/2026, com autorização do responsável | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, na versão esperada 1.6.0 (o lote tem `feat`), que também leva o #507 e a T-26 (d, e). O deploy dispara sozinho com a tag, então o merge da PR do release-please é feito durante o dia. Depois do deploy, reinício do queue worker e conferência de que o serviço do agendador subiu e de que a listagem do agendamento mostra a rotina às 03:30 UTC. Revisão da simulação de retenção pelo responsável antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | A definir, com autorização do responsável (o turno noturno de 04/11/2026 passou sem o release) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, na versão esperada 1.6.0 (o lote tem `feat`), que também leva o #507 e a T-26 (d, e). O deploy dispara sozinho com a tag, então o merge da PR do release-please é feito durante o dia. Depois do deploy, reinício do queue worker e conferência de que o serviço do agendador subiu e de que a listagem do agendamento mostra a rotina às 03:30 UTC. Revisão da simulação de retenção pelo responsável antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
@@ -33,7 +33,7 @@
 
 Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
 
-- **1.6.0** (noite de 04/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
+- **1.6.0** (data a definir; prevista para o turno noturno de 04/11/2026, que passou sem o release): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
 - **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
 - **Próxima minor (Onda 3; branch `feat/onda-3-estabilidade`)**: Onda 3. S26 e S14 (em andamento ou planejadas), S42, S17, S33 e S34/S35.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
