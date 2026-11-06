@@ -16,7 +16,7 @@
 ## Agora
 
 - **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado. Primeira rodada de retenção (06/11/2026, 03:30 UTC) conferida: 0 erros e simulação posterior sem nada a remover.
-- **Próximo passo:** a preparação da próxima release (1.7.0, a onda que fechar primeiro, com a Onda 3 e a Onda 2 parte 2 em branches de integração); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** o release 1.6.1 (Onda 3, parte 1: S26 e S14; decisão de 06/11/2026), com a branch de integração atualizada com a `develop` e validada em 06/11/2026; depois, staging (rc.114) e produção, com autorização. A Onda 2 parte 2 segue na branch de integração e sai como 1.7.0. Também: a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
@@ -24,6 +24,8 @@
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando o responsável confirmar (sem data) | Confirmar o teste de abertura completo e a cópia externa do backup manual anterior à 1.6.0; depois disso, destruir o backup anterior à 1.5.0 (decisão de 02/11) | Responsável | T-23 |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
+  | Deploy da 1.6.1 em staging e em produção (sem data) | Conferir se o queue worker subiu com a imagem nova depois do deploy (a S26 exige; reiniciar se não subiu); fila vazia antes do deploy e `failed_jobs` sem jobs de reserva depois | Responsável | S26 |
+  | Depois do deploy da 1.6.1 em produção e do teste do modal (sem data) | Avisar os institucionais de que a orientação de não salvar o modal de quem tem dois papéis (I4) deixou de valer, e registrar a retirada | Responsável; o master registra | S14 (I4) |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
@@ -34,11 +36,13 @@
 Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
 
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
-- **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
-- **Próxima minor (Onda 3; branch `feat/onda-3-estabilidade`)**: Onda 3. S26 e S14 (em andamento ou planejadas), S42, S17, S33 e S34/S35.
+- **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
+- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31 (pronta na integração), T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
+- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
-- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo; a que fechar primeiro sai como 1.7.0, e a outra como 1.8.0.
+- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fecha primeiro, como 1.6.1; a Onda 2 parte 2 sai como 1.7.0. Enquanto a 1.6.1 estiver em staging, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
+- **Forçar versão:** se um dia for preciso, só com `release-as` no `release-please-config.json` (produção), removido depois do release. Nunca com rodapé `Release-As:` em commit: ele chega também ao release-please de staging, que pode criar na `develop` uma tag sem sufixo, e essa tag dispara o deploy de produção.
 
 ---
 
