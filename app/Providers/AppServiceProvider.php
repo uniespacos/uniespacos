@@ -27,6 +27,8 @@ use App\Repositories\AgendaRepositoryEloquent;
 use App\Repositories\AgendaRepositoryInterface;
 use App\Repositories\AndarRepositoryEloquent;
 use App\Repositories\AndarRepositoryInterface;
+use App\Repositories\AnonimizacaoDeBaseRepositoryDb;
+use App\Repositories\AnonimizacaoDeBaseRepositoryInterface;
 use App\Repositories\EspacoRepositoryEloquent;
 use App\Repositories\EspacoRepositoryInterface;
 use App\Repositories\FotoPerfilRepositoryEloquent;
@@ -82,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UnidadeRepositoryInterface::class, UnidadeRepositoryEloquent::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepositoryEloquent::class);
         $this->app->bind(RetencaoRepositoryInterface::class, RetencaoRepositoryDb::class);
+        $this->app->bind(AnonimizacaoDeBaseRepositoryInterface::class, AnonimizacaoDeBaseRepositoryDb::class);
         $this->app->bind(FotoPerfilRepositoryInterface::class, FotoPerfilRepositoryEloquent::class);
 
         if ($this->app->environment('development') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
