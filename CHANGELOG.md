@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.114](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.113...v1.5.0-rc.114) (2026-11-06)
+
+
+### Bug Fixes
+
+* estabilidade da v1, parte 1 — broadcast fora do desfecho dos jobs e modal de permissões com papéis acumulados (S26, S14) ([a94f8fd](https://github.com/uniespacos/uniespacos/commit/a94f8fd64938836a70c4a6ed466447a0058440d4))
+
 ## [1.5.0-rc.113](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.112...v1.5.0-rc.113) (2026-11-06)
 
 
