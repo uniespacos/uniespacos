@@ -28,6 +28,8 @@
   | Deploy da 1.6.1 em produção (sem data) | Conferir se o queue worker subiu com a imagem nova depois do deploy (a S26 exige; reiniciar se não subiu); fila vazia antes do deploy e `failed_jobs` sem jobs de reserva depois. Em staging, conferido em 06/11/2026: o deploy recriou o worker com a imagem nova, sem reinício | Responsável | S26 |
   | Depois do deploy da 1.6.1 em produção e do teste do modal (sem data) | Avisar os institucionais de que a orientação de não salvar o modal de quem tem dois papéis (I4) deixou de valer, e registrar a retirada | Responsável; o master registra | S14 (I4) |
   | Depois do release que levar a PR da Onda 2 (sem data) | Cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução do reprocessamento das fotos antigas | Responsável | T-31 |
+  | Depois do merge da PR da Onda 2 em `develop` e do deploy em staging (sem data) | Parar o agendador durante uma rodada. Esperado: saída 0 sem 137, logs `agendador.parada_solicitada` e `agendador.parada_concluida`, e rodada seguinte normal | Responsável | T-19d |
+  | Depois do deploy em staging (sem data) | Rodar `app:check-env` no container de staging e revisar os falsos positivos | Responsável | T-35 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
@@ -39,7 +41,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
 - **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
-- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31 (pronta na integração), T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
+- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. Conteúdo na integração: T-31 (comando `fotos:reprocessar`), T-19c (poda de tokens de redefinição de senha vencidos e alerta de jobs pendentes antigos, sem apagar), T-19d (parada limpa do agendador de produção; ver o risco de rollback no item), T-35 (comando manual `app:check-env`; a lista é calibrada depois da T-08), T-41 (comando `base:anonimizar`, recusado em produção), T-38 (fonte tipográfica servida pela aplicação), T-46 (bloco de privacidade no template de PR e nas skills) e T-29 parte a (respostas uniformes no login e na redefinição de senha). Fica para depois da 1.7.0: T-29b, T-29c, T-19e, T-19f e T-35b.
 - **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
@@ -55,6 +57,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   **Pronto quando:** os logs brutos e a cópia cifrada do servidor foram destruídos com remoção segura, e o espaço em disco foi liberado.
 - [ ] **T-08** · 🔧 em andamento · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
   Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava a T-35. = H-01 a H-03.
+  **Ferramenta (06/11/2026):** o `app:check-env` (T-35, na integração) é o jeito de ler a configuração efetiva sem abrir valores: mostra OK, AVISO ou FALHA por checagem, com o motivo, e nunca o valor.
   **Em andamento (04/11/2026; atualizado em 05/11):** o roteiro de leitura em produção, só com agregados, foi autorizado pelo responsável. Já feitas: erros nos logs dos containers nas últimas 24 h = 0 (passo 0.6 do smoke, refeito) e a tabela do Telescope em produção com 0 linhas. Falta: a configuração efetiva, os dumps acumulados no host, a contagem de fotos e as tabelas da T-19c. O deploy da 1.6.0 (05/11) destravou essa leitura, que ainda não foi feita. Ele gerou mais um dump sem cifra no host, como todo deploy (H-02, já conhecido).
 
 ## Onda 2 — LGPD: próximo lote (`P1`–`P3`)
@@ -66,23 +69,38 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   **Código pronto e integrado em `feat/onda-2-lgpd-lote-2` (04/11/2026); entra pela PR da Onda 2.** Comando `fotos:reprocessar` com `--dry-run`, testes e documentação prontos. A PR própria (#511) foi fechada sem merge; o código entra pela PR da onda. Falta, depois do release: cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução (tabela de verificações).
   **Testes no banco semeado corrigidos em 06/11/2026:** 2 testes do `ReprocessarFotosDePerfilTest` falhavam sempre no banco semeado da CI, que tem 18 usuários com foto fora do padrão de caminho; os testes supunham que só existiam as fotos criadas por eles. Agora o teste isola o estado inicial dentro da transação, sem mudar asserção. O comando estava certo: rodado contra o banco semeado, conta as 18 como fora do padrão, sem erro e sem gravar nada. Suíte normal e suíte semeada: 655 testes OK cada.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo, verde também no banco semeado da CI.
-- [ ] **T-35** · Validar na inicialização se a configuração de produção está segura — `P2` · pequeno · segurança
+- [ ] **T-35** · 🔧 em andamento (comando pronto na integração `feat/onda-2-lgpd-lote-2`; lista a calibrar na leitura da T-08) · Auditar a configuração de produção (comando manual, não roda na inicialização) — `P2` · pequeno · segurança
   Comando `app:check-env`. Depende da T-08. = S53, A-18.
-- [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
+  **Código pronto na integração (06/11/2026):** não é chamado no deploy, no entrypoint nem no workflow. Faz 21 checagens sobre a configuração efetiva e mostra OK, AVISO ou FALHA com o motivo, nunca o valor. Sem `--estrito` sai sempre com 0; com `--estrito`, sai com 1 se houver FALHA. No ambiente de desenvolvimento, a checagem `senha_banco` acusa FALHA com a senha de exemplo do `.env`: é o esperado.
+  **Pronto quando:** a lista de checagens está calibrada com a configuração real de produção (depende da T-08) e a saída de staging foi revisada, sem falso positivo sem explicação.
+- [ ] **T-41** · 🔧 em andamento (código pronto na integração; entra pela PR da Onda 2) · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
   Recusa rodar em produção. Prepara a T-01 e a T-03.
+  **Código pronto na integração (06/11/2026):** comando `base:anonimizar`, com tratamento por tabela, uma transação só, lotes e um teste que exige toda tabela classificada. Roda só em local, development, staging e testing; em produção é recusado, mesmo com `--dry-run`. Uso e tabela de tratamento em [`operacao/anonimizacao-de-bases.md`](./operacao/anonimizacao-de-bases.md). Falta o processo de uso: quando rodar, quem autoriza e como conferir o resultado sem expor dado pessoal.
+  **Pronto quando:** o processo de uso está aprovado pelo responsável e a execução numa base não produtiva foi conferida.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
   Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
-- [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
-  Tabelas fora da rotina da T-19. **Estado (04/11/2026):** a tabela de entradas do Telescope em produção tem 0 linhas, e o pacote não é instalado na imagem de produção (é dependência de desenvolvimento). Por isso não precisa de poda. Restam a conferir, na leitura da T-08: tabelas de tags e de monitoramento do Telescope, tokens de redefinição de senha, fila (jobs pendentes e lotes), travas de cache e pastas de armazenamento. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
-- [ ] **T-19d** · Parada limpa do agendador sem cortar a rodada de retenção — `P3` · pequeno · operação
+- [ ] **T-19c** · 🔧 em andamento (código pronto na integração; a conferência em produção depende da T-08) · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
+  Tabelas fora da rotina da T-19. **Estado (06/11/2026):** a tabela de entradas do Telescope em produção tem 0 linhas, e o pacote não é instalado na imagem de produção (é dependência de desenvolvimento). Por isso não precisa de poda. **Código pronto na integração:** `retencao:aplicar` passou a apagar tokens de redefinição de senha vencidos (padrão de 1 dia, `RETENCAO_TOKENS_REDEFINICAO_DIAS`) e a só contar os jobs pendentes com mais de 7 dias, com aviso (nunca apaga; ver T-19e). Já cobertos antes: jobs falhos e lotes, cache e travas expirados, sessões inativas e notificações lidas (as não lidas nunca saem). Restam a conferir, na leitura da T-08: tabelas de tags e de monitoramento do Telescope, pastas de armazenamento e logs no host (T-19f). **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
+- [ ] **T-19d** · 🔧 em andamento (código pronto na integração; aguarda verificação em staging, depois do merge da PR da Onda 2) · Parada limpa do agendador sem cortar a rodada de retenção — `P3` · pequeno · operação
   O `schedule:work` não trata o sinal de parada, e o Docker encerra o processo à força depois de 10 s (saída 137). Sem efeito quando nada está rodando (foi o caso em 05/11). Mas um deploy (que recria o container) ou uma parada do agendador durante a rodada das 03:30 UTC corta a retenção no meio e pode deixar a trava de sobreposição (`withoutOverlapping`, validade padrão de 24 h) ativa, o que pode pular a rodada seguinte.
   Achado em 05/11/2026.
-  **Pronto quando:** parar ou recriar o agendador durante uma rodada não deixa a trava de sobreposição presa, e a rodada seguinte roda normalmente (conferido em staging).
+  **Código pronto na integração (06/11/2026):** o serviço `scheduler` de produção roda `agendador:executar`, que trata SIGTERM e SIGINT: não dispara rodada nova, espera as rodadas em curso até `--teto-parada` (padrão 100 s) e sai com 0. O serviço tem `stop_grace_period: 2m`. A trava de sobreposição da retenção passou a expirar em 60 minutos (antes, 1440). O compose de desenvolvimento segue com `schedule:work` (ver OP-02).
+  **Risco de rollback:** imagem antiga com o compose novo deixa o scheduler em loop de restart, porque o comando não existe nela. O rollback reverte imagem e compose juntos. Imagem nova com compose antigo funciona.
+  **Pronto quando:** parar ou recriar o agendador durante uma rodada não deixa a trava de sobreposição presa, e a rodada seguinte roda normalmente (conferido em staging, ver a tabela de verificações).
+- [ ] **T-19e** · ⏳ aguarda decisão · Prazo dos jobs pendentes antigos (hoje só alerta) — `P3` · pequeno · lgpd
+  A rotina de retenção só conta os jobs pendentes com mais de 7 dias e registra um aviso. Não apaga. Decidir se, e com que prazo, eles saem. Ligado à T-12 e à F-03. Achado na T-19c (06/11/2026).
+  **Pronto quando:** prazo decidido e registrado em `docs/arquitetura/erros-e-logs.md`, com a rotina ajustada se for o caso.
+- [ ] **T-19f** · Pastas de armazenamento e logs no host podem ter dado pessoal fora da retenção e do `base:anonimizar` — `P3` · pequeno · lgpd
+  O `storage/logs` pode conter dado pessoal. O `base:anonimizar` só avisa sobre ele e não apaga. Na leitura da T-08, confirmar se há outras pastas com fotos de pessoas além de `avatars/`, e decidir o tratamento de cada uma. Achado em 06/11/2026.
+  **Pronto quando:** pastas conferidas, tratamento decidido e registrado no inventário de dados (rascunho fora do git até a T-14).
 
 **Operação de produção (um arquivo por vez)**
 
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). Achado em 05/11/2026: a mensagem final do script de deploy diz "Staging deployment finished successfully!" também no deploy de produção; corrigir junto. = A-07, A-12, A-21, B22.
+- [ ] **T-35b** · Chamar o `app:check-env` no deploy só como aviso — `P3` · pequeno · segurança
+  Depois da T-35, na mesma janela da T-06. Só imprime o resultado do comando no log do deploy; não usa `--estrito` e não bloqueia o deploy. Achado em 06/11/2026.
+  **Pronto quando:** o deploy mostra o resumo do `app:check-env` e continua mesmo com FALHA.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
   Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
   **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
@@ -111,15 +129,24 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 **Diferidas pelo responsável**
 
 - [ ] **T-01, T-03** · Ambientes de desenvolvimento só com dados sintéticos ou anonimizados — `P1` · médio · lgpd · diferida (P-11)
-  É o maior risco do plano LGPD; vale reavaliar a data. A T-41 prepara o caminho. = A-01, A-02, R-P01.
+  É o maior risco do plano LGPD; vale reavaliar a data. A T-41 tem código pronto na integração; falta o processo de uso ([anonimização de bases](./operacao/anonimizacao-de-bases.md)). = A-01, A-02, R-P01.
 - [ ] **T-33** · Orientação de privacidade nos campos de texto livre — diferida (P-14)
 
 **Complementares**
 
-- [ ] **T-38** · Servir a fonte tipográfica pela própria aplicação — `P3` · pequeno · lgpd. = A-23.
-- [ ] **T-46** · Checklist de privacidade no template de PR e nas skills — `P3` · pequeno · docs.
+- [ ] **T-38** · 🔧 em andamento (código pronto na integração; entra pela PR da Onda 2) · Servir a fonte tipográfica pela própria aplicação — `P3` · pequeno · lgpd. = A-23.
+  Fonte Instrument Sans servida pelo pacote `@fontsource/instrument-sans` (pesos 400, 500 e 600, versão 5.3.0 no lock), e o link ao provedor externo saiu do layout. Teste: `AppSemFontesExternasTest`. O provedor de fontes deixa de ser operador e de receber dado técnico do navegador só com o deploy da 1.7.0 (ver F-10; o rascunho do inventário de dados, fora do git até a T-14, já reflete isso).
+- [ ] **T-46** · 🔧 em andamento (código pronto na integração; entra pela PR da Onda 2) · Checklist de privacidade no template de PR e nas skills — `P3` · pequeno · docs.
+  Bloco Privacidade em `.github/pull_request_template.md`. As skills `backend-conventions`, `frontend-conventions` e `git-workflow` apontam para ele.
 - [ ] **T-45** · Trilha de ações administrativas sobre dados pessoais — `P3` · médio · lgpd · depende da T-12 (ver também a GAP-10).
-- [ ] **T-29 (limitação)** · Reduzir a informação revelada nos fluxos públicos de conta — `P3` · pequeno · segurança.
+- [ ] **T-29 (limitação)** · 🔧 em andamento (parte a na integração `feat/onda-2-lgpd-lote-2`; resíduos nas T-29b e T-29c) · Reduzir a informação revelada nos fluxos públicos de conta — `P3` · pequeno · segurança.
+  **Parte a feita (06/11/2026):** no login, a conta inexistente passa a gastar o mesmo custo de verificação de senha que uma conta existente (status, mensagem e redirecionamento já eram iguais). Na redefinição de senha, o e-mail sem conta recebe a mesma mensagem do token inválido. "Esqueci a senha" e o reenvio de verificação já eram uniformes e ganharam testes.
+- [ ] **T-29b** · ⏳ aguarda decisão do responsável · Cadastro sem revelar e-mail já cadastrado — `P3` · médio · segurança
+  O cadastro ainda responde diferente quando o e-mail existe. Uma resposta neutra mudaria o fluxo, porque o Fortify loga o usuário logo após o cadastro. Decisão em Decisões pendentes. Achado na T-29.
+  **Pronto quando:** a decisão está registrada e, se aprovada, o cadastro responde igual nos dois casos e há teste.
+- [ ] **T-29c** · Tempo de resposta neutro na recuperação de senha — `P3` · médio · segurança
+  No "esqueci a senha" e na redefinição, o tempo de resposta ainda varia conforme a conta existe, por causa do broker de senhas do Laravel. Corrigir depende de estender o broker. Resíduo da T-29 (parte a).
+  **Pronto quando:** a medição de tempo entre conta existente e inexistente fica dentro de uma faixa definida, com teste ou roteiro registrado.
 - [ ] **T-47, T-48** · Revisões periódicas e métricas de prestação de contas — `P3` · tarefa humana e recorrente · dependem da T-15, da T-10 e da T-16.
 
 ## Onda 3 — Estabilidade e segurança da v1 (`P1`)
@@ -196,6 +223,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Não há nenhum (o hotfix 1.4.3 foi feito sem). Base: REGRAS §3 do plano de estabilização (arquivo local). Destino: `docs/operacao/`. O restore depende da T-23. = E2-D, B65.
 - [ ] **OP-01** · Numeração das release candidatas de staging parada na 1.5.0 — `P4` · pequeno · operação
   O manifesto do release-please de staging (`develop`) não acompanha as versões de produção: com a 1.6.0 em produção, staging segue em `1.5.0-rc.N` (a 1.6.1 foi para staging como rc.114), porque no modo de pré-release cada `feat` ou `fix` só aumenta o número da rc. Não quebra deploy, mas a tag de staging não diz qual versão está sendo testada. **Pronto quando:** depois de cada release em produção, a numeração de staging parte da versão seguinte (por exemplo, na PR de sincronização `main` → `develop`), com a regra escrita no runbook (S21, S71). Achado em 06/11/2026.
+- [ ] **OP-02** · Conferir o pcntl e alinhar o compose de desenvolvimento com o de produção, para exercitar o `agendador:executar` localmente — `P4` · pequeno · operação
+  O Dockerfile do `php-fpm` de desenvolvimento já instala a extensão pcntl, mas o compose de desenvolvimento segue com `schedule:work`. Conferido em 06/11/2026: o container `app` em uso tem pcntl, e os containers `scheduler` e `workspace` não têm (o `scheduler` foi construído antes do Dockerfile atual; o `workspace` usa outro Dockerfile). Reconstruir o `scheduler` de dev e, se for útil, trocar o comando dele para `agendador:executar`. Achado em 06/11/2026.
+  **Pronto quando:** `agendador:executar` roda no container de dev e sai com 0 ao receber SIGTERM durante uma rodada.
 - [ ] **S27** · Limite de taxa, teto diário e retentativa dos e-mails de notificação — `P2` · médio · bug
   O backoff já existe (#451). Depende das perguntas A e B (tipo de conta SMTP) e da I6. = B47.
 - [ ] **S29** · Limites de upload e pool do php-fpm na imagem de produção — `P2` · pequeno · operação
@@ -212,6 +242,8 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Detalhe, DEB-L1: quitar as 24 supressões de `prefer-nullish-coalescing` em 12 arquivos (pequeno). Trocar `||` por `??` muda o comportamento com string vazia; refazer a partir do `lint:debt`, caso a caso. Uma branch antiga com a tentativa existe, mas está defasada demais para reaproveitar.
 - [ ] **DOC-02** · Sincronizar o `GEMINI.md` com o `CLAUDE.md` — `P3` · pequeno · docs
   O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
+- [ ] **DEB-L2** · `LoginRequest` e `AuthenticatedSessionController` são código morto — `P4` · pequeno · débito técnico
+  Nenhum código usa as duas classes além delas mesmas; as rotas que as usavam estão dentro de um bloco comentado em `routes/auth.php`. O login real é o do Fortify. Remover junto com a S65, que cobre o resto de `Auth/` (conferir antes, porque o arquivo de rotas tem outras partes). Achado em 06/11/2026.
 - [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
   O nível 9 está ativo e o gate impede crescimento, mas o `phpstan-baseline.neon` ainda ignora cerca de 400 erros.
 - [ ] **S65, S70, B39, B49, B50** · Limpeza de código morto e de ferramentas — `P4` · médio · débito técnico
@@ -239,6 +271,9 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 - [ ] **I18N-F1** · Arquivos de idioma, validação e testes de paridade — `P2` · médio · depende da F0
   `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais. Inclui a RR-F01.
   **Pronto quando:** a validação em `es` sai em espanhol, e remover uma chave de `es.json` faz um teste falhar.
+- [ ] **I18N-F1b** · Mensagens de redefinição de senha em `es` e `en` — `P3` · pequeno · depende da F1
+  `lang/es` e `lang/en` não têm `passwords.php`. As mensagens de redefinição caem no `pt`, que é o idioma de fallback. Entra junto com a F1 (paridade dos arquivos de idioma). Achado em 06/11/2026.
+  **Pronto quando:** `lang/es` e `lang/en` têm `passwords.php` com as mesmas chaves de `pt`, e o teste de paridade da F1 cobre o arquivo.
 - [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio · depende da F0
   Plural no motor; date-fns e formatos de data pelo locale ativo (hoje há `ptBR` importado em 7 arquivos e 14 formatos `dd/MM` fixos em 9 arquivos, contagem de 04/11/2026); ordenação pelo locale; textos dos primitivos de UI; dicionários divididos por namespace; pseudo-locale só em dev; testes com o motor real no lugar de mocks; script de inventário versionado.
   **Pronto quando:** nenhum import de `date-fns/locale` fora de `resources/js/i18n/`; testes de plural e datas nos 3 idiomas; nenhum teste com `jest.mock('@/i18n')`.
@@ -318,7 +353,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
-| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes (a T-38 tira esse provedor da aplicação só com o deploy da 1.7.0); operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
@@ -349,6 +384,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | B44 · Papéis acumulados comum e gestor. Pontos levantados na S14 (04/11/2026): o acúmulo é estado válido ou deve ser normalizado; o modal vira seleção múltipla; quem acumula papéis sem gestor pode virar gestor pelo modal; quem é comum e gestor e perde todas as agendas continua gestor | S14 (o código preserva o estado atual até a decisão) |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
+| T-29b · Cadastro: aceitar resposta neutra ao e-mail já cadastrado (a resposta neutra muda o login automático depois do cadastro) | T-29b |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
 
 ## Gestão do repositório (não é código)

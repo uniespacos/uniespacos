@@ -69,3 +69,36 @@ Os workflows de PR e de deploy (`tests.yml`, `lint-static-analysis.yml`, `cicd-s
 - A chave de `node_modules` inclui SO e versão do Node, porque os binários nativos (esbuild, rollup, lightningcss etc.) são por plataforma.
 - Não há `restore-keys` de propósito: um `node_modules` parcial de outro lock é pior que instalar do zero.
 - O `concurrency` cancela a execução anterior do mesmo ref.
+
+---
+
+## Agendador de produção (`agendador:executar`)
+
+O serviço `scheduler` do `compose.prod.yml` roda `php artisan agendador:executar`, que substitui o `schedule:work`. O comando dispara `schedule:run` a cada minuto. Em SIGTERM ou SIGINT, não dispara rodada nova, espera as rodadas em curso (até 100 s, por `--teto-parada`) e sai com código 0. O serviço tem `stop_grace_period: 2m`. Logs e detalhes da parada em [`arquitetura/erros-e-logs.md`](../arquitetura/erros-e-logs.md) (seção "Agendador com parada limpa").
+
+> **Risco de rollback (T-19d).** O compose novo chama `agendador:executar`, que só existe na imagem nova. Imagem antiga com este compose faz o `scheduler` entrar em loop de restart. Imagem nova com compose antigo funciona, porque o compose antigo usa `schedule:work`. Por isso, o rollback reverte imagem e compose juntos.
+
+- Verificação em staging: pendente (T-19d). A linha correspondente está na tabela de verificações do [backlog](../backlog.md).
+- Desenvolvimento: `compose.dev.yml` segue com `schedule:work`. O comando novo não é exercitado localmente (OP-02 no backlog).
+
+---
+
+## Verificação da configuração (`app:check-env`)
+
+O comando `app:check-env` audita a configuração efetiva e mostra `OK`, `AVISO` ou `FALHA` por checagem, com o motivo. Ele não imprime valores. É manual: não roda no deploy, no entrypoint nem no workflow (a chamada como aviso no deploy é a T-35b).
+
+```bash
+# Desenvolvimento
+docker exec uniespacos-workspace-1 php artisan app:check-env
+
+# Produção (no servidor, container da aplicação)
+docker exec app-production php artisan app:check-env
+
+# Sai com código 1 se houver alguma FALHA
+docker exec app-production php artisan app:check-env --estrito
+```
+
+- Sem `--estrito`, o comando sempre sai com 0. Com `--estrito`, sai com 1 se houver `FALHA`.
+- No desenvolvimento, `senha_banco` acusa `FALHA` porque o `.env` usa a senha de exemplo. É o esperado.
+- Os valores da configuração de produção ainda não foram lidos; a lista de checagens é calibrada na T-08 (ver o [backlog](../backlog.md)).
+- Antes de rodar o [`base:anonimizar`](./anonimizacao-de-bases.md), confira o ambiente com este comando.

@@ -32,9 +32,10 @@ Antes de criar qualquer documento novo, verifique se o assunto pertence a um dos
 | `docs/arquitetura/repositorios.md` | Interfaces e implementações Eloquent no `AppServiceProvider`. |
 | `docs/arquitetura/notificacoes.md` | Notificações (mail, database, broadcast), `ShouldQueue`, retentativas. |
 | `docs/arquitetura/tempo-real.md` | Reverb, canais privados, eventos e Echo. |
-| `docs/arquitetura/erros-e-logs.md` | Envelope de erro JSON e logs com contexto sanitizado. |
+| `docs/arquitetura/erros-e-logs.md` | Envelope de erro JSON, logs com contexto sanitizado, retenção (`retencao:aplicar`), agendador com parada limpa e `app:check-env`. |
 | `docs/arquitetura/modelo-de-dados.dbml` | Esquema do banco. |
-| `docs/operacao/deploy-e-segredos.md` | Variáveis de ambiente, segredos e deploy. |
+| `docs/operacao/deploy-e-segredos.md` | Variáveis de ambiente, segredos, deploy, agendador de produção e `app:check-env`. |
+| `docs/operacao/anonimizacao-de-bases.md` | Comando `base:anonimizar`: guardas de ambiente, tratamento por tabela e uso. |
 | `docs/privacidade/pagina-de-privacidade.md` | Página pública `/privacidade`. |
 | `docs/processo/auditorias-e-planos.md` | Como conduzir auditoria e plano em fases, fechar o ciclo no backlog e a regra de backlog reativo. |
 

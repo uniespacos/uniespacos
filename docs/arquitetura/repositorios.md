@@ -4,7 +4,7 @@ Este documento descreve o padrão Repository + Interface do projeto: como encaps
 
 ## Repositórios Registrados
 
-Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface`, `RetencaoRepositoryInterface` e `FotoPerfilRepositoryInterface`.
+Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface`, `RetencaoRepositoryInterface`, `AnonimizacaoDeBaseRepositoryInterface` e `FotoPerfilRepositoryInterface`.
 
 | Interface | Implementação Eloquent | Detalhado aqui |
 |-----------|------------------------|----------------|
@@ -12,6 +12,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 | `PermissionRepositoryInterface` | `PermissionRepositoryEloquent` | Não |
 | `AgendaRepositoryInterface` | `AgendaRepositoryEloquent` | [Sim](#agendarepositoryinterface) |
 | `AndarRepositoryInterface` | `AndarRepositoryEloquent` | Não |
+| `AnonimizacaoDeBaseRepositoryInterface` | `AnonimizacaoDeBaseRepositoryDb` (query builder, sem model) | [Sim](#anonimizacaodebaserepositoryinterface) |
 | `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | Não |
 | `FotoPerfilRepositoryInterface` | `FotoPerfilRepositoryEloquent` | [Sim](#fotoperfilrepositoryinterface) |
 | `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | Não |
@@ -30,6 +31,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 - [ReservaRepositoryInterface](#reservarepositoryinterface)
 - [AgendaRepositoryInterface](#agendarepositoryinterface)
 - [RetencaoRepositoryInterface](#retencaorepositoryinterface)
+- [AnonimizacaoDeBaseRepositoryInterface](#anonimizacaodebaserepositoryinterface)
 - [FotoPerfilRepositoryInterface](#fotoperfilrepositoryinterface)
 - [Trade-off: Especialização vs. Generalização](#trade-off-especialização-vs-generalização)
 - [Evitando N+1 Queries](#evitando-n1-queries)
@@ -547,7 +549,7 @@ Os demais repositórios se chamam `...Eloquent` porque cada um encapsula um mode
 
 - **Cache e locks:** tabelas `cache` e `cache_locks` do store `database`. Nomes e conexões vêm de `config/cache.php`.
 - **Sessões:** tabela `sessions`. Nome e conexão vêm de `config/session.php`.
-- **Notificações e justificativas:** lidas e alteradas por query builder (`DB::table`), sem passar pelos models. Assim a rotina não dispara eventos nem altera `updated_at`.
+- **Notificações, justificativas, tokens de redefinição e jobs pendentes:** lidos e alterados por query builder (`DB::table`), sem passar pelos models. Assim a rotina não dispara eventos nem altera `updated_at`.
 
 `Db` nomeia a implementação pelo que ela é: consultas diretas ao banco pelo query builder, sem model.
 
@@ -560,6 +562,10 @@ public function contarCacheExpiradoAntesDe(int $corteUnix): int;
 public function apagarCacheExpiradoAntesDe(int $corteUnix): int;
 public function contarSessoesInativasAntesDe(int $corteUnix): int;
 public function apagarSessoesInativasAntesDe(int $corteUnix): int;
+public function contarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
+public function apagarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
+public function contarTokensRedefinicaoSemData(): int;
+public function contarJobsPendentesAntesDe(int $corteUnix): int;
 public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array;
 public function substituirJustificativas(array $ids, string $texto): int;
 ```
@@ -569,6 +575,9 @@ public function substituirJustificativas(array $ids, string $texto): int;
 | `contar…` / `apagar…` (notificações) | `notifications` com `read_at` anterior ao corte | Só notificações lidas |
 | `contar…` / `apagar…` (cache) | `cache` e `cache_locks` com `expiration` anterior ao corte, somados | Entradas já expiradas |
 | `contar…` / `apagar…` (sessões) | `sessions` com `last_activity` anterior ao corte | Sessões inativas |
+| `contar…` / `apagar…` (tokens de redefinição) | `password_reset_tokens` com `created_at` anterior ao corte. Linhas sem data ficam de fora | Tokens vencidos |
+| `contarTokensRedefinicaoSemData` | `password_reset_tokens` com `created_at` nulo | Só contagem, para o registro `retencao.tokens_redefinicao_sem_data` |
+| `contarJobsPendentesAntesDe` | `jobs` com `created_at` anterior ao corte | Só contagem. Nunca apaga; alimenta o aviso `retencao.jobs_pendentes_antigos` |
 | `justificativasDeConflitoAposId` | `horarios` com `id` maior que `$aposId` e `justificativa` começando por `Conflito com a reserva` | Lotes de 500, por `id` (paginação por chave) |
 | `substituirJustificativas` | `update` por lista de `id` | Troca o texto, sem tocar em `updated_at` |
 
@@ -577,6 +586,28 @@ public function substituirJustificativas(array $ids, string $texto): int;
 **Filtro estrito no service:** `justificativasDeConflitoAposId` traz candidatos por prefixo. `RetencaoService` confirma cada linha com uma expressão regular do formato antigo, em português, antes de trocar. Motivos digitados pelo gestor não casam com esse formato.
 
 ---
+
+## AnonimizacaoDeBaseRepositoryInterface
+
+Usado só pelo `base:anonimizar`, por meio de `AnonimizacaoDeBaseService`. A implementação é `AnonimizacaoDeBaseRepositoryDb` (query builder, sem model), registrada no `AppServiceProvider`. Quais tabelas são apagadas vem de `config/anonimizacao.php`; as colunas tratadas e os valores neutros ficam no service.
+
+```php
+public function linhasAposId(string $tabela, array $colunas, int $aposId, int $tamanho): array;
+public function atualizar(string $tabela, int $id, array $atributos): int;
+public function tabelaExiste(string $tabela): bool;
+public function contar(string $tabela): int;
+public function apagarTudo(string $tabela, ?string $chave, int $tamanho): int;
+```
+
+| Método | Uso |
+|--------|-----|
+| `linhasAposId` | Lê um lote de linhas por `id`, em ordem de `id` (paginação por chave) |
+| `atualizar` | Altera uma linha por `id` |
+| `tabelaExiste` | Confere se a tabela existe antes de tratá-la (as do Telescope podem não existir) |
+| `contar` | Conta as linhas de uma tabela para o `--dry-run` |
+| `apagarTudo` | Sem chave, um único `DELETE`. Com chave, apaga em lotes de 500 linhas. Não usa `TRUNCATE`, para que o rollback da transação desfaça tudo |
+
+Os métodos de escrita rodam dentro da transação aberta pelo service. O tratamento de cada tabela está em [`operacao/anonimizacao-de-bases.md`](../operacao/anonimizacao-de-bases.md).
 
 ## FotoPerfilRepositoryInterface
 

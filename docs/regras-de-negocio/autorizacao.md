@@ -604,8 +604,10 @@ A mensagem é a chave `__('If an account exists with this email, we will send a 
 
 ### Limitações conhecidas
 
-1. **Cadastro revela e-mail existente.** A validação `unique` do `CreateNewUser` responde diferente quando o e-mail já existe. O limitador `register` reduz a enumeração, mas não a elimina.
-2. **Tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir.
+1. **Cadastro revela e-mail existente.** A validação `unique` do `CreateNewUser` responde diferente quando o e-mail já existe. O limitador `register` reduz a enumeração, mas não a elimina. Pendente de decisão (T-29b): uma resposta neutra mudaria o login automático que o Fortify faz depois do cadastro.
+2. **Recuperação de senha: tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir. Vale para o "esqueci a senha" e para a redefinição (pendente, T-29c).
+3. **Login: tempo igualado (T-29, parte a).** Com conta inexistente, o login executa uma verificação de hash descartável, para que o custo de tempo fique parecido com o de uma conta existente. Status, mensagem e redirecionamento já eram iguais.
+4. **Redefinição de senha: mensagem única.** Para e-mail sem conta, a redefinição responde a mesma mensagem do token inválido (`passwords.user` igual a `passwords.token`, em `lang/pt/passwords.php`). Os idiomas `en` e `es` ainda não têm esse arquivo e caem no `pt` (I18N-F1b no backlog).
 
 **429 em requisições Inertia.** Fora de `local` e `testing`, o handler de `bootstrap/app.php` converte o 429 em `Errors/ErrorPage` (título e descrição de `TOO_MANY_REQUESTS`, nos três idiomas), como já fazia com 403, 404, 419, 500 e 503. Sem isso, um `useForm` receberia o HTML do Symfony e mostraria o modal de erro cru do Inertia. Coberto por `LimitesDeTaxaAuthTest::test_esqueci_a_senha_em_producao_mostra_a_pagina_de_erro_429_numa_visita_inertia`, que troca o ambiente para `production` dentro do teste.
 

@@ -34,10 +34,10 @@
 
 - [ ] Não: esta PR não altera tratamento de dado pessoal.
 - [ ] Sim, e os itens abaixo estão atendidos:
-  - [ ] Inventário `docs/privacidade/inventario-de-dados.md` atualizado (categoria, finalidade, base legal candidata, acesso, compartilhamento e retenção).
+  - [ ] Inventário de dados atualizado (categoria, finalidade, base legal candidata, acesso, compartilhamento e retenção). Enquanto o inventário não é versionado (T-14), registre a mudança na descrição da PR para o responsável levar ao rascunho.
   - [ ] Teste de privacidade ou de payload cobre o dado novo exibido, quando a mudança passa a exibir dado que antes não era visível.
   - [ ] `config/anonimizacao.php` atualizado, quando a mudança cria tabela ou coluna com dado pessoal.
   - [ ] Prazo de retenção definido, ou declarado "a definir (em aprovação)" no inventário.
   - [ ] Nenhum dado pessoal real em fixtures, logs ou documentação.
 
-Referências: [inventário de dados](../docs/privacidade/inventario-de-dados.md) e skill [`lgpd-audit`](../.claude/skills/lgpd-audit/SKILL.md).
+Referências: skill [`lgpd-audit`](../.claude/skills/lgpd-audit/SKILL.md) e item T-14 do [backlog](../docs/backlog.md) (versionamento do inventário de dados).
