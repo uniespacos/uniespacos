@@ -61,10 +61,10 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 **Código**
 
-- [ ] **T-31 (resíduo)** · 🔧 em andamento (código na integração, 2 testes falham na CI) · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
+- [ ] **T-31 (resíduo)** · 🔧 em andamento (código na integração, testes verdes; entra pela PR da Onda 2) · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Código pronto e integrado em `feat/onda-2-lgpd-lote-2` (04/11/2026); entra pela PR da Onda 2.** Comando `fotos:reprocessar` com `--dry-run`, testes e documentação prontos. A PR própria (#511) foi fechada sem merge; o código entra pela PR da onda. Falta, depois do release: cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução (tabela de verificações).
-  **Bloqueia a PR da Onda 2 (achado em 06/11/2026):** 2 testes do `ReprocessarFotosDePerfilTest` (`usuario_sem_foto_e_ignorado` e `saida_e_log_nao_expoem_caminho_nem_dados_pessoais`) falham sempre no banco semeado, que é o da CI (`migrate --seed` com `APP_ENV=testing` cria 18 usuários com foto). Os testes supõem que só existem as fotos que eles criam. A CI do #511 já tinha ficado vermelha por isso em 04/11 (2 falhas, 637 OK). Na suíte sem seed, passam. Corrigir os testes para não depender do banco vazio (a princípio o comando está certo, porque conta todas as fotos do banco), e conferir a suíte semeada antes de abrir a PR da onda.
+  **Testes no banco semeado corrigidos em 06/11/2026:** 2 testes do `ReprocessarFotosDePerfilTest` falhavam sempre no banco semeado da CI, que tem 18 usuários com foto fora do padrão de caminho; os testes supunham que só existiam as fotos criadas por eles. Agora o teste isola o estado inicial dentro da transação, sem mudar asserção. O comando estava certo: rodado contra o banco semeado, conta as 18 como fora do padrão, sem erro e sem gravar nada. Suíte normal e suíte semeada: 655 testes OK cada.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo, verde também no banco semeado da CI.
 - [ ] **T-35** · Validar na inicialização se a configuração de produção está segura — `P2` · pequeno · segurança
   Comando `app:check-env`. Depende da T-08. = S53, A-18.
@@ -181,6 +181,8 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24; hoje só existe um teste mínimo de exportação em PDF), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
 - [ ] **S26c** · Teste de registro do listener de cache de relatórios quase nunca falha — `P4` · pequeno · teste
   A asserção aceita qualquer listener registrado no evento. Trocar por uma que confira o listener de cache no evento de domínio. Achado na S26 (04/11/2026).
+- [ ] **T-31c** · Asserções exatas na saída do `fotos:reprocessar` e fotos válidas no seeder — `P4` · pequeno · teste
+  Os testes do comando conferem a saída por trecho de texto (`reprocessadas: 1` também casaria com `reprocessadas: 10`); comparar linha a linha. O seeder de desenvolvimento grava em `profile_pic` valores que não são caminho de avatar; decidir se passa a gerar caminhos válidos. Achado na correção dos testes da T-31 (06/11/2026).
 - [ ] **AF-6.3b** · Testes de conteúdo dos 4 tipos de relatório — `P3` · médio · teste · depende da S38
 - [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
   Desde 31/10 (#489), os seeders de desenvolvimento só rodam em local, development e testing. A CI ainda roda os seeders de desenvolvimento.
