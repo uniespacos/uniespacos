@@ -1,7 +1,7 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
-> **Base:** `main` na 1.5.0 · `develop` e staging na rc.112 (com o #505, o #507 e o #509) · produção: v1.5.0 (02/11/2026).
+> **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.112 (com o #505, o #507 e o #509).
 > **Atualizado em:** 2026-11-05.
 
 ## Como ler
@@ -15,14 +15,15 @@
 
 ## Agora
 
-- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
-- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. A conferência da primeira rodada de retenção em staging foi feita pelo responsável, com resultado OK (informado em 04/11/2026), e o queue worker de staging foi reiniciado depois do deploy. Próximo: o release para produção (1.6.0), com autorização (previsto para o turno noturno de 04/11/2026, que passou sem o release; data a definir), na ordem da tabela abaixo, e a T-05b em 16/11/2026. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado (primeira rodada em 06/11/2026).
+- **Próximo passo:** a preparação da próxima release (1.7.0, a onda que fechar primeiro, com a Onda 3 e a Onda 2 parte 2 em branches de integração); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
-  | A definir, com autorização do responsável (o turno noturno de 04/11/2026 passou sem o release) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, na versão esperada 1.6.0 (o lote tem `feat`), que também leva o #507 e a T-26 (d, e). O deploy dispara sozinho com a tag, então o merge da PR do release-please é feito durante o dia. Depois do deploy, reinício do queue worker e conferência de que o serviço do agendador subiu e de que a listagem do agendamento mostra a rotina às 03:30 UTC. Revisão da simulação de retenção pelo responsável antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | 06/11/2026, depois das 03:30 UTC | Conferir a primeira rodada de retenção em produção: 0 erros no agendador e nova simulação sem notificações lidas antigas | Responsável; quem pede confere a data antes | T-19 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
+  | Quando o responsável confirmar (sem data) | Confirmar o teste de abertura completo e a cópia externa do backup manual anterior à 1.6.0; depois disso, destruir o backup anterior à 1.5.0 (decisão de 02/11) | Responsável | T-23 |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
@@ -33,8 +34,8 @@
 
 Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
 
-- **1.6.0** (data a definir; prevista para o turno noturno de 04/11/2026, que passou sem o release): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
-- **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
+- **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
+- **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
 - **Próxima minor (Onda 3; branch `feat/onda-3-estabilidade`)**: Onda 3. S26 e S14 (em andamento ou planejadas), S42, S17, S33 e S34/S35.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
@@ -48,29 +49,13 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em armazenamento privado. A finalidade é provar o que havia nos logs antigos, caso um titular, a ANPD ou a UESB questione a limpeza feita em 02/11. O prazo é até 02/05/2027: nessa data, o responsável renova com justificativa anotada ou destrói (T-23). Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa mesma data, também é destruída a cópia cifrada do snapshot que ficou no servidor.
   **Pronto quando:** os logs brutos e a cópia cifrada do servidor foram destruídos com remoção segura, e o espaço em disco foi liberado.
 - [ ] **T-08** · 🔧 em andamento · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
-  Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
-  **Em andamento (04/11/2026):** o roteiro de leitura em produção, só com agregados, foi autorizado pelo responsável. Já feitas: erros nos logs dos containers nas últimas 24 h = 0 (passo 0.6 do smoke, refeito) e a tabela do Telescope em produção com 0 linhas. Falta: a configuração efetiva, os dumps acumulados no host, a contagem de fotos e as tabelas da T-19c, depois do deploy da 1.6.0.
+  Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava a T-35. = H-01 a H-03.
+  **Em andamento (04/11/2026; atualizado em 05/11):** o roteiro de leitura em produção, só com agregados, foi autorizado pelo responsável. Já feitas: erros nos logs dos containers nas últimas 24 h = 0 (passo 0.6 do smoke, refeito) e a tabela do Telescope em produção com 0 linhas. Falta: a configuração efetiva, os dumps acumulados no host, a contagem de fotos e as tabelas da T-19c. O deploy da 1.6.0 (05/11) destravou essa leitura, que ainda não foi feita. Ele gerou mais um dump sem cifra no host, como todo deploy (H-02, já conhecido).
 
 ## Onda 2 — LGPD: próximo lote (`P1`–`P3`)
 
 **Código**
 
-- [ ] **T-19** · 🚀 código pronto · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
-  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
-  **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
-  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (rc.111, 02/11): agendador de pé; a rotina aparece no agendamento das 03:30 UTC; simulação com 2.880 notificações lidas há mais de 90 dias, 0 de cache, 0 sessões e 0 logs. A primeira rodada de retenção em staging foi conferida pelo responsável, com resultado OK (informado em 04/11/2026), e o serviço do agendador subiu normal em staging. Falta: a produção, com autorização.
-  **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
-- [ ] **T-19b** · 🚀 código pronto · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
-  Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
-  **Limite conhecido:** nomes de terceiros com ponto ou vírgula não casam com o critério e ficam como estão.
-  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (02/11): simulação com 0 justificativas a trocar. Falta: a execução em produção, com autorização, depois de a simulação ser revisada pelo responsável.
-  **Pronto quando:** comando com `--dry-run` coberto por teste; executado em produção com autorização do responsável.
-- [ ] **T-20** · 🚀 código pronto · Poda dos logs diários sem depender de escrita nova, e limite dos logs dos containers — `P1` · pequeno · lgpd
-  Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
-  **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
-  **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
-  **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). A poda com arquivos falsos foi conferida em staging pelo responsável, com resultado OK (informado em 04/11/2026). Falta: a produção, com autorização.
-  **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -82,17 +67,21 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
 - [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
   Tabelas fora da rotina da T-19. **Estado (04/11/2026):** a tabela de entradas do Telescope em produção tem 0 linhas, e o pacote não é instalado na imagem de produção (é dependência de desenvolvimento). Por isso não precisa de poda. Restam a conferir, na leitura da T-08: tabelas de tags e de monitoramento do Telescope, tokens de redefinição de senha, fila (jobs pendentes e lotes), travas de cache e pastas de armazenamento. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
+- [ ] **T-19d** · Parada limpa do agendador sem cortar a rodada de retenção — `P3` · pequeno · operação
+  O `schedule:work` não trata o sinal de parada, e o Docker encerra o processo à força depois de 10 s (saída 137). Sem efeito quando nada está rodando (foi o caso em 05/11). Mas um deploy (que recria o container) ou uma parada do agendador durante a rodada das 03:30 UTC corta a retenção no meio e pode deixar a trava de sobreposição (`withoutOverlapping`, validade padrão de 24 h) ativa, o que pode pular a rodada seguinte.
+  Achado em 05/11/2026.
+  **Pronto quando:** parar ou recriar o agendador durante uma rodada não deixa a trava de sobreposição presa, e a rodada seguinte roda normalmente (conferido em staging).
 
 **Operação de produção (um arquivo por vez)**
 
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
-  Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
+  Precisa de janela combinada (DT-08). Achado em 05/11/2026: a mensagem final do script de deploy diz "Staging deployment finished successfully!" também no deploy de produção; corrigir junto. = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
   Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
   **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
   **Cifragem confirmada (02/11):** o responsável confirmou que o backup manual anterior à 1.5.0 foi cifrado antes de sair do servidor. Os dois arquivos (snapshot e backup manual) vão cifrados do lado do responsável.
   **Status (02/11):** a mensagem com as três perguntas à TI foi entregue ao responsável para envio. Aguarda resposta.
-  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. Backup manual anterior à 1.6.0: feito em 05/11/2026, cifrado no servidor antes de sair; falta a confirmação do responsável (teste de abertura completo e cópia externa) para destruir o backup anterior à 1.5.0. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
@@ -396,6 +385,9 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **05/11** · #513 e #514 release 1.6.0 em produção (Onda 2, parte 1: #505, #507 e #509). Pós-deploy OK nos serviços de app, worker, reverb e web, com o banco saudável (recriado para aplicar o limite de logs da T-20, com dados intactos); debug e modo de manutenção desligados; o deploy recriou o worker com a imagem nova, e o reinício explícito não foi necessário; rotina de retenção no agendamento das 03:30 UTC, com 0 erros nos logs. Smoke por papel: reserva de teste criada pela conta comum e indeferida pelo gestor (indeferida, não aprovada, porque aprovar indeferiria horários de terceiros em conflito); a notificação chegou em tempo real ao gestor e ao solicitante, sem recarregar a página. Simulação de retenção aprovada pelo responsável: 2.957 notificações lidas há mais de 90 dias e 197 jobs falhos há mais de 30 dias. Agendador religado depois da aprovação; primeira rodada em 06/11/2026, 03:30 UTC (conferência na tabela de verificações).
+- **05/11** · T-19 e T-20 concluídas em produção (#505, na 1.6.0). T-19b concluída por decisão do responsável em 05/11/2026, sem execução em produção: a simulação em staging (02/11) deu 0 justificativas a trocar, e o responsável dispensou a simulação e a execução em produção.
+- **05/11** · #512 backlog: estado da rc.112, auditoria de 04/11 e regra de PR por onda.
 - **03/11** · #510 release candidata rc.112 em staging (#507 e #509), com deploy e teste feitos pelo responsável.
 - **02/11** · #509 T-26 (d, e): broadcast de notificações só com campos públicos (sem IDs internos) e remoção da rota JSON sem uso. Reiniciar o queue worker depois do deploy.
 - **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
