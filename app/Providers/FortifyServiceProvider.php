@@ -13,8 +13,11 @@ use App\Http\Responses\CustomLogoutResponse;
 use App\Http\Responses\CustomVerifyEmailResponse;
 use App\Http\Responses\NeutralPasswordResetLinkResponse;
 use App\Models\Instituicao;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +39,8 @@ class FortifyServiceProvider extends ServiceProvider
         'password.update' => 'reset-password',
         'password.confirm.store' => 'confirm-password',
     ];
+
+    private const HASH_DESCARTAVEL = '$2y$12$/wdPtsmGFf27zeIHql0AG.8wf8zp6j4Hx5WK9NVNswjsl0fnbATTe';
 
     /**
      * Register any application services.
@@ -64,6 +69,12 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
+
+        Event::listen(Failed::class, function (Failed $evento): void {
+            if ($evento->user === null) {
+                Hash::check((string) ($evento->credentials['password'] ?? ''), self::HASH_DESCARTAVEL);
+            }
+        });
 
         // Tell Fortify to render Inertia views for standard authentication pages
         Fortify::loginView(function () {
