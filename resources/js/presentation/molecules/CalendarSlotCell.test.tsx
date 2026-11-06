@@ -50,7 +50,7 @@ describe('CalendarSlotCell', () => {
                         permissions: [],
                         setor_id: 2,
                         setor: { id: 2, nome: 'Departamento de Ciências', sigla: 'DC' },
-                        unread_notifications: [],
+                        unread_notifications_count: 0,
                         created_at: '',
                         updated_at: '',
                     },

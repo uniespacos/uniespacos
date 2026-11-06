@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\CamposPublicosNotificacao;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Arr;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 
@@ -65,7 +68,22 @@ class HandleInertiaRequests extends Middleware
             ],
             'notifications' => fn () => $request->user()
                 ? $request->user()->notifications()->limit(15)->get()
+                    ->map(fn (DatabaseNotification $notification): array => $this->formatNotification($notification))
+                    ->all()
                 : [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatNotification(DatabaseNotification $notification): array
+    {
+        $atributos = $notification->toArray();
+
+        return [
+            ...Arr::only($atributos, CamposPublicosNotificacao::REGISTRO),
+            'data' => CamposPublicosNotificacao::dadosPublicos((array) ($atributos['data'] ?? [])),
         ];
     }
 

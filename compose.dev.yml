@@ -54,6 +54,19 @@ services:
     depends_on:
       reverb:
         condition: service_started
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./docker/development/php-fpm/Dockerfile
+    entrypoint: [ "sh", "-c", "php artisan schedule:work" ]
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/
+    env_file:
+      - .env
+    depends_on:
+      reverb:
+        condition: service_started
 
   workspace:
     build:

@@ -9,7 +9,7 @@ const mockUser: User = {
     telefone: '77999999999',
     roles: ['administrador'],
     permissions: [],
-    unread_notifications: [],
+    unread_notifications_count: 0,
     setor_id: 1,
     email_verified_at: '2026-01-01',
     created_at: '2026-01-01',

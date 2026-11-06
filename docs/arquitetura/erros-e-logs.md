@@ -676,11 +676,11 @@ Tratados como sensíveis (nunca logar):
 
 ### Limpeza de Logs Antigos
 
-Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/console.php`:
+Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retencao.php`, `routes/console.php` e `app/Services/RetencaoService.php`:
 
 - **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e não define `LOG_DAILY_DAYS` (o padrão do código é 14).
 - **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
-- **Limpeza agendada:** não existe. `routes/console.php` não agenda nenhum comando de limpeza de logs.
+- **Limpeza agendada:** existe, pelo comando `retencao:aplicar` (ver abaixo), que remove os logs diários além do prazo.
 
 ```php
 // config/logging.php (trecho)
@@ -695,14 +695,37 @@ Estado atual, conferido em `.env.example`, `config/logging.php` e `routes/consol
 ],
 ```
 
-**Planejado (não existe no código):** rotação diária com 14 dias e nível `info` em produção, com `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` ([T-20](../backlog.md)). As rotinas de retenção e o scheduler (ainda inexistente: `routes/console.php` não agenda nenhum comando) estão em [T-19](../backlog.md).
+#### Rotina `retencao:aplicar`
+
+`routes/console.php` agenda `retencao:aplicar` todos os dias às 03:30 UTC (00:30 no horário da Bahia), com `withoutOverlapping`. O agendamento roda no serviço `scheduler` (`php artisan schedule:work`), presente em `compose.prod.yml` e `compose.dev.yml`. Para conferir: `php artisan schedule:list`. Com `--dry-run`, o comando só conta o que removeria.
+
+| Rotina | Critério de remoção | Variável | Padrão |
+| --- | --- | --- | --- |
+| Jobs falhos (`queue:prune-failed`) | `failed_at` anterior a hoje − N dias | `RETENCAO_JOBS_FALHOS_DIAS` | 30 dias |
+| Lotes de jobs (`queue:prune-batches`) | Lotes concluídos, não terminados ou cancelados, com mais de N dias | `RETENCAO_JOBS_FALHOS_DIAS` (mesmo prazo) | 30 dias |
+| Notificações lidas | `read_at` anterior a hoje − N dias. Notificações não lidas nunca saem | `RETENCAO_NOTIFICACOES_LIDAS_DIAS` | 90 dias |
+| Cache expirado (`cache` e `cache_locks`) | Entradas já expiradas há mais de N dias. Entradas válidas nunca saem | `RETENCAO_CACHE_DIAS` | 7 dias |
+| Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 7 dias |
+| Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 14 dias |
+
+Os prazos de jobs, notificações, cache e sessões são **provisórios** (proposta DT-11) até a decisão da T-12, e ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs (14 dias) já está decidido ([T-20](../backlog.md)) e vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+
+Cada rotina registra só contagens (`retencao.rotina_aplicada`, com o nome da rotina, a quantidade e se foi simulação). Se alguma rotina falhar, o comando termina com código de saída diferente de zero e registra `retencao.rotina_falhou` (ou `retencao.comando_falhou`, nas rotinas de fila), com o nome da exceção e sem mensagem nem dados. O comando `retencao:neutralizar-justificativas` é de execução única e manual, não é agendado (ver T-19b no [backlog](../backlog.md)).
+
+#### Por que a poda dos logs diários é própria
+
+O canal `daily` limita o número de arquivos pelo prazo, mas a poda do Monolog só roda quando o handler rotaciona: na criação do arquivo do dia ou na primeira escrita de um dia novo. Sem escrita nova, os arquivos antigos ficam no disco. A rotina `logs_diarios` remove os arquivos pela data no nome, sem depender de escrita. As duas convivem: a poda do canal continua valendo quando há escrita, e a rotina cobre o resto. Ambientes que gravam em `laravel.log` (canal `single`) não passam por essa poda, porque o arquivo não tem data no nome.
+
+#### Limite de logs dos containers
+
+Em `compose.prod.yml`, todos os serviços usam o driver `json-file` com `max-size: 10m` e `max-file: 5` (âncora `x-logging`). Esse limite vale para o log que o Docker guarda de cada container, e não para `storage/logs`. O `compose.dev.yml` não define limite.
 
 ### Requisitos de Conformidade
 
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** planejada ([T-20](../backlog.md) e [T-19](../backlog.md)). Hoje o canal `single` não rotaciona nem expira; ver "Limpeza de Logs Antigos"
+4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo final dos demais dados depende da T-12
 
 **Campos recomendados para auditoria:**
 

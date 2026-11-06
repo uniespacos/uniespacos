@@ -42,7 +42,7 @@ describe('PermissionModal', () => {
         permissions: [],
         direct_permissions: [],
         setor_id: null,
-        unread_notifications: [],
+        unread_notifications_count: 0,
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
     };

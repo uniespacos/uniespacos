@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
+use App\Support\CamposPublicosNotificacao;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -99,7 +100,7 @@ abstract class BaseNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return new BroadcastMessage($this->payload());
+        return new BroadcastMessage(CamposPublicosNotificacao::dadosPublicos($this->payload()));
     }
 
     /**

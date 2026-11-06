@@ -1,48 +1,76 @@
 # Backlog — UniEspaços
 
-> **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 2026-11-01.
-> **Base:** `develop` @ `9027acc` (1.5.0-rc.109, em staging) · produção: `main` v1.4.4 (30/10/2026).
-> **Atualizado em:** 2026-11-01.
+> **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
+> **Base:** `main` na 1.5.0 · `develop` e staging na rc.112 (com o #505, o #507 e o #509) · produção: v1.5.0 (02/11/2026).
+> **Atualizado em:** 2026-11-05.
 
 ## Como ler
 
 - **Ordem:** as ondas estão na ordem de execução. A LGPD (Ondas 1 e 2) tem precedência; itens `P1` das Ondas 3 e 4 podem correr em paralelo aos `P3` da LGPD.
 - **Prioridade:** `P0` bloqueia o próximo release ou é risco imediato · `P1` alto impacto, próximo ciclo · `P2` importante, planejar · `P3` melhoria · `P4` ideia ou baixo impacto.
 - **Esforço:** pequeno (até 1 dia) · médio (alguns dias) · grande (uma semana ou mais).
+- **Situação:** marcador no começo do texto do item; o checkbox não muda. 🚀 código pronto = mergeado em `develop`, falta staging ou produção · 🔧 em andamento = trabalho aberto, com a branch citada no item · ⏸ parado = aguarda terceiro, com o motivo · ⏳ aguarda decisão = depende de uma decisão de [Decisões pendentes](#decisões-pendentes-não-é-código) · sem marcador = não iniciado.
 - **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação. Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
 - **Segurança:** o repositório é público. Itens de segurança descrevem o objetivo, sem detalhe de exploração; o detalhe fica nos planos locais (ver [Origem dos itens](#origem-dos-itens)).
 
 ## Agora
 
-- **Em staging:** 1.5.0-rc.109, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496). Validação manual concluída em 01/11: os 29 passos passaram. Produção segue na v1.4.4.
-- **Próximo passo:** release 1.5.0 (em andamento) → T-05. A página de privacidade está em standby (desligada por padrão) e não entra no 1.5.0.
+- **Em produção:** v1.5.0 desde 02/11, com o lote LGPD (#489), a congruência de UI/UX (#487), o resíduo da Onda 1 (#494) e a página de privacidade em standby (#496, desligada por padrão). Validação manual em staging: 29 passos OK (01/11). Smoke por papel em produção e reinício do queue worker: OK (02/11). Backup manual anterior ao deploy conferido (02/11).
+- **Próximo passo:** Onda 2 em andamento. A rc.112 está em staging desde 03/11 (00:13 UTC), com o #505 (T-19, T-19b, T-20 e T-21), o #507 (T-26 (a, b)) e o #509 (T-26 (d, e)); deploy e teste feitos pelo responsável. A conferência da primeira rodada de retenção em staging foi feita pelo responsável, com resultado OK (informado em 04/11/2026), e o queue worker de staging foi reiniciado depois do deploy. Próximo: o release para produção (1.6.0), com autorização (previsto para o turno noturno de 04/11/2026, que passou sem o release; data a definir), na ordem da tabela abaixo, e a T-05b em 16/11/2026. Em paralelo: a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
+
+  | Data ou gatilho | O que fazer | Quem | ID |
+  | --- | --- | --- | --- |
+  | A definir, com autorização do responsável (o turno noturno de 04/11/2026 passou sem o release) | Produção do #505, nesta ordem: backup manual cifrado; release para `main`, na versão esperada 1.6.0 (o lote tem `feat`), que também leva o #507 e a T-26 (d, e). O deploy dispara sozinho com a tag, então o merge da PR do release-please é feito durante o dia. Depois do deploy, reinício do queue worker e conferência de que o serviço do agendador subiu e de que a listagem do agendamento mostra a rotina às 03:30 UTC. Revisão da simulação de retenção pelo responsável antes das 03:30 UTC (se não aprovada, parar o agendador antes desse horário); simulação e execução da T-19b; conferência depois da primeira rodada | Responsável | T-19, T-19b, T-20 |
+  | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
+  | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
+  | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
+
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
 - **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
+
+## Próximas versões (previsão)
+
+Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
+
+- **1.6.0** (data a definir; prevista para o turno noturno de 04/11/2026, que passou sem o release): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
+- **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
+- **Próxima minor (Onda 3; branch `feat/onda-3-estabilidade`)**: Onda 3. S26 e S14 (em andamento ou planejadas), S42, S17, S33 e S34/S35.
+- **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
+- **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
+- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo; a que fechar primeiro sai como 1.7.0, e a outra como 1.8.0.
 
 ---
 
 ## Onda 1 — LGPD: fechar e liberar o lote que está em staging (`P0`)
 
-- [ ] **Release 1.5.0** · Levar o lote LGPD para produção — `P0` · pequeno · operação · em andamento (validação em staging concluída em 01/11)
-  A validação manual da rc.109 em staging passou nos 29 passos (responsável, 01/11). A decisão sobre a página de privacidade já foi tomada (standby, fora do 1.5.0). Sem migration. Checklist: conferir que o `.env` de staging e o de produção não definem `PRIVACY_PAGE_ENABLED=true` (o padrão `false` só vale se o servidor não sobrescrever); backup manual baixado para fora do host antes do deploy; PR do release-please na `develop`; PR `develop` → `main` com **merge commit** (squash não gera release, B53); acompanhar o `CI/CD - Production`; smoke por papel; PR de sincronização `main` → `develop`; reiniciar o queue worker (o lote mexe em Job e Notification).
-- [ ] **T-05** · Tratar os logs antigos de produção — `P0` · pequeno · operação · plano aprovado em 01/11, executa logo depois do release 1.5.0
-  Decisões do responsável em 01/11, sem retorno do jurídico e com base no guia de boas práticas da LGPD: não houve incidente; o conteúdo existente é preservado, sem descarte às cegas, primeiro inventariado e depois decidido; o que não tem finalidade sai da cópia preservada, e as credenciais de longa duração que possam estar nela são invalidadas. A cópia preservada fica pelo prazo mínimo: a LGPD não fixa mínimo para log e manda eliminar quando a finalidade termina, então vale o prazo da P-16, de 14 dias. As cópias em snapshot da VM, mantidas pela TI, ficam fora do alcance desta tarefa; a consulta à TI sobre a guarda delas não bloqueia (vai para a T-23). = A-03, R-P03, S13.
-  **Pronto quando:** o log ativo não tem mais registro com credencial, a versão nova comprovadamente não grava credencial (teste real), os tokens de longa duração foram invalidados e a data de eliminação da cópia preservada está anotada.
-- [ ] **T-08** · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
-  Pode correr em paralelo à validação. Destrava T-20 e T-35. = H-01 a H-03.
+- [ ] **T-05b** · Destruir os logs brutos preservados de produção — `P0` · pequeno · operação · gatilho: 16/11/2026
+  Resto da T-05, executada em 02/11. Os logs antigos saíram do alcance da aplicação para uma pasta restrita no servidor, os tokens de longa duração foram invalidados e a versão em produção foi conferida. Em 02/11 foi gerado um snapshot de auditoria cifrado (um arquivo, com senha), que fica com o responsável, em armazenamento privado. A finalidade é provar o que havia nos logs antigos, caso um titular, a ANPD ou a UESB questione a limpeza feita em 02/11. O prazo é até 02/05/2027: nessa data, o responsável renova com justificativa anotada ou destrói (T-23). Em 02/11, o responsável conferiu o checksum do snapshot e o abriu com a senha, então a destruição dos logs brutos está liberada para 16/11 (prazo da P-16), com remoção segura. Nessa mesma data, também é destruída a cópia cifrada do snapshot que ficou no servidor.
+  **Pronto quando:** os logs brutos e a cópia cifrada do servidor foram destruídos com remoção segura, e o espaço em disco foi liberado.
+- [ ] **T-08** · 🔧 em andamento · Conferir a configuração efetiva de produção, sem abrir dados — `P1` · pequeno · operação
+  Respondida em parte em 02/11 para os logs (canal, nível, prazo e Telescope). Falta o restante da configuração de produção. Destrava T-20 e T-35. = H-01 a H-03.
+  **Em andamento (04/11/2026):** o roteiro de leitura em produção, só com agregados, foi autorizado pelo responsável. Já feitas: erros nos logs dos containers nas últimas 24 h = 0 (passo 0.6 do smoke, refeito) e a tabela do Telescope em produção com 0 linhas. Falta: a configuração efetiva, os dumps acumulados no host, a contagem de fotos e as tabelas da T-19c, depois do deploy da 1.6.0.
 
 ## Onda 2 — LGPD: próximo lote (`P1`–`P3`)
 
 **Código**
 
-- [ ] **T-19** · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
-  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. Também limpa registros antigos que ainda têm nome de terceiros (anteriores à T-24). = S52, DT-11, B23, A-06.
+- [ ] **T-19** · 🚀 código pronto · Rotinas de retenção configuráveis e scheduler em produção — `P1` · médio · lgpd
+  Valores provisórios da DT-11 (jobs falhos 30 dias, notificações lidas 90, cache 7, sessões 7) atrás de `config/retencao.php`; os valores finais dependem da T-12. As notificações antigas seguem a regra das lidas (lidas há mais de 90 dias saem; não lidas ficam), sem regra especial. = S52, DT-11, B23, A-06.
+  **Decisões de 02/11:** sessões inativas há mais de 7 dias (a sessão em banco já expira em 120 minutos, então a rotina é só rede de segurança); cache: só entradas expiradas há mais de 7 dias, sem apagar entradas válidas; agendamento diário, às 03:30 UTC (00:30 na Bahia). As justificativas de horário antigas vão para a T-19b.
+  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (rc.111, 02/11): agendador de pé; a rotina aparece no agendamento das 03:30 UTC; simulação com 2.880 notificações lidas há mais de 90 dias, 0 de cache, 0 sessões e 0 logs. A primeira rodada de retenção em staging foi conferida pelo responsável, com resultado OK (informado em 04/11/2026), e o serviço do agendador subiu normal em staging. Falta: a produção, com autorização.
   **Pronto quando:** `php artisan schedule:list` mostra as rotinas, os testes de retenção passam e o serviço de scheduler roda em staging.
-- [ ] **T-20** · Log diário com 14 dias e nível `info` em produção — `P1` · pequeno · lgpd
-  Prazo decidido (P-16). Depende da T-08. Inclui limite de tamanho dos logs dos containers. = S43, B23, E1-29.
-  **Pronto quando:** `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` e `LOG_LEVEL=info` em produção, com arquivos rotacionados em staging.
-- [ ] **T-26 (a, b)** · Props compartilhadas mínimas — `P1` · pequeno · débito técnico
-  Trocar o tipo `unread_notifications` por `unread_notifications_count` em `resources/js/types/index.d.ts` e nos mocks; avaliar enxugar a prop `notifications` (15 itens com texto). A visibilidade do telefone para institucionais aguarda a F-06. A prop `notifications` ganha `chave`/`parametros` na I18N-F3; coordenar. = S61, F1, E2-O.1.
+- [ ] **T-19b** · 🚀 código pronto · Neutralizar justificativas de horário anteriores à T-24 — `P2` · pequeno · lgpd
+  Justificativas gravadas antes da T-24 trazem o título da reserva e o nome de terceiro. Troca pelo texto neutro atual, por comando com simulação (`--dry-run`), sem apagar reservas. Não afeta a lógica: o campo é só exibido. Critério estrito (só o texto automático antigo em português), para não tocar em motivos digitados pelo gestor. Não é agendado: roda uma vez, manualmente.
+  **Limite conhecido:** nomes de terceiros com ponto ou vírgula não casam com o critério e ficam como estão.
+  **Código pronto no #505 (em `develop` desde 02/11).** Conferido em staging (02/11): simulação com 0 justificativas a trocar. Falta: a execução em produção, com autorização, depois de a simulação ser revisada pelo responsável.
+  **Pronto quando:** comando com `--dry-run` coberto por teste; executado em produção com autorização do responsável.
+- [ ] **T-20** · 🚀 código pronto · Poda dos logs diários sem depender de escrita nova, e limite dos logs dos containers — `P1` · pequeno · lgpd
+  Prazo decidido (P-16): 14 dias. Inclui o limite de tamanho dos logs dos containers. = S43, B23, E1-29.
+  **Estado em produção (conferido em 02/11):** o canal já é diário, com 14 dias e nível `warning`, mais protetor que `info`. Por isso o nível não sobe. O problema é a poda: ela só roda quando um arquivo novo é criado, e sem escrita nova os arquivos de setembro e outubro passam de 14 dias sem ser apagados.
+  **Solução:** rotina agendada que apaga os arquivos diários pela data do nome do arquivo, com o mesmo número de dias do canal. No compose de produção, os logs dos containers ganham limite de 10 MB por arquivo e 5 arquivos por serviço.
+  **Código pronto no #505 (em `develop` desde 02/11).** Staging igualado a produção em 02/11 (canal diário, 14 dias, `warning`), e o limite de logs dos containers conferido em staging (10 MB × 5 nos serviços de app, agendador, web e banco). A poda com arquivos falsos foi conferida em staging pelo responsável, com resultado OK (informado em 04/11/2026). Falta: a produção, com autorização.
+  **Pronto quando:** um teste automatizado prova que um arquivo diário além do prazo é removido sem escrita nova; a poda foi conferida em staging; o nível continua `warning` ou mais restritivo; o limite de tamanho dos logs dos containers está no `compose.prod.yml`.
 - [ ] **T-31 (resíduo)** · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
@@ -51,22 +79,26 @@
 - [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
   Recusa rodar em produção. Prepara a T-01 e a T-03.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
-  Depende da T-26 completa.
-- [ ] **T-21** · Documentação de retenção de logs igual à configuração real — `P2` · pequeno · docs
-  Atualizar [`arquitetura/erros-e-logs.md`](./arquitetura/erros-e-logs.md) depois da T-19 e da T-20.
+  Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
+- [ ] **T-19c** · Conferir tabelas com dado pessoal que a rotina de retenção não cobre (por exemplo, a do Telescope) — `P3` · pequeno · lgpd
+  Tabelas fora da rotina da T-19. **Estado (04/11/2026):** a tabela de entradas do Telescope em produção tem 0 linhas, e o pacote não é instalado na imagem de produção (é dependência de desenvolvimento). Por isso não precisa de poda. Restam a conferir, na leitura da T-08: tabelas de tags e de monitoramento do Telescope, tokens de redefinição de senha, fila (jobs pendentes e lotes), travas de cache e pastas de armazenamento. **Pronto quando:** conferência registrada e, se houver dados, poda agendada com prazo configurável.
 
 **Operação de produção (um arquivo por vez)**
 
 - [ ] **T-06** · Endurecer o script de deploy contra configuração ausente — `P1` · pequeno · segurança
   Precisa de janela combinada (DT-08). = A-07, A-12, A-21, B22.
 - [ ] **T-23** · Cópias de segurança cifradas, com retenção, cópia externa e restauração testada — `P1` · grande · operação · ⏸ parado
-  Aguarda a conversa com a TI (destino externo, retenção, staging para o ensaio, e o prazo de guarda dos snapshots da VM, que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la) e as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  Aguarda a conversa com a TI, que deve responder: prazo de guarda dos snapshots da VM (que guardam cópias antigas dos logs; vindo da T-05, sem bloqueá-la), destino institucional para cópias externas e uso de staging para o ensaio de restauração.
+  **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
+  **Cifragem confirmada (02/11):** o responsável confirmou que o backup manual anterior à 1.5.0 foi cifrado antes de sair do servidor. Os dois arquivos (snapshot e backup manual) vão cifrados do lado do responsável.
+  **Status (02/11):** a mensagem com as três perguntas à TI foi entregue ao responsável para envio. Aguarda resposta.
+  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
   = S67, E2-20, A-21, B27.
 
-**Aguardando decisão institucional** (ver [Decisões pendentes](#decisões-pendentes-não-é-código))
+**⏳ Aguardando decisão institucional** (ver [Decisões pendentes](#decisões-pendentes-não-é-código))
 
 - [ ] **T-17, T-18 (retomada)** · Retomar a página de privacidade: levantamento de design e redesenho — `P2` · médio · produto/UI · depende do texto final (T-10, T-17, T-18 / F-01)
   Página em standby desde 01/11, por decisão do responsável: os termos estão minimamente adequados, mas a UI/UX ficou desarmônica com o design do sistema. Detalhe e condição de retomada em [`privacidade/pagina-de-privacidade.md`](./privacidade/pagina-de-privacidade.md). Primeiro passo, antes de qualquer redesenho: levantar o que já existe no projeto (tokens Catppuccin do `@theme`, átomos, moléculas e templates em `resources/js/presentation`, primitivos shadcn em `resources/js/components/ui`, e os padrões de anatomia de página e estado vazio do #487) e redesenhar a partir desse levantamento.
@@ -78,6 +110,7 @@
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
+  Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). Snapshot de auditoria e backup manual vão cifrados do lado do responsável, o que mitiga a transferência.
 
 **Diferidas pelo responsável**
 
@@ -98,18 +131,25 @@
 - [ ] **S42** · Revisar a configuração de proxies confiáveis (borda e aplicação) — `P1` · pequeno · segurança
   = B28, E1-35, D-EST-17.
 - [ ] **S17** · Congelar o relógio nos testes que dependem da data real — `P2` · médio · teste
-  Habilita a S26, a S33 e a S36. Cerca de 19 arquivos de teste PHP usam `now()` ou `today()` sem congelar; o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
+  Habilita a S26, a S33 e a S36. 18 arquivos de teste PHP usam `now()` ou `today()` sem congelar (contagem de 04/11/2026); o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
   **Pronto quando:** existe um trait de congelamento em `tests/Concerns/` e a suíte passa em duas datas simuladas (dia 31 e dia 1).
-- [ ] **S26** · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
+- [ ] **S26** · 🔧 em andamento (código pronto na integração) · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
   Uma falha do Reverb pode marcar o job como falho e pular a notificação. Decisão tomada: broadcast depois do commit, num ponto único com `try/catch` (D-EST-14). = B15, B59, B60, E1-17.
+  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Ponto único de publicação, chamado por último e depois do commit nos 5 pontos (4 jobs e o cancelamento); falha do broadcaster vira aviso no log e não falha o job, não pula notificação nem regrava a validação de conflitos como falha. A invalidação do cache de relatórios saiu do evento de tempo real para um evento de domínio próprio: no Laravel o broadcast roda antes dos listeners, e uma falha deixaria o cache desatualizado em silêncio. Suíte completa verde (614). Exige reiniciar o queue worker no deploy (staging e produção).
   **Pronto quando:** com um broadcaster que lança exceção, criar e avaliar reserva não gera `failed_jobs` e o solicitante é notificado.
 - [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
   Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S26 e da S17. = B15, B61, E1-18.
-- [ ] **S14** · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
+- [ ] **S14** · 🔧 em andamento (código pronto na integração) · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
   Salvar o modal de quem tem dois papéis (comum e gestor) pode apagar as agendas dessa pessoa. Mitigação em vigor: os institucionais foram orientados a não salvar o modal desses usuários (I4). = B56, E2-14, A-15; decisão relacionada: B44.
+  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Branch `fix/estab-s14-permissoes-papeis-acumulados`. Sem depender da B44: quem tem mais de um papel não tem papel trocado nem removido ao salvar o modal, e as agendas só mudam no que foi tirado ou incluído (nunca em massa); para papel único, a regra continua a mesma. O modal mostra os papéis acumulados só para leitura, com aviso. As notificações de gestor passam a sair só em transição real e depois do commit (antes, a todo salvamento). Teste HTTP cobre os dois casos. O próprio sistema produz o acúmulo de papéis ao vincular gestor a um espaço, por isso a B44 é decisão de modelo. A mitigação I4 pode ser retirada depois do deploy da Onda 3. As notificações de gestor são reenviadas a cada salvamento do modal; a correção entra junto com a S14.
+  **Objetivo de segurança:** a tela de permissões não pode alterar papéis nem agendas de quem tem dois papéis ao ser salva.
   **Pronto quando:** um teste HTTP de `updatePermissions` preserva papéis e agendas de usuário com dois papéis.
+- [ ] **S14b** · Conferir o dono atual antes de reatribuir uma agenda a outro gestor — `P3` · pequeno · segurança
+  Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026.
+- [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
+  Isso deixava testes de permissão instáveis (o usuário do teste ganhava gestor antes da requisição). Isolar o efeito para quem precisa dele. Achado em 04/11/2026.
 - [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
-  `retry_after` maior que o timeout do worker, que é maior que o dos jobs; o comando de reparo cobre todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
+  Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
 
 ## Onda 4 — Regras de negócio e segurança (`P2`)
 
@@ -135,6 +175,7 @@
 - [ ] **S46 → S48–S50** · Isolamento por instituição nas operações de escrita: ADR e implementação — `P2` · grande · segurança
   Hoje há uma instituição ativa; é requisito do gate da v2. Depende da decisão E1-16 (quem edita instituições alheias). = B6, E1-16, E2-A, A-16, A-26.
 - [ ] **S39** · Atualizações em tempo real de reservas só por canais privados autenticados — `P3` · médio · segurança
+  Relacionado (achado em 04/11/2026): o hook do canal público só recarrega as listas para `created`, `validated` e `evaluated`; `updated` e `canceled` são publicados pelo backend, mas não atualizam a tela. Decidir junto com a troca do canal.
   Remove o canal público `reserva-channel` e o listener morto. Decisão tomada: canal privado por usuário. Depende da S26. = B14, E1-15, B66.
 - [ ] **B76** · Sanitizar o conteúdo das células nas exportações de planilha — `P3` · pequeno · segurança
   Depois do teste de exportação (S24).
@@ -150,9 +191,12 @@
 **Testes**
 
 - [ ] **B26** · Testes de caracterização dos módulos que a v2 vai alterar — `P2` · grande · teste
-  `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
+  `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24; hoje só existe um teste mínimo de exportação em PDF), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
+- [ ] **S26c** · Teste de registro do listener de cache de relatórios quase nunca falha — `P4` · pequeno · teste
+  A asserção aceita qualquer listener registrado no evento. Trocar por uma que confira o listener de cache no evento de domínio. Achado na S26 (04/11/2026).
 - [ ] **AF-6.3b** · Testes de conteúdo dos 4 tipos de relatório — `P3` · médio · teste · depende da S38
 - [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
+  Desde 31/10 (#489), os seeders de desenvolvimento só rodam em local, development e testing. A CI ainda roda os seeders de desenvolvimento.
   = B38, B52, I11.
 
 **Operação**
@@ -174,6 +218,7 @@
 
 - [ ] **S64** · Reduzir as supressões do ESLint, com ratchet — `P3` · médio · débito técnico
   Reconferido em 01/11: 73 supressões em 33 arquivos no `eslint-suppressions.json` (`npm run lint:debt`), mais 6 `eslint-disable` inline: 5 `eslint-disable-next-line` em dois arquivos de teste (`hooks/use-espaco-live-updates.test.ts` e `presentation/pages/Espacos/VisualizarEspacoPage.test.tsx`) e 1 `/* eslint-disable */` em `ssr.tsx`.
+  Detalhe, DEB-L1: quitar as 24 supressões de `prefer-nullish-coalescing` em 12 arquivos (pequeno). Trocar `||` por `??` muda o comportamento com string vazia; refazer a partir do `lint:debt`, caso a caso. Uma branch antiga com a tentativa existe, mas está defasada demais para reaproveitar.
 - [ ] **DOC-02** · Sincronizar o `GEMINI.md` com o `CLAUDE.md` — `P3` · pequeno · docs
   O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
 - [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
@@ -185,6 +230,7 @@
 - [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno. Entra no PR da I18N-F1, que traduz as Rules.
 - [ ] **RR-F04** · Renomear a prop `conflictCache` do `ConflictAlertBox`, que recebe conflitos calculados na hora — `P4` · pequeno.
 - [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
+  Hoje só existe o log de cache miss, em nível info, que não aparece em produção (nível warning). Não há registro de acerto.
 - [ ] **S72** · Remover o código legado de unicidade de nome de andar — `P3` · pequeno · débito técnico
   `app/Rules/UniqueNormalizedFloorName.php` e `Andar::normalizarNome()` não têm uso. A Rule consulta a coluna `nome_normalizado`, que não existe em `andars`: resíduo do CRUD avulso de andar removido no #251.
   **Pronto quando:** os dois arquivos e as referências saem do código, e a suíte passa.
@@ -194,7 +240,7 @@
 
 ## Onda 6 — Internacionalização (`P2`–`P4`)
 
-Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e critérios em `docs/plano-i18n/` (local; uma pasta por fase), auditoria em `docs/auditoria-i18n-2026-10-31/`. Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
+Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais (ver [Origem dos itens](#origem-dos-itens)). Convenção decidida (01/11): no backend, frase em inglês como chave nos JSON de `lang/`; no front, o motor tipado de `resources/js/i18n/`. Ordem: F0 → F1 e F5 em paralelo → F2, F3, F4+6a e os lotes 6b, 6c, 6d e 6f em paralelo → 6e → F7 → consolidação. F8 só com gatilho.
 
 - [ ] **I18N-F0** · Fundação de locale: idioma salvo no usuário e formato único — `P2` · médio
   Enum de locale único; `users.locale` com `HasLocalePreference`; a prop `locale` do Inertia sempre em `pt-BR`/`en`/`es`; remove a prop `quote`, que não é usada; `<html lang>` acompanha a troca de idioma; cria `docs/arquitetura/internacionalizacao.md` com a convenção decidida.
@@ -203,7 +249,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
   `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais. Inclui a RR-F01.
   **Pronto quando:** a validação em `es` sai em espanhol, e remover uma chave de `es.json` faz um teste falhar.
 - [ ] **I18N-F5** · Infraestrutura do front: plural, datas por locale e pseudo-locale — `P2` · médio · depende da F0
-  Plural no motor; date-fns e formatos de data pelo locale ativo (hoje há `ptBR` importado em 7 arquivos e 12 formatos `dd/MM` fixos); ordenação pelo locale; textos dos primitivos de UI; dicionários divididos por namespace; pseudo-locale só em dev; testes com o motor real no lugar de mocks; script de inventário versionado.
+  Plural no motor; date-fns e formatos de data pelo locale ativo (hoje há `ptBR` importado em 7 arquivos e 14 formatos `dd/MM` fixos em 9 arquivos, contagem de 04/11/2026); ordenação pelo locale; textos dos primitivos de UI; dicionários divididos por namespace; pseudo-locale só em dev; testes com o motor real no lugar de mocks; script de inventário versionado.
   **Pronto quando:** nenhum import de `date-fns/locale` fora de `resources/js/i18n/`; testes de plural e datas nos 3 idiomas; nenhum teste com `jest.mock('@/i18n')`.
 - [ ] **I18N-F2** · Mensagens de erro ao usuário traduzidas e sem detalhe técnico interno — `P3` · pequeno · depende da F1
   As flash messages já estão traduzidas (#489), e falhas de banco já viram mensagem genérica. Falta: exceção de domínio com mensagem traduzível, mensagem genérica para qualquer exceção não prevista, e as mensagens de `abort()` dos relatórios.
@@ -218,6 +264,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6c** · Textos do front: administração, usuários e permissões (cerca de 108 strings, incluindo os rótulos de permissão) — `P3` · médio · depende da F5
+  Inclui os textos fixos do modal de permissões (título, botão de salvar e mensagem de erro).
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6d** · Textos do front: reservas e agenda (cerca de 57 strings, incluindo a validação do formulário de reserva) — `P3` · médio · depende da F5
@@ -277,10 +324,10 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | F-03 · Prazos de guarda (proposta DT-11: 30, 90, 7 e 7 dias) e eliminar ou anonimizar | encarregado e CPAD | T-12, T-19 (valores finais), T-23 |
 | F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
 | F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
-| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade institucional (T-26) |
+| F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
-| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes | TI e gestão da UESB | T-13, T-23, T-38 |
+| F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
@@ -308,7 +355,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 | D-1 · Multi-instituição | v2 |
 | D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
 | D-7 e D-EST-05 · Destino do PR #397 | v2 |
-| B44 · Papéis acumulados comum e gestor | S14 |
+| B44 · Papéis acumulados comum e gestor. Pontos levantados na S14 (04/11/2026): o acúmulo é estado válido ou deve ser normalizado; o modal vira seleção múltipla; quem acumula papéis sem gestor pode virar gestor pelo modal; quem é comum e gestor e perde todas as agendas continua gestor | S14 (o código preserva o estado atual até a decisão) |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
@@ -318,7 +365,8 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Tarefas, riscos e crité
 - [ ] Comentar o fechamento das issues #48 e #102 (fechadas sem comentário). A #41 já foi tratada (entrega no #432 comentada no GitHub e label `wontfix` removida). A validação manual com dois navegadores (T6.6) nunca foi registrada.
 - [ ] Alinhar as labels: #104 está `P0` (o plano pede ADR antes e deixa fora da 2.0); #107 está `P4` (requisito "Must" original); #98 e #462 estão sem prioridade.
 - [ ] As 18 issues do plano de estabilização (`criar-issues.sh`) nunca foram criadas. Este backlog passa a ser a fonte: fechar o milestone vazio "Estabilização v1 — Fase 1" e abrir issue só quando o item entrar em execução.
-- [ ] Limpar as 33 branches remotas antigas já absorvidas por `develop`: 14 `fase-*`, 5 `fix/fase-*`, 4 `fix/governanca-eslint-*` e 10 avulsas. Conferir cada uma por conteúdo, não por `git branch -r --merged`: o repo usa squash merge e a maioria nunca teve PR própria (entrou pela branch-mãe). Fora da limpeza: `feat/tickets-module` (PR #397 aberta), `refactor/melhorias-arquitetura-ux-frontend` (commit de 30/10; perguntar ao dono), `docs/v2-0-documentacao-preparatoria` (manter até o E3-01) e `docs/backlog-alinhamento-i18n`.
+- [ ] Limpar as branches remotas antigas. Análise por conteúdo de 04/11/2026 (não por `git branch -r --merged`: o repo usa squash merge): das 33 branches antigas, 30 estão absorvidas por `develop`, pelas PRs consolidadoras #286, #386, #394, #399, #401, #406, #415, #422 e #481. Podem ser apagadas, aguardando autorização. Mais cerca de 10 branches de PRs mergeadas em novembro e a branch de notas do release-please de 04/10 também podem sair. Fora da limpeza: `feat/tickets-module` (PR #397 aberta), `docs/v2-0-documentacao-preparatoria` (até o E3-01) e `refactor/melhorias-arquitetura-ux-frontend` (rascunho da #481, já absorvida; confirmar com o dono).
+- [ ] Decidir a política de testes dos executores: suíte completa a cada tarefa (hoje) ou só testes focados por tarefa, com suíte completa uma vez, pelo master, no fim do plano. Uma branch antiga com a segunda política nunca entrou. Se adotada, reaplicar nos agentes, nos espelhos e na skill de testes. — `P3` · pequeno · processo
 - [ ] Arquivar os planos locais concluídos (ver [Origem dos itens](#origem-dos-itens)).
 
 > O `Closes #N` não fecha a issue em merge para `develop`; o GitHub só fecha em merge para a branch padrão (`main`). Feche manualmente, com comentário.
@@ -330,11 +378,11 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 - **GAP-01** · obsoleto: o fluxo mudou e o hook foi removido (fase 07 dos débitos 2026-09).
 - **GAP-04** · falso positivo: os e-mails já usam templates Blade desde fevereiro de 2026 (#117).
 - **GAP-05** · feito no #432 (filtro de período nas listas de reservas).
-- **GAP-02 e GAP-03** · feitos em agosto: a edição regenera os conflitos (commit `554e85a`) e a propagação `recurring` respeita as agendas do gestor (#302).
+- **GAP-02 e GAP-03** · feitos em agosto: a edição regenera os conflitos (#313) e a propagação `recurring` respeita as agendas do gestor (#302).
 - **GAP-11** · feito: canais privados por espaço (#338) e recarga das listas por evento (#432). Resta trocar o canal público (S39).
 - **#41** · feito no #432 (atualização em tempo real das listas; issue fechada).
 - **T-34 e T-42** · cancelados: telefone obrigatório mantido (P-07) e cadastro aberto ao público (P-06).
-- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) segue na Onda 2.
+- **T-04 e T-26 (c)** · feitas no #494 (01/11). A T-26 (a, b) foi feita no #507.
 - **Página de privacidade no release 1.5.0** · decidida em 01/11 pelo responsável: standby, fora do 1.5.0, desligada por padrão (`PRIVACY_PAGE_ENABLED=false`) no #496. A retomada é o item T-17, T-18 da Onda 2.
 - **S13, S15, S25, S40, S55, S62 e S63** · feitos: S13 pela T-04 (o resíduo saiu no #494), S15 e S63 pela T-25, S25 no #469, S40 no #470, S55 pela T-29 e S62 pela T-22.
 - **S56** · alerta de expiração do certificado: perdeu o motivo (D-EST-16); reavaliar só se a renovação deixar de ser automática.
@@ -348,6 +396,15 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **03/11** · #510 release candidata rc.112 em staging (#507 e #509), com deploy e teste feitos pelo responsável.
+- **02/11** · #509 T-26 (d, e): broadcast de notificações só com campos públicos (sem IDs internos) e remoção da rota JSON sem uso. Reiniciar o queue worker depois do deploy.
+- **02/11** · #508 backlog: estado da Onda 2 sincronizado, bloco de verificações e passos agendados em "Agora" e regras novas do backlog reativo (estado completo no backlog, atualização na hora e conferência da data).
+- **02/11** · #507 T-26 (a, b): a prop compartilhada de notificações sai com lista branca de campos e o badge usa a contagem real de não lidas; decisões sobre a guarda do snapshot da T-05 e do backup manual (T-05b, T-13, T-23).
+- **02/11** · #506 release candidata rc.111 (`develop`, com o #505 e o agendador) em staging. O #507 entra na próxima release candidata.
+- **02/11** · #505 T-21: documentação de retenção e logs igual à configuração real. Na mesma PR, o código da T-19, da T-19b e da T-20 (seguem abertas até os passos em staging e produção).
+- **02/11** · #504 backlog: registro do snapshot de auditoria e da guarda da T-05 (T-05b, T-13 e T-23).
+- **02/11** · T-05 logs antigos de produção tratados: movidos para fora do alcance da aplicação, tokens de longa duração invalidados e código conferido; a cópia segue até 16/11 (T-05b). Na PR de sincronização: #502.
+- **02/11** · #500 e #501 release 1.5.0 em produção (lote LGPD, congruência de UI/UX e resíduos da Onda 1), com smoke por papel e reinício do worker OK; sincronização `main` → `develop`: #502.
 - **01/11** · validação manual em staging da rc.109 (lote LGPD, 29 passos em 6 blocos): tudo OK, feita pelo responsável. Registro: #499.
 - **01/11** · #496 página de privacidade em standby: desligada por padrão, links ocultos nas telas e no e-mail (fora do 1.5.0).
 - **01/11** · #494 resíduos da Onda 1 do LGPD: logs de autenticação sem parâmetros de acesso (T-04) e setor do gestor no dashboard institucional (T-26 (c)).
@@ -358,7 +415,7 @@ Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 - **30–31/10** · #481, #483 e #487: fronteiras de camadas, correções de UX, acessibilidade, estado vazio e anatomia de página.
 - **30/10** · #485 cache de dependências e camadas Docker na CI, com o workflow `cache-warmup.yml` (em PR só de changelog, pula a suíte); #476 dependências; #475 release 1.4.4 em produção.
 - **24/10** · #465 hotfix 1.4.3 (PHP 8.4.27); #469 e #470 patches de segurança e Laravel 12.70 (S25, S40); #471 hardening do Docker.
-- **05–09/10** · #438 a #459: linha de base verde e onda 1 da estabilização (B1, B4, B7 a B10, B13, B17, B19, B29 a B32, B43, B46).
+- **04–05/10** · #438 a #459: linha de base verde e onda 1 da estabilização (B1, B4, B7 a B10, B13, B17, B19, B29 a B32, B43, B46).
 - **01/10** · #434 HTTP/3 desabilitado no Caddy de produção, mantendo h1 e h2.
 - **30/09** · #432 débitos técnicos 2026-09: canal privado por espaço, filtro de período, tempo real nas listas, gate do PHPStan e snapshot do `conflict_cache`.
 - **29–30/08** · #403 áreas de foco (relatórios com policy e cache, revalidação de conflitos) e #406 regras de reserva (sobreposição síncrona, lock, datas, auto-aprovação).
