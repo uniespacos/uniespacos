@@ -79,3 +79,10 @@ adicione a linha na baseline).
 Dado pesado que só uma tela específica de um fluxo (ex.: modal de edição de permissões) precisa não
 entra no payload da listagem — vira endpoint próprio, buscado só quando o modal abre. Ver
 `InstitucionalUsuarioController::permissionContext()` como referência do padrão.
+
+## Privacidade em mudanças
+
+Antes de fechar a tarefa, responda à pergunta do bloco Privacidade do template de PR
+(`.github/pull_request_template.md`): esta mudança coleta, exibe, exporta, compartilha ou apaga dado
+pessoal? Se sim, o inventário e os testes de privacidade vão na mesma PR. Antes de criar feature que
+trate dado de pessoa, use a skill [`lgpd-audit`](../lgpd-audit/SKILL.md).

@@ -212,3 +212,10 @@ Quando o backend armazena slugs (`andar-1`, `terreo`) e a UI precisa de rótulo 
 ## Antes de escrever componente novo
 
 Sempre pesquise em `resources/js/presentation/` antes de criar um componente. Padrões como busca com debounce (`ComboboxFiltro`, `UserSearchComboBox`), modais adaptáveis (`ResponsiveModal`), tabelas paginadas (`DataTable`) e botões móveis (`MobileBottomBar`) já existem e devem ser reutilizados.
+
+## Privacidade em mudanças
+
+Antes de fechar a tarefa, responda à pergunta do bloco Privacidade do template de PR
+(`.github/pull_request_template.md`): esta mudança coleta, exibe, exporta, compartilha ou apaga dado
+pessoal? Se sim, o inventário e os testes de privacidade vão na mesma PR. Antes de criar feature que
+trate dado de pessoa, use a skill [`lgpd-audit`](../lgpd-audit/SKILL.md).

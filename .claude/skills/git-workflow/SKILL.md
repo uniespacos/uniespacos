@@ -55,7 +55,7 @@ perf: cache de permissões por request
    ```
 3. **Reporte ao master:** "Branch X commitada e pushada. Validações: [resultado]"
 4. **Aguarde permissão explícita do usuário:** "OK, cria a PR"
-5. **Master cria PR com `gh pr create`** e retorna URL
+5. **Master cria PR com `gh pr create`** e retorna URL. O corpo segue `.github/pull_request_template.md` (inclui o bloco Privacidade).
 
 ### Após merge (Automático)
 
