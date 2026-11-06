@@ -33,6 +33,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
+
+        DB::table('users')->update(['profile_pic' => '']);
     }
 
     private function usuario(string $fotoAtual, string $nome = 'Usuário de teste', string $email = ''): User
