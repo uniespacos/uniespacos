@@ -20,4 +20,14 @@ class RetencaoAgendamentoTest extends TestCase
         $this->assertCount(1, $eventos);
         $this->assertSame('30 3 * * *', $eventos->first()?->expression);
     }
+
+    public function test_retencao_aplicar_tem_trava_sem_sobreposicao_com_validade_de_60_minutos(): void
+    {
+        $evento = collect(app(Schedule::class)->events())
+            ->first(fn (Event $evento): bool => str_contains((string) $evento->command, 'retencao:aplicar'));
+
+        $this->assertInstanceOf(Event::class, $evento);
+        $this->assertTrue($evento->withoutOverlapping);
+        $this->assertSame(60, $evento->expiresAt);
+    }
 }
