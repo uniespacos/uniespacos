@@ -7,7 +7,7 @@ import { RegisterStepInstitution } from '@/presentation/molecules/RegisterStepIn
 import { RegisterStepCredentials } from '@/presentation/molecules/RegisterStepCredentials';
 import type { Instituicao } from '@/types';
 import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, type ReactNode } from 'react';
 
 interface FormRegistroUsuarioProps {
     data: {
@@ -24,11 +24,12 @@ interface FormRegistroUsuarioProps {
     processing: boolean;
     instituicaos: Instituicao[];
     onSubmit: (e: React.SyntheticEvent) => void;
+    emailErrorAction?: ReactNode;
 }
 
 const TOTAL_STEPS = 3;
 
-export function FormRegistroUsuario({ data, onInputChange, errors, processing, instituicaos, onSubmit }: FormRegistroUsuarioProps) {
+export function FormRegistroUsuario({ data, onInputChange, errors, processing, instituicaos, onSubmit, emailErrorAction }: FormRegistroUsuarioProps) {
     const { t } = useTranslation();
     const { currentStep, isFirstStep, isLastStep, nextStep, prevStep, goToStep } = useMultiStepForm({
         totalSteps: TOTAL_STEPS,
@@ -91,7 +92,13 @@ export function FormRegistroUsuario({ data, onInputChange, errors, processing, i
             {/* Step Content — com transição */}
             <div className="animate-fade-in-up min-h-[200px]" key={currentStep}>
                 {currentStep === 0 && (
-                    <RegisterStepPersonal data={data} onInputChange={onInputChange} errors={errors} processing={processing} />
+                    <RegisterStepPersonal
+                        data={data}
+                        onInputChange={onInputChange}
+                        errors={errors}
+                        processing={processing}
+                        emailErrorAction={emailErrorAction}
+                    />
                 )}
 
                 {currentStep === 1 && (

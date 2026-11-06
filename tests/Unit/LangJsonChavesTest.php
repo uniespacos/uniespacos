@@ -40,6 +40,10 @@ class LangJsonChavesTest extends TestCase
         'If an account exists with this email, we will send a link to reset your password.',
     ];
 
+    private const CHAVES_DO_CADASTRO_COM_EMAIL_EXISTENTE = [
+        'An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.',
+    ];
+
     private const CHAVES_DE_PREFIXOS_DE_ERRO_INSTITUCIONAL = [
         'Error creating module: :message',
         'Error updating module: :message',
@@ -151,6 +155,12 @@ class LangJsonChavesTest extends TestCase
     public function test_resposta_neutra_da_recuperacao_de_senha_existe_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_RESPOSTA_NEUTRA_DA_RECUPERACAO_DE_SENHA);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagem_de_email_existente_no_cadastro_existe_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DO_CADASTRO_COM_EMAIL_EXISTENTE);
     }
 
     #[DataProvider('arquivosDeIdiomaProvider')]

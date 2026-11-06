@@ -88,5 +88,6 @@
     "Your change request was sent for processing.": "Sua solicitação de alteração foi enviada para processamento.",
     "An error occurred while sending the update for processing.": "Ocorreu um erro ao enviar a atualização para processamento.",
     "Reservation cancelled successfully!": "Reserva cancelada com sucesso!",
-    "Error cancelling the reservation. Please try again.": "Erro ao cancelar a reserva. Por favor, tente novamente."
+    "Error cancelling the reservation. Please try again.": "Erro ao cancelar a reserva. Por favor, tente novamente.",
+    "An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.": "Já existe uma conta com este e-mail. Se não lembra a senha, use “Esqueceu sua senha” para redefini-la."
 }

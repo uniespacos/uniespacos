@@ -4,6 +4,7 @@ import { useTranslation } from '@/i18n';
 import { FormField } from '@/presentation/molecules/FormField';
 import { PrivacyLink } from '@/presentation/molecules/PrivacyLink';
 import type React from 'react';
+import type { ReactNode } from 'react';
 
 interface RegisterStepPersonalProps {
     data: {
@@ -14,9 +15,10 @@ interface RegisterStepPersonalProps {
     onInputChange: (field: string, value: string) => void;
     errors: Record<string, string>;
     processing: boolean;
+    emailErrorAction?: ReactNode;
 }
 
-export function RegisterStepPersonal({ data, onInputChange, errors, processing }: RegisterStepPersonalProps) {
+export function RegisterStepPersonal({ data, onInputChange, errors, processing, emailErrorAction }: RegisterStepPersonalProps) {
     const { t } = useTranslation();
     const privacidadeHabilitada = usePrivacidadeHabilitada();
 
@@ -60,22 +62,25 @@ export function RegisterStepPersonal({ data, onInputChange, errors, processing }
                     />
                 </FormField>
 
-                <FormField label={t('auth.register.email')} htmlFor="email" error={errors.email} required>
-                    <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        value={data.email}
-                        onChange={(e) => {
-                            onInputChange('email', e.target.value);
-                        }}
-                        placeholder={t('auth.register.step_personal_email_placeholder')}
-                        required
-                        disabled={processing}
-                        className="h-11"
-                    />
-                </FormField>
+                <div className="space-y-2">
+                    <FormField label={t('auth.register.email')} htmlFor="email" error={errors.email} required>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            value={data.email}
+                            onChange={(e) => {
+                                onInputChange('email', e.target.value);
+                            }}
+                            placeholder={t('auth.register.step_personal_email_placeholder')}
+                            required
+                            disabled={processing}
+                            className="h-11"
+                        />
+                    </FormField>
+                    {emailErrorAction}
+                </div>
             </div>
 
             <FormField label={t('auth.register.telefone')} htmlFor="phone" error={errors.phone}>
