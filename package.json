@@ -41,6 +41,7 @@
         "ziggy-js": "^2.6.5"
     },
     "dependencies": {
+        "@fontsource/instrument-sans": "^5.3.0",
         "@hookform/resolvers": "^5.9.2",
         "@inertiajs/react": "^2.3.29",
         "@radix-ui/react-alert-dialog": "^1.2.1",
