@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.112 (com o #505, o #507 e o #509).
-> **Atualizado em:** 2026-11-05.
+> **Atualizado em:** 2026-11-06.
 
 ## Como ler
 
@@ -15,13 +15,12 @@
 
 ## Agora
 
-- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado (primeira rodada em 06/11/2026).
+- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado. A primeira rodada de retenção rodou em 06/11/2026 e foi conferida pelo responsável: 0 erros e 0 notificações lidas antigas na nova simulação.
 - **Próximo passo:** a preparação da próxima release (1.7.0, a onda que fechar primeiro, com a Onda 3 e a Onda 2 parte 2 em branches de integração); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
-  | 06/11/2026, depois das 03:30 UTC | Conferir a primeira rodada de retenção em produção: 0 erros no agendador e nova simulação sem notificações lidas antigas | Responsável; quem pede confere a data antes | T-19 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando o responsável confirmar (sem data) | Confirmar o teste de abertura completo e a cópia externa do backup manual anterior à 1.6.0; depois disso, destruir o backup anterior à 1.5.0 (decisão de 02/11) | Responsável | T-23 |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
@@ -385,6 +384,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **06/11** · T-19 conferida em produção: a primeira rodada de retenção (06/11/2026, 03:30 UTC) rodou sem erros no agendador, e a nova simulação mostrou 0 notificações lidas há mais de 90 dias (eram 2.957), com cache, sessões e logs diários também em 0.
 - **05/11** · #513 e #514 release 1.6.0 em produção (Onda 2, parte 1: #505, #507 e #509). Pós-deploy OK nos serviços de app, worker, reverb e web, com o banco saudável (recriado para aplicar o limite de logs da T-20, com dados intactos); debug e modo de manutenção desligados; o deploy recriou o worker com a imagem nova, e o reinício explícito não foi necessário; rotina de retenção no agendamento das 03:30 UTC, com 0 erros nos logs. Smoke por papel: reserva de teste criada pela conta comum e indeferida pelo gestor (indeferida, não aprovada, porque aprovar indeferiria horários de terceiros em conflito); a notificação chegou em tempo real ao gestor e ao solicitante, sem recarregar a página. Simulação de retenção aprovada pelo responsável: 2.957 notificações lidas há mais de 90 dias e 197 jobs falhos há mais de 30 dias. Agendador religado depois da aprovação; primeira rodada em 06/11/2026, 03:30 UTC (conferência na tabela de verificações). Sincronização `main` → `develop`: #515.
 - **05/11** · T-19 e T-20 concluídas em produção (#505, na 1.6.0). T-19b concluída por decisão do responsável em 05/11/2026, sem execução em produção: a simulação em staging (02/11) deu 0 justificativas a trocar, e o responsável dispensou a simulação e a execução em produção.
 - **05/11** · #512 backlog: estado da rc.112, auditoria de 04/11 e regra de PR por onda.
