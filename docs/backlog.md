@@ -41,7 +41,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
 - **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
-- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. Conteúdo na integração: T-31 (comando `fotos:reprocessar`), T-19c (poda de tokens de redefinição de senha vencidos e alerta de jobs pendentes antigos, sem apagar), T-19d (parada limpa do agendador de produção; ver o risco de rollback no item), T-35 (comando manual `app:check-env`; a lista é calibrada depois da T-08), T-41 (comando `base:anonimizar`, recusado em produção), T-38 (fonte tipográfica servida pela aplicação), T-46 (bloco de privacidade no template de PR e nas skills) e T-29 parte a (respostas uniformes no login e na redefinição de senha). Fica para depois da 1.7.0: T-29b, T-29c, T-19e, T-19f e T-35b.
+- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. Conteúdo na integração: T-31 (comando `fotos:reprocessar`), T-19c (poda de tokens de redefinição de senha vencidos e alerta de jobs pendentes antigos, sem apagar), T-19d (parada limpa do agendador de produção; ver o risco de rollback no item), T-35 (comando manual `app:check-env`; a lista é calibrada depois da T-08), T-41 (comando `base:anonimizar`, recusado em produção), T-38 (fonte tipográfica servida pela aplicação), T-46 (bloco de privacidade no template de PR e nas skills) e T-29 parte a (respostas uniformes no login e na redefinição de senha) e T-29b (aviso de e-mail já cadastrado com orientação para redefinir a senha, decidido em 06/11/2026). Fica para depois da 1.7.0: T-29c, T-19e, T-19f e T-35b.
 - **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
@@ -76,6 +76,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **T-41** · 🔧 em andamento (código pronto na integração; entra pela PR da Onda 2) · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
   Recusa rodar em produção. Prepara a T-01 e a T-03.
   **Código pronto na integração (06/11/2026):** comando `base:anonimizar`, com tratamento por tabela, uma transação só, lotes e um teste que exige toda tabela classificada. Roda só em local, development, staging e testing; em produção é recusado, mesmo com `--dry-run`. Uso e tabela de tratamento em [`operacao/anonimizacao-de-bases.md`](./operacao/anonimizacao-de-bases.md). Falta o processo de uso: quando rodar, quem autoriza e como conferir o resultado sem expor dado pessoal.
+  **Ajuste de escopo (decisão do responsável, 06/11/2026):** `espacos.descricao` e `roles.description` não são mais anonimizadas. São conteúdo institucional e mantêm a cópia realista para testes; as tabelas `espacos` e `roles` estão em "sem dado pessoal" no config. **Confirmações do responsável (06/11/2026):** staging fica na lista de ambientes permitidos; apagar os favoritos (`espaco_user`) está ok; as descrições institucionais ficam como estão.
   **Pronto quando:** o processo de uso está aprovado pelo responsável e a execução numa base não produtiva foi conferida.
 - [ ] **T-44** · Teste transversal de privacidade das páginas na CI — `P2` · médio · teste
   Depende do que ainda falta da T-26: a visibilidade do telefone para institucionais (F-06).
@@ -139,11 +140,12 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **T-46** · 🔧 em andamento (código pronto na integração; entra pela PR da Onda 2) · Checklist de privacidade no template de PR e nas skills — `P3` · pequeno · docs.
   Bloco Privacidade em `.github/pull_request_template.md`. As skills `backend-conventions`, `frontend-conventions` e `git-workflow` apontam para ele.
 - [ ] **T-45** · Trilha de ações administrativas sobre dados pessoais — `P3` · médio · lgpd · depende da T-12 (ver também a GAP-10).
-- [ ] **T-29 (limitação)** · 🔧 em andamento (parte a na integração `feat/onda-2-lgpd-lote-2`; resíduos nas T-29b e T-29c) · Reduzir a informação revelada nos fluxos públicos de conta — `P3` · pequeno · segurança.
+- [ ] **T-29 (limitação)** · 🔧 em andamento (parte a e T-29b na integração `feat/onda-2-lgpd-lote-2`; resíduo só na T-29c) · Reduzir a informação revelada nos fluxos públicos de conta — `P3` · pequeno · segurança.
   **Parte a feita (06/11/2026):** no login, a conta inexistente passa a gastar o mesmo custo de verificação de senha que uma conta existente (status, mensagem e redirecionamento já eram iguais). Na redefinição de senha, o e-mail sem conta recebe a mesma mensagem do token inválido. "Esqueci a senha" e o reenvio de verificação já eram uniformes e ganharam testes.
-- [ ] **T-29b** · ⏳ aguarda decisão do responsável · Cadastro sem revelar e-mail já cadastrado — `P3` · médio · segurança
-  O cadastro ainda responde diferente quando o e-mail existe. Uma resposta neutra mudaria o fluxo, porque o Fortify loga o usuário logo após o cadastro. Decisão em Decisões pendentes. Achado na T-29.
-  **Pronto quando:** a decisão está registrada e, se aprovada, o cadastro responde igual nos dois casos e há teste.
+  **Cadastro (T-29b):** decidido em 06/11/2026; não é mais resíduo deste item.
+- [ ] **T-29b** · 🔧 em andamento (código na integração `feat/onda-2-lgpd-lote-2`; entra pela 1.7.0) · Cadastro: aviso de e-mail já cadastrado com orientação para redefinir a senha — `P3` · pequeno · segurança
+  **Decisão do responsável (06/11/2026):** o cadastro continua avisando quando o e-mail já tem conta. Não se usa resposta neutra: ela mudaria o login automático que o Fortify faz logo após o cadastro. A mensagem do campo e-mail passa a orientar a redefinição ("Já existe uma conta com este e-mail. Se não lembra a senha, use “Esqueceu sua senha” para redefini-la."), e abaixo dela aparece o link "Esqueceu sua senha?" para a redefinição. O login automático após o cadastro não muda, e os limitadores de taxa do cadastro continuam valendo, reduzindo a enumeração. Achado na T-29.
+  **Pronto quando:** a mensagem e o link aparecem no cadastro com e-mail existente, em pt e es, e há teste (feature no backend e Jest no front).
 - [ ] **T-29c** · Tempo de resposta neutro na recuperação de senha — `P3` · médio · segurança
   No "esqueci a senha" e na redefinição, o tempo de resposta ainda varia conforme a conta existe, por causa do broker de senhas do Laravel. Corrigir depende de estender o broker. Resíduo da T-29 (parte a).
   **Pronto quando:** a medição de tempo entre conta existente e inexistente fica dentro de uma faixa definida, com teste ou roteiro registrado.
@@ -384,7 +386,6 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | B44 · Papéis acumulados comum e gestor. Pontos levantados na S14 (04/11/2026): o acúmulo é estado válido ou deve ser normalizado; o modal vira seleção múltipla; quem acumula papéis sem gestor pode virar gestor pelo modal; quem é comum e gestor e perde todas as agendas continua gestor | S14 (o código preserva o estado atual até a decisão) |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
-| T-29b · Cadastro: aceitar resposta neutra ao e-mail já cadastrado (a resposta neutra muda o login automático depois do cadastro) | T-29b |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
 
 ## Gestão do repositório (não é código)

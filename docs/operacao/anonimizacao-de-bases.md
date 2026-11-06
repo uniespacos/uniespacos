@@ -69,8 +69,6 @@ Tabelas tratadas: só as colunas listadas mudam. As demais colunas ficam como es
 | `users` | `name` vira `Usuário {id}`; `email` vira `usuario{id}@anonimizado.test`; `telefone` vira `(00) 00000-0000`; `profile_pic` fica vazio; `password` recebe o hash da senha informada ou gerada; `remember_token`, `two_factor_secret`, `two_factor_recovery_codes` e `two_factor_confirmed_at` ficam nulos | `id`, `setor_id`, `email_verified_at` e os papéis (Spatie) |
 | `reservas` | `titulo` vira `Reserva {id}`; `descricao` e `observacao` viram `Texto anonimizado.`; `conflict_cache` fica nulo | Demais colunas (datas, horários, situação e vínculos) |
 | `horarios` | `justificativa` vira `Texto anonimizado.` | Demais colunas |
-| `espacos` | `descricao` vira `Texto anonimizado.` | `nome`, imagens e demais colunas, que são institucionais |
-| `roles` | `description` vira `Texto anonimizado.` | `name` |
 
 Tabelas apagadas (todas as linhas, quando a tabela existe no ambiente):
 
@@ -80,7 +78,7 @@ Tabelas apagadas (todas as linhas, quando a tabela existe no ambiente):
 | `espaco_user` | Favoritos |
 | `telescope_entries`, `telescope_entries_tags`, `telescope_monitoring` | Registros do Telescope |
 
-Tabelas sem dado pessoal, que não são tocadas: `agendas` (vínculo de gestor por `user_id`, sem texto livre), `andars`, `instituicaos`, `migrations`, `model_has_permissions`, `model_has_roles`, `modulos`, `permissions`, `role_has_permissions`, `setors` e `unidades`.
+Tabelas sem dado pessoal, que não são tocadas: `agendas` (vínculo de gestor por `user_id`, sem texto livre), `andars`, `espacos` (nome, descrição e imagens institucionais; descrições institucionais, mantidas por decisão de 06/11/2026), `instituicaos`, `migrations`, `model_has_permissions`, `model_has_roles`, `modulos`, `permissions`, `role_has_permissions`, `roles` (`name` e `description` institucionais; mantidas por decisão de 06/11/2026), `setors` e `unidades`.
 
 Contas já anonimizadas são puladas. Por isso, uma segunda execução não troca de novo a senha nem os nomes dessas contas.
 
