@@ -697,7 +697,7 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 
 #### Rotina `retencao:aplicar`
 
-`routes/console.php` agenda `retencao:aplicar` todos os dias às 03:30 UTC (00:30 no horário da Bahia), com `withoutOverlapping`. O agendamento roda no serviço `scheduler` (`php artisan schedule:work`), presente em `compose.prod.yml` e `compose.dev.yml`. Para conferir: `php artisan schedule:list`. Com `--dry-run`, o comando só conta o que removeria.
+`routes/console.php` agenda `retencao:aplicar` todos os dias às 03:30 UTC (00:30 no horário da Bahia), com `withoutOverlapping`. O agendamento roda no serviço `scheduler` (`php artisan schedule:work`), presente em `compose.prod.yml` e `compose.dev.yml`. Para conferir: `php artisan schedule:list`. Com `--dry-run`, o comando só conta o que removeria. As podas de fila (`queue:prune-failed` e `queue:prune-batches`) não são contadas: nelas o comando só mostra que seriam executadas.
 
 | Rotina | Critério de remoção | Variável | Padrão |
 | --- | --- | --- | --- |
@@ -711,6 +711,8 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 Os prazos de jobs, notificações, cache e sessões são **provisórios** (proposta DT-11) até a decisão da T-12, e ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs (14 dias) já está decidido ([T-20](../backlog.md)) e vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
 
 Cada rotina registra só contagens (`retencao.rotina_aplicada`, com o nome da rotina, a quantidade e se foi simulação). Se alguma rotina falhar, o comando termina com código de saída diferente de zero e registra `retencao.rotina_falhou` (ou `retencao.comando_falhou`, nas rotinas de fila), com o nome da exceção e sem mensagem nem dados. O comando `retencao:neutralizar-justificativas` é de execução única e manual, não é agendado (ver T-19b no [backlog](../backlog.md)).
+
+**Operação do agendador:** o serviço `scheduler` roda `schedule:work` como processo principal do container. Esse processo não trata SIGTERM: `docker stop` (e a recriação do container num deploy) espera 10 s e mata o processo. Fora da rodada das 03:30 UTC não há efeito. Durante a rodada, a parada corta a rotina no meio, e a trava do `withoutOverlapping` (validade padrão de 24 h) pode ficar ativa e fazer a rodada seguinte ser pulada. Até a [T-19d](../backlog.md) ser feita, evite deploy e parada do agendador perto das 03:30 UTC. Para suspender a rotina, pare o serviço `scheduler`. Com `restart: unless-stopped`, ele só volta ao ser iniciado de novo ou no próximo deploy (`docker compose up -d`).
 
 #### Por que a poda dos logs diários é própria
 
