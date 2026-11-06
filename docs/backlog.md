@@ -57,10 +57,11 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 **Código**
 
-- [ ] **T-31 (resíduo)** · 🔧 em andamento (código pronto na integração) · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
+- [ ] **T-31 (resíduo)** · 🔧 em andamento (código na integração, 2 testes falham na CI) · Reprocessar as fotos de perfil enviadas antes do reprocessamento automático — `P2` · pequeno · lgpd
   O tratamento da T-31 vale para os envios novos; as fotos já gravadas não passaram por ele. = A-19.
   **Código pronto e integrado em `feat/onda-2-lgpd-lote-2` (04/11/2026); entra pela PR da Onda 2.** Comando `fotos:reprocessar` com `--dry-run`, testes e documentação prontos. A PR própria (#511) foi fechada sem merge; o código entra pela PR da onda. Falta, depois do release: cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução (tabela de verificações).
-  **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo.
+  **Bloqueia a PR da Onda 2 (achado em 06/11/2026):** 2 testes do `ReprocessarFotosDePerfilTest` (`usuario_sem_foto_e_ignorado` e `saida_e_log_nao_expoem_caminho_nem_dados_pessoais`) falham sempre no banco semeado, que é o da CI (`migrate --seed` com `APP_ENV=testing` cria 18 usuários com foto). Os testes supõem que só existem as fotos que eles criam. A CI do #511 já tinha ficado vermelha por isso em 04/11 (2 falhas, 637 OK). Na suíte sem seed, passam. Corrigir os testes para não depender do banco vazio (a princípio o comando está certo, porque conta todas as fotos do banco), e conferir a suíte semeada antes de abrir a PR da onda.
+  **Pronto quando:** comando com `--dry-run` reprocessa as fotos existentes e há teste cobrindo, verde também no banco semeado da CI.
 - [ ] **T-35** · Validar na inicialização se a configuração de produção está segura — `P2` · pequeno · segurança
   Comando `app:check-env`. Depende da T-08. = S53, A-18.
 - [ ] **T-41** · Comando de anonimização para bases não produtivas — `P2` · médio · lgpd
