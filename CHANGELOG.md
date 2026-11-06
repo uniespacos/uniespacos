@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.6.0](https://github.com/uniespacos/uniespacos/compare/v1.5.0...v1.6.0) (2026-11-06)
+
+
+### Features
+
+* **infra:** adicionar scheduler e limite de tamanho dos logs dos containers ([61efa38](https://github.com/uniespacos/uniespacos/commit/61efa388fbd0b8bbe3c5f11666f40441c31ac876))
+* **lgpd:** adicionar comando para neutralizar justificativas de conflito anteriores à T-24 ([82f7bbb](https://github.com/uniespacos/uniespacos/commit/82f7bbb2fdac52eb802a55ad5789dd38943a2fec))
+* **lgpd:** adicionar o comando retencao:aplicar com prazos configuráveis e poda dos logs diários ([76bb31d](https://github.com/uniespacos/uniespacos/commit/76bb31d6d6f5b8576e86d43865f36cbe30964fa1))
+* **lgpd:** agendar a retenção diária às 03:30 UTC ([b83f4e7](https://github.com/uniespacos/uniespacos/commit/b83f4e743500b4f6546bd1444cd07a59cea1bce9))
+* **lgpd:** retenção de dados agendada e poda dos logs diários (T-19, T-19b, T-20, T-21) ([d40f359](https://github.com/uniespacos/uniespacos/commit/d40f35939607132ba63d6edb00048e359510c0bc))
+
+
+### Bug Fixes
+
+* **lgpd:** broadcast de notificações só com campos públicos e remoção da rota JSON sem uso (T-26 d, e) ([1fe3729](https://github.com/uniespacos/uniespacos/commit/1fe372982fae45fbfce6593b972376c5a069b593))
+* **lgpd:** enviar só campos públicos no broadcast de notificações e remover a rota JSON sem uso ([2e5ddb2](https://github.com/uniespacos/uniespacos/commit/2e5ddb26655f069016576f4b38a6665abad36737))
+
+
+### Miscellaneous Chores
+
+* **develop:** release 1.5.0-rc.110 ([1f0a3ce](https://github.com/uniespacos/uniespacos/commit/1f0a3ce5252a224f8401deada0b01bedb7c830be))
+* **develop:** release 1.5.0-rc.110 ([e322123](https://github.com/uniespacos/uniespacos/commit/e322123497343cda1609080258bd27aa702bf694))
+* **develop:** release 1.5.0-rc.111 ([a7f48a7](https://github.com/uniespacos/uniespacos/commit/a7f48a7a63fb1cddfefc2d0f596a97fad0554a90))
+* **develop:** release 1.5.0-rc.111 ([190dedf](https://github.com/uniespacos/uniespacos/commit/190dedf72b8eb914abffb8bb299de76d289c9810))
+* **develop:** release 1.5.0-rc.112 ([54f282c](https://github.com/uniespacos/uniespacos/commit/54f282cbbfc0db58a47bf483544a2d038338b775))
+* **develop:** release 1.5.0-rc.112 ([ac286c7](https://github.com/uniespacos/uniespacos/commit/ac286c792ab9de77dbd895e51026ae7f2b4ab3f9))
+* release 1.6.0 com a retenção de dados e o broadcast mínimo ([8cc8177](https://github.com/uniespacos/uniespacos/commit/8cc8177c20c31726de05ab9bf205e6fafa6908ca))
+* sincronizar main em develop após release 1.5.0 ([ed71ef2](https://github.com/uniespacos/uniespacos/commit/ed71ef21dcaf4b4c8037dcd852b0d2a3dc1f89c6))
+* sincronizar main em develop após release 1.5.0 ([f75d194](https://github.com/uniespacos/uniespacos/commit/f75d194248b10e18d15c738b02759c4b783f5b46))
+
 ## [1.5.0-rc.112](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.111...v1.5.0-rc.112) (2026-11-03)
 
 
