@@ -106,12 +106,14 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
         $this->assertNull($this->repo->linha('horarios', 21)['justificativa']);
     }
 
-    public function test_descricao_de_espaco_e_descricao_de_papel_viram_texto_neutro(): void
+    public function test_descricao_do_espaco_e_do_papel_ficam_intactas(): void
     {
         $this->service->anonimizar(self::HASH, semArquivos: true);
 
-        $this->assertSame(self::TEXTO_NEUTRO, $this->repo->linha('espacos', 30)['descricao']);
-        $this->assertNull($this->repo->linha('roles', 40)['description']);
+        $this->assertSame('Sala com texto livre', $this->repo->linha('espacos', 30)['descricao']);
+        $this->assertSame('Papel administrativo de teste', $this->repo->linha('roles', 40)['description']);
+        $this->assertNotContains('espacos', array_column($this->repo->atualizacoes, 'tabela'));
+        $this->assertNotContains('roles', array_column($this->repo->atualizacoes, 'tabela'));
     }
 
     public function test_segunda_execucao_nao_altera_nada(): void
@@ -246,7 +248,7 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
                 30 => ['id' => 30, 'descricao' => 'Sala com texto livre'],
             ],
             'roles' => [
-                40 => ['id' => 40, 'description' => null],
+                40 => ['id' => 40, 'description' => 'Papel administrativo de teste'],
             ],
             'sessions' => [
                 'sessao-1' => ['id' => 'sessao-1', 'payload' => 'dados'],

@@ -88,26 +88,6 @@ class AnonimizacaoDeBaseService
                     $simular,
                 ),
             ],
-            [
-                'tabela' => 'espacos',
-                'operacao' => 'anonimizar',
-                'quantidade' => $this->anonimizarTabela(
-                    'espacos',
-                    ['id', 'descricao'],
-                    fn (array $linha): array => $this->textosNeutros($linha, ['descricao']),
-                    $simular,
-                ),
-            ],
-            [
-                'tabela' => 'roles',
-                'operacao' => 'anonimizar',
-                'quantidade' => $this->anonimizarTabela(
-                    'roles',
-                    ['id', 'description'],
-                    fn (array $linha): array => $this->textosNeutros($linha, ['description']),
-                    $simular,
-                ),
-            ],
         ];
 
         foreach ((array) config('anonimizacao.apagar', []) as $tabela => $chave) {

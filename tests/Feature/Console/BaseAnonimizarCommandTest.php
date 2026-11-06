@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Console;
 
 use App\Console\Commands\BaseAnonimizarCommand;
+use App\Models\Andar;
+use App\Models\Espaco;
 use App\Models\Horario;
+use App\Models\Instituicao;
+use App\Models\Modulo;
 use App\Models\Reserva;
+use App\Models\Unidade;
 use App\Models\User;
 use App\Services\ExclusaoDeContaService;
 use Carbon\Carbon;
@@ -152,6 +157,32 @@ class BaseAnonimizarCommandTest extends TestCase
         $this->assertSame('Reunião particular', DB::table('reservas')->find($reserva->id)->titulo);
         $this->assertSame('Motivo digitado', DB::table('horarios')->where('reserva_id', $reserva->id)->value('justificativa'));
         Storage::disk('public')->assertExists('avatars/fulano.jpg');
+    }
+
+    public function test_descricao_do_espaco_e_do_papel_ficam_intactas(): void
+    {
+        $unidade = Unidade::factory()->create(['instituicao_id' => Instituicao::factory()->create()->id]);
+        $modulo = Modulo::factory()->create(['unidade_id' => $unidade->id]);
+        $andar = Andar::factory()->create(['modulo_id' => $modulo->id]);
+        $espaco = Espaco::create([
+            'andar_id' => $andar->id,
+            'nome' => 'Sala institucional',
+            'descricao' => 'Sala institucional com equipamentos',
+            'capacidade_pessoas' => 20,
+        ]);
+        $papelId = (int) DB::table('roles')->insertGetId([
+            'name' => 'papel-teste-anonimizacao-'.uniqid(),
+            'guard_name' => 'web',
+            'description' => 'Papel administrativo institucional',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('base:anonimizar', ['--force' => true, '--senha' => self::SENHA_DE_TESTE, '--sem-arquivos' => true])
+            ->assertExitCode(0);
+
+        $this->assertSame('Sala institucional com equipamentos', DB::table('espacos')->find($espaco->id)->descricao);
+        $this->assertSame('Papel administrativo institucional', DB::table('roles')->find($papelId)->description);
     }
 
     public function test_segunda_execucao_nao_altera_contas_nem_senha(): void

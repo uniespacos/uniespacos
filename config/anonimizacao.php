@@ -12,6 +12,8 @@ declare(strict_types=1);
 | `sem_dado_pessoal`. Tabela nova sem classificação quebra
 | AnonimizacaoCoberturaDeTabelasTest.
 |
+| Descrições de espaços e papéis são institucionais; mantidas por decisão de 06/11/2026.
+|
 */
 
 return [
@@ -37,8 +39,6 @@ return [
         'users' => 'name, email, telefone, profile_pic, password, remember_token e two_factor_* tratados; id, setor_id, papéis e email_verified_at preservados; contas da exclusão de conta puladas',
         'reservas' => 'titulo, descricao, observacao e conflict_cache tratados',
         'horarios' => 'justificativa tratada',
-        'espacos' => 'descricao (texto livre de gestor) tratada; nome e imagens são institucionais',
-        'roles' => 'description (texto livre administrativo) tratada; name preservado',
     ],
 
     'apagar' => [
@@ -59,6 +59,7 @@ return [
     'sem_dado_pessoal' => [
         'agendas' => 'vínculo de gestor por user_id, sem texto livre',
         'andars' => 'nome e tipo_acesso institucionais',
+        'espacos' => 'nome, descrição e imagens institucionais',
         'instituicaos' => 'nome, sigla e endereço institucionais',
         'migrations' => 'controle interno do Laravel',
         'model_has_permissions' => 'vínculo por id com permissões do Spatie',
@@ -66,6 +67,7 @@ return [
         'modulos' => 'nome institucional',
         'permissions' => 'catálogo de permissões do Spatie',
         'role_has_permissions' => 'vínculo papel-permissão do Spatie',
+        'roles' => 'name e description institucionais',
         'setors' => 'nome e sigla institucionais',
         'unidades' => 'nome e sigla institucionais',
     ],
