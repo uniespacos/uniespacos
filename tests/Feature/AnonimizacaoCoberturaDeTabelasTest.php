@@ -51,7 +51,7 @@ class AnonimizacaoCoberturaDeTabelasTest extends TestCase
     {
         return 'Tabela(s) sem classificação de privacidade: '.implode(', ', $semClassificacao).'. '
             .'Classifique cada uma em config/anonimizacao.php (grupos tratadas, apagar ou sem_dado_pessoal). '
-            .'Se a tabela tiver dado pessoal ou texto livre, trate-a e atualize o inventário em docs/privacidade/inventario-de-dados.md. '
+            .'Se a tabela tiver dado pessoal ou texto livre, trate-a e registre a mudança para o inventário de dados (T-14 no backlog). '
             .'Marque o bloco Privacidade do template de PR (.github/pull_request_template.md).';
     }
 }
