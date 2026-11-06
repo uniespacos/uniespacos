@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.113](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.112...v1.5.0-rc.113) (2026-11-06)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.6.0 ([7ecb96d](https://github.com/uniespacos/uniespacos/commit/7ecb96dabd5b111ddf084e89e8694572dc6a0912))
+* **main:** release 1.6.0 ([a40d030](https://github.com/uniespacos/uniespacos/commit/a40d030bbbcced86f5da33282feb6c6a3a4cbbc3))
+* release 1.6.0 com a retenção de dados e o broadcast mínimo ([8cc8177](https://github.com/uniespacos/uniespacos/commit/8cc8177c20c31726de05ab9bf205e6fafa6908ca))
+* sincronizar main em develop após release 1.6.0 ([6490831](https://github.com/uniespacos/uniespacos/commit/6490831a6ffbbf7b9aa41987e49014916693c014))
+
 ## [1.6.0](https://github.com/uniespacos/uniespacos/compare/v1.5.0...v1.6.0) (2026-11-06)
 
 
