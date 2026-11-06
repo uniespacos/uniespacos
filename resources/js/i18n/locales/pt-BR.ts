@@ -668,6 +668,8 @@ export const ptBR = {
             atribuir_gestor: 'Atribuir como Gestor',
             remover_gestor: 'Remover da Gestão',
             permissoes: 'Permissões do Usuário',
+            papeis_atuais: 'Papéis atuais',
+            papeis_acumulados_aviso: 'Este usuário tem mais de um papel; os papéis não podem ser alterados aqui.',
         },
     },
     admin: {

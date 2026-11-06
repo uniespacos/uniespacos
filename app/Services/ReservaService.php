@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Enums\SituacaoReserva\ModoArquivoEnum;
 use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
-use App\Events\ReservaEvent;
 use App\Jobs\AvaliarReservaJob;
 use App\Jobs\ProcessarCriacaoReserva;
 use App\Jobs\UpdateReservaJob;
@@ -33,6 +32,7 @@ class ReservaService
         protected AgendaRepositoryInterface $repoAgenda,
         protected EspacoService $espacoService,
         protected ConflictDetectionService $conflictService,
+        protected ReservaBroadcaster $broadcaster,
     ) {}
 
     /**
@@ -289,9 +289,7 @@ class ReservaService
 
         $this->revalidateConflictedReservations($horariosLiberados);
 
-        $espacoId = $reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
-        $horariosCount = $reserva->horarios()->count();
-        ReservaEvent::dispatch('canceled', $reserva->id, $espacoId, $horariosCount);
+        $this->broadcaster->publicar($reserva, 'canceled');
     }
 
     /**

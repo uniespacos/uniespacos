@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
-use App\Events\ReservaEvent;
 use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
@@ -14,6 +13,7 @@ use App\Notifications\ReservationUpdatedNotification;
 use App\Notifications\ReservationUpdateFailedNotification;
 use App\Services\AutoAprovacaoService;
 use App\Services\ExpansaoHorariosService;
+use App\Services\ReservaBroadcaster;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -50,7 +50,7 @@ class UpdateReservaJob implements ShouldQueue
      * MIN/MAX dos horarios restantes apos a edicao, garantindo que nenhum horario
      * fique fora do range. No escopo 'recurring', as datas vem do validatedData.
      */
-    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao): void
+    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
         Log::info('UpdateReservaJob started', [
             'reserva_id' => $this->reserva->id,
@@ -321,9 +321,7 @@ class UpdateReservaJob implements ShouldQueue
 
             ValidateReservationConflictsJob::dispatch($this->reserva);
 
-            $espacoId = $this->reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
-            $horariosCount = $this->reserva->horarios()->count();
-            ReservaEvent::dispatch('updated', $this->reserva->id, $espacoId, $horariosCount);
+            $broadcaster->publicar($this->reserva, 'updated');
 
         } catch (Exception $e) {
             Log::error('UpdateReservaJob failed', [

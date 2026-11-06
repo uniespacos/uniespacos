@@ -32,12 +32,14 @@ Não há canal de presença. O canal público `reserva-channel` ainda existe; a 
 
 **Responsabilidade:** Broadcasting de eventos de reserva para **todos os usuários conectados**.
 
-**Uso:**
+**Uso:** jobs e services não chamam `ReservaEvent::dispatch` diretamente. Eles publicam pelo ponto único [`ReservaBroadcaster`](#ponto-único-de-publicação-reservabroadcaster), sempre como último passo do fluxo (depois do commit e das notificações):
 ```php
-// Backend: Em jobs que alteram reserva (criação, validação, avaliação)
-ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount);
-ReservaEvent::dispatch('validated', $reserva->id, $espacoId, $horariosCount);
-ReservaEvent::dispatch('evaluated', $reserva->id, $espacoId, $horariosCount);
+// Backend: jobs e services que alteram reserva
+$broadcaster->publicar($reserva, 'created');    // ProcessarCriacaoReserva
+$broadcaster->publicar($reserva, 'validated');  // ValidateReservationConflictsJob
+$broadcaster->publicar($reserva, 'evaluated');  // AvaliarReservaJob
+$broadcaster->publicar($reserva, 'updated');    // UpdateReservaJob
+$broadcaster->publicar($reserva, 'canceled');   // ReservaService::notificarCancelamento
 ```
 
 **Evento Broadcast:** `ReservaEvent` implementa `ShouldBroadcastNow` (envio sem fila) e é publicado com o nome `reserva-event` (`broadcastAs()`), recebido no cliente como `.reserva-event`.
@@ -55,7 +57,7 @@ public function broadcastOn(): array
 **Payload Broadcast:**
 ```json
 {
-  "action": "created|validated|evaluated",
+  "action": "created|updated|validated|evaluated|canceled",
   "reservaId": 123,
   "espacoId": 5,
   "horariosCount": 3
@@ -106,6 +108,33 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 ---
 
+### Ponto único de publicação: `ReservaBroadcaster`
+
+**Localização:** `app/Services/ReservaBroadcaster.php` (`publicar(Reserva $reserva, string $acao)`)
+
+**Responsabilidade:** Único ponto que despacha `ReservaEvent` e o evento de domínio `ReservaAlterada`. Quem altera a reserva chama `publicar()` depois do commit e das notificações.
+
+| Ação | Chamada por | `ReservaAlterada` (invalida cache de relatórios) | `ReservaEvent` (tempo real) |
+|---|---|---|---|
+| `created` | `ProcessarCriacaoReserva` | Sim | Sim |
+| `updated` | `UpdateReservaJob` | Sim | Sim |
+| `evaluated` | `AvaliarReservaJob` | Sim | Sim |
+| `canceled` | `ReservaService::notificarCancelamento()` (cancelamento e exclusão de conta) | Sim | Sim |
+| `validated` | `ValidateReservationConflictsJob` | Não | Sim |
+
+**Ordem interna de `publicar()`:**
+
+1. Para as ações que alteram relatórios (`ReservaAlterada::ACOES_QUE_ALTERAM_RELATORIOS`), despacha `ReservaAlterada`. Esse dispatch fica **fora** do `try`: o evento de domínio não é engolido.
+2. Dentro de `try/catch (Throwable)`, calcula `espacoId` e `horariosCount` e despacha `ReservaEvent` (`ShouldBroadcastNow`).
+
+**Por que o evento de domínio sai primeiro:** o listener `InvalidarCacheRelatoriosAoAtualizarReserva` (`ShouldQueue`) escuta `ReservaAlterada`, e não o broadcast. No Laravel, o broadcast de um `ShouldBroadcastNow` pode rodar antes dos listeners do mesmo fluxo: se ele falhasse, a invalidação não seria despachada. Com `ReservaAlterada` primeiro e a publicação em `try`, a invalidação não depende do Reverb.
+
+**Falha tolerada:** se o `ReservaEvent` falhar (Reverb fora do ar, por exemplo), `publicar()` registra `Log::warning` e retorna. O job ou a request não falha, e o status da reserva não muda. Campos do log em [erros-e-logs.md](./erros-e-logs.md#broadcast-em-tempo-real-falha-tolerada).
+
+**Ação `validated`:** não gera `ReservaAlterada`, então validar conflitos não invalida relatórios. Ver [relatorios.md](../regras-de-negocio/relatorios.md#3-cache).
+
+---
+
 ### Fluxo de um Evento de Reserva
 
 **Exemplo: Criação de Reserva**
@@ -134,17 +163,22 @@ ProcessarCriacaoReserva::handle()
 │
 ├─ Dispara ValidateReservationConflictsJob
 │
-└─ **Broadcast ReservaEvent**
+└─ **Publicação (último passo)**: $broadcaster->publicar($reserva, 'created')
    │
-   ├─ Extrai espacoId = $reserva->horarios()->first()?->agenda->espaco_id
-   ├─ Extrai horariosCount = $reserva->horarios()->count()
+   ├─ ReservaAlterada::dispatch('created', $reserva->id)
+   │  └─ Listener na fila: invalida cache de relatórios
    │
-   └─ ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount)
-      │
-      └─ Reverb::broadcast([
-           'reserva-channel',  # Todos veem
-           'App.Models.Espaco.{espacoId}'  # Autorizados ao espaço veem
-         ])
+   └─ try {
+        Extrai espacoId e horariosCount
+        ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount)
+           │
+           └─ Reverb::broadcast([
+                'reserva-channel',  # Todos veem
+                'App.Models.Espaco.{espacoId}'  # Autorizados ao espaço veem
+              ])
+      } catch (Throwable) {
+        Log::warning(...)  # Falha do Reverb não falha o job
+      }
 
 [Reverb processa]
 
@@ -259,6 +293,8 @@ export function useReservationLiveUpdates(): void {
 - `'created'` — Nova reserva criada
 - `'validated'` — Conflitos validados
 - `'evaluated'` — Reserva avaliada (aprovada/reprovada)
+
+As ações `'updated'` e `'canceled'` são publicadas pelo backend, mas não estão no conjunto `ACOES_QUE_ATUALIZAM` deste hook: o hook público não as converte em `reserva:updated`.
 
 ---
 
@@ -443,13 +479,15 @@ if (count(array_unique($espacoIds)) > 1) {
 
 ### Backend
 
-1. **Job** (ex.: `ProcessarCriacaoReserva`) termina de alterar reserva
-2. **Extrai espacoId:** `$reserva->horarios()->first()?->agenda->espaco_id`
-3. **Extrai horariosCount:** `$reserva->horarios()->count()`
-4. **Dispatch event:** `ReservaEvent::dispatch('created', $reserva->id, $espacoId, $horariosCount)`
-5. **Reverb** transmite para canais:
+1. **Job** (ex.: `ProcessarCriacaoReserva`) termina de alterar reserva e fazer o commit
+2. **Notificações** saem antes (ver [notificacoes.md](./notificacoes.md#ordem-nos-jobs-notificação-antes-do-broadcast))
+3. **Publicação:** `$broadcaster->publicar($reserva, 'created')` (`ReservaBroadcaster`)
+   - Despacha `ReservaAlterada` (invalidação do cache de relatórios, fora do `try`)
+   - Dentro de `try/catch`, extrai `espacoId` e `horariosCount` e despacha `ReservaEvent`
+4. **Reverb** transmite para canais:
    - Público: `reserva-channel`
    - Privado: `App.Models.Espaco.{espacoId}`
+5. **Falha no Reverb** vira `Log::warning` e não falha o job nem a request. A invalidação do cache não depende dela.
 
 ### Frontend
 
@@ -510,6 +548,17 @@ window.Echo = echoInstance;
 ---
 
 ## Testing
+
+### Backend: falha de broadcast
+
+**Localização:** `tests/Feature/ReservaBroadcastFalhaTest.php`, com o publicador que falha em memória em `tests/Support/BroadcasterQueFalha.php`
+
+**Cenários:**
+
+- ✅ Falha do `ReservaEvent` não impede criação, edição, avaliação, validação nem cancelamento (status e notificações preservados)
+- ✅ Falha do broadcast não impede a invalidação do cache de relatórios (`ReservaAlterada`)
+- ✅ Ação `validated` não despacha `ReservaAlterada`
+- ✅ `Log::warning` é registrado sem a mensagem da exceção
 
 ### Unit: Registry
 
@@ -655,7 +704,7 @@ useEffect(() => {
 
 **Comportamento:** Worker carrega app na memória; mudanças em Job/Event/Notification não passam a valer
 
-**Sintoma:** ReservaEvent nova não é disparada, ou dispatch com parâmetros antigos
+**Sintoma:** comportamento novo de `ReservaBroadcaster` ou `ReservaAlterada` não aparece (ex.: relatório não invalida, evento de reserva com lógica antiga)
 
 **Solução:**
 ```bash
@@ -667,6 +716,8 @@ docker restart uniespacos-queue-worker-1
 ## Referências
 
 - **Backend Event:** `app/Events/ReservaEvent.php`
+- **Publicador:** `app/Services/ReservaBroadcaster.php`
+- **Evento de domínio (cache de relatórios):** `app/Events/ReservaAlterada.php`
 - **Routes:** `routes/channels.php`
 - **Limite de taxa do canal (T-29):** `bootstrap/app.php` (`withBroadcasting`), `app/Providers/AppServiceProvider.php` (limitador `broadcasting`)
 - **Jobs:** `app/Jobs/ProcessarCriacaoReserva.php`, `AvaliarReservaJob.php`, `UpdateReservaJob.php`, `ValidateReservationConflictsJob.php`
