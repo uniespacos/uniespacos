@@ -1,8 +1,8 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
-> **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.112 (com o #505, o #507 e o #509).
-> **Atualizado em:** 2026-11-05.
+> **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.113 (06/11/2026; mesmo código da 1.6.0, com o #505, o #507 e o #509).
+> **Atualizado em:** 2026-11-06.
 
 ## Como ler
 
@@ -15,16 +15,17 @@
 
 ## Agora
 
-- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado (primeira rodada em 06/11/2026).
-- **Próximo passo:** a preparação da próxima release (1.7.0, a onda que fechar primeiro, com a Onda 3 e a Onda 2 parte 2 em branches de integração); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado. Primeira rodada de retenção (06/11/2026, 03:30 UTC) conferida: 0 erros e simulação posterior sem nada a remover.
+- **Próximo passo:** o release 1.6.1 (Onda 3, parte 1: S26 e S14; decisão de 06/11/2026), com a branch de integração atualizada com a `develop` e validada em 06/11/2026; depois, staging (rc.114) e produção, com autorização. A Onda 2 parte 2 segue na branch de integração e sai como 1.7.0. Também: a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
-  | 06/11/2026, depois das 03:30 UTC | Conferir a primeira rodada de retenção em produção: 0 erros no agendador e nova simulação sem notificações lidas antigas | Responsável; quem pede confere a data antes | T-19 |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
   | Quando o responsável confirmar (sem data) | Confirmar o teste de abertura completo e a cópia externa do backup manual anterior à 1.6.0; depois disso, destruir o backup anterior à 1.5.0 (decisão de 02/11) | Responsável | T-23 |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
+  | Deploy da 1.6.1 em staging e em produção (sem data) | Conferir se o queue worker subiu com a imagem nova depois do deploy (a S26 exige; reiniciar se não subiu); fila vazia antes do deploy e `failed_jobs` sem jobs de reserva depois | Responsável | S26 |
+  | Depois do deploy da 1.6.1 em produção e do teste do modal (sem data) | Avisar os institucionais de que a orientação de não salvar o modal de quem tem dois papéis (I4) deixou de valer, e registrar a retirada | Responsável; o master registra | S14 (I4) |
   | Depois do release que levar a PR da Onda 2 (sem data) | Cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução do reprocessamento das fotos antigas | Responsável | T-31 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
@@ -36,11 +37,13 @@
 Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
 
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
-- **Próxima minor (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31, T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
-- **Próxima minor (Onda 3; branch `feat/onda-3-estabilidade`)**: Onda 3. S26 e S14 (em andamento ou planejadas), S42, S17, S33 e S34/S35.
+- **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
+- **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31 (pronta na integração), T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
+- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
-- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo; a que fechar primeiro sai como 1.7.0, e a outra como 1.8.0.
+- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fecha primeiro, como 1.6.1; a Onda 2 parte 2 sai como 1.7.0. Enquanto a 1.6.1 estiver em staging, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
+- **Forçar versão:** se um dia for preciso, só com `release-as` no `release-please-config.json` (produção), removido depois do release. Nunca com rodapé `Release-As:` em commit: ele chega também ao release-please de staging, que pode criar na `develop` uma tag sem sufixo, e essa tag dispara o deploy de produção.
 
 ---
 
@@ -123,19 +126,10 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **S42** · Revisar a configuração de proxies confiáveis (borda e aplicação) — `P1` · pequeno · segurança
   = B28, E1-35, D-EST-17.
 - [ ] **S17** · Congelar o relógio nos testes que dependem da data real — `P2` · médio · teste
-  Habilita a S26, a S33 e a S36. 18 arquivos de teste PHP usam `now()` ou `today()` sem congelar (contagem de 04/11/2026); o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
+  Habilita a S33 e a S36 (a S26 entrou no #518 sem depender dela). 18 arquivos de teste PHP usam `now()` ou `today()` sem congelar (contagem de 04/11/2026); o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
   **Pronto quando:** existe um trait de congelamento em `tests/Concerns/` e a suíte passa em duas datas simuladas (dia 31 e dia 1).
-- [ ] **S26** · 🔧 em andamento (código pronto na integração) · Broadcast não decide o desfecho dos jobs de reserva — `P1` · médio · bug
-  Uma falha do Reverb pode marcar o job como falho e pular a notificação. Decisão tomada: broadcast depois do commit, num ponto único com `try/catch` (D-EST-14). = B15, B59, B60, E1-17.
-  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Ponto único de publicação, chamado por último e depois do commit nos 5 pontos (4 jobs e o cancelamento); falha do broadcaster vira aviso no log e não falha o job, não pula notificação nem regrava a validação de conflitos como falha. A invalidação do cache de relatórios saiu do evento de tempo real para um evento de domínio próprio: no Laravel o broadcast roda antes dos listeners, e uma falha deixaria o cache desatualizado em silêncio. Suíte completa verde (614). Exige reiniciar o queue worker no deploy (staging e produção).
-  **Pronto quando:** com um broadcaster que lança exceção, criar e avaliar reserva não gera `failed_jobs` e o solicitante é notificado.
 - [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
-  Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S26 e da S17. = B15, B61, E1-18.
-- [ ] **S14** · 🔧 em andamento (código pronto na integração) · Tela de permissões usa o papel efetivo do usuário — `P1` · médio · bug
-  Salvar o modal de quem tem dois papéis (comum e gestor) pode apagar as agendas dessa pessoa. Mitigação em vigor: os institucionais foram orientados a não salvar o modal desses usuários (I4). = B56, E2-14, A-15; decisão relacionada: B44.
-  **Código pronto e integrado em `feat/onda-3-estabilidade` (04/11/2026); entra pela PR da Onda 3.** Branch `fix/estab-s14-permissoes-papeis-acumulados`. Sem depender da B44: quem tem mais de um papel não tem papel trocado nem removido ao salvar o modal, e as agendas só mudam no que foi tirado ou incluído (nunca em massa); para papel único, a regra continua a mesma. O modal mostra os papéis acumulados só para leitura, com aviso. As notificações de gestor passam a sair só em transição real e depois do commit (antes, a todo salvamento). Teste HTTP cobre os dois casos. O próprio sistema produz o acúmulo de papéis ao vincular gestor a um espaço, por isso a B44 é decisão de modelo. A mitigação I4 pode ser retirada depois do deploy da Onda 3. As notificações de gestor são reenviadas a cada salvamento do modal; a correção entra junto com a S14.
-  **Objetivo de segurança:** a tela de permissões não pode alterar papéis nem agendas de quem tem dois papéis ao ser salva.
-  **Pronto quando:** um teste HTTP de `updatePermissions` preserva papéis e agendas de usuário com dois papéis.
+  Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S17 (a S26, da qual também dependia, entrou no #518). = B15, B61, E1-18.
 - [ ] **S14b** · Conferir o dono atual antes de reatribuir uma agenda a outro gestor — `P3` · pequeno · segurança
   Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026.
 - [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
@@ -388,6 +382,9 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **06/11** · #518 Onda 3, parte 1 (vai na 1.6.1): S26 e S14 concluídas. S26: ponto único de publicação do evento de reserva, chamado por último e depois do commit nos 5 pontos (4 jobs e o cancelamento); falha do broadcaster vira aviso no log, sem falhar o job, pular notificação ou regravar a validação de conflitos; a invalidação do cache de relatórios passa para o evento de domínio `ReservaAlterada`. S14: o modal de permissões não troca nem remove papel de quem tem mais de um, e só muda as agendas tiradas ou incluídas; papéis acumulados aparecem só para leitura; notificações de gestor só em transição real, depois do commit. Validado em 06/11/2026 com a `develop` da rc.113: 621 testes de backend (suíte normal e semeada), 662 de frontend, Pint, PHPStan e ESLint sem erros e sem supressão nova. Seguem na tabela de passos: a conferência do queue worker no deploy (S26) e a retirada da mitigação I4 depois do deploy em produção (S14). Seguem em aberto: S14b, S14c e a decisão B44.
+- **06/11** · T-19 primeira rodada de retenção em produção conferida pelo responsável por volta das 10:40 na Bahia (13:40 UTC, depois das 03:30 UTC): o agendador não registrou nenhum erro nas últimas 12 h (janela que inclui a rodada) e a simulação seguinte deu 0 notificações lidas antigas (eram 2.957 antes da rodada), 0 de cache, 0 sessões e 0 logs diários. A simulação não conta jobs falhos nem lotes (só informa que a limpeza seria executada), então a poda dos 197 jobs falhos não foi medida; só a contagem à parte provaria isso, e nenhum item depende dela. Rotina diária seguindo sem intervenção.
+- **06/11** · #517 backlog: conferência da primeira rodada de retenção em produção (T-19), staging na rc.113 e decisão de lançar a Onda 3 parte 1 como 1.6.1.
 - **05/11** · #513 e #514 release 1.6.0 em produção (Onda 2, parte 1: #505, #507 e #509). Pós-deploy OK nos serviços de app, worker, reverb e web, com o banco saudável (recriado para aplicar o limite de logs da T-20, com dados intactos); debug e modo de manutenção desligados; o deploy recriou o worker com a imagem nova, e o reinício explícito não foi necessário; rotina de retenção no agendamento das 03:30 UTC, com 0 erros nos logs. Smoke por papel: reserva de teste criada pela conta comum e indeferida pelo gestor (indeferida, não aprovada, porque aprovar indeferiria horários de terceiros em conflito); a notificação chegou em tempo real ao gestor e ao solicitante, sem recarregar a página. Simulação de retenção aprovada pelo responsável: 2.957 notificações lidas há mais de 90 dias e 197 jobs falhos há mais de 30 dias. Agendador religado depois da aprovação; primeira rodada em 06/11/2026, 03:30 UTC (conferência na tabela de verificações). Sincronização `main` → `develop`: #515.
 - **05/11** · T-19 e T-20 concluídas em produção (#505, na 1.6.0). T-19b concluída por decisão do responsável em 05/11/2026, sem execução em produção: a simulação em staging (02/11) deu 0 justificativas a trocar, e o responsável dispensou a simulação e a execução em produção.
 - **05/11** · #512 backlog: estado da rc.112, auditoria de 04/11 e regra de PR por onda.

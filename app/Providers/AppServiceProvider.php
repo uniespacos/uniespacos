@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Events\ReservaEvent;
+use App\Events\ReservaAlterada;
 use App\Listeners\InvalidarCacheRelatoriosAoAtualizarReserva;
 use App\Models\Espaco;
 use App\Models\Instituicao;
@@ -108,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
             return app(RelatorioPolicy::class)->aplicarEscopoParaUsuario($user);
         });
 
-        Event::listen(ReservaEvent::class, InvalidarCacheRelatoriosAoAtualizarReserva::class);
+        Event::listen(ReservaAlterada::class, InvalidarCacheRelatoriosAoAtualizarReserva::class);
 
         RateLimiter::for('locale', function (Request $request) {
             return Limit::perMinute(60)->by('locale|'.$request->ip());

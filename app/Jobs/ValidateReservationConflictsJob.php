@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Events\ReservaEvent;
 use App\Models\Reserva;
 use App\Services\ConflictDetectionService;
+use App\Services\ReservaBroadcaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -45,7 +45,7 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
     /**
      * Execute the job — runs conflict detection and caches the result on the reservation.
      */
-    public function handle(ConflictDetectionService $conflictService): void
+    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
         Log::info('ValidateReservationConflictsJob started', ['reserva_id' => $this->reserva->id]);
 
@@ -59,9 +59,7 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
                 'validation_status' => 'completed',
             ]);
 
-            $espacoId = $this->reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
-            $horariosCount = $this->reserva->horarios()->count();
-            ReservaEvent::dispatch('validated', $this->reserva->id, $espacoId, $horariosCount);
+            $broadcaster->publicar($this->reserva, 'validated');
 
             Log::info('ValidateReservationConflictsJob completed', [
                 'reserva_id' => $this->reserva->id,

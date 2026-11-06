@@ -2101,19 +2101,7 @@ parameters:
 			path: app/Services/UserService.php
 
 		-
-			message: '#^Parameter \#1 \$array of function array_diff expects an array of values castable to string, array\<mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/UserService.php
-
-		-
 			message: '#^Parameter \#1 \.\.\.\$permissions of method App\\Models\\User\:\:syncPermissions\(\) expects array\|BackedEnum\|Illuminate\\Support\\Collection\|int\|Spatie\\Permission\\Contracts\\Permission\|string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/UserService.php
-
-		-
-			message: '#^Parameter \#2 \.\.\.\$arrays of function array_diff expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Services/UserService.php

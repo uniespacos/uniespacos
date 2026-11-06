@@ -670,6 +670,8 @@ export const es = {
             atribuir_gestor: 'Asignar como Gestor',
             remover_gestor: 'Eliminar de la Gestión',
             permissoes: 'Permisos del Usuario',
+            papeis_atuais: 'Roles actuales',
+            papeis_acumulados_aviso: 'Este usuario tiene más de un rol; los roles no se pueden cambiar aquí.',
         },
     },
     admin: {
