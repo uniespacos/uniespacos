@@ -40,6 +40,8 @@ class RetencaoAplicarCommandTest extends TestCase
             'retencao.notificacoes_lidas_dias' => 90,
             'retencao.cache_dias' => 7,
             'retencao.sessoes_dias' => 7,
+            'retencao.tokens_redefinicao_dias' => 1,
+            'retencao.jobs_pendentes_alerta_dias' => 7,
         ]);
     }
 

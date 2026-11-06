@@ -44,6 +44,8 @@ return [
         'notificacoes_lidas_dias',
         'cache_dias',
         'sessoes_dias',
+        'tokens_redefinicao_dias',
+        'jobs_pendentes_alerta_dias',
     ],
 
     'limites' => [

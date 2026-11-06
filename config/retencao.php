@@ -23,6 +23,10 @@ return [
 
     'sessoes_dias' => env('RETENCAO_SESSOES_DIAS', 7),
 
+    'tokens_redefinicao_dias' => env('RETENCAO_TOKENS_REDEFINICAO_DIAS', 1),
+
+    'jobs_pendentes_alerta_dias' => env('RETENCAO_JOBS_PENDENTES_ALERTA_DIAS', 7),
+
     'logs' => [
         'diretorio' => env('RETENCAO_LOGS_DIRETORIO', storage_path('logs')),
     ],

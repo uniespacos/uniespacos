@@ -46,6 +46,30 @@ class RetencaoRepositoryDb implements RetencaoRepositoryInterface
         return $this->sessoesInativasAntesDe($corteUnix)->delete();
     }
 
+    public function contarTokensRedefinicaoAntesDe(CarbonInterface $corte): int
+    {
+        return $this->tokensRedefinicaoAntesDe($corte)->count();
+    }
+
+    public function apagarTokensRedefinicaoAntesDe(CarbonInterface $corte): int
+    {
+        return $this->tokensRedefinicaoAntesDe($corte)->delete();
+    }
+
+    public function contarTokensRedefinicaoSemData(): int
+    {
+        return DB::table('password_reset_tokens')
+            ->whereNull('created_at')
+            ->count();
+    }
+
+    public function contarJobsPendentesAntesDe(int $corteUnix): int
+    {
+        return DB::table('jobs')
+            ->where('created_at', '<', $corteUnix)
+            ->count();
+    }
+
     public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array
     {
         $linhas = [];
@@ -101,6 +125,13 @@ class RetencaoRepositoryDb implements RetencaoRepositoryInterface
                 ->table($this->nomeOuPadrao($loja['lock_table'] ?? null, 'cache_locks'))
                 ->where('expiration', '<', $corteUnix),
         ];
+    }
+
+    private function tokensRedefinicaoAntesDe(CarbonInterface $corte): Builder
+    {
+        return DB::table('password_reset_tokens')
+            ->whereNotNull('created_at')
+            ->where('created_at', '<', $corte);
     }
 
     private function sessoesInativasAntesDe(int $corteUnix): Builder

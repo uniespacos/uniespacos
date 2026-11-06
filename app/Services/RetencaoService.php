@@ -73,6 +73,51 @@ class RetencaoService
     }
 
     /**
+     * Apaga tokens de redefinição de senha com created_at anterior a hoje − N dias.
+     * Linhas sem created_at ficam de fora e são contadas no log, sem e-mail nem token.
+     */
+    public function tokensRedefinicao(bool $simular = false): ?int
+    {
+        $dias = $this->diasValidos('tokens_redefinicao_dias', config('retencao.tokens_redefinicao_dias'));
+
+        if ($dias === null) {
+            return null;
+        }
+
+        $semData = $this->repo->contarTokensRedefinicaoSemData();
+
+        if ($semData > 0) {
+            Log::info('retencao.tokens_redefinicao_sem_data', ['quantidade' => $semData]);
+        }
+
+        $corte = now()->subDays($dias);
+
+        return $simular
+            ? $this->repo->contarTokensRedefinicaoAntesDe($corte)
+            : $this->repo->apagarTokensRedefinicaoAntesDe($corte);
+    }
+
+    /**
+     * Só conta jobs pendentes com created_at anterior a hoje − N dias e sinaliza no log. Nunca apaga.
+     */
+    public function jobsPendentesAntigos(): ?int
+    {
+        $dias = $this->diasValidos('jobs_pendentes_alerta_dias', config('retencao.jobs_pendentes_alerta_dias'));
+
+        if ($dias === null) {
+            return null;
+        }
+
+        $quantidade = $this->repo->contarJobsPendentesAntesDe(now()->subDays($dias)->getTimestamp());
+
+        if ($quantidade > 0) {
+            Log::warning('retencao.jobs_pendentes_antigos', ['quantidade' => $quantidade]);
+        }
+
+        return $quantidade;
+    }
+
+    /**
      * Apaga `laravel-AAAA-MM-DD.log` com data anterior a hoje − N dias, N de logging.channels.daily.days.
      * A decisão usa só a data do nome do arquivo, nunca o mtime.
      */

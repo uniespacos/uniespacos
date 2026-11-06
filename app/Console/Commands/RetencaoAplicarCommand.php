@@ -20,7 +20,7 @@ class RetencaoAplicarCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Aplica os prazos de retenção de jobs, lotes, notificações lidas, cache, sessões e logs diários.';
+    protected $description = 'Aplica os prazos de retenção de jobs, lotes, notificações lidas, cache, sessões, tokens de redefinição de senha e logs diários, e sinaliza jobs pendentes antigos.';
 
     public function handle(RetencaoService $retencao): int
     {
@@ -32,14 +32,16 @@ class RetencaoAplicarCommand extends Command
             $this->rotina('notificacoes_lidas', fn (): ?int => $retencao->notificacoesLidas($simular), $simular),
             $this->rotina('cache', fn (): ?int => $retencao->cache($simular), $simular),
             $this->rotina('sessoes', fn (): ?int => $retencao->sessoes($simular), $simular),
+            $this->rotina('tokens_redefinicao', fn (): ?int => $retencao->tokensRedefinicao($simular), $simular),
             $this->rotina('logs_diarios', fn (): ?int => $retencao->logs($simular), $simular),
+            $this->rotina('jobs_pendentes_antigos', fn (): ?int => $retencao->jobsPendentesAntigos(), $simular, somenteContagem: true),
             $this->podarFilas($retencao, $simular),
         ];
 
         return in_array(false, $resultados, true) ? self::FAILURE : self::SUCCESS;
     }
 
-    private function rotina(string $nome, Closure $acao, bool $simular): bool
+    private function rotina(string $nome, Closure $acao, bool $simular, bool $somenteContagem = false): bool
     {
         try {
             $quantidade = $acao();
@@ -53,7 +55,13 @@ class RetencaoAplicarCommand extends Command
             return true;
         }
 
-        $this->line("[{$nome}] {$quantidade} ".($simular ? 'seriam removidos.' : 'removidos.'));
+        $desfecho = match (true) {
+            $somenteContagem => 'encontrados.',
+            $simular => 'seriam removidos.',
+            default => 'removidos.',
+        };
+
+        $this->line("[{$nome}] {$quantidade} {$desfecho}");
         Log::info('retencao.rotina_aplicada', ['rotina' => $nome, 'quantidade' => $quantidade, 'simulacao' => $simular]);
 
         return true;

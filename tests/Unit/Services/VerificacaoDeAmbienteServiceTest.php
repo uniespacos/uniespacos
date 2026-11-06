@@ -45,6 +45,8 @@ class VerificacaoDeAmbienteServiceTest extends TestCase
             'retencao.notificacoes_lidas_dias' => 90,
             'retencao.cache_dias' => 7,
             'retencao.sessoes_dias' => 7,
+            'retencao.tokens_redefinicao_dias' => 1,
+            'retencao.jobs_pendentes_alerta_dias' => 7,
         ]);
     }
 
@@ -112,6 +114,8 @@ class VerificacaoDeAmbienteServiceTest extends TestCase
             'bcrypt rounds abaixo de 12' => ['bcrypt_rounds', ['hashing.bcrypt.rounds' => 10]],
             'Telescope instalado' => ['telescope_instalado', ['verificacao-ambiente.classes.telescope' => VerificacaoDeAmbienteService::class]],
             'prazo de retenção zero' => ['retencao_prazos', ['retencao.cache_dias' => 0]],
+            'prazo de tokens de redefinição zero' => ['retencao_prazos', ['retencao.tokens_redefinicao_dias' => 0]],
+            'prazo de alerta de jobs pendentes inválido' => ['retencao_prazos', ['retencao.jobs_pendentes_alerta_dias' => 'abc']],
         ];
     }
 
