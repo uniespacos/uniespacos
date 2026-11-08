@@ -51,7 +51,7 @@ O sistema de autorização reconhece **quatro atores** no contexto de reservas:
 
 **Exemplo:** Um gestor da agenda de "Sala de Aula A" pode ver e avaliar reservas que incluem "Sala de Aula A", mas não pode ver reservas de "Sala de Aula B", mesmo que de outro gestor.
 
-**Acúmulo:** o papel `'gestor'` pode coexistir com `'comum'` no mesmo usuário. É o estado que o sistema produz ao vincular um gestor a um espaço (`EspacoService::updateGestores()` adiciona `'gestor'` sem remover o papel anterior). As regras de acúmulo e a decisão pendente estão em [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões).
+**Acúmulo:** o papel `'gestor'` pode coexistir com `'comum'` no mesmo usuário. É o estado que o sistema produz ao vincular um gestor a um espaço (`EspacoService::updateGestores()` adiciona `'gestor'` sem remover o papel anterior). As regras de acúmulo estão em [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões).
 
 ---
 
@@ -458,7 +458,7 @@ return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 
 ### 1. Separação entre Roles
 
-Cada papel tem escopo bem definido, e as permissões de um usuário são a soma dos papéis que ele tem. Um usuário pode acumular papéis: `'comum'` + `'gestor'` é o estado produzido pelo sistema ao vincular um gestor a um espaço. O acúmulo não é uma exceção a ser evitada; a forma de tratá-lo (se é estado válido ou deve ser normalizado) é a decisão B44 pendente (ver [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões)).
+Cada papel tem escopo bem definido, e as permissões de um usuário são a soma dos papéis que ele tem. Um usuário pode acumular papéis: `'comum'` + `'gestor'` é o estado produzido pelo sistema ao vincular um gestor a um espaço. O acúmulo é estado válido e não se normaliza (decisão de 08/11/2026, ver [Decisão sobre papéis acumulados](#decisão-sobre-papéis-acumulados)). O papel `'gestor'`, nesse caso, depende de ter agenda vinculada.
 
 As linhas "Solicitante" valem para qualquer usuário, inclusive para quem também tem o papel `'gestor'` ou `'institucional'`. Um "—" indica apenas que o papel, sozinho, não concede a ação.
 
@@ -630,7 +630,7 @@ Sem transição real (ex.: `'comum'` salvo como `'comum'`, ou gestor salvo com a
 
 Este é o caso de quem acumula `'comum'` + `'gestor'`. O modal mostra os papéis atuais como etiquetas só de leitura, com o aviso de que os papéis não podem ser alterados ali. Não há seletor de papel.
 
-- **Papéis não mudam.** O `role_name` da request é validado (precisa existir), mas ignorado. Nenhum papel é adicionado ou removido.
+- **Papéis não mudam.** O `role_name` da request é validado (precisa existir), mas ignorado. Nenhum papel é adicionado ou removido. Esta é a regra do código atual; a regra decidida para o papel `'gestor'` ainda não está aplicada no modal (item S14d do backlog, ver [Decisão sobre papéis acumulados](#decisão-sobre-papéis-acumulados)).
 - **Agendas só são tratadas se `'gestor'` estiver entre os papéis.** Se estiver, as agendas que estavam vinculadas e deixaram de constar na lista são desvinculadas, e as novas são vinculadas. Não há desvinculação em massa do conjunto inteiro, só das removidas da lista.
 - **Sem `'gestor'` entre os papéis** (ex.: `'comum'` + `'institucional'`), as agendas não são tocadas.
 - **Notificações.** Só `UserAssignedAsManagerNotification`, e só se o usuário ganhou agenda nova sendo gestor. Não há `UserRemovedAsManagerNotification` neste caso, porque o papel `'gestor'` continua.
@@ -647,9 +647,25 @@ Papéis, agendas e permissões diretas são gravados numa única `DB::transactio
 | Um papel | Sim (Institucional, Gestor, Comum) | Não exibidos | Aparece se o papel selecionado for `'gestor'` |
 | Mais de um papel | Não | Etiquetas só de leitura + aviso | Aparece se `'gestor'` estiver entre os papéis |
 
-### Decisão pendente B44
+### Decisão sobre papéis acumulados
 
-Ainda não está decidido se o acúmulo `'comum'` + `'gestor'` é estado válido ou se deve ser normalizado, e se o modal passará a aceitar seleção múltipla de papéis. Até essa decisão, o código preserva o estado atual, e o comportamento descrito nesta seção é provisório. O acompanhamento está no [backlog](../backlog.md) (item B44, relacionado à S14).
+Decidido pelo responsável em 08/11/2026 (item B44 do [backlog](../backlog.md), tratado no item S14d):
+
+- **O acúmulo é estado válido.** Papéis acumulados (`'comum'` + `'gestor'`, ou `'comum'` + `'institucional'`) não são normalizados.
+- **Regra do papel `'gestor'`:** o usuário só é gestor se tiver ao menos uma agenda vinculada.
+  - Quem acumula papéis sem ser gestor vira gestor ao receber agenda.
+  - Quem é comum e gestor e perde todas as agendas perde o papel de gestor e continua comum.
+- **Seleção múltipla de papéis no modal:** não decidida. Fica em aberto como pendência menor do item S14d.
+
+**Estado do código (08/11/2026):** o vínculo pelo espaço (`EspacoService`) já segue a regra. O modal (`UserService::updatePermissions`) ainda não segue (item S14d):
+
+| Caso | Comportamento atual do modal | Regra decidida |
+| --- | --- | --- |
+| Papel único `'gestor'` com lista de agendas vazia | Continua gestor | Perde o papel de gestor |
+| Papéis acumulados que incluem `'gestor'`, ao perder todas as agendas | Continua gestor | Perde o papel de gestor |
+| Papéis acumulados sem `'gestor'`, ao receber agenda | Não vira gestor | Vira gestor |
+
+Até a S14d, o modal segue o comportamento descrito nesta seção; a regra acima é o alvo.
 
 ---
 

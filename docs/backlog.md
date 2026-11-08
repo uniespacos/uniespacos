@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.113 (06/11/2026; mesmo código da 1.6.0, com o #505, o #507 e o #509).
-> **Atualizado em:** 2026-11-06.
+> **Atualizado em:** 2026-11-08.
 
 ## Como ler
 
@@ -30,7 +30,7 @@
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
-- **Decisões que mais destravam:** encarregado formal (F-01), prazos de guarda (F-03), canal do titular (F-08), 2FA (F-12), rastreador de erros e canal de alerta (D-EST-01, D-EST-15). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
+- **Decisões que mais destravam:** pessoa do encarregado (F-01), confirmação das categorias da guarda (F-03), rito e prazo de atendimento ao titular (F-08), F-05, F-06 e as perguntas da TI (T-23). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
 ## Próximas versões (previsão)
 
@@ -39,7 +39,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
 - **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
 - **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31 (pronta na integração), T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
-- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
+- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b, S14c e S14d. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
 - **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fecha primeiro, como 1.6.1; a Onda 2 parte 2 sai como 1.7.0. Enquanto a 1.6.1 estiver em staging, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
@@ -96,14 +96,14 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **T-17, T-18 (retomada)** · Retomar a página de privacidade: levantamento de design e redesenho — `P2` · médio · produto/UI · depende do texto final (T-10, T-17, T-18 / F-01)
   Página em standby desde 01/11, por decisão do responsável: os termos estão minimamente adequados, mas a UI/UX ficou desarmônica com o design do sistema. Detalhe e condição de retomada em [`privacidade/pagina-de-privacidade.md`](./privacidade/pagina-de-privacidade.md). Primeiro passo, antes de qualquer redesenho: levantar o que já existe no projeto (tokens Catppuccin do `@theme`, átomos, moléculas e templates em `resources/js/presentation`, primitivos shadcn em `resources/js/components/ui`, e os padrões de anatomia de página e estado vazio do #487) e redesenhar a partir desse levantamento.
   **Pronto quando:** o levantamento de design está registrado no documento da área; a página está redesenhada com o texto final aprovado; com `PRIVACY_PAGE_ENABLED=true` em staging, a página, os links e o e-mail passam nos testes e no roteiro.
-- [ ] **T-30** · Reforçar a autenticação de perfis administrativos — `P2` · médio · segurança · depende da F-12
-  = A-10, P-13, P-18.
 - [ ] **T-14, T-16** · Versionar o inventário de dados e o runbook de incidente em `docs/privacidade/` — `P2` · pequeno · docs
   Rascunhos prontos, fora do git; aguardam aprovação e a definição de papéis (T-10). O RIPD (T-15) e o registro de incidentes continuam fora do git.
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
+  Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`). Falta o rito e o prazo de resposta (F-08).
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
   Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). Snapshot de auditoria e backup manual vão cifrados do lado do responsável, o que mitiga a transferência.
+  **Prazo de guarda (decidido em 08/11/2026):** 90 dias. Falta confirmar se os 90 dias valem para todas as categorias ou só como referência, e se o destino é eliminar ou anonimizar (F-03).
 
 **Diferidas pelo responsável**
 
@@ -132,6 +132,10 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026. Reproduzido no teste da S14 em staging (06/11/2026): uma agenda escolhida por engano no modal passou para a conta de teste sem nenhum aviso (estava sem gestor, sem prejuízo). Até a correção, quem usa o modal confere a agenda antes de salvar.
 - [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
   Isso deixava testes de permissão instáveis (o usuário do teste ganhava gestor antes da requisição). Isolar o efeito para quem precisa dele. Achado em 04/11/2026.
+- [ ] **S14d** · Aplicar no modal de permissões a regra "gestor só com agenda vinculada" — `P2` · pequeno · bug
+  **Decidido pelo responsável em 08/11/2026 (B44):** o acúmulo de papéis é estado válido e não se normaliza. Regra: o usuário só é gestor se tiver ao menos uma agenda vinculada. Quem acumula papéis sem ser gestor vira gestor ao receber agenda. Quem é comum e gestor e perde todas as agendas perde o papel de gestor. A seleção múltipla de papéis no modal não foi decidida e fica em aberto (pendência menor deste item).
+  **Achado no código (08/11/2026):** o vínculo pelo espaço (`EspacoService`) já segue a regra. O modal (`UserService::updatePermissions`, `atualizarPapelUnico` e `atualizarAgendasDeUsuarioComPapeisAcumulados`) não segue: (a) com papel único `gestor` e lista de agendas vazia, continua gestor; (b) com papéis acumulados que incluem `gestor`, ao perder todas as agendas continua gestor; (c) com papéis acumulados sem `gestor`, não vira gestor ao receber agenda. Regra de negócio em [autorização](./regras-de-negocio/autorizacao.md#decisão-sobre-papéis-acumulados).
+  **Pronto quando:** no modal, perder a última agenda tira o papel de gestor, e a notificação de remoção sai depois do commit; receber agenda dá o papel de gestor, inclusive para quem acumula papéis; há testes de feature para os três casos.
 - [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
   Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
 
@@ -144,7 +148,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **S36** · "Hoje" no fuso de negócio (America/Bahia) nas regras de data — `P2` · médio · bug
   À noite, o usuário pode não conseguir reservar para o próprio dia, porque a validação usa UTC. Decisão tomada: regras em America/Bahia, armazenamento em UTC (D-EST-02). Depende da S17. = B3, E1-04.
 - [ ] **RR-H3** · Fechar a brecha de reserva dupla sob concorrência — `P2` · médio · bug
-  O lock só alcança linhas que já existem e não há restrição no banco; duas criações simultâneas no mesmo horário vazio podem passar. Decidir a abordagem: lock consultivo por agenda e dia, ou restrição de exclusão no PostgreSQL.
+  O lock só alcança linhas que já existem e não há restrição no banco; duas criações simultâneas no mesmo horário vazio podem passar. **Abordagem decidida pelo responsável em 08/11/2026:** lock consultivo do PostgreSQL (advisory lock) por agenda e dia.
   **Pronto quando:** um teste com duas conexões reais não grava dois horários deferidos sobrepostos.
 - [ ] **RR-H2** · Validar no envio todas as semanas da recorrência — `P2` · médio · bug
   A validação síncrona olha só a primeira data; um conflito em semana posterior aparece no job como falha genérica.
@@ -185,8 +189,6 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 **Operação**
 
-- [ ] **S44, S45** · Health-check da fila e rastreador de erros — `P2` · médio · operação
-  Hoje uma falha de fila só aparece por reclamação. Dependem da D-EST-15 (canal de alerta) e da D-EST-01 (rastreador). = B23, E1-30, E1-31.
 - [ ] **S21, S71** · Runbooks versionados de deploy, rollback, hotfix, sincronização `main` → `develop` e restore — `P2` · médio · docs
   Não há nenhum (o hotfix 1.4.3 foi feito sem). Base: REGRAS §3 do plano de estabilização (arquivo local). Destino: `docs/operacao/`. O restore depende da T-23. = E2-D, B65.
 - [ ] **OP-01** · Numeração das release candidatas de staging parada na 1.5.0 — `P4` · pequeno · operação
@@ -292,9 +294,15 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 
 - [ ] **E3-01** · Re-baseline da documentação da v2 — `P3` · grande · decisão
   A documentação preparatória está na branch `docs/v2-0-documentacao-preparatoria`, não mergeada e escrita sobre a rc.71. Precisa aplicar o ADENDO-V2 antes de entrar na `develop`, já no padrão de nomes de `docs/`. Escopo da v2: Gestor de Unidade e Gestor de Espaço, dashboard composto, setor e expediente, aprovação por urgência, QR Code e chamados, consolidação retroativa (sprints 0 a 7).
-  **Gate da v2:** 14 dias de v1 estável · fuso de negócio (S36) · isolamento de escrita (S48–S50) · staging anonimizado (E3-03, T-41) · restore testado nos últimos 30 dias (T-23) · jobs sem falha por broadcast (S26) · testes de caracterização (B26) · destino do PR #397.
-- [ ] **PR #397** · Decidir o destino do módulo de chamados — `P2` · pequeno · decisão
-  Aberto desde 26/08, sem revisão, com conflitos em 83 arquivos. Recomendação dos planos: fechar como substituído e reimplementar na v2 (sprint 6). = D-EST-05, D-7, A-06.
+  **Gate da v2:** 14 dias de v1 estável · fuso de negócio (S36) · isolamento de escrita (S48–S50) · staging anonimizado (E3-03, T-41) · restore testado nos últimos 30 dias (T-23) · jobs sem falha por broadcast (S26) · testes de caracterização (B26).
+- [ ] **PR #397** · Módulo de chamados: fica aberto, sem prazo — `P2` · pequeno · decidido
+  **Decidido pelo responsável em 08/11/2026:** a PR fica aberta, sem ação e sem prazo; não é problema. A recomendação dos planos (fechar como substituído e reimplementar na v2, sprint 6) deixa de ser pendência. Aberta desde 26/08, sem revisão, com conflitos em 83 arquivos. = D-EST-05, D-7, A-06.
+- [ ] **T-30** · Reforçar a autenticação de perfis administrativos — `P2` · médio · segurança · v2
+  **Decidido pelo responsável em 08/11/2026 (F-12):** o 2FA obrigatório para institucionais e gestores vai para a v2; implementar se for simples. = A-10, P-13, P-18.
+- [ ] **V2-MNT** · Levantar o requisito do Painel do Mantenedor (saúde da fila, erros e alertas) — `P3` · decisão/requisito
+  **Decidido pelo responsável em 08/11/2026:** o rastreador de erros (D-EST-01) e o canal de alerta (D-EST-15) viram requisito de um Painel do Mantenedor na v2, sem travar agora. O requisito cobre as S44 e S45 abaixo.
+- [ ] **S44, S45** · Health-check da fila e rastreador de erros — `P2` · médio · operação · escopo do V2-MNT
+  Hoje uma falha de fila só aparece por reclamação. Ligadas ao V2-MNT (Painel do Mantenedor), sem travar agora. = B23, E1-30, E1-31.
 
 ---
 
@@ -304,10 +312,10 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 
 | Decisão | Quem decide | Destrava |
 | --- | --- | --- |
-| F-01 · Encarregado formal, com contato próprio (provisório: Projur e prefeituras dos campi) | gestão da UESB | T-10, texto final da política (T-17, T-18), runbook (T-16) |
-| F-08 · Canal, rito e prazo de atendimento ao titular | encarregado | T-10, T-39, T-40, T-48 |
+| F-01 · Pessoa que ocupa o encarregado (o canal do titular já está decidido, ver F-08) | gestão da UESB | T-10, texto final da política (T-17, T-18), runbook (T-16) |
+| F-08 · Rito e prazo de resposta ao titular. Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`). A LGPD fixa prazo próprio para a resposta ao titular (art. 19); o número ainda não foi definido | encarregado | T-10, T-39, T-40, T-48 |
 | F-02 · Bases legais e norma estadual | jurídico | T-11, T-14, T-15 |
-| F-03 · Prazos de guarda (proposta DT-11: 30, 90, 7 e 7 dias) e eliminar ou anonimizar | encarregado e CPAD | T-12, T-19 (valores finais), T-23 |
+| F-03 · Confirmar se os 90 dias de guarda valem para todas as categorias (proposta DT-11: jobs falhos 30, notificações lidas 90, cache 7, sessões 7; a T-19 usa esses valores) ou só como referência, e se o destino é eliminar ou anonimizar | responsável | T-12, T-19 (valores finais), T-19e, T-23 |
 | F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
 | F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
 | F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
@@ -315,7 +323,6 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
 | F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
-| F-12 · 2FA obrigatório para institucionais e gestores | gestão da UESB | T-30 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
 | F-14 · Conferir os binários de `docs/UniEspaço Web/` | responsável | H-05 e reorganização da pasta |
 | Manter diferidas ou antecipar a T-01 e a T-03 | responsável | maior risco do plano LGPD |
@@ -326,8 +333,6 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | --- | --- |
 | D-EST-13 e DT-10 · Backup: destino, retenção, cifragem e staging para o ensaio (com a TI) | T-23 |
 | D-EST-23 e D-EST-24 · Efeitos do backup parado; liberar a S34 e a S41 a S43 com backup manual | Ondas 3 e 4 |
-| D-EST-01 · Rastreador de erros | S45 |
-| D-EST-15 · Canal de alerta | S44 |
 | DT-13 · CSP e HSTS | T-28 |
 | DT-14 · Reparo automático de reservas presas | S35 |
 | E1-16 · Quem edita instituições alheias | S46, S48–S50 |
@@ -340,10 +345,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | D-6 · Login institucional (@uesb.edu.br), requisito "Must" original ainda sem issue | nova issue |
 | D-1 · Multi-instituição | v2 |
 | D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
-| D-7 e D-EST-05 · Destino do PR #397 | v2 |
-| B44 · Papéis acumulados comum e gestor. Pontos levantados na S14 (04/11/2026): o acúmulo é estado válido ou deve ser normalizado; o modal vira seleção múltipla; quem acumula papéis sem gestor pode virar gestor pelo modal; quem é comum e gestor e perde todas as agendas continua gestor | S14 (o código preserva o estado atual até a decisão) |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
-| RR-H3 · Lock consultivo ou restrição de exclusão | RR-H3 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
 
 ## Gestão do repositório (não é código)
