@@ -742,7 +742,7 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 | Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 7 dias |
 | Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 14 dias |
 
-Os prazos de jobs, notificações, cache e sessões são **provisórios** (proposta DT-11) até a decisão da T-12, e ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs (14 dias) já está decidido ([T-20](../backlog.md)) e vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+**Decisão (08/11/2026, F-03):** o prazo de guarda é de **90 dias para todas as categorias** (jobs falhos, notificações lidas, cache, sessões e logs diários). Os padrões do código ainda estão nos valores das tabelas acima (jobs falhos 30, cache 7, sessões 7 e logs diários 14); o alinhamento é a T-19g do [backlog](../backlog.md). Enquanto ela não sai, as tabelas continuam fiéis ao código. Os prazos ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
 
 Cada rotina registra só contagens (`retencao.rotina_aplicada`, com o nome da rotina, a quantidade e se foi simulação). Se alguma rotina falhar, o comando termina com código de saída diferente de zero e registra `retencao.rotina_falhou` (ou `retencao.comando_falhou`, nas rotinas de fila), com o nome da exceção e sem mensagem nem dados. O comando `retencao:neutralizar-justificativas` é de execução única e manual, não é agendado (ver T-19b no [backlog](../backlog.md)).
 
@@ -759,7 +759,7 @@ Em `compose.prod.yml`, todos os serviços usam o driver `json-file` com `max-siz
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo final dos demais dados depende da T-12
+4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo de guarda dos demais dados é de 90 dias (decidido em 08/11/2026, F-03; o código alinha na T-19g). O destino final depende da T-12
 
 **Campos recomendados para auditoria:**
 

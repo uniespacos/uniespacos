@@ -30,7 +30,7 @@
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
-- **Decisões que mais destravam:** pessoa do encarregado (F-01), confirmação das categorias da guarda (F-03), rito e prazo de atendimento ao titular (F-08), F-05, F-06 e as perguntas da TI (T-23). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
+- **Decisões que mais destravam:** pessoa do encarregado (F-01), rito e prazo de atendimento ao titular (F-08), F-05, F-06 e as perguntas da TI (T-23). Lista completa em [Decisões pendentes](#decisões-pendentes-não-é-código).
 
 ## Próximas versões (previsão)
 
@@ -75,6 +75,10 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   O `schedule:work` não trata o sinal de parada, e o Docker encerra o processo à força depois de 10 s (saída 137). Sem efeito quando nada está rodando (foi o caso em 05/11). Mas um deploy (que recria o container) ou uma parada do agendador durante a rodada das 03:30 UTC corta a retenção no meio e pode deixar a trava de sobreposição (`withoutOverlapping`, validade padrão de 24 h) ativa, o que pode pular a rodada seguinte.
   Achado em 05/11/2026.
   **Pronto quando:** parar ou recriar o agendador durante uma rodada não deixa a trava de sobreposição presa, e a rodada seguinte roda normalmente (conferido em staging).
+- [ ] **T-19g** · Alinhar os prazos padrão de retenção aos 90 dias da F-03 — `P2` · pequeno · lgpd
+  Decidido pelo responsável em 08/11/2026 (F-03): o prazo de guarda é de 90 dias para todas as categorias. Os padrões atuais do código são: `config/retencao.php` com jobs falhos 30, notificações lidas 90, cache 7 e sessões 7; `config/logging.php` com logs diários de 14 (`LOG_DAILY_DAYS`). Muda: jobs falhos 30 → 90, cache 7 → 90, sessões 7 → 90 e logs diários 14 → 90. As notificações lidas já estão em 90. Na branch de integração da Onda 2 também existem os tokens de redefinição de senha vencidos (1 dia, `RETENCAO_TOKENS_REDEFINICAO_DIAS`) e o alerta de jobs pendentes antigos (T-19e, que só existe no backlog da integração); eles seguem a mesma regra quando a Onda 2 entrar.
+  Antes de fechar: em produção, conferir se o `.env` sobrescreve algum desses valores. Logs e sessões guardados por mais tempo aumentam o volume de dado pessoal guardado, e o inventário de dados e a política precisam refletir isso (T-14, T-17 e T-18).
+  **Pronto quando:** os padrões de `config/retencao.php` e `config/logging.php` estão em 90, os testes da retenção cobrem os novos prazos, `docs/arquitetura/erros-e-logs.md` e `docs/arquitetura/notificacoes.md` (que ainda chama o prazo de provisório) mostram os valores, e o `.env` de produção foi conferido.
 
 **Operação de produção (um arquivo por vez)**
 
@@ -99,11 +103,11 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **T-14, T-16** · Versionar o inventário de dados e o runbook de incidente em `docs/privacidade/` — `P2` · pequeno · docs
   Rascunhos prontos, fora do git; aguardam aprovação e a definição de papéis (T-10). O RIPD (T-15) e o registro de incidentes continuam fora do git.
 - [ ] **T-39, T-40** · "Meus dados": consulta e solicitações do titular — `P2` · médio · lgpd · depende da T-12 e da F-08
-  Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`). Falta o rito e o prazo de resposta (F-08).
+  Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`). O controlador é a UESB, que responde ao titular por esse e-mail. Os autores e responsáveis pelo sistema são o Professor Dr. Agnaldo Volpe Lovato e o graduando de Sistemas de Informação Pedro Henrique Pinheiro Lemos. Falta o rito e o prazo de resposta (F-08), e a designação formal do encarregado pela UESB (art. 41, F-01).
 - [ ] **T-43** · Quem vê o nome do solicitante na agenda — `P2` · depende da F-05
 - [ ] **T-10 a T-13** · Encarregado, bases legais, tabela de temporalidade e operadores — decisões institucionais
   Operador de armazenamento registrado em 02/11 (T-13): o provedor de nuvem que guarda o snapshot de auditoria da T-05 e o backup manual anterior à 1.5.0. A transferência é internacional (art. 33). Snapshot de auditoria e backup manual vão cifrados do lado do responsável, o que mitiga a transferência.
-  **Prazo de guarda (decidido em 08/11/2026):** 90 dias. Falta confirmar se os 90 dias valem para todas as categorias ou só como referência, e se o destino é eliminar ou anonimizar (F-03).
+  **Prazo de guarda (decidido pelo responsável em 08/11/2026, F-03):** 90 dias para todas as categorias. O destino padrão da rotina atual é eliminar (a rotina apaga). Os padrões do código ainda estão nos valores antigos até a T-19g.
 
 **Diferidas pelo responsável**
 
@@ -312,15 +316,14 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 
 | Decisão | Quem decide | Destrava |
 | --- | --- | --- |
-| F-01 · Pessoa que ocupa o encarregado (o canal do titular já está decidido, ver F-08) | gestão da UESB | T-10, texto final da política (T-17, T-18), runbook (T-16) |
-| F-08 · Rito e prazo de resposta ao titular. Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`). A LGPD fixa prazo próprio para a resposta ao titular (art. 19); o número ainda não foi definido | encarregado | T-10, T-39, T-40, T-48 |
+| F-01 · Pessoa que ocupa o encarregado (o canal do titular já está decidido, ver F-08). Os responsáveis pelo sistema estão definidos (autores, ver F-08), mas a designação formal do encarregado pela UESB (art. 41) continua pendente, junto com o prazo e o rito de resposta da F-08 | gestão da UESB | T-10, texto final da política (T-17, T-18), runbook (T-16) |
+| F-08 · Rito e prazo de resposta ao titular. Canal decidido em 08/11/2026: o e-mail do próprio sistema (`uniespacos@uesb.edu.br`), da UESB como controladora. Os autores e responsáveis pelo sistema são o Professor Dr. Agnaldo Volpe Lovato e o graduando de Sistemas de Informação Pedro Henrique Pinheiro Lemos. A LGPD fixa prazo próprio para a resposta ao titular (art. 19); o número ainda não foi definido | encarregado | T-10, T-39, T-40, T-48 |
 | F-02 · Bases legais e norma estadual | jurídico | T-11, T-14, T-15 |
-| F-03 · Confirmar se os 90 dias de guarda valem para todas as categorias (proposta DT-11: jobs falhos 30, notificações lidas 90, cache 7, sessões 7; a T-19 usa esses valores) ou só como referência, e se o destino é eliminar ou anonimizar | responsável | T-12, T-19 (valores finais), T-19e, T-23 |
 | F-04 · Reservas históricas: temporalidade da CPAD ou anonimização | encarregado e arquivo | T-12, T-25 |
 | F-05 · Quem vê o nome do solicitante na agenda | responsável e encarregado | T-43 |
 | F-06 · Quem, além do gestor da reserva, vê o telefone | responsável | visibilidade do telefone para institucionais (resíduo da T-26) |
 | F-07 · Menores de idade com cadastro aberto | gestão da UESB | RIPD |
-| F-09 · Responsável técnico e guardião do registro de incidentes | gestão da UESB | T-16 |
+| F-09 · Responsável técnico e guardião do registro de incidentes. Provável: os autores do sistema, a confirmar (ver F-08) | gestão da UESB | T-16 |
 | F-10 · Provedor SMTP, proxy da borda e guarda de logs de acesso; contratos com GitHub e com o provedor de fontes; operador de armazenamento do snapshot e do backup manual (registrado em 02/11, com transferência internacional; snapshot e backup manual vão cifrados do lado do responsável) | TI e gestão da UESB | T-13, T-23, T-38 |
 | F-11 · O art. 15 do Marco Civil se aplica? | jurídico | confirma a T-20 |
 | F-13 · Texto e guarda dos campos livres | encarregado | T-33 |
