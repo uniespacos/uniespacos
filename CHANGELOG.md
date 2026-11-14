@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.117](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.116...v1.5.0-rc.117) (2026-11-14)
+
+
+### Bug Fixes
+
+* exibir aviso em reserva cancelada para gestor, otimizar performance e fechar T-31c ([717cd72](https://github.com/uniespacos/uniespacos/commit/717cd72218348d4f6083b0aab66466f59b62e3c5))
+* exibir aviso em reserva cancelada para gestor, otimizar performance e fechar T-31c ([3bdcb2b](https://github.com/uniespacos/uniespacos/commit/3bdcb2b28f9a361b684dcf79a1af7d17c6202c1f))
+
 ## [1.5.0-rc.116](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.115...v1.5.0-rc.116) (2026-11-14)
 
 
