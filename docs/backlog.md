@@ -1,8 +1,8 @@
 # Backlog — UniEspaços
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
-> **Base:** `main`, `develop` e produção na v1.6.0 (05/11/2026; `develop` pela sincronização depois do release) · staging na rc.113 (06/11/2026; mesmo código da 1.6.0, com o #505, o #507 e o #509).
-> **Atualizado em:** 2026-11-06.
+> **Base:** `main`, `develop` e produção na v1.6.1 (14/11/2026; `develop` pela sincronização depois do release) · staging na rc.114 (mesmo código da 1.6.1).
+> **Atualizado em:** 2026-11-14.
 
 ## Como ler
 
@@ -15,18 +15,16 @@
 
 ## Agora
 
-- **Em produção:** v1.6.0 desde 05/11/2026, com a Onda 2 parte 1 (#505, #507 e #509). Backup manual cifrado antes do deploy (teste de abertura a confirmar), pós-deploy e smoke por papel OK, simulação de retenção aprovada e agendador religado. Primeira rodada de retenção (06/11/2026, 03:30 UTC) conferida: 0 erros e simulação posterior sem nada a remover.
-- **Em staging:** rc.114 (1.6.1: Onda 3 parte 1, S26 e S14) desde 06/11/2026, 15:05 UTC. Pós-deploy e testes da S26 (Reverb parado) e da S14 (modal com dois papéis) OK em 06/11/2026.
-- **Próximo passo:** o deploy da 1.6.1 em produção (sem data; backup manual cifrado, fila vazia, PR `develop` → `main`), com autorização. A Onda 2 parte 2 segue na branch de integração e sai como 1.7.0. Também: a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Em produção:** v1.6.1 desde 14/11/2026 (Onda 3, parte 1: S26 e S14, #518). Backup manual cifrado antes do deploy, com teste de abertura completo e cópia externa conferidos (o primeiro com as duas conferências); fila vazia antes do deploy. Pós-deploy conferido nos serviços (imagem 1.6.1, banco não recriado, worker recriado pelo deploy, sem reinício explícito), com 0 erros em 15 min e `failed_jobs` vazio nos 30 min seguintes. Smoke por papel e teste do modal com dois papéis OK, e a orientação I4 foi retirada (aviso aos institucionais em 14/11/2026). Da 1.6.0 segue valendo: a rotina de retenção diária roda sem intervenção.
+- **Em staging:** rc.114, mesmo código da 1.6.1.
+- **Próximo passo:** a sincronização `main` → `develop` (esta PR) libera a `develop` para PR de código; em seguida, a PR da Onda 2 parte 2 (1.7.0, `feat/onda-2-lgpd-lote-2`) e a Onda 3 parte 2. Também: a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
   | --- | --- | --- | --- |
   | 16/11/2026 | Destruir os logs brutos e a cópia cifrada do snapshot que ficou no servidor, com remoção segura | Responsável | T-05b |
-  | Quando o responsável confirmar (sem data) | Confirmar o teste de abertura completo e a cópia externa do backup manual anterior à 1.6.0; depois disso, destruir o backup anterior à 1.5.0 (decisão de 02/11) | Responsável | T-23 |
+  | Quando o responsável confirmar (sem data) | Destruir os backups manuais anteriores à 1.5.0 (decisão de 02/11) e à 1.6.0. O backup anterior à 1.6.1 teve teste de abertura completo e cópia externa conferidos em 14/11/2026, então a destruição está liberada e aguarda o responsável executar e confirmar | Responsável | T-23 |
   | Quando a TI responder (sem data) | Registrar a resposta sobre o prazo dos snapshots da VM, o destino institucional das cópias externas e o uso de staging para o ensaio de restauração | Responsável com a TI; o master registra | T-23 |
-  | Deploy da 1.6.1 em produção (sem data) | Conferir se o queue worker subiu com a imagem nova depois do deploy (a S26 exige; reiniciar se não subiu); fila vazia antes do deploy e `failed_jobs` sem jobs de reserva depois. Em staging, conferido em 06/11/2026: o deploy recriou o worker com a imagem nova, sem reinício | Responsável | S26 |
-  | Depois do deploy da 1.6.1 em produção e do teste do modal (sem data) | Avisar os institucionais de que a orientação de não salvar o modal de quem tem dois papéis (I4) deixou de valer, e registrar a retirada | Responsável; o master registra | S14 (I4) |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
@@ -37,12 +35,12 @@
 Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR única (branch de integração `feat/onda-N-<tema>`), e a PR de atualização do backlog também sai por onda. Cada onda vira uma versão minor, na ordem em que fechar: a que fechar primeiro leva a próxima minor (o release-please numera pela ordem de merge). Regra completa em [`processo/auditorias-e-planos.md`](./processo/auditorias-e-planos.md#backlog-reativo).
 
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
-- **1.6.1 (Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518)**: S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
+- **1.6.1** (em produção desde 14/11/2026; Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518): S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
 - **1.7.0 (Onda 2, parte 2; branch `feat/onda-2-lgpd-lote-2`)**: resto da Onda 2 que não depende de terceiros. T-31 (pronta na integração), T-19c, T-19d, T-35 (depois da T-08), T-41, T-38, T-46 e T-29 (limitação).
 - **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b e S14c. Sai como patch se tiver só `fix`.
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
-- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fecha primeiro, como 1.6.1; a Onda 2 parte 2 sai como 1.7.0. Enquanto a 1.6.1 estiver em staging, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
+- **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fecha primeiro, como 1.6.1; a Onda 2 parte 2 sai como 1.7.0. A 1.6.1 saiu em produção em 14/11/2026, e a `develop` volta a receber PR de código depois da sincronização `main` → `develop` (esta PR). Regra geral: enquanto uma versão estiver em staging aguardando produção, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
 - **Forçar versão:** se um dia for preciso, só com `release-as` no `release-please-config.json` (produção), removido depois do release. Nunca com rodapé `Release-As:` em commit: ele chega também ao release-please de staging, que pode criar na `develop` uma tag sem sufixo, e essa tag dispara o deploy de produção.
 
 ---
@@ -85,7 +83,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   **Guarda dos dados da T-05 (decisões de 02/11):** o snapshot de auditoria tem como finalidade servir de prova, caso um titular, a ANPD ou a UESB questione a limpeza da T-05. Prazo: até 02/05/2027, quando o responsável renova com justificativa anotada ou destrói. Ele fica cifrado e com o responsável; o arquivo é cifrado antes de sair do servidor e vai para um provedor de nuvem, que entra como operador de armazenamento (T-13). Só o responsável tem a senha. O backup manual anterior à 1.5.0 (a cópia do servidor e a cópia fora do servidor, com o responsável) fica até o próximo backup conferido e então é destruído. Como essa cópia externa é dado pessoal fora da infraestrutura institucional, ela precisa de lugar institucional.
   **Cifragem confirmada (02/11):** o responsável confirmou que o backup manual anterior à 1.5.0 foi cifrado antes de sair do servidor. Os dois arquivos (snapshot e backup manual) vão cifrados do lado do responsável.
   **Status (02/11):** a mensagem com as três perguntas à TI foi entregue ao responsável para envio. Aguarda resposta.
-  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. Backup manual anterior à 1.6.0: feito em 05/11/2026, cifrado no servidor antes de sair; falta a confirmação do responsável (teste de abertura completo e cópia externa) para destruir o backup anterior à 1.5.0. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
+  **Falta:** lugar institucional para essa guarda (com a TI), prazo dos snapshots da VM e destino das cópias externas. Seguem em aberto as decisões T-12, T-13, D-EST-13, D-EST-23, D-EST-24 e DT-10. Até lá: backup manual antes de cada deploy, e restauração automática pelo script de rollback proibida. Backup manual anterior à 1.6.0: feito em 05/11/2026, cifrado no servidor antes de sair; o teste de abertura completo e a cópia externa ainda não foram registrados. Backup manual anterior à 1.6.1: feito em 14/11/2026, cifrado no servidor antes de sair; teste de abertura completo e cópia externa com hash conferidos pelo responsável. A destruição dos backups anteriores (à 1.5.0 e à 1.6.0) aguarda o responsável executar e confirmar. = D-EST-22, S16, S22, S23, S51, S71, B21, B22, B74, E1-26 a E1-28, A-07.
 - [ ] **T-28** · Cabeçalhos de segurança e compressão na borda — `P2` · pequeno · segurança
   Depende da DT-13 (CSP e HSTS). = S54, DT-13, A-20, B24, B67.
 - [ ] **T-37** · Reduzir o escopo de variáveis e volumes por container — `P2` · pequeno · segurança
@@ -382,6 +380,8 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **14/11** · #NNN sincronização `main` → `develop` depois da 1.6.1 e backlog do release.
+- **14/11** · #521 e #522 release 1.6.1 em produção (Onda 3, parte 1: #518, S26 e S14). Backup manual cifrado antes do deploy, com teste de abertura completo e cópia externa conferidos; fila vazia antes do deploy. Pós-deploy OK: app, queue worker, scheduler, reverb e web na imagem 1.6.1, com o banco saudável e não recriado; o deploy recriou o queue worker com a imagem nova, então o reinício explícito não foi necessário; ambiente de produção com debug e manutenção desligados; retenção agendada às 03:30 UTC, com 0 erros nos logs do agendador, do app e do worker em 15 min e `failed_jobs` vazio nos 30 min seguintes. Smoke por papel e teste do modal com dois papéis OK. Sem migration. Mitigação I4 retirada: o responsável avisou os institucionais em 14/11/2026 de que a orientação de não salvar o modal de quem tem dois papéis deixou de valer (S14).
 - **06/11** · #520 backlog: 1.6.1 validada em staging (rc.114; S26 com o Reverb parado e S14 com o modal de dois papéis), S14b reproduzida no teste e item novo OP-01.
 - **06/11** · #518 Onda 3, parte 1 (vai na 1.6.1): S26 e S14 concluídas. S26: ponto único de publicação do evento de reserva, chamado por último e depois do commit nos 5 pontos (4 jobs e o cancelamento); falha do broadcaster vira aviso no log, sem falhar o job, pular notificação ou regravar a validação de conflitos; a invalidação do cache de relatórios passa para o evento de domínio `ReservaAlterada`. S14: o modal de permissões não troca nem remove papel de quem tem mais de um, e só muda as agendas tiradas ou incluídas; papéis acumulados aparecem só para leitura; notificações de gestor só em transição real, depois do commit. Validado em 06/11/2026 com a `develop` da rc.113: 621 testes de backend (suíte normal e semeada), 662 de frontend, Pint, PHPStan e ESLint sem erros e sem supressão nova. Seguem na tabela de passos: a conferência do queue worker no deploy (S26) e a retirada da mitigação I4 depois do deploy em produção (S14). Seguem em aberto: S14b, S14c e a decisão B44.
 - **06/11** · T-19 primeira rodada de retenção em produção conferida pelo responsável por volta das 10:40 na Bahia (13:40 UTC, depois das 03:30 UTC): o agendador não registrou nenhum erro nas últimas 12 h (janela que inclui a rodada) e a simulação seguinte deu 0 notificações lidas antigas (eram 2.957 antes da rodada), 0 de cache, 0 sessões e 0 logs diários. A simulação não conta jobs falhos nem lotes (só informa que a limpeza seria executada), então a poda dos 197 jobs falhos não foi medida; só a contagem à parte provaria isso, e nenhum item depende dela. Rotina diária seguindo sem intervenção.
