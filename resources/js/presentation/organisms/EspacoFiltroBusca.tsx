@@ -362,7 +362,7 @@ export default function EspacoFiltroBusca({ route: targetRoute, filters, unidade
                                 <DrawerTitle>{t('common.actions.filter')}</DrawerTitle>
                                 <DrawerDescription>{t('espacos.consultar_espacos_desc')}</DrawerDescription>
                             </DrawerHeader>
-                            <div className="max-h-[60vh] space-y-4 overflow-y-auto p-4">{renderFilterSelects('mobile-')}</div>
+                            <div className="max-h-[60dvh] space-y-4 overflow-y-auto p-4">{renderFilterSelects('mobile-')}</div>
                             <DrawerFooter>
                                 <DrawerClose asChild>
                                     <Button className="w-full">{t('common.actions.filter')}</Button>

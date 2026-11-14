@@ -57,10 +57,7 @@ export default function Password() {
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall
-                        title={t('settings.password.title')}
-                        description={t('settings.password.desc')}
-                    />
+                    <HeadingSmall title={t('settings.password.title')} description={t('settings.password.desc')} />
 
                     <form onSubmit={updatePassword} className="space-y-6">
                         <div className="grid gap-2">
@@ -76,10 +73,12 @@ export default function Password() {
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="current-password"
+                                aria-invalid={!!errors.current_password}
+                                aria-describedby={errors.current_password ? 'current_password-error' : undefined}
                                 placeholder={t('settings.password.current_placeholder')}
                             />
 
-                            <InputError message={errors.current_password} />
+                            <InputError id="current_password-error" message={errors.current_password} />
                         </div>
 
                         <div className="grid gap-2">
@@ -95,10 +94,12 @@ export default function Password() {
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
+                                aria-invalid={!!errors.password}
+                                aria-describedby={errors.password ? 'password-error' : undefined}
                                 placeholder={t('settings.password.new_placeholder')}
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError id="password-error" message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
@@ -113,10 +114,12 @@ export default function Password() {
                                 type="password"
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
+                                aria-invalid={!!errors.password_confirmation}
+                                aria-describedby={errors.password_confirmation ? 'password_confirmation-error' : undefined}
                                 placeholder={t('settings.password.confirm_placeholder')}
                             />
 
-                            <InputError message={errors.password_confirmation} />
+                            <InputError id="password_confirmation-error" message={errors.password_confirmation} />
                         </div>
 
                         <div className="flex items-center gap-4">

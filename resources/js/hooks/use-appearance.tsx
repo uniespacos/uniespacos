@@ -17,6 +17,12 @@ export function updateThemeClass(appearance: Appearance) {
     const isDark = appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) {
+        meta.setAttribute('content', appearance === 'system' ? 'light dark' : isDark ? 'dark' : 'light');
+    }
 }
 
 export function initializeTheme() {

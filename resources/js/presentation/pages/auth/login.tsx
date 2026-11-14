@@ -72,6 +72,8 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                         type="email"
                         name="email"
                         autoComplete="username"
+                        spellCheck={false}
+                        autoCapitalize="none"
                         placeholder={t('auth.login.email_placeholder')}
                         value={data.email}
                         autoFocus

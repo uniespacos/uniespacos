@@ -1,16 +1,16 @@
-import React, { SyntheticEvent, useCallback, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
-import { StepperProgress } from '@/presentation/molecules/StepperProgress';
-import { StepHorariosRecorrencia } from '@/presentation/molecules/StepHorariosRecorrencia';
-import { StepDadosJustificativa } from '@/presentation/molecules/StepDadosJustificativa';
-import { StepRevisaoConfirmacao } from '@/presentation/molecules/StepRevisaoConfirmacao';
-import { assertNever } from '@/lib/utils/exhaustive';
 import { useReservaStepper } from '@/hooks/useReservaStepper';
+import { useTranslation } from '@/i18n';
+import { assertNever } from '@/lib/utils/exhaustive';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
+import { StepDadosJustificativa } from '@/presentation/molecules/StepDadosJustificativa';
+import { StepHorariosRecorrencia } from '@/presentation/molecules/StepHorariosRecorrencia';
+import { StepperProgress } from '@/presentation/molecules/StepperProgress';
+import { StepRevisaoConfirmacao } from '@/presentation/molecules/StepRevisaoConfirmacao';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { useTranslation } from '@/i18n';
+import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
+import React, { SyntheticEvent, useCallback, useEffect } from 'react';
 
 export interface ReservaStepperModalProps {
     isOpen: boolean;
@@ -187,7 +187,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     <StepperProgress steps={steps} currentStepId={currentStepId} onStepClick={goToStep} />
                 </div>
 
-                <div className="max-h-[58vh] min-h-[280px] overflow-y-auto px-0.5 py-1">{renderStepContent()}</div>
+                <div className="max-h-[58dvh] min-h-[280px] overflow-y-auto px-0.5 py-1">{renderStepContent()}</div>
             </form>
         </ResponsiveModal>
     );
