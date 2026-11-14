@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,14 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getGroupLabel, getPermissionLabel } from '@/constants/permission-labels';
 import { PERMISSION_USUARIOS_GERENCIAR_PERMISSOES_DIRETAS, ROLE_COMUM, ROLE_GESTOR, ROLE_INSTITUCIONAL } from '@/constants/permissions';
-import { roleLabel } from '@/constants/role-labels';
+import { getRoleBadgeClass, roleLabel } from '@/constants/role-labels';
 import { useTranslation } from '@/i18n';
 import { hasPermission } from '@/lib/auth';
 import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import FiltroBuscaPermission from '@/presentation/organisms/FiltroBuscaPermission';
 import { Instituicao, Permission, SelectedAgenda, User } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Info, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +31,14 @@ interface PermissionContext {
     user: User;
     instituicoes: Instituicao[];
     permissionCatalog: Record<string, Permission[]>;
+}
+
+function papelInicial(papeis: string[]): string {
+    if (papeis.length > 1 && papeis.includes(ROLE_GESTOR)) {
+        return ROLE_GESTOR;
+    }
+
+    return papeis[0] ?? ROLE_COMUM;
 }
 
 export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = false }: PermissionModalProps) {
@@ -75,7 +84,7 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
             .then((data) => {
                 if (cancelled) return;
                 setContext(data);
-                setSelectedRole(data.user.roles[0] ?? ROLE_COMUM);
+                setSelectedRole(papelInicial(data.user.roles));
                 setDirectPermissions(data.user.direct_permissions ?? []);
                 setSelectedAgendas(
                     (data.user.agendas ?? []).map(
@@ -119,6 +128,9 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
     const inheritedPermissions = (context?.user.permissions ?? []).filter((p) => !directPermissions.includes(p));
     const permissionCatalog = context?.permissionCatalog ?? {};
     const instituicoes = context?.instituicoes ?? [];
+    const papeisAtuais = context?.user.roles ?? [];
+    const possuiPapeisAcumulados = papeisAtuais.length > 1;
+    const exibeFiltroAgendas = possuiPapeisAcumulados ? papeisAtuais.includes(ROLE_GESTOR) : selectedRole === ROLE_GESTOR;
 
     return (
         <ResponsiveModal
@@ -145,23 +157,42 @@ export function PermissionModal({ user, isOpen, onClose, onUpdate, processing = 
                     </TabsList>
 
                     <TabsContent value="role" className="mt-6 space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="permission-type">Papel do usuário</Label>
-                            <Select value={selectedRole} onValueChange={setSelectedRole}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o papel" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roleOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
+                        {possuiPapeisAcumulados ? (
+                            <div className="space-y-2">
+                                <p className="text-sm leading-none font-medium">{t('usuarios.gerenciar.papeis_atuais')}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {papeisAtuais.map((papel) => (
+                                        <Badge key={papel} variant="outline" className={getRoleBadgeClass(papel)}>
+                                            {roleLabel(t, papel)}
+                                        </Badge>
                                     ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                </div>
+                                <Alert className="border-warning-accent/30 bg-warning-subtle text-warning-accent">
+                                    <Info className="!text-warning-accent" />
+                                    <AlertDescription className="!text-warning-accent">
+                                        {t('usuarios.gerenciar.papeis_acumulados_aviso')}
+                                    </AlertDescription>
+                                </Alert>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Label htmlFor="permission-type">Papel do usuário</Label>
+                                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o papel" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {roleOptions.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
 
-                        {selectedRole === ROLE_GESTOR && (
+                        {exibeFiltroAgendas && (
                             <FiltroBuscaPermission
                                 instituicoes={instituicoes}
                                 selectedAgendas={selectedAgendas}

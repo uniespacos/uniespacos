@@ -367,7 +367,7 @@ Propriedades extras:
 **Disparada por:**
 
 - `EspacoService::updateGestores()`: ao designar um novo gestor para um turno do espaço, quando ele ainda não tem `reservas.avaliar`
-- `UserService::updatePermissions()`: quando o papel informado é `gestor`
+- `UserService::updatePermissions()`: só em transição real, depois do commit. Dispara quando o usuário passa a ser gestor (papel único que vira `gestor`) ou quando, já sendo gestor, ganha uma agenda nova. Salvar sem mudança não reenvia. Usuário com mais de um papel só dispara se ganhar agenda nova
 
 **Destinatário:** Usuário recém-designado como gestor
 
@@ -401,7 +401,7 @@ Propriedades extras:
 **Disparada por:**
 
 - `EspacoService::updateGestores()`: ao trocar o gestor de um turno, quando o usuário anterior não gerencia mais nenhuma agenda
-- `UserService::updatePermissions()`: quando o papel informado não é `gestor` (o usuário perde as agendas que gerenciava)
+- `UserService::updatePermissions()`: só em transição real, depois do commit. Dispara quando o usuário deixa de ser gestor (perde o papel ou as agendas) e antes era gestor (papel ou agenda). Salvar sem mudança não reenvia. Usuário com mais de um papel não recebe esta notificação pelo modal, porque o papel `gestor` não é removido por ele
 
 **Destinatário:** Usuário removido de gestão
 
@@ -673,6 +673,27 @@ public function failed(Throwable $exception): void
 ```
 
 Mesmo em `failed()`, o try-catch protege para que a falha de notificação não esconda a falha original do job.
+
+---
+
+## Ordem nos Jobs: Notificação Antes do Broadcast
+
+Em todo job ou service que altera reserva, as notificações (banco, e-mail e canal `broadcast` do Laravel) saem **antes** da publicação em tempo real. A publicação é feita por `ReservaBroadcaster::publicar()` e despacha o `ReservaEvent`, que é o evento de tela, não uma notificação. Detalhes em [tempo-real.md](./tempo-real.md#ponto-único-de-publicação-reservabroadcaster).
+
+| Conceito | Classe | Canal | Papel |
+|----------|--------|-------|-------|
+| Notificação do usuário | `BaseNotification` (`database`, `broadcast`, `mail`) | `App.Models.User.{id}` | Aviso ao usuário |
+| Evento de reserva | `ReservaEvent` (`ShouldBroadcastNow`) | `reserva-channel`, `App.Models.Espaco.{id}` | Atualização de tela |
+
+**Regra:** o broadcast de reserva nunca substitui nem pula a notificação. Se `publicar()` falhar, a notificação já foi enfileirada e o job segue. A falha vira `Log::warning` (ver [erros-e-logs.md](./erros-e-logs.md#broadcast-em-tempo-real-falha-tolerada)).
+
+| Job / service | Ordem depois do commit |
+|---------------|------------------------|
+| `ProcessarCriacaoReserva` | `NewReservationNotification` (gestores) → dispatch de `ValidateReservationConflictsJob` → `ReservationCreatedNotification` (solicitante) → `publicar('created')` |
+| `UpdateReservaJob` | `ReservationUpdatedNotification` (solicitante) → dispatch de `ValidateReservationConflictsJob` → `publicar('updated')` |
+| `AvaliarReservaJob` | Revalidação de conflitos → `ReservationEvaluatedNotification` (solicitante) → `publicar('evaluated')` |
+| `ValidateReservationConflictsJob` | Grava `conflict_cache` e `completed` → `publicar('validated')` (sem notificação) |
+| `ReservaService::notificarCancelamento()` | `ReservationCanceledNotification` (gestores) → revalidação de conflitos → `publicar('canceled')` |
 
 ---
 

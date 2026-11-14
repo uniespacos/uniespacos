@@ -9,6 +9,7 @@ Este documento descreve o sistema de autorização de reservas: papéis, permiss
 - [ReservaPolicy — Métodos e Fluxos](#reservapolicy--métodos-e-fluxos)
 - [IDOR Prevention](#idor-prevention)
 - [Invariantes de Segurança](#invariantes-de-segurança)
+- [Gerenciamento de papéis e agendas (modal de permissões)](#gerenciamento-de-papéis-e-agendas-modal-de-permissões)
 - [Visibilidade de dados pessoais](#visibilidade-de-dados-pessoais)
 - [Escopo dos relatórios](#escopo-dos-relatórios)
 - [Limites de Taxa (Throttling) — T-29](#limites-de-taxa-throttling--t-29)
@@ -49,6 +50,8 @@ O sistema de autorização reconhece **quatro atores** no contexto de reservas:
 **Escopo:** Acesso limitado a reservas que envolvem intersecção de agendas.
 
 **Exemplo:** Um gestor da agenda de "Sala de Aula A" pode ver e avaliar reservas que incluem "Sala de Aula A", mas não pode ver reservas de "Sala de Aula B", mesmo que de outro gestor.
+
+**Acúmulo:** o papel `'gestor'` pode coexistir com `'comum'` no mesmo usuário. É o estado que o sistema produz ao vincular um gestor a um espaço (`EspacoService::updateGestores()` adiciona `'gestor'` sem remover o papel anterior). As regras de acúmulo e a decisão pendente estão em [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões).
 
 ---
 
@@ -455,7 +458,9 @@ return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 
 ### 1. Separação entre Roles
 
-Cada papel tem escopo bem definido e não se sobrepõe:
+Cada papel tem escopo bem definido, e as permissões de um usuário são a soma dos papéis que ele tem. Um usuário pode acumular papéis: `'comum'` + `'gestor'` é o estado produzido pelo sistema ao vincular um gestor a um espaço. O acúmulo não é uma exceção a ser evitada; a forma de tratá-lo (se é estado válido ou deve ser normalizado) é a decisão B44 pendente (ver [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões)).
+
+As linhas "Solicitante" valem para qualquer usuário, inclusive para quem também tem o papel `'gestor'` ou `'institucional'`. Um "—" indica apenas que o papel, sozinho, não concede a ação.
 
 | Ação | Solicitante | Gestor | Institucional |
 |------|------------|--------|---------------|
@@ -603,6 +608,48 @@ A mensagem é a chave `__('If an account exists with this email, we will send a 
 2. **Tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir.
 
 **429 em requisições Inertia.** Fora de `local` e `testing`, o handler de `bootstrap/app.php` converte o 429 em `Errors/ErrorPage` (título e descrição de `TOO_MANY_REQUESTS`, nos três idiomas), como já fazia com 403, 404, 419, 500 e 503. Sem isso, um `useForm` receberia o HTML do Symfony e mostraria o modal de erro cru do Inertia. Coberto por `LimitesDeTaxaAuthTest::test_esqueci_a_senha_em_producao_mostra_a_pagina_de_erro_429_numa_visita_inertia`, que troca o ambiente para `production` dentro do teste.
+
+---
+
+## Gerenciamento de papéis e agendas (modal de permissões)
+
+O modal "Gerenciar Permissões" (`PermissionModal.tsx`, em Institucional > Usuários) salva por `PUT institucional.usuarios.updatepermissions`, que chama `UserService::updatePermissions()`. A autorização é `UserPolicy::updatePermissions()`, que nega contas anonimizadas (ver [UserPolicy](#userpolicy--contas-anonimizadas)).
+
+A regra depende de quantos papéis o usuário tem no momento do salvamento.
+
+### Usuário com um papel só
+
+| Papel enviado | Agendas | Notificações |
+|---------------|---------|--------------|
+| `'gestor'` | Vincula as agendas da lista e desvincula as que tinham este usuário e saíram da lista. Uma agenda tem um único gestor (`agendas.user_id`) | `UserAssignedAsManagerNotification` se virou gestor ou ganhou agenda nova |
+| Outro papel (`'comum'`, `'institucional'`) | Desvincula todas as agendas do usuário | `UserRemovedAsManagerNotification` se era gestor (papel ou agenda) |
+
+Sem transição real (ex.: `'comum'` salvo como `'comum'`, ou gestor salvo com as mesmas agendas), nenhuma notificação de gestor é enviada.
+
+### Usuário com mais de um papel
+
+Este é o caso de quem acumula `'comum'` + `'gestor'`. O modal mostra os papéis atuais como etiquetas só de leitura, com o aviso de que os papéis não podem ser alterados ali. Não há seletor de papel.
+
+- **Papéis não mudam.** O `role_name` da request é validado (precisa existir), mas ignorado. Nenhum papel é adicionado ou removido.
+- **Agendas só são tratadas se `'gestor'` estiver entre os papéis.** Se estiver, as agendas que estavam vinculadas e deixaram de constar na lista são desvinculadas, e as novas são vinculadas. Não há desvinculação em massa do conjunto inteiro, só das removidas da lista.
+- **Sem `'gestor'` entre os papéis** (ex.: `'comum'` + `'institucional'`), as agendas não são tocadas.
+- **Notificações.** Só `UserAssignedAsManagerNotification`, e só se o usuário ganhou agenda nova sendo gestor. Não há `UserRemovedAsManagerNotification` neste caso, porque o papel `'gestor'` continua.
+- **Permissões diretas** são sincronizadas quando a request traz `direct_permissions`. O modal só a envia para quem pode gerenciar permissões diretas.
+
+### Ordem das operações
+
+Papéis, agendas e permissões diretas são gravados numa única `DB::transaction`. As notificações de gestor são enviadas depois do commit, e uma falha de envio só gera log (`Log::warning`), sem desfazer a gravação. Todas as notificações de gestor implementam `ShouldQueue` (ver [notificações](../arquitetura/notificacoes.md)).
+
+### Interface do modal
+
+| Situação | Seletor de papel | Papéis atuais | Seção de agendas |
+|----------|------------------|---------------|------------------|
+| Um papel | Sim (Institucional, Gestor, Comum) | Não exibidos | Aparece se o papel selecionado for `'gestor'` |
+| Mais de um papel | Não | Etiquetas só de leitura + aviso | Aparece se `'gestor'` estiver entre os papéis |
+
+### Decisão pendente B44
+
+Ainda não está decidido se o acúmulo `'comum'` + `'gestor'` é estado válido ou se deve ser normalizado, e se o modal passará a aceitar seleção múltipla de papéis. Até essa decisão, o código preserva o estado atual, e o comportamento descrito nesta seção é provisório. O acompanhamento está no [backlog](../backlog.md) (item B44, relacionado à S14).
 
 ---
 

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
-use App\Events\ReservaEvent;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Notifications\ReservationEvaluatedNotification;
 use App\Services\ConflictDetectionService;
+use App\Services\ReservaBroadcaster;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -42,7 +42,7 @@ class AvaliarReservaJob implements ShouldQueue
     /**
      * Execute the job — evaluates each horario based on the gestor's decisions and conflict state.
      */
-    public function handle(ConflictDetectionService $conflictService): void
+    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
         Log::info('AvaliarReservaJob started', [
             'reserva_id' => $this->reserva->id,
@@ -148,10 +148,6 @@ class AvaliarReservaJob implements ShouldQueue
 
             $this->reserva->refresh();
 
-            $espacoId = $this->reserva->horarios()->with('agenda.espaco')->first()?->agenda->espaco_id ?? 0;
-            $horariosCount = $this->reserva->horarios()->count();
-            ReservaEvent::dispatch('evaluated', $this->reserva->id, $espacoId, $horariosCount);
-
             Log::info('AvaliarReservaJob completed', [
                 'reserva_id' => $this->reserva->id,
                 'situacao' => $this->reserva->situacao,
@@ -186,6 +182,8 @@ class AvaliarReservaJob implements ShouldQueue
                     ]);
                 }
             }
+
+            $broadcaster->publicar($this->reserva, 'evaluated');
 
         } catch (Exception $e) {
             Log::error('AvaliarReservaJob failed', [

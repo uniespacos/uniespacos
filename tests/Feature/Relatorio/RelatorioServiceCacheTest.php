@@ -6,7 +6,7 @@ namespace Tests\Feature\Relatorio;
 
 use App\Enums\Relatorio\FormatoRelatorioEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
-use App\Events\ReservaEvent;
+use App\Events\ReservaAlterada;
 use App\Listeners\InvalidarCacheRelatoriosAoAtualizarReserva;
 use App\Models\Agenda;
 use App\Models\Espaco;
@@ -241,7 +241,7 @@ final class RelatorioServiceCacheTest extends TestCase
         $this->assertSame($versaoBInicial, $versaoBPos);
     }
 
-    public function test_listener_invalida_cache_ao_receber_reserva_event(): void
+    public function test_listener_invalida_cache_ao_receber_reserva_alterada(): void
     {
         $versaoReservas = (int) (Cache::get('relatorio_version:reservas_periodo') ?? 1);
         $versaoOcupacao = (int) (Cache::get('relatorio_version:ocupacao_espacos') ?? 1);
@@ -249,11 +249,9 @@ final class RelatorioServiceCacheTest extends TestCase
         $versaoInventario = (int) (Cache::get('relatorio_version:inventario_espacos') ?? 1);
 
         $listener = app(InvalidarCacheRelatoriosAoAtualizarReserva::class);
-        $event = new ReservaEvent(
-            action: 'updated',
+        $event = new ReservaAlterada(
+            acao: 'updated',
             reservaId: 1,
-            espacoId: 2,
-            horariosCount: 1,
         );
 
         $listener->handle($event);
@@ -269,7 +267,7 @@ final class RelatorioServiceCacheTest extends TestCase
 
     public function test_listener_esta_registrado_no_framework(): void
     {
-        $listeners = Event::getListeners(ReservaEvent::class);
+        $listeners = Event::getListeners(ReservaAlterada::class);
 
         $registrado = false;
         foreach ($listeners as $listener) {
@@ -288,7 +286,7 @@ final class RelatorioServiceCacheTest extends TestCase
             }
         }
 
-        $this->assertTrue($registrado || count($listeners) > 0, 'Listener de invalidação deve estar registrado para ReservaEvent.');
+        $this->assertTrue($registrado || count($listeners) > 0, 'Listener de invalidação deve estar registrado para ReservaAlterada.');
     }
 
     public function test_usuario_sem_permissao_lanca_403_ao_agregar_com_cache(): void

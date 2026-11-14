@@ -202,11 +202,13 @@ sequenceDiagram
     ProcessarCriacaoReserva->>Notification: NewReservationNotification → Gestores (se não auto-aprovada)
     ProcessarCriacaoReserva->>Queue: ValidateReservationConflictsJob::dispatch(reserva)
     ProcessarCriacaoReserva->>Notification: ReservationCreatedNotification → Solicitante (suprime mail em auto-aprovação)
+    ProcessarCriacaoReserva->>ProcessarCriacaoReserva: publicar 'created' (ReservaAlterada + ReservaEvent, por último)
 
     Queue->>ValidateJob: handle()
     ValidateJob->>DB: UPDATE reservas SET validation_status='processing'
     ValidateJob->>DB: SQL JOIN horarios para detectar conflitos (mesma agenda, data, sobreposição de horário)
     ValidateJob->>DB: UPDATE reservas SET conflict_cache=JSON, validation_status='completed'
+    ValidateJob->>ValidateJob: publicar 'validated' (só ReservaEvent; falha não grava 'failed')
 ```
 
 ### 4.2.1 Defesa Contra Race Condition: Lock Pessimista e Revalidação
@@ -235,6 +237,19 @@ O field `validation_status` acompanha o progresso do `ValidateReservationConflic
 | `failed` | Job falhou após retries; cache pode estar desatualizado | Manual (não há retry automático) |
 
 **Nota:** Durante `pending` ou `processing`, a `AvaliarReservaPage` (gestor) exibe um spinner e bloqueia avaliação, pois não há conflitos verificados ainda.
+
+### 4.4 Efeitos Depois do Commit {#efeitos-pos-commit}
+
+Os efeitos externos de uma alteração de reserva só rodam depois que a transação foi commitada, nesta ordem:
+
+| Ordem | Efeito | Se falhar |
+|-------|--------|-----------|
+| 1 | Validação de conflitos (`ValidateReservationConflictsJob`, na criação, edição e cascata de avaliação) | `validation_status = 'failed'` (após retries) |
+| 2 | Notificações (`notify()` em try-catch, uma por destinatário) | `Log::warning`; o fluxo segue |
+| 3 | Invalidação do cache de relatórios (`ReservaAlterada`, listener na fila) | Só para `created`, `updated`, `evaluated` e `canceled`. `validated` não invalida |
+| 4 | Tempo real (`ReservaEvent` via `ReservaBroadcaster::publicar()`) | `Log::warning`; não altera a situação da reserva, o `validation_status` nem as notificações |
+
+O tempo real é sempre o último passo. A exceção de status é `validated`: depois de gravar `completed`, falha de broadcast não regrava `failed`. O cancelamento segue a mesma regra, com a revalidação de reservas em conflito antes da publicação (ver [seção 8](#cancelamento)).
 
 ---
 
@@ -305,6 +320,7 @@ sequenceDiagram
     end
     
     AvaliarJob->>Notification: ReservationEvaluatedNotification → Solicitante (database + broadcast + mail)
+    AvaliarJob->>AvaliarJob: publicar 'evaluated' (ReservaAlterada + ReservaEvent, por último)
 ```
 
 ---
@@ -408,10 +424,12 @@ sequenceDiagram
     ReservaService->>DB: UPDATE reservas SET situacao='inativa'
     ReservaService->>DB: COMMIT
     ReservaService->>Notification: ReservationCanceledNotification → Gestores afetados
+    ReservaService->>ReservaService: revalida reservas em conflito (despacha ValidateReservationConflictsJob)
+    ReservaService->>ReservaService: publicar 'canceled' (ReservaAlterada + ReservaEvent, por último)
     ReservaController-->>Browser: redirect back (flash "cancelada")
 ```
 
-> **Nota:** O cancelamento é **síncrono** (não usa job/queue), diferente da criação e avaliação.
+> **Nota:** O cancelamento é **síncrono** (não usa job/queue), diferente da criação e avaliação. Os efeitos depois do commit (avisos, revalidação e publicação) seguem a ordem da [seção 4.4](#efeitos-pos-commit).
 
 ---
 
