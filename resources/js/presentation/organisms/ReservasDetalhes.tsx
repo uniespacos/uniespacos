@@ -170,22 +170,24 @@ export default function ReservaDetalhes({
                     </Button>
 
                     {isGestor ? (
-                        <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
-                            <Button
-                                type="button"
-                                variant="default"
-                                size="default"
-                                className="min-h-[44px] gap-1.5 text-xs font-semibold"
-                                onClick={() => {
-                                    router.get(route('gestor.reservas.show', selectedReserva.id));
-                                }}
-                            >
-                                <Edit className="h-4 w-4" />
-                                {selectedReserva.situacao === SituacaoReserva.EM_ANALISE
-                                    ? t('reservas.acoes.avaliar')
-                                    : t('reservas.avaliacao.reavaliacao_titulo')}
-                            </Button>
-                        </Can>
+                        selectedReserva.situacao !== SituacaoReserva.INATIVA ? (
+                            <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
+                                <Button
+                                    type="button"
+                                    variant="default"
+                                    size="default"
+                                    className="min-h-[44px] gap-1.5 text-xs font-semibold"
+                                    onClick={() => {
+                                        router.get(route('gestor.reservas.show', selectedReserva.id));
+                                    }}
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    {selectedReserva.situacao === SituacaoReserva.EM_ANALISE
+                                        ? t('reservas.acoes.avaliar')
+                                        : t('reservas.avaliacao.reavaliacao_titulo')}
+                                </Button>
+                            </Can>
+                        ) : null
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {selectedReserva.can_update && (
@@ -222,6 +224,19 @@ export default function ReservaDetalhes({
             }
         >
             <div className="space-y-4 py-1 text-sm">
+                {selectedReserva.situacao === SituacaoReserva.INATIVA && (
+                    <div
+                        data-testid="modal-reserva-cancelada-alert"
+                        className="border-warning-accent/30 bg-warning-subtle/80 text-foreground space-y-1 rounded-xl border p-3.5"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Info className="text-warning-accent h-4 w-4 shrink-0" />
+                            <h4 className="text-xs font-semibold tracking-wider uppercase">{t('reservas.avaliacao.cancelada_titulo')}</h4>
+                        </div>
+                        <p className="text-muted-foreground text-xs leading-relaxed sm:text-sm">{t('reservas.avaliacao.cancelada_descricao')}</p>
+                    </div>
+                )}
+
                 {/* Seção 1: Context Cards Responsivos (Diferenciação Gestor vs Solicitante) */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {/* Card de Identificação da Pessoa */}

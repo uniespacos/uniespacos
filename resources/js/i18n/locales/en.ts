@@ -287,6 +287,10 @@ export const en = {
             escopo_edicao: 'Evaluation Scope',
             escopo_todas: 'All recurrence occurrences',
             escopo_semana: 'Only slots of this week',
+            cancelada_titulo: 'Reservation request canceled',
+            cancelada_descricao:
+                'This reservation request was canceled before it could be evaluated or completed. The requested time slots have been released and no action is required.',
+            voltar_listagem: 'Back to Manage Reservations',
         },
         gestor: {
             conflicts_detected: 'Warning: {{count}} time slot(s) of this reservation overlap(s) with another reservation(s).',

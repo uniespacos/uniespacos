@@ -204,6 +204,32 @@ class ReservaAuthorizationTest extends TestCase
         $this->assertDatabaseHas('reservas', ['id' => $reserva->id, 'situacao' => 'inativa']);
     }
 
+    public function test_gestor_can_view_archived_reservation_from_own_agenda_but_intruder_cannot(): void
+    {
+        $dono = User::factory()->create();
+        $gestorDono = User::factory()->create();
+        $gestorDono->assignRole('gestor');
+        $gestorIntruso = User::factory()->create();
+        $gestorIntruso->assignRole('gestor');
+
+        $reserva = $this->criarReservaCom($dono, $gestorDono);
+        $reserva->horarios()->update(['situacao' => 'inativa']);
+        $reserva->update(['situacao' => 'inativa']);
+
+        $this->actingAs($gestorDono)
+            ->get(route('gestor.reservas.show', $reserva->id))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Reservas/Gestor/AvaliarReservaPage')
+                ->where('reserva.id', $reserva->id)
+                ->where('reserva.situacao', 'inativa')
+            );
+
+        $this->actingAs($gestorIntruso)
+            ->get(route('gestor.reservas.show', $reserva->id))
+            ->assertForbidden();
+    }
+
     public function test_gestor_modal_does_not_return_reservation_outside_their_agendas(): void
     {
         $dono = User::factory()->create();

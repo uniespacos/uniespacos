@@ -10,7 +10,7 @@ import AvaliarReservaPage from './AvaliarReservaPage';
 
 jest.mock('@inertiajs/react', () => ({
     Head: ({ title }: { title: string }) => <title>{title}</title>,
-    router: { reload: jest.fn() },
+    router: { get: jest.fn(), reload: jest.fn() },
 }));
 
 jest.mock('@/presentation/templates/AppLayout', () => ({
@@ -193,5 +193,19 @@ describe('AvaliarReservaPage', () => {
 
         expect(screen.getByRole('heading', { level: 1, name: 'reservas.avaliacao.titulo' })).toBeInTheDocument();
         expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    });
+
+    it('exibe aviso informativo e oculta formulario de avaliacao quando reserva esta cancelada', () => {
+        const canceladaReserva: Reserva = {
+            ...mockReserva,
+            situacao: 'inativa',
+        };
+
+        const { queryByTestId } = render(<AvaliarReservaPage reserva={canceladaReserva} semana={mockSemana} />);
+
+        expect(screen.getByTestId('reserva-cancelada-alert')).toBeInTheDocument();
+        expect(screen.getByText('reservas.avaliacao.cancelada_titulo')).toBeInTheDocument();
+        expect(screen.getByText('reservas.avaliacao.cancelada_descricao')).toBeInTheDocument();
+        expect(queryByTestId('evaluation-form')).not.toBeInTheDocument();
     });
 });

@@ -157,7 +157,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $usuario = $this->usuario('avatars/antiga.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 1')
+            ->expectsOutput('reprocessadas: 1')
             ->assertExitCode(0);
 
         $novo = $this->fotoDoBanco($usuario);
@@ -180,7 +180,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $usuario = $this->usuario('avatars/com-texto.png');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 1')
+            ->expectsOutput('reprocessadas: 1')
             ->assertExitCode(0);
 
         $novo = $this->fotoDoBanco($usuario);
@@ -197,7 +197,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $usuario = $this->usuario('avatars/grande.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 1')
+            ->expectsOutput('reprocessadas: 1')
             ->assertExitCode(0);
 
         $novo = $this->fotoDoBanco($usuario);
@@ -216,8 +216,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $png = $this->usuario('avatars/limite.png');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('já em ordem: 2')
-            ->expectsOutputToContain('reprocessadas: 0')
+            ->expectsOutput('já em ordem: 2')
+            ->expectsOutput('reprocessadas: 0')
             ->assertExitCode(0);
 
         $this->assertSame('avatars/limpa.jpg', $this->fotoDoBanco($jpeg));
@@ -238,9 +238,9 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $limpa = $this->usuario('avatars/limpa.jpg');
 
         $this->artisan('fotos:reprocessar', ['--dry-run' => true])
-            ->expectsOutputToContain('Simulação: nenhuma foto será alterada.')
-            ->expectsOutputToContain('a reprocessar: 2')
-            ->expectsOutputToContain('já em ordem: 1')
+            ->expectsOutput('Simulação: nenhuma foto será alterada.')
+            ->expectsOutput('já em ordem: 1')
+            ->expectsOutput('a reprocessar: 2')
             ->assertExitCode(0);
 
         $this->assertSame($arquivosAntes, $this->arquivosNoDisco());
@@ -258,12 +258,12 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $this->usuario('avatars/grande.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 2')
+            ->expectsOutput('reprocessadas: 2')
             ->assertExitCode(0);
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 0')
-            ->expectsOutputToContain('já em ordem: 2')
+            ->expectsOutput('já em ordem: 2')
+            ->expectsOutput('reprocessadas: 0')
             ->assertExitCode(0);
     }
 
@@ -282,8 +282,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $usuarioWebp = $this->usuario($webp);
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('já em ordem: 2')
-            ->expectsOutputToContain('reprocessadas: 0')
+            ->expectsOutput('já em ordem: 2')
+            ->expectsOutput('reprocessadas: 0')
             ->assertExitCode(0);
 
         $this->assertSame($jpeg, $this->fotoDoBanco($usuarioJpeg));
@@ -301,7 +301,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $xmp = $this->usuario('avatars/xmp.webp');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('reprocessadas: 2')
+            ->expectsOutput('reprocessadas: 2')
             ->assertExitCode(0);
 
         foreach ([$exif, $xmp] as $usuario) {
@@ -318,8 +318,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $usuario = $this->usuario('avatars/sumiu.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('ausentes no disco: 1')
-            ->expectsOutputToContain('reprocessadas: 0')
+            ->expectsOutput('reprocessadas: 0')
+            ->expectsOutput('ausentes no disco: 1')
             ->assertExitCode(0);
 
         $this->assertSame('avatars/sumiu.jpg', $this->fotoDoBanco($usuario));
@@ -340,8 +340,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $texto = $this->usuario('avatars/texto.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('ilegíveis ou não processáveis: 2')
-            ->expectsOutputToContain('reprocessadas: 0')
+            ->expectsOutput('reprocessadas: 0')
+            ->expectsOutput('ilegíveis ou não processáveis: 2')
             ->assertExitCode(0);
 
         $this->assertSame('avatars/quebrada.png', $this->fotoDoBanco($quebrada));
@@ -358,8 +358,8 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $travessia = $this->usuario('avatars/../segredo.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('fora do padrão: 2')
-            ->expectsOutputToContain('reprocessadas: 0')
+            ->expectsOutput('reprocessadas: 0')
+            ->expectsOutput('fora do padrão: 2')
             ->assertExitCode(0);
 
         $this->assertSame('outra-pasta/foto.jpg', $this->fotoDoBanco($fora));
@@ -373,7 +373,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $this->usuario('');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('total com foto: 0')
+            ->expectsOutput('total com foto: 0')
             ->assertExitCode(0);
     }
 
@@ -385,7 +385,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         $this->usuario('avatars/usada.jpg');
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('órfãs (sem usuário): 1')
+            ->expectsOutput('órfãs (sem usuário): 1')
             ->assertExitCode(0);
 
         Storage::disk('public')->assertExists('avatars/orfa.jpg');
@@ -430,7 +430,7 @@ class ReprocessarFotosDePerfilTest extends TestCase
         });
 
         $this->artisan('fotos:reprocessar')
-            ->expectsOutputToContain('alteradas em paralelo: 1')
+            ->expectsOutput('alteradas em paralelo: 1')
             ->assertExitCode(0);
 
         $this->assertSame('avatars/trocada-pelo-usuario.jpg', $this->fotoDoBanco($usuario));

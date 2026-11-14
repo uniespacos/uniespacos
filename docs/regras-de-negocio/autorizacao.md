@@ -96,7 +96,7 @@ As permissões Spatie relacionadas a reservas são:
 | `'reservas.visualizar'` | Visualizar qualquer reserva (bypass de propriedade) | `ReservaPolicy::view()` |
 | `'reservas.atualizar'` | ~~Editar qualquer reserva (bypass de propriedade e situação)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional`). A edição segue a regra do proprietário. | `ReservaPolicy::update()` |
 | `'reservas.deletar'` | ~~Deletar qualquer reserva (bypass de propriedade)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_155138_revoke_reservas_deletar_from_institucional`) — cancelamento é exclusivamente por proprietário. | `ReservaPolicy::delete()` |
-| `'reservas.avaliar'` | Avaliar (aprovar/indeferir) horários de reservas em suas agendas | `ReservaPolicy::viewForGestor()`, `GestorReservaController::show()`, `GestorReservaController::update()` |
+| `'reservas.avaliar'` | Avaliar (aprovar/indeferir) horários de reservas em suas agendas | `ReservaPolicy::viewForGestor()`, `ReservaPolicy::evaluateForGestor()`, `GestorReservaController::show()`, `GestorReservaController::update()` |
 
 **Permissões de controle de seção:**
 - `'secao.dashboard-gestor'` — acesso a dashboard do gestor
@@ -260,43 +260,48 @@ return $user->hasPermissionTo('reservas.deletar')  // Bypass de propriedade, se 
 
 ---
 
-### 6. `viewForGestor(User $user, Reserva $reserva): bool`
+### 6. `viewForGestor(User $user, Reserva $reserva): bool` e `evaluateForGestor(User $user, Reserva $reserva): bool`
 
-**Propósito:** Autorizar um gestor a visualizar e avaliar uma reserva.
+**Propósito:** Separar a visualização da página de detalhes/avaliação (`viewForGestor`, que inclui reservas canceladas/`inativa` para evitar erro 403 em links de e-mail e exibir o aviso informativo) da ação de avaliar horários (`evaluateForGestor`, que segue bloqueando reservas `inativa`).
 
 **Lógica:**
-```
-// Requer permissão de avaliador
-if (! $user->hasPermissionTo('reservas.avaliar')) {
-    return false;
+```php
+public function viewForGestor(User $user, Reserva $reserva): bool
+{
+    if (! $user->hasPermissionTo('reservas.avaliar')) {
+        return false;
+    }
+
+    $agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
+    $agendasDoGestorIds = $user->agendas()->pluck('id');
+
+    return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 }
 
-// Não pode avaliar reservas inativas
-if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
-    return false;
+public function evaluateForGestor(User $user, Reserva $reserva): bool
+{
+    if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+        return false;
+    }
+
+    return $this->viewForGestor($user, $reserva);
 }
-
-// Requer que ao menos uma agenda da reserva seja gerenciada pelo gestor
-$agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
-$agendasDoGestorIds = $user->agendas()->pluck('id');
-
-return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 ```
 
 **Quem pode executar:**
-1. Deve ter permissão `'reservas.avaliar'` (papel `'gestor'`)
-2. Reserva deve **estar ativa** (situação ≠ `'inativa'`)
-3. Deve gerenciar **ao menos uma agenda** que a reserva usa
+1. **`viewForGestor`:** usuário com permissão `'reservas.avaliar'` que gerencie **ao menos uma agenda** da reserva (mesmo quando `situacao === 'inativa'`, permitindo abrir o link de notificação e visualizar o aviso de reserva cancelada).
+2. **`evaluateForGestor`:** mesmos requisitos de `viewForGestor` **e** reserva com `situacao !== 'inativa'`.
 
 **Quem NÃO pode:**
 - Usuário sem `'reservas.avaliar'` (papel `'comum'`)
 - Gestor de agenda **disjunta** (ex: gestor de Sala A não pode ver reserva de Sala B)
 - Proprietário (mesmo que autor da reserva)
 - Institucional sem ser também gestor (sem `'reservas.avaliar'`)
+- Qualquer gestor tentando enviar avaliação (`evaluateForGestor`) em reserva `'inativa'`
 
 **Invariante crítico — Intersecção de Agendas:**
 
-A policy verifica que `$agendasDoGestorIds.intersect($agendasDaReservaIds).isNotEmpty()`. Isto significa:
+A policy verifica que `$agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty()`. Isto significa:
 
 - Gestor de Agenda A vê reservas que usam Agenda A (e outras)
 - Gestor de Agenda A **não** vê reservas de Agenda B (mesmo que outro gestor)
@@ -315,13 +320,13 @@ Gestor1 pode ver: Reserva_1 (intersecção: SalaA), Reserva_2 (SalaA) — NÃO R
 Gestor2 pode ver: Reserva_1 (intersecção: SalaB), Reserva_3 (SalaB) — NÃO Reserva_2
 ```
 
-**Rota associada:**
-- `GET /gestor/reservas/{reserva}` (GestorReservaController::show) — exibe página de avaliação
-- `PUT/PATCH /gestor/reservas/{reserva}` (GestorReservaController::update) — despatch job de avaliação
+**Rotas associadas:**
+- `GET /gestor/reservas/{reserva}` (GestorReservaController::show) — usa `viewForGestor`; exibe página de avaliação ou aviso de reserva cancelada
+- `PUT/PATCH /gestor/reservas/{reserva}` (GestorReservaController::update) — usa `evaluateForGestor`; despatch job de avaliação apenas para reservas ativas
 
 **Segurança (IDOR Prevention):**
-- Sem a intersecção de agendas, um gestor poderia avaliar qualquer reserva (acesso além de seu escopo).
-- Sem `! $reserva->inativa`, um gestor poderia "reavaliar" reservas já processadas.
+- Sem a intersecção de agendas, um gestor poderia acessar ou avaliar reservas fora de seu escopo.
+- Sem a checagem de `situacao !== 'inativa'` em `evaluateForGestor()`, um gestor poderia submeter avaliação para reserva cancelada.
 
 ---
 
@@ -413,7 +418,7 @@ return $user->hasPermissionTo('reservas.deletar')
 
 ---
 
-#### `viewForGestor()` — Proteção contra acesso a agendas alheias
+#### `viewForGestor()` e `evaluateForGestor()` — Proteção contra acesso e avaliação em agendas alheias
 
 **Vulnerabilidade a evitar:**
 ```php
@@ -425,24 +430,32 @@ public function viewForGestor(User $user, Reserva $reserva): bool {
 
 **Implementação segura:**
 ```php
-if (! $user->hasPermissionTo('reservas.avaliar')) {
-    return false;
+public function viewForGestor(User $user, Reserva $reserva): bool
+{
+    if (! $user->hasPermissionTo('reservas.avaliar')) {
+        return false;
+    }
+
+    $agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
+    $agendasDoGestorIds = $user->agendas()->pluck('id');
+
+    return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 }
 
-if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
-    return false;
+public function evaluateForGestor(User $user, Reserva $reserva): bool
+{
+    if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+        return false;
+    }
+
+    return $this->viewForGestor($user, $reserva);
 }
-
-$agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
-$agendasDoGestorIds = $user->agendas()->pluck('id');
-
-return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 ```
 
 **Defesa:**
 - Permissão gatilho (`'reservas.avaliar'`)
-- Intersecção de agendas: gestor só vê reservas que usam suas agendas
-- Exclusão de reservas inativas (não reavaliar)
+- Intersecção de agendas: gestor só vê e avalia reservas que usam suas agendas
+- Bloqueio de avaliação para reservas inativas em `evaluateForGestor()` (visualização somente leitura com aviso permitida via `viewForGestor()`)
 
 **Invasor consegue avaliar se:** Conseguir permissão `'reservas.avaliar'` OU conseguir ser assignado a uma agenda que a reserva usa.
 
@@ -693,8 +706,8 @@ Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAno
 | `/reservas/{id}` | PUT/PATCH | ReservaController::update | update | — | Despatch job de atualização |
 | `/reservas/{id}` | DELETE | ReservaController::destroy | delete | — | Despatch job de cancelamento |
 | `/gestor/reservas` | GET | GestorReservaController::index | — | `reservas.avaliar` + middleware | Listagem do gestor |
-| `/gestor/reservas/{id}` | GET | GestorReservaController::show | viewForGestor | `reservas.avaliar` | Página de avaliação |
-| `/gestor/reservas/{id}` | PUT/PATCH | GestorReservaController::update | viewForGestor | `reservas.avaliar` | Despatch job de avaliação |
+| `/gestor/reservas/{id}` | GET | GestorReservaController::show | viewForGestor | `reservas.avaliar` | Página de avaliação (inclui inativa com aviso) |
+| `/gestor/reservas/{id}` | PUT/PATCH | GestorReservaController::update | evaluateForGestor | `reservas.avaliar` | Despatch job de avaliação (bloqueia inativa) |
 
 ---
 

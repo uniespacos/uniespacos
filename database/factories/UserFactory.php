@@ -50,7 +50,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'telefone' => fake()->phoneNumber(),
-            'profile_pic' => '[https://placehold.co/400x400/000000/FFFFFF?text=](https://placehold.co/400x400/000000/FFFFFF?text=)'.fake()->lexify('??'),
+            'profile_pic' => '',
             'setor_id' => Setor::pluck('id')->random(),
             'remember_token' => Str::random(10),
         ];

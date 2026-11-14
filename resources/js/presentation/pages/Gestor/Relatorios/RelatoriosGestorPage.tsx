@@ -18,9 +18,27 @@ import { Head } from '@inertiajs/react';
 import { AlertCircle, BarChart3, Filter, SlidersHorizontal } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
-const GraficoReservasPeriodo = lazy(() => import('@/presentation/organisms/GraficoReservasPeriodo'));
-const GraficoOcupacaoEspacos = lazy(() => import('@/presentation/organisms/GraficoOcupacaoEspacos'));
-const GraficoInventarioEspacos = lazy(() => import('@/presentation/organisms/GraficoInventarioEspacos'));
+const loadGraficoReservasPeriodo = () => import('@/presentation/organisms/GraficoReservasPeriodo');
+const loadGraficoOcupacaoEspacos = () => import('@/presentation/organisms/GraficoOcupacaoEspacos');
+const loadGraficoInventarioEspacos = () => import('@/presentation/organisms/GraficoInventarioEspacos');
+
+const GraficoReservasPeriodo = lazy(loadGraficoReservasPeriodo);
+const GraficoOcupacaoEspacos = lazy(loadGraficoOcupacaoEspacos);
+const GraficoInventarioEspacos = lazy(loadGraficoInventarioEspacos);
+
+function preloadGraficoRelatorioGestor(tipo: TipoRelatorioType): void {
+    switch (tipo) {
+        case TipoRelatorio.RESERVAS_PERIODO:
+            void loadGraficoReservasPeriodo();
+            break;
+        case TipoRelatorio.OCUPACAO_ESPACOS:
+            void loadGraficoOcupacaoEspacos();
+            break;
+        case TipoRelatorio.INVENTARIO_ESPACOS:
+            void loadGraficoInventarioEspacos();
+            break;
+    }
+}
 
 interface Props {
     tipos_disponiveis: TipoRelatorioOption[];
@@ -55,7 +73,9 @@ export default function RelatoriosGestorPage({ tipos_disponiveis, opcoes_inventa
                     <Tabs
                         value={tipoSelecionado}
                         onValueChange={(value) => {
-                            setTipoSelecionado(value as TipoRelatorioType);
+                            const novoTipo = value as TipoRelatorioType;
+                            preloadGraficoRelatorioGestor(novoTipo);
+                            setTipoSelecionado(novoTipo);
                         }}
                         className="w-full"
                     >

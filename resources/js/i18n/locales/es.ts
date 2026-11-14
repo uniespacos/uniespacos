@@ -287,6 +287,10 @@ export const es = {
             escopo_edicao: 'Alcance de la Evaluación',
             escopo_todas: 'Todas las ocurrencias de la recurrencia',
             escopo_semana: 'Solo horarios de esta semana',
+            cancelada_titulo: 'Solicitud de reserva cancelada',
+            cancelada_descricao:
+                'Esta solicitud de reserva fue cancelada antes de que pudiera ser evaluada o completada. Los horarios solicitados fueron liberados y no se requiere ninguna acción.',
+            voltar_listagem: 'Volver a Gestionar Reservas',
         },
         gestor: {
             conflicts_detected: 'Advertencia: {{count}} franja(s) horaria(s) de esta reserva se superpone(n) con otra(s) reserva(s).',
