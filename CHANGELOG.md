@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.1](https://github.com/uniespacos/uniespacos/compare/v1.6.0...v1.6.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* estabilidade da v1, parte 1 — broadcast fora do desfecho dos jobs e modal de permissões com papéis acumulados (S26, S14) ([a94f8fd](https://github.com/uniespacos/uniespacos/commit/a94f8fd64938836a70c4a6ed466447a0058440d4))
+
+
+### Miscellaneous Chores
+
+* **develop:** release 1.5.0-rc.113 ([0db77d6](https://github.com/uniespacos/uniespacos/commit/0db77d6c50aaab0b5e23d36b0b086621790a77f5))
+* **develop:** release 1.5.0-rc.113 ([6739f49](https://github.com/uniespacos/uniespacos/commit/6739f499073818dc9b3d7be6f7a67e884edb3b85))
+* **develop:** release 1.5.0-rc.114 ([50ef296](https://github.com/uniespacos/uniespacos/commit/50ef296199232bf3d19ec549da6438ef716819ef))
+* **develop:** release 1.5.0-rc.114 ([78d5956](https://github.com/uniespacos/uniespacos/commit/78d595607668fd5b335e901b2be93e45af4022b2))
+* release 1.6.1 com a estabilidade da v1, parte 1 (S26 e S14) ([c85c806](https://github.com/uniespacos/uniespacos/commit/c85c8063063134945b3613dd1bb81d4cca70ce07))
+* sincronizar main em develop após release 1.6.0 ([6490831](https://github.com/uniespacos/uniespacos/commit/6490831a6ffbbf7b9aa41987e49014916693c014))
+
 ## [1.5.0-rc.114](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.113...v1.5.0-rc.114) (2026-11-06)
 
 
