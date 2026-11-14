@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'email_verified_at' => now(),
-                'profile_pic' => fake()->name(),
+                'profile_pic' => '',
                 'telefone' => fake()->phoneNumber(),
                 'password' => Hash::make('123123123'),
                 'setor_id' => $setorId,

@@ -10,9 +10,34 @@ interface UserAvatarProps {
     fallbackClassName?: string;
 }
 
+const VALID_IMAGE_EXTENSION_PATTERN = /\.(?:avif|bmp|gif|ico|jpe?g|png|svg|webp)(?:[?#].*)?$/i;
+const failedAvatarUrls = new Set<string>();
+
+export function clearFailedAvatarUrls(): void {
+    failedAvatarUrls.clear();
+}
+
+function isPlausibleAvatarPath(value: string): boolean {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return false;
+    }
+    if (
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('data:') ||
+        trimmed.startsWith('blob:') ||
+        trimmed.startsWith('/') ||
+        trimmed.includes('/')
+    ) {
+        return true;
+    }
+    return VALID_IMAGE_EXTENSION_PATTERN.test(trimmed);
+}
+
 export function UserAvatar({ user, className = 'h-8 w-8', fallbackClassName }: UserAvatarProps) {
     const getInitials = useInitials();
-    const [hasImageError, setHasImageError] = useState(false);
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
     const rawProfilePic =
         typeof user.profile_pic === 'string'
@@ -20,16 +45,24 @@ export function UserAvatar({ user, className = 'h-8 w-8', fallbackClassName }: U
             : 'avatar' in user && typeof (user as { avatar: unknown }).avatar === 'string'
               ? (user as { avatar: string }).avatar
               : undefined;
-    const profilePic = resolveStorageUrl(rawProfilePic);
+    const profilePic = rawProfilePic && isPlausibleAvatarPath(rawProfilePic) ? resolveStorageUrl(rawProfilePic) : undefined;
+    const shouldRenderImage = Boolean(profilePic && failedSrc !== profilePic && !failedAvatarUrls.has(profilePic));
 
     return (
         <Avatar className={`overflow-hidden rounded-full ${className}`}>
-            {profilePic && !hasImageError ? (
+            {shouldRenderImage && profilePic ? (
                 <AvatarImage
                     src={profilePic}
                     alt={user.name}
+                    onLoadingStatusChange={(status) => {
+                        if (status === 'error') {
+                            failedAvatarUrls.add(profilePic);
+                            setFailedSrc(profilePic);
+                        }
+                    }}
                     onError={() => {
-                        setHasImageError(true);
+                        failedAvatarUrls.add(profilePic);
+                        setFailedSrc(profilePic);
                     }}
                 />
             ) : null}

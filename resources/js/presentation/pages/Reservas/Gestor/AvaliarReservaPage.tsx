@@ -1,4 +1,6 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { SituacaoReserva, ValidationStatus, type SituacaoReservaType } from '@/contracts';
 import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
 import { useAvaliarReserva } from '@/hooks/use-avaliar-reserva';
@@ -19,9 +21,9 @@ import EvaluationForm from '@/presentation/organisms/EvaluationForm';
 import { ReservaInfoCard } from '@/presentation/organisms/ReservaInfoCard';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Agenda, Reserva, type BreadcrumbItem, type ConflictInfo } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { format, parse, parseISO } from 'date-fns';
-import { Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock, Info, Loader2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -52,6 +54,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
     useReservationLiveUpdates();
     useReservaRefreshOnEvent({ only: ['reserva'] });
 
+    const isCancelada = reserva.situacao === SituacaoReserva.INATIVA;
     const isReavaliacao = reserva.situacao !== SituacaoReserva.EM_ANALISE;
 
     const agendas = useMemo(() => {
@@ -150,9 +153,13 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
         }
     };
 
-    const situacaoHeader = verificarStatusReserva(slotsSelecao);
+    const situacaoHeader = isCancelada ? SituacaoReserva.INATIVA : verificarStatusReserva(slotsSelecao);
 
-    const tituloAvaliacao = isReavaliacao ? t('reservas.avaliacao.reavaliacao_titulo') : t('reservas.avaliacao.titulo');
+    const tituloAvaliacao = isCancelada
+        ? t('reservas.detalhes.titulo')
+        : isReavaliacao
+          ? t('reservas.avaliacao.reavaliacao_titulo')
+          : t('reservas.avaliacao.titulo');
     const espacoAvaliacao = reserva.horarios[0]?.agenda?.espaco;
     const andarAvaliacao = espacoAvaliacao?.andar?.nome ? getAndarLabelByValue(espacoAvaliacao.andar.nome) : null;
     const espacoDescricao = `${t('espacos.titulo')}: ${espacoAvaliacao?.nome ?? ''}`;
@@ -183,6 +190,28 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                     }
                 />
 
+                {isCancelada && (
+                    <Alert data-testid="reserva-cancelada-alert" className="border-warning-accent/30 bg-warning-subtle/80 text-foreground">
+                        <Info className="text-warning-accent h-4 w-4" />
+                        <AlertTitle className="font-semibold">{t('reservas.avaliacao.cancelada_titulo')}</AlertTitle>
+                        <AlertDescription className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <span>{t('reservas.avaliacao.cancelada_descricao')}</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0 self-start sm:self-center"
+                                onClick={() => {
+                                    router.get('/gestor/reservas');
+                                }}
+                            >
+                                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                                {t('reservas.avaliacao.voltar_listagem')}
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 <ReservaInfoCard reserva={reserva}>
                     <div>
                         <h4 className="text-foreground mb-3 flex items-center gap-2 font-medium">
@@ -202,7 +231,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                                 agendas={agendas}
                                 diasSemana={diasDaSemana(semanaVisivel, hoje)}
                                 slotsSolicitados={slotsSelecao}
-                                alternarSelecaoSlot={avaliarSlot}
+                                alternarSelecaoSlot={isCancelada ? () => undefined : avaliarSlot}
                             />
                             {isLoading && (
                                 <div className="bg-background/70 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm">
@@ -213,21 +242,25 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                     </div>
                 </ReservaInfoCard>
 
-                <ConflictAlertBox conflictCache={todosOsConflitos} />
+                {!isCancelada && (
+                    <>
+                        <ConflictAlertBox conflictCache={todosOsConflitos} />
 
-                <ConflictCacheSnapshotPanel snapshot={conflictCacheSnapshot} />
+                        <ConflictCacheSnapshotPanel snapshot={conflictCacheSnapshot} />
 
-                <EvaluationForm
-                    isReavaliacao={isReavaliacao}
-                    data={form.data}
-                    setData={form.setData}
-                    decisao={decisao}
-                    isSubmitting={form.processing}
-                    isRadioGroupDisabled={isRadioGroupDisabled}
-                    slotsSelecao={slotsSelecao}
-                    onDecisaoChange={handleDecisaoChange}
-                    onSubmit={handleSubmit}
-                />
+                        <EvaluationForm
+                            isReavaliacao={isReavaliacao}
+                            data={form.data}
+                            setData={form.setData}
+                            decisao={decisao}
+                            isSubmitting={form.processing}
+                            isRadioGroupDisabled={isRadioGroupDisabled}
+                            slotsSelecao={slotsSelecao}
+                            onDecisaoChange={handleDecisaoChange}
+                            onSubmit={handleSubmit}
+                        />
+                    </>
+                )}
             </div>
         </AppLayout>
     );

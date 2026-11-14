@@ -19,10 +19,32 @@ import { Head } from '@inertiajs/react';
 import { AlertCircle, BarChart3, Filter, SlidersHorizontal } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
-const GraficoReservasPeriodo = lazy(() => import('@/presentation/organisms/GraficoReservasPeriodo'));
-const GraficoOcupacaoEspacos = lazy(() => import('@/presentation/organisms/GraficoOcupacaoEspacos'));
-const GraficoInventarioEspacos = lazy(() => import('@/presentation/organisms/GraficoInventarioEspacos'));
-const GraficoIndicadoresConsolidados = lazy(() => import('@/presentation/organisms/GraficoIndicadoresConsolidados'));
+const loadGraficoReservasPeriodo = () => import('@/presentation/organisms/GraficoReservasPeriodo');
+const loadGraficoOcupacaoEspacos = () => import('@/presentation/organisms/GraficoOcupacaoEspacos');
+const loadGraficoInventarioEspacos = () => import('@/presentation/organisms/GraficoInventarioEspacos');
+const loadGraficoIndicadoresConsolidados = () => import('@/presentation/organisms/GraficoIndicadoresConsolidados');
+
+const GraficoReservasPeriodo = lazy(loadGraficoReservasPeriodo);
+const GraficoOcupacaoEspacos = lazy(loadGraficoOcupacaoEspacos);
+const GraficoInventarioEspacos = lazy(loadGraficoInventarioEspacos);
+const GraficoIndicadoresConsolidados = lazy(loadGraficoIndicadoresConsolidados);
+
+function preloadGraficoRelatorioInstitucional(tipo: TipoRelatorioType): void {
+    switch (tipo) {
+        case TipoRelatorio.RESERVAS_PERIODO:
+            void loadGraficoReservasPeriodo();
+            break;
+        case TipoRelatorio.OCUPACAO_ESPACOS:
+            void loadGraficoOcupacaoEspacos();
+            break;
+        case TipoRelatorio.INVENTARIO_ESPACOS:
+            void loadGraficoInventarioEspacos();
+            break;
+        case TipoRelatorio.INDICADORES_CONSOLIDADOS:
+            void loadGraficoIndicadoresConsolidados();
+            break;
+    }
+}
 
 interface Props {
     tipos_disponiveis: TipoRelatorioOption[];
@@ -57,7 +79,9 @@ export default function RelatoriosInstitucionalPage({ tipos_disponiveis, opcoes_
                     <Tabs
                         value={tipoSelecionado}
                         onValueChange={(value) => {
-                            setTipoSelecionado(value as TipoRelatorioType);
+                            const novoTipo = value as TipoRelatorioType;
+                            preloadGraficoRelatorioInstitucional(novoTipo);
+                            setTipoSelecionado(novoTipo);
                         }}
                         className="w-full"
                     >

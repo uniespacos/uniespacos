@@ -1,31 +1,44 @@
 import { DadosRelatorio, FiltrosRelatorio, TipoRelatorio } from '@/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export type StatusDadosRelatorio = 'idle' | 'loading' | 'success' | 'error' | 'empty';
 
 const DEBOUNCE_MS = 350;
 
+interface DadosRelatorioPorTipo {
+    tipo: TipoRelatorio;
+    payload: DadosRelatorio;
+}
+
 export function useDadosRelatorio(endpoint: string, tipo: TipoRelatorio | undefined, filtros: FiltrosRelatorio | undefined) {
-    const [dados, setDados] = useState<DadosRelatorio | null>(null);
+    const [dadosPorTipo, setDadosPorTipo] = useState<DadosRelatorioPorTipo | null>(null);
     const [status, setStatus] = useState<StatusDadosRelatorio>('idle');
     const [erro, setErro] = useState<string | null>(null);
+    const ultimoContextoRef = useRef<{ endpoint: string; tipo: TipoRelatorio | undefined } | null>(null);
 
     const filtrosSerializados = JSON.stringify(filtros ?? {});
 
     useEffect(() => {
         if (!tipo) {
+            ultimoContextoRef.current = null;
             setStatus('idle');
-            setDados(null);
+            setDadosPorTipo(null);
             setErro(null);
             return;
         }
 
+        const anterior = ultimoContextoRef.current;
+        const mudouTipo = anterior?.tipo !== tipo;
+        const mudouEndpoint = anterior?.endpoint !== endpoint;
+        const mudouTipoOuEndpoint = mudouTipo || mudouEndpoint;
+        ultimoContextoRef.current = { endpoint, tipo };
+
+        setStatus('loading');
+        setErro(null);
+
         const controller = new AbortController();
 
         const buscar = async (signal: AbortSignal) => {
-            setStatus('loading');
-            setErro(null);
-
             const filtrosAtuais = JSON.parse(filtrosSerializados) as FiltrosRelatorio;
 
             const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -65,7 +78,7 @@ export function useDadosRelatorio(endpoint: string, tipo: TipoRelatorio | undefi
 
                 const json: DadosRelatorio = await response.json();
 
-                setDados(json);
+                setDadosPorTipo({ tipo, payload: json });
                 setStatus(json.linhas.length === 0 ? 'empty' : 'success');
             } catch {
                 if (signal.aborted) {
@@ -77,9 +90,10 @@ export function useDadosRelatorio(endpoint: string, tipo: TipoRelatorio | undefi
             }
         };
 
+        const delayMs = mudouTipoOuEndpoint ? 0 : DEBOUNCE_MS;
         const timer = setTimeout(() => {
             void buscar(controller.signal);
-        }, DEBOUNCE_MS);
+        }, delayMs);
 
         return () => {
             clearTimeout(timer);
@@ -87,5 +101,8 @@ export function useDadosRelatorio(endpoint: string, tipo: TipoRelatorio | undefi
         };
     }, [endpoint, tipo, filtrosSerializados]);
 
-    return { dados, status, erro };
+    const dados = tipo && dadosPorTipo?.tipo === tipo ? dadosPorTipo.payload : null;
+    const statusEfetivo: StatusDadosRelatorio = tipo && status === 'success' && dados === null ? 'loading' : status;
+
+    return { dados, status: statusEfetivo, erro };
 }

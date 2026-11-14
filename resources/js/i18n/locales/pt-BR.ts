@@ -285,6 +285,10 @@ export const ptBR = {
             escopo_edicao: 'Escopo da Avaliação',
             escopo_todas: 'Todas as ocorrências da recorrência',
             escopo_semana: 'Apenas horários desta semana',
+            cancelada_titulo: 'Solicitação de reserva cancelada',
+            cancelada_descricao:
+                'Esta solicitação de reserva foi cancelada antes que pudesse ser avaliada ou concluída. Os horários solicitados foram liberados e nenhuma ação é necessária.',
+            voltar_listagem: 'Voltar para Gerenciar Reservas',
         },
         gestor: {
             conflicts_detected: 'Atenção: {{count}} horário(s) desta reserva possui(em) sobreposição com outra(s) reserva(s).',

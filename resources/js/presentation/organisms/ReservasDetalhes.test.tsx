@@ -190,4 +190,43 @@ describe('ReservaDetalhes', () => {
 
         expect(screen.getByText(/07\/09 - 13\/09\/2026/)).toBeInTheDocument();
     });
+
+    it('exibe aviso informativo e oculta botão Avaliar quando a reserva está cancelada (inativa)', () => {
+        (usePage as jest.Mock).mockImplementation(() => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 2,
+                        name: 'Gestor Manhã',
+                        email: 'gestor@example.com',
+                        roles: ['gestor'],
+                        permissions: ['reservas.avaliar'],
+                    },
+                },
+            },
+            url: '/gestor/reservas',
+            component: '',
+            version: null,
+        }));
+
+        const canceladaReserva: Reserva = {
+            ...mockReserva,
+            situacao: 'inativa',
+        };
+
+        render(
+            <ReservaDetalhes
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                selectedReserva={canceladaReserva}
+                isGestor={true}
+                setRemoverReserva={jest.fn()}
+                routeName="gestor.reservas.index"
+            />,
+        );
+
+        expect(screen.getByTestId('modal-reserva-cancelada-alert')).toBeInTheDocument();
+        expect(screen.getByText('Solicitação de reserva cancelada')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Avaliar|Reavaliação/i })).not.toBeInTheDocument();
+    });
 });

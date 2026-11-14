@@ -52,7 +52,25 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     }, [reservaToShow]);
 
     if (reservas.length === 0) {
-        return fallback;
+        return (
+            <>
+                {fallback}
+                {selectedReserva && (
+                    <ReservaDetalhes
+                        isOpen={Boolean(selectedReserva)}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                handleFecharDetalhes();
+                            }
+                        }}
+                        isGestor={isModoGestor}
+                        selectedReserva={selectedReserva}
+                        setRemoverReserva={setRemoverReserva}
+                        routeName={routeName}
+                    />
+                )}
+            </>
+        );
     }
 
     const handleAvaliarButton = (id: number) => {
