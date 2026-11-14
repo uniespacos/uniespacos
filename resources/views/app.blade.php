@@ -2,7 +2,9 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => (request()->cookie('appearance', 'light')) == 'dark'])>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="text-scale" content="scale">
+        <meta name="color-scheme" content="light dark">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <!-- PWA Web App Manifest e iOS Support -->
@@ -26,22 +28,26 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
+
+                const meta = document.querySelector('meta[name="color-scheme"]');
+                if (meta) {
+                    meta.setAttribute('content', appearance === 'system' ? 'light dark' : (appearance === 'dark' ? 'dark' : 'light'));
+                }
             })();
         </script>
 
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                color-scheme: light;
+                background-color: oklch(0.96 0.008 250);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                color-scheme: dark;
+                background-color: oklch(0.28 0.025 265);
             }
         </style>
-
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
         @routes
         @viteReactRefresh

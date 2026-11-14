@@ -12,4 +12,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('retencao:aplicar')
     ->dailyAt('03:30')
-    ->withoutOverlapping();
+    ->withoutOverlapping(60);

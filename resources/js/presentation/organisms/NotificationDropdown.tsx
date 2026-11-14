@@ -139,7 +139,7 @@ export function NotificationDropdown() {
         return (
             <Drawer open={isOpen} onOpenChange={setIsOpen}>
                 <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-                <DrawerContent className="max-h-[85vh]" data-testid="notification-drawer">
+                <DrawerContent className="max-h-[85dvh]" data-testid="notification-drawer">
                     <DrawerHeader className="border-border/40 border-b pb-3 text-left">
                         <div className="flex items-center justify-between">
                             <div>
@@ -162,7 +162,7 @@ export function NotificationDropdown() {
                             ) : null}
                         </div>
                     </DrawerHeader>
-                    <div className="max-h-[calc(85vh-100px)] overflow-y-auto px-2 py-3 pb-8">
+                    <div className="max-h-[calc(85dvh-100px)] overflow-y-auto px-2 py-3 pb-8">
                         <NotificationGroupList notifications={notifications} onItemClick={handleItemClick} />
                     </div>
                 </DrawerContent>
@@ -173,7 +173,7 @@ export function NotificationDropdown() {
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-            <PopoverContent className="flex max-h-[85vh] w-80 flex-col overflow-hidden p-0 sm:w-96" align="end" data-testid="notification-popover">
+            <PopoverContent className="flex max-h-[85dvh] w-80 flex-col overflow-hidden p-0 sm:w-96" align="end" data-testid="notification-popover">
                 <div className="flex shrink-0 items-center justify-between p-3">
                     <h4 className="text-foreground text-sm font-semibold">Notificações{unreadCount > 0 ? ` (${String(unreadCount)})` : ''}</h4>
                     {unreadCount > 0 ? (

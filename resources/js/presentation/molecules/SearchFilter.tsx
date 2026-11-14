@@ -23,6 +23,7 @@ export function SearchFilter({ searchTerm, onSearchTermChange, placeholder, vari
             <Input
                 id={inputId}
                 type="search"
+                spellCheck={false}
                 placeholder={placeholder}
                 className="w-full pl-8"
                 value={searchTerm}
@@ -35,11 +36,13 @@ export function SearchFilter({ searchTerm, onSearchTermChange, placeholder, vari
 
     if (variant === 'card') {
         return (
-            <Card>
-                <CardContent className="space-y-2">{field}</CardContent>
-            </Card>
+            <search>
+                <Card>
+                    <CardContent className="space-y-2">{field}</CardContent>
+                </Card>
+            </search>
         );
     }
 
-    return <div className="flex flex-col gap-4 sm:flex-row">{field}</div>;
+    return <search className="flex flex-col gap-4 sm:flex-row">{field}</search>;
 }

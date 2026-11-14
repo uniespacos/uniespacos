@@ -6,9 +6,13 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Notifications\Auth\ResetPasswordQueued;
+use App\Services\ExclusaoDeContaService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class EsqueciSenhaRespostaNeutraTest extends TestCase
@@ -86,5 +90,42 @@ class EsqueciSenhaRespostaNeutraTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    public function test_conta_anonimizada_recebe_a_mesma_resposta_que_email_inexistente(): void
+    {
+        Notification::fake();
+
+        $titular = User::factory()->create(['email' => 'titular-anonimizado@test.local']);
+        $emailOriginal = $titular->email;
+        app(ExclusaoDeContaService::class)->anonimizar($titular);
+
+        $anonimizada = $this->post(route('password.email'), ['email' => $emailOriginal]);
+        $inexistente = $this->post(route('password.email'), ['email' => self::EMAIL_INEXISTENTE]);
+
+        $this->assertSame($anonimizada->status(), $inexistente->status());
+        $this->assertSame($anonimizada->headers->get('Location'), $inexistente->headers->get('Location'));
+        $anonimizada->assertSessionHas('status', $this->mensagemNeutra());
+        $inexistente->assertSessionHas('status', $this->mensagemNeutra());
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_email_de_redefinicao_e_enfileirado_so_para_conta_existente(): void
+    {
+        Queue::fake();
+
+        $usuario = User::factory()->create();
+
+        $this->post(route('password.email'), ['email' => self::EMAIL_INEXISTENTE]);
+        Queue::assertNothingPushed();
+
+        $this->post(route('password.email'), ['email' => $usuario->email]);
+        Queue::assertPushed(SendQueuedNotifications::class, 1);
+    }
+
+    public function test_notificacao_de_redefinicao_implementa_should_queue(): void
+    {
+        $this->assertTrue(is_a(ResetPasswordQueued::class, ShouldQueue::class, true));
     }
 }

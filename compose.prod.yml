@@ -60,7 +60,8 @@ services:
         container_name: scheduler-production
         image: ghcr.io/${GHCR_REPO_APP:-uniespacos/uniespacos/app}:${IMAGE_TAG:-latest}
         restart: unless-stopped
-        command: php artisan schedule:work
+        command: php artisan agendador:executar
+        stop_grace_period: 2m
         volumes:
             - uniespacos-storage-production:/var/www/storage
         env_file:

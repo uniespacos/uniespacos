@@ -36,6 +36,8 @@ class CreateNewUser implements CreatesNewUsers
             'phone' => ['required', 'string', 'max:20'],
             'setor_id' => ['required', 'exists:setors,id'],
             'password' => $this->passwordRules(),
+        ], [
+            'email.unique' => __('An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.'),
         ])->validate();
 
         $user = User::create([

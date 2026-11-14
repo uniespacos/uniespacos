@@ -26,55 +26,49 @@ export function UserSearchCombobox({ usuarios, value, onValueChange, placeholder
         setOpen(false);
     };
 
-    const handleClear = (e: React.MouseEvent) => {
+    const handleClear = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
-        e.preventDefault();
         onValueChange(null);
     };
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between bg-transparent font-normal"
-                    disabled={disabled}
-                    type="button"
-                >
-                    {selectedUser ? (
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <UserAvatar user={selectedUser} className="h-5 w-5" fallbackClassName="text-xs" />
-                            <div className="flex min-w-0 flex-col items-start">
-                                <span className="truncate text-sm font-medium">{selectedUser.name}</span>
-                                <span className="text-muted-foreground truncate text-xs">{selectedUser.email}</span>
+            <div className="relative flex w-full items-center">
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full justify-between bg-transparent font-normal"
+                        disabled={disabled}
+                        type="button"
+                    >
+                        {selectedUser ? (
+                            <div className="flex min-w-0 flex-1 items-center gap-2 pr-6">
+                                <UserAvatar user={selectedUser} className="h-5 w-5" fallbackClassName="text-xs" />
+                                <div className="flex min-w-0 flex-col items-start">
+                                    <span className="truncate text-sm font-medium">{selectedUser.name}</span>
+                                    <span className="text-muted-foreground truncate text-xs">{selectedUser.email}</span>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <span className="text-muted-foreground">{placeholder}</span>
-                    )}
-                    <div className="flex items-center gap-1">
-                        {selectedUser && (
-                            <span
-                                role="button"
-                                tabIndex={0}
-                                aria-label="Limpar seleção"
-                                className="hover:bg-destructive hover:text-destructive-foreground flex h-4 w-4 cursor-pointer items-center justify-center rounded p-0"
-                                onClick={handleClear}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        handleClear(e as unknown as React.MouseEvent);
-                                    }
-                                }}
-                            >
-                                <X className="h-3 w-3" />
-                            </span>
+                        ) : (
+                            <span className="text-muted-foreground">{placeholder}</span>
                         )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </div>
-                </Button>
-            </PopoverTrigger>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
+                    </Button>
+                </PopoverTrigger>
+                {selectedUser && (
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        aria-label="Limpar seleção"
+                        className="text-muted-foreground hover:bg-destructive hover:text-destructive-foreground focus-visible:ring-ring/50 absolute right-8 z-10 flex h-5 w-5 cursor-pointer items-center justify-center rounded transition-colors focus-visible:ring-[3px] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                        onClick={handleClear}
+                    >
+                        <X className="h-3 w-3" aria-hidden="true" />
+                    </button>
+                )}
+            </div>
             <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[280px] p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Buscar por nome ou email..." />

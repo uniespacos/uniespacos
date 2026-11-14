@@ -40,7 +40,13 @@ export default function AuthSplitLayout({ children, title, description, maxWidth
                         className="animate-fade-in-up animation-delay-100 flex items-center gap-3 transition-opacity hover:opacity-90"
                     >
                         <div className="bg-brand-surface flex size-48 items-center justify-center rounded-xl p-4 shadow-lg lg:size-56 xl:size-64">
-                            <img src="/images/uniespacos-logo.png" alt="UniEspaços" className="size-full object-contain" />
+                            <img
+                                src="/images/uniespacos-logo.png"
+                                alt="UniEspaços"
+                                className="size-full object-contain"
+                                fetchPriority="high"
+                                decoding="async"
+                            />
                         </div>
                     </Link>
 
@@ -72,7 +78,13 @@ export default function AuthSplitLayout({ children, title, description, maxWidth
                     <div className="animate-fade-in-up flex flex-col items-center justify-center gap-3 lg:hidden">
                         <Link href={route('home')} className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
                             <div className="bg-brand-surface flex size-16 items-center justify-center rounded-xl p-1.5 shadow-md">
-                                <img src="/images/uniespacos-logo.png" alt="UniEspaços" className="size-full object-contain" />
+                                <img
+                                    src="/images/uniespacos-logo.png"
+                                    alt="UniEspaços"
+                                    className="size-full object-contain"
+                                    fetchPriority="high"
+                                    decoding="async"
+                                />
                             </div>
                         </Link>
                         <p className="text-muted-foreground max-w-xs text-center text-xs">{t('auth.layout.mobile_tagline')}</p>
@@ -81,7 +93,7 @@ export default function AuthSplitLayout({ children, title, description, maxWidth
                     {/* Cabeçalho da Tela — com animação de entrada */}
                     {(title ?? description) && (
                         <div className="animate-fade-in-up animation-delay-200 flex flex-col space-y-1.5 text-center sm:text-left">
-                            {title && <h1 className="text-foreground text-2xl font-bold tracking-tight">{title}</h1>}
+                            {title && <h1 className="text-foreground text-2xl font-bold tracking-tight text-balance">{title}</h1>}
                             {description && <p className="text-muted-foreground text-sm text-balance">{description}</p>}
                         </div>
                     )}
