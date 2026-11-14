@@ -133,17 +133,24 @@ export function TabelaDetalhamento({ titulo = 'Detalhamento', colunas, linhas, i
                                     const Icone = !ativa ? ChevronsUpDown : ordenacao.direcao === 'asc' ? ArrowUp : ArrowDown;
 
                                     return (
-                                        <TableHead key={coluna.chave} className="p-0">
+                                        <TableHead
+                                            key={coluna.chave}
+                                            scope="col"
+                                            aria-sort={ativa ? (ordenacao.direcao === 'asc' ? 'ascending' : 'descending') : undefined}
+                                            className="p-0"
+                                        >
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     alternarOrdenacao(coluna.chave);
                                                 }}
-                                                aria-label={`Ordenar por ${coluna.rotulo}`}
                                                 className="hover:text-foreground flex w-full items-center gap-1 px-4 py-3 text-left font-medium"
                                             >
                                                 {coluna.rotulo}
-                                                <Icone className={cn('h-3.5 w-3.5 shrink-0', ativa ? 'opacity-100' : 'opacity-40')} />
+                                                <Icone
+                                                    className={cn('h-3.5 w-3.5 shrink-0', ativa ? 'opacity-100' : 'opacity-40')}
+                                                    aria-hidden="true"
+                                                />
                                             </button>
                                         </TableHead>
                                     );

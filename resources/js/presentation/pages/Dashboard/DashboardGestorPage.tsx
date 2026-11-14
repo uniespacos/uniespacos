@@ -154,7 +154,8 @@ export default function DashboardGestorPage(props: DashboardGestorProps) {
                                 router.get(href);
                             }}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
                                     router.get(href);
                                 }
                             }}

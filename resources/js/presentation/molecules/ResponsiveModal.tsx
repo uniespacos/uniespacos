@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import * as React from 'react';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
 
@@ -84,7 +84,7 @@ export function ResponsiveModal({
         <Dialog open={effectiveOpen} onOpenChange={handleOpenChange}>
             {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent
-                className={cn(maxWidthClasses[effectiveSize], 'flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0', className)}
+                className={cn(maxWidthClasses[effectiveSize], 'flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0', className)}
                 showCloseButton={showCloseButton}
             >
                 {hasHeader && (

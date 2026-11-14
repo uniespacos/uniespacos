@@ -48,7 +48,7 @@ export default function GenericHeader({
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-balance">{titulo}</h1>
                     {badge && (
                         <Badge variant="secondary" className="text-primary bg-primary/10">
                             {BadgeIcon && <BadgeIcon className="h-3 w-3" />}
@@ -56,7 +56,7 @@ export default function GenericHeader({
                         </Badge>
                     )}
                 </div>
-                {descricao && <p className="text-muted-foreground">{descricao}</p>}
+                {descricao && <p className="text-muted-foreground text-pretty">{descricao}</p>}
             </div>
             {canSeeButton && (
                 <Button className="flex items-center gap-2" onClick={handleOnClick}>
