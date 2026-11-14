@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-rc.116](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.115...v1.5.0-rc.116) (2026-11-14)
+
+
+### Features
+
+* Onda 2 parte 2 (1.7.0) — retenção, comandos operacionais LGPD, fontes locais e modernização de frontend ([6a2e1b1](https://github.com/uniespacos/uniespacos/commit/6a2e1b1d547d0faef3dbc15fd5dbed7a86a8f1fd))
+
 ## [1.5.0-rc.115](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.114...v1.5.0-rc.115) (2026-11-14)
 
 
