@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.115](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.114...v1.5.0-rc.115) (2026-11-14)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.6.1 ([6e564eb](https://github.com/uniespacos/uniespacos/commit/6e564eb442c04db67df9a1e8ade158f06004bf0c))
+* **main:** release 1.6.1 ([648fc5e](https://github.com/uniespacos/uniespacos/commit/648fc5e36098c174f5a1318a2b5e94f96155e153))
+* release 1.6.1 com a estabilidade da v1, parte 1 (S26 e S14) ([c85c806](https://github.com/uniespacos/uniespacos/commit/c85c8063063134945b3613dd1bb81d4cca70ce07))
+* sincronizar main em develop após release 1.6.1 ([69586f4](https://github.com/uniespacos/uniespacos/commit/69586f4d2fff2ee4c003f45529e07e4bb5b7925c))
+
 ## [1.6.1](https://github.com/uniespacos/uniespacos/compare/v1.6.0...v1.6.1) (2026-11-14)
 
 
