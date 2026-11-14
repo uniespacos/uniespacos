@@ -517,7 +517,7 @@ O broadcast leva só os campos da lista branca `CamposPublicosNotificacao::DADOS
 
 Vale para as 10 Notifications que herdam `BaseNotification`. `VerifyEmailQueued` e `ResetPasswordQueued` são só e-mail, sem canal `broadcast`.
 
-**Deploy:** a classe da notificação é executada pelo queue worker. Após mudar uma Notification, reinicie o worker (`docker restart uniespacos-queue-worker-1` em desenvolvimento; em staging e produção, reinicie o serviço do worker depois do deploy). Sem isso, o broadcast segue com o código antigo.
+**Deploy:** a classe da notificação é executada pelo queue worker, que carrega o código ao subir. No deploy por tag (staging e produção), o `docker compose up -d` recria o container do worker com a imagem nova, e o processo já sobe com o código novo (conferido na 1.6.0 e na 1.6.1). Depois do deploy, confira a hora de início e a imagem do worker. O reinício explícito (`docker restart uniespacos-queue-worker-1` em desenvolvimento) vale para o desenvolvimento e para um deploy sem troca de imagem. Sem isso, o broadcast segue com o código antigo.
 
 **Canal de transmissão:** `App.Models.User.{id}` (privado; nome vindo de `User::receivesBroadcastNotificationsOn()`)
 
