@@ -65,9 +65,17 @@ class RetencaoRepositoryDb implements RetencaoRepositoryInterface
 
     public function contarJobsPendentesAntesDe(int $corteUnix): int
     {
-        return DB::table('jobs')
-            ->where('created_at', '<', $corteUnix)
-            ->count();
+        return $this->jobsPendentesNaoReservadosAntesDe($corteUnix)->count();
+    }
+
+    public function contarJobsPendentesApagaveisAntesDe(int $corteUnix): int
+    {
+        return $this->jobsPendentesNaoReservadosAntesDe($corteUnix)->count();
+    }
+
+    public function apagarJobsPendentesAntesDe(int $corteUnix): int
+    {
+        return $this->jobsPendentesNaoReservadosAntesDe($corteUnix)->delete();
     }
 
     public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array
@@ -125,6 +133,13 @@ class RetencaoRepositoryDb implements RetencaoRepositoryInterface
                 ->table($this->nomeOuPadrao($loja['lock_table'] ?? null, 'cache_locks'))
                 ->where('expiration', '<', $corteUnix),
         ];
+    }
+
+    private function jobsPendentesNaoReservadosAntesDe(int $corteUnix): Builder
+    {
+        return DB::table('jobs')
+            ->whereNull('reserved_at')
+            ->where('created_at', '<', $corteUnix);
     }
 
     private function tokensRedefinicaoAntesDe(CarbonInterface $corte): Builder

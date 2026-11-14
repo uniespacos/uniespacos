@@ -56,6 +56,7 @@ class CheckEnvCommandTest extends TestCase
             'retencao.sessoes_dias' => 7,
             'retencao.tokens_redefinicao_dias' => 1,
             'retencao.jobs_pendentes_alerta_dias' => 7,
+            'retencao.jobs_pendentes_dias' => 90,
         ]);
     }
 

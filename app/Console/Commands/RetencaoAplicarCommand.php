@@ -20,7 +20,7 @@ class RetencaoAplicarCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Aplica os prazos de retenção de jobs, lotes, notificações lidas, cache, sessões, tokens de redefinição de senha e logs diários, e sinaliza jobs pendentes antigos.';
+    protected $description = 'Aplica os prazos de retenção de jobs, lotes, notificações lidas, cache, sessões, tokens de redefinição de senha e logs diários, sinaliza jobs pendentes parados e apaga os jobs pendentes vencidos.';
 
     public function handle(RetencaoService $retencao): int
     {
@@ -35,6 +35,7 @@ class RetencaoAplicarCommand extends Command
             $this->rotina('tokens_redefinicao', fn (): ?int => $retencao->tokensRedefinicao($simular), $simular),
             $this->rotina('logs_diarios', fn (): ?int => $retencao->logs($simular), $simular),
             $this->rotina('jobs_pendentes_antigos', fn (): ?int => $retencao->jobsPendentesAntigos(), $simular, somenteContagem: true),
+            $this->rotina('jobs_pendentes', fn (): ?int => $retencao->jobsPendentes($simular), $simular),
             $this->podarFilas($retencao, $simular),
         ];
 

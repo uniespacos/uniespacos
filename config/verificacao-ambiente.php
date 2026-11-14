@@ -46,6 +46,7 @@ return [
         'sessoes_dias',
         'tokens_redefinicao_dias',
         'jobs_pendentes_alerta_dias',
+        'jobs_pendentes_dias',
     ],
 
     'limites' => [

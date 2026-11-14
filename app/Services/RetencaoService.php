@@ -98,7 +98,7 @@ class RetencaoService
     }
 
     /**
-     * Só conta jobs pendentes com created_at anterior a hoje − N dias e sinaliza no log. Nunca apaga.
+     * Só conta jobs pendentes (reserved_at nulo) com created_at anterior a hoje − N dias e sinaliza no log. Nunca apaga.
      */
     public function jobsPendentesAntigos(): ?int
     {
@@ -115,6 +115,32 @@ class RetencaoService
         }
 
         return $quantidade;
+    }
+
+    /**
+     * Apaga jobs pendentes (reserved_at nulo) com created_at anterior a hoje − N dias. Jobs reservados nunca entram.
+     */
+    public function jobsPendentes(bool $simular = false): ?int
+    {
+        $dias = $this->diasValidos('jobs_pendentes_dias', config('retencao.jobs_pendentes_dias'));
+
+        if ($dias === null) {
+            return null;
+        }
+
+        $corteUnix = now()->subDays($dias)->getTimestamp();
+
+        if ($simular) {
+            return $this->repo->contarJobsPendentesApagaveisAntesDe($corteUnix);
+        }
+
+        $removidos = $this->repo->apagarJobsPendentesAntesDe($corteUnix);
+
+        if ($removidos > 0) {
+            Log::info('retencao.jobs_pendentes_apagados', ['quantidade' => $removidos]);
+        }
+
+        return $removidos;
     }
 
     /**

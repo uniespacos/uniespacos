@@ -47,6 +47,7 @@ class VerificacaoDeAmbienteServiceTest extends TestCase
             'retencao.sessoes_dias' => 7,
             'retencao.tokens_redefinicao_dias' => 1,
             'retencao.jobs_pendentes_alerta_dias' => 7,
+            'retencao.jobs_pendentes_dias' => 90,
         ]);
     }
 
@@ -116,6 +117,7 @@ class VerificacaoDeAmbienteServiceTest extends TestCase
             'prazo de retenção zero' => ['retencao_prazos', ['retencao.cache_dias' => 0]],
             'prazo de tokens de redefinição zero' => ['retencao_prazos', ['retencao.tokens_redefinicao_dias' => 0]],
             'prazo de alerta de jobs pendentes inválido' => ['retencao_prazos', ['retencao.jobs_pendentes_alerta_dias' => 'abc']],
+            'prazo de remoção de jobs pendentes zero' => ['retencao_prazos', ['retencao.jobs_pendentes_dias' => 0]],
         ];
     }
 

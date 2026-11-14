@@ -39,7 +39,8 @@ class RetencaoTokensEJobsTest extends TestCase
             'retencao.sessoes_dias' => 7,
             'retencao.tokens_redefinicao_dias' => 1,
             'retencao.jobs_pendentes_alerta_dias' => 7,
-            'logging.channels.daily.days' => 14,
+            'retencao.jobs_pendentes_dias' => 90,
+            'logging.channels.daily.days' => 90,
             'retencao.logs.diretorio' => sys_get_temp_dir().DIRECTORY_SEPARATOR.'retencao-inexistente-'.Str::random(8),
         ]);
     }
@@ -104,6 +105,7 @@ class RetencaoTokensEJobsTest extends TestCase
     public function test_conta_jobs_pendentes_antigos_sem_apagar_nenhum_job(): void
     {
         Log::spy();
+        config(['retencao.jobs_pendentes_dias' => 36500]);
         $antigosAntes = $this->jobsAntigosNoBanco();
         $totalAntes = DB::table('jobs')->count();
 
@@ -132,6 +134,7 @@ class RetencaoTokensEJobsTest extends TestCase
 
         $this->assertStringContainsString('[tokens_redefinicao] ', $saida);
         $this->assertStringContainsString('[jobs_pendentes_antigos] ', $saida);
+        $this->assertStringContainsString('[jobs_pendentes] ', $saida);
         $this->assertTrue($this->jobExiste($antigo));
         $this->assertSame($totalAntes + 1, DB::table('jobs')->count());
     }
@@ -179,6 +182,7 @@ class RetencaoTokensEJobsTest extends TestCase
     private function jobsAntigosNoBanco(): int
     {
         return DB::table('jobs')
+            ->whereNull('reserved_at')
             ->where('created_at', '<', Carbon::parse(self::CORTE_JOBS)->getTimestamp())
             ->count();
     }

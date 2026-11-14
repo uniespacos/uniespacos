@@ -28,6 +28,10 @@ interface RetencaoRepositoryInterface
 
     public function contarJobsPendentesAntesDe(int $corteUnix): int;
 
+    public function contarJobsPendentesApagaveisAntesDe(int $corteUnix): int;
+
+    public function apagarJobsPendentesAntesDe(int $corteUnix): int;
+
     /**
      * @return list<array{id: int, justificativa: string}>
      */

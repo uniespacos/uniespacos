@@ -566,6 +566,8 @@ public function contarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
 public function apagarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
 public function contarTokensRedefinicaoSemData(): int;
 public function contarJobsPendentesAntesDe(int $corteUnix): int;
+public function contarJobsPendentesApagaveisAntesDe(int $corteUnix): int;
+public function apagarJobsPendentesAntesDe(int $corteUnix): int;
 public function justificativasDeConflitoAposId(int $aposId, int $tamanho): array;
 public function substituirJustificativas(array $ids, string $texto): int;
 ```
@@ -577,7 +579,8 @@ public function substituirJustificativas(array $ids, string $texto): int;
 | `contar…` / `apagar…` (sessões) | `sessions` com `last_activity` anterior ao corte | Sessões inativas |
 | `contar…` / `apagar…` (tokens de redefinição) | `password_reset_tokens` com `created_at` anterior ao corte. Linhas sem data ficam de fora | Tokens vencidos |
 | `contarTokensRedefinicaoSemData` | `password_reset_tokens` com `created_at` nulo | Só contagem, para o registro `retencao.tokens_redefinicao_sem_data` |
-| `contarJobsPendentesAntesDe` | `jobs` com `created_at` anterior ao corte | Só contagem. Nunca apaga; alimenta o aviso `retencao.jobs_pendentes_antigos` |
+| `contarJobsPendentesAntesDe` | `jobs` com `created_at` anterior ao corte e `reserved_at` nulo | Só contagem; jobs reservados ficam de fora. Nunca apaga; alimenta o aviso `retencao.jobs_pendentes_antigos` |
+| `contarJobsPendentesApagaveisAntesDe` / `apagarJobsPendentesAntesDe` | `jobs` com `created_at` anterior ao corte e `reserved_at` nulo | Remoção da rotina `jobs_pendentes`. Job reservado (em execução ou aguardando nova tentativa) nunca entra. A simulação usa o `contar…` |
 | `justificativasDeConflitoAposId` | `horarios` com `id` maior que `$aposId` e `justificativa` começando por `Conflito com a reserva` | Lotes de 500, por `id` (paginação por chave) |
 | `substituirJustificativas` | `update` por lista de `id` | Troca o texto, sem tocar em `updated_at` |
 

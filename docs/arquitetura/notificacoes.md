@@ -489,7 +489,7 @@ Propriedades extras:
 - Registra histórico completo (permite auditoria)
 - Usuário visualiza no painel ("Notificações")
 - Marca como lida quando clicada
-- Lidas: saem 90 dias depois do `read_at`, pela rotina `retencao:aplicar` (variável `RETENCAO_NOTIFICACOES_LIDAS_DIAS`, provisória até a T-12)
+- Lidas: saem 90 dias depois do `read_at`, pela rotina `retencao:aplicar` (variável `RETENCAO_NOTIFICACOES_LIDAS_DIAS`, decidida em 08/11/2026, F-03)
 - Não lidas: ficam, sem prazo de expiração
 
 **Registros anteriores ao T-24:** linhas gravadas antes desta mudança ainda trazem o nome do solicitante ou de quem cancelou dentro de `descricao` (ex.: `"...foi enviada por '<nome>'."`). Não há migration que reescreva esses dados, e não há regra especial para elas: seguem a regra geral de retenção. As lidas saem 90 dias depois de `read_at`; as não lidas ficam. Logo, uma notificação anterior à T-24 que continue não lida pode manter o nome do terceiro enquanto não for lida. O front exibe `descricao` como está gravada, pois essas linhas não têm `chave` e caem no fallback em `titulo`/`descricao`.

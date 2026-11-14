@@ -712,8 +712,8 @@ Tratados como sensíveis (nunca logar):
 
 Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retencao.php`, `routes/console.php` e `app/Services/RetencaoService.php`:
 
-- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e não define `LOG_DAILY_DAYS` (o padrão do código é 14).
-- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
+- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e `LOG_DAILY_DAYS=90`, igual ao padrão do código.
+- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 90). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
 - **Limpeza agendada:** existe, pelo comando `retencao:aplicar` (ver abaixo), que remove os logs diários além do prazo.
 
 ```php
@@ -725,7 +725,7 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 'daily' => [
     'driver' => 'daily',
     'path' => storage_path('logs/laravel.log'),
-    'days' => env('LOG_DAILY_DAYS', 14),
+    'days' => env('LOG_DAILY_DAYS', 90),
 ],
 ```
 
@@ -735,22 +735,23 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 
 | Rotina | Critério de remoção | Variável | Padrão |
 | --- | --- | --- | --- |
-| Jobs falhos (`queue:prune-failed`) | `failed_at` anterior a hoje − N dias | `RETENCAO_JOBS_FALHOS_DIAS` | 30 dias |
-| Lotes de jobs (`queue:prune-batches`) | Lotes concluídos, não terminados ou cancelados, com mais de N dias | `RETENCAO_JOBS_FALHOS_DIAS` (mesmo prazo) | 30 dias |
+| Jobs falhos (`queue:prune-failed`) | `failed_at` anterior a hoje − N dias | `RETENCAO_JOBS_FALHOS_DIAS` | 90 dias |
+| Lotes de jobs (`queue:prune-batches`) | Lotes concluídos, não terminados ou cancelados, com mais de N dias | `RETENCAO_JOBS_FALHOS_DIAS` (mesmo prazo) | 90 dias |
 | Notificações lidas | `read_at` anterior a hoje − N dias. Notificações não lidas nunca saem | `RETENCAO_NOTIFICACOES_LIDAS_DIAS` | 90 dias |
-| Cache expirado (`cache` e `cache_locks`) | Entradas já expiradas há mais de N dias. Entradas válidas nunca saem | `RETENCAO_CACHE_DIAS` | 7 dias |
-| Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 7 dias |
+| Cache expirado (`cache` e `cache_locks`) | Entradas já expiradas há mais de N dias. Entradas válidas nunca saem | `RETENCAO_CACHE_DIAS` | 90 dias |
+| Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 90 dias |
 | Tokens de redefinição de senha (`password_reset_tokens`) | `created_at` anterior a hoje − N dias. Linhas sem data ficam de fora: são só contadas, com o registro `retencao.tokens_redefinicao_sem_data` | `RETENCAO_TOKENS_REDEFINICAO_DIAS` | 1 dia |
-| Jobs pendentes antigos (`jobs`) | **Não remove.** Só conta os jobs com `created_at` anterior a hoje − N dias e registra o aviso `retencao.jobs_pendentes_antigos` | `RETENCAO_JOBS_PENDENTES_ALERTA_DIAS` | 7 dias (só alerta) |
-| Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 14 dias |
+| Jobs pendentes, alerta (`jobs`) | **Não remove.** Só conta os jobs com `created_at` anterior a hoje − N dias e `reserved_at` nulo, e registra o aviso `retencao.jobs_pendentes_antigos` | `RETENCAO_JOBS_PENDENTES_ALERTA_DIAS` | 7 dias (só alerta) |
+| Jobs pendentes, remoção (`jobs`) | Apaga jobs com `created_at` anterior a hoje − N dias e `reserved_at` nulo. Job reservado (em execução ou aguardando nova tentativa) nunca sai | `RETENCAO_JOBS_PENDENTES_DIAS` | 90 dias |
+| Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 90 dias |
 
-Os prazos de jobs, notificações, cache, sessões e tokens de redefinição são **provisórios** (proposta DT-11) até a decisão da T-12, e ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo de alerta dos jobs pendentes depende da T-19e. O prazo dos logs (14 dias) já está decidido ([T-20](../backlog.md)) e vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+**Decisões de retenção:** em 08/11/2026 (F-03), o prazo de guarda passou a ser de **90 dias para todas as categorias** (jobs falhos, lotes, notificações lidas, cache, sessões e logs diários). Em 14/11/2026, os tokens de redefinição seguem em **1 dia**, por ser validade técnica e não prazo de guarda; os jobs pendentes são apagados depois de **90 dias**, com o alerta aos 7 dias mantido. Os prazos ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
 
-**Decisão (08/11/2026, F-03):** o prazo de guarda é de **90 dias para todas as categorias** (jobs falhos, notificações lidas, cache, sessões e logs diários). Os padrões do código ainda estão nos valores das tabelas acima (jobs falhos 30, cache 7, sessões 7 e logs diários 14); o alinhamento é a T-19g do [backlog](../backlog.md). Enquanto ela não sai, as tabelas continuam fiéis ao código. Os prazos ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+**Aviso operacional:** a primeira rodada depois do deploy não apaga mais do que antes, porque os prazos aumentam. A única exclusão nova é a de jobs pendentes com mais de 90 dias. Logs e sessões guardados por mais tempo aumentam o volume de dado pessoal guardado, e o inventário de dados e a política de privacidade precisam refletir isso (T-14, T-17 e T-18). O `.env` de produção pode sobrescrever os padrões, então os valores precisam ser conferidos depois do deploy.
 
 Cada rotina registra só contagens (`retencao.rotina_aplicada`, com o nome da rotina, a quantidade e se foi simulação). Se alguma rotina falhar, o comando termina com código de saída diferente de zero e registra `retencao.rotina_falhou` (ou `retencao.comando_falhou`, nas rotinas de fila), com o nome da exceção e sem mensagem nem dados. O comando `retencao:neutralizar-justificativas` é de execução única e manual, não é agendado (ver T-19b no [backlog](../backlog.md)).
 
-Dois registros novos: `retencao.tokens_redefinicao_sem_data` (quantidade de tokens sem data de criação, sem e-mail nem token) e `retencao.jobs_pendentes_antigos` (nível aviso, com a quantidade de jobs pendentes além do prazo de alerta). A rotina `jobs_pendentes_antigos` só conta: não há remoção, e o comando não a conta como falha.
+Registros novos: `retencao.tokens_redefinicao_sem_data` (quantidade de tokens sem data de criação, sem e-mail nem token) e `retencao.jobs_pendentes_antigos` (nível aviso, com a quantidade de jobs pendentes além do prazo de alerta). A rotina `jobs_pendentes_antigos` só conta e não remove. A remoção é a rotina `jobs_pendentes`, que roda logo depois do alerta e registra `retencao.jobs_pendentes_apagados` (com a quantidade) só quando apaga algo. Na saída do comando aparece `[jobs_pendentes] N removidos.`, ou `N seriam removidos.` na simulação. O comando não conta a rotina de alerta como falha.
 
 #### Agendador com parada limpa
 
@@ -793,7 +794,7 @@ No desenvolvimento, a checagem de senha do banco acusa `FALHA` com a senha de ex
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo de guarda dos demais dados é de 90 dias (decidido em 08/11/2026, F-03; o código alinha na T-19g). O destino final depende da T-12
+4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo de guarda dos demais dados é de 90 dias (decidido em 08/11/2026, F-03, e já aplicado no código)
 
 **Campos recomendados para auditoria:**
 
