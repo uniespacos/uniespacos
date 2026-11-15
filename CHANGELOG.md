@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0-rc.118](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.117...v1.5.0-rc.118) (2026-11-15)
+
+
+### Bug Fixes
+
+* corrigir reservas em múltiplas semanas/turnos e otimizar performance ([7bea020](https://github.com/uniespacos/uniespacos/commit/7bea020c478d6ed9824d939ceefa14954d05fa43))
+* corrigir reservas em múltiplas semanas/turnos e otimizar performance ([284738e](https://github.com/uniespacos/uniespacos/commit/284738e0c3cbd0a10ac81b06e1631422dcaf78d7))
+* resolver tipagem no PHPStan em ExpansaoHorariosService ([ab2e2dc](https://github.com/uniespacos/uniespacos/commit/ab2e2dce7fc364b7606a2a8b62e85d96646210bc))
+
 ## [1.5.0-rc.117](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.116...v1.5.0-rc.117) (2026-11-14)
 
 
