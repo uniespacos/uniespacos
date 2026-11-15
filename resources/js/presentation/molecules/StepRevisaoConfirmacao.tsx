@@ -31,8 +31,8 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
 
     const rotuloRecorrencia = useMemo(() => {
         const op = opcoesRecorrencia.find((o) => o.valor === formData.recorrencia);
-        return op?.label ?? formData.recorrencia;
-    }, [formData.recorrencia]);
+        return op ? t(op.labelKey) : formData.recorrencia;
+    }, [formData.recorrencia, t]);
 
     const periodoFormatado = useMemo(() => {
         const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;

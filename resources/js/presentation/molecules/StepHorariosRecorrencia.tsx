@@ -197,8 +197,8 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                             key={opcao.valor}
                             value={opcao.valor}
                             id={`rec-${opcao.valor}`}
-                            titulo={opcao.label}
-                            descricao={opcao.descricao}
+                            titulo={t(opcao.labelKey)}
+                            descricao={t(opcao.descricaoKey)}
                             selecionado={formData.recorrencia === opcao.valor}
                         />
                     ))}

@@ -1,8 +1,7 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { StepHorariosRecorrencia } from './StepHorariosRecorrencia';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { StepHorariosRecorrencia } from './StepHorariosRecorrencia';
 
 jest.mock('@/lib/echo-channel-registry', () => ({
     acquirePrivateChannel: jest.fn(() => ({
@@ -62,7 +61,7 @@ describe('StepHorariosRecorrencia', () => {
         );
 
         expect(screen.getByText(/Padrão de Recorrência/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Apenas esta semana/i).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Apenas os horários selecionados/i).length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByText(/próximos 15 dias/i).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText('08:00 - 09:00')).toBeInTheDocument();
     });
@@ -98,6 +97,7 @@ describe('StepHorariosRecorrencia', () => {
 
         expect(screen.getByText(/Escopo da Edição/i)).toBeInTheDocument();
         expect(screen.getByText(/Todas as ocorrências/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Apenas esta semana/i).length).toBe(2);
+        expect(screen.getAllByText(/Apenas os horários selecionados/i).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Apenas esta semana/i).length).toBe(1);
     });
 });

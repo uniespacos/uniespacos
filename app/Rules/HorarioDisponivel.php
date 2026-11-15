@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Rules;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Services\ExpansaoHorariosService;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -73,9 +74,24 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
         }
 
         $agendaIdInt = is_int($agendaId) ? $agendaId : (int) $agendaId;
+        $recorrencia = is_string($this->data['recorrencia'] ?? null) ? $this->data['recorrencia'] : 'unica';
+        $editScope = is_string($this->data['edit_scope'] ?? null) ? $this->data['edit_scope'] : null;
+        $dataFinalRaw = is_string($this->data['data_final'] ?? null) ? $this->data['data_final'] : null;
+
+        if ($editScope === 'single') {
+            $datasParaVerificar = [$data];
+        } else {
+            $datasExpandidas = app(ExpansaoHorariosService::class)->datasExpandidasParaSlot(
+                $horario,
+                $horariosRaw,
+                $recorrencia,
+                $dataFinalRaw,
+            );
+            $datasParaVerificar = $datasExpandidas !== [] ? $datasExpandidas : [$data];
+        }
 
         $query = DB::table('horarios')
-            ->where('data', $data)
+            ->whereIn('data', $datasParaVerificar)
             ->where('agenda_id', $agendaIdInt)
             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
             ->where('horario_inicio', '<', $horarioFim)

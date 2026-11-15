@@ -222,8 +222,8 @@ export const en = {
             noite: 'Evening',
         },
         recorrencia: {
-            unica: 'This week only',
-            unica_desc: 'The reservation will apply only to selected days in this week.',
+            unica: 'Selected time slots only',
+            unica_desc: 'The reservation will apply only to the dates and time slots marked on the calendar, without weekly repetition.',
             quinze_dias: 'Next 15 days',
             quinze_dias_desc: 'The reservation will repeat over the next 15 consecutive days.',
             um_mes: '1 month',

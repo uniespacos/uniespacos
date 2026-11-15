@@ -9,7 +9,7 @@ Recorrência define como um padrão de horários (agenda + dia da semana + faixa
 
 | Tipo | Quem define `data_final` | Expansão | `data_final` editável? | Exemplo |
 |------|--------------------------|----------|----------------------|---------|
-| `unica` | Front: `data_inicial` + 6 dias (rótulo "Apenas esta semana") | Nenhuma: grava as datas recebidas | Não | Aulas avulsas em datas da mesma semana |
+| `unica` | Front: `data_inicial` + 6 dias (rótulo "Apenas os horários selecionados", traduzido via i18n) | Nenhuma: grava as datas recebidas | Não | Aulas avulsas em datas da mesma semana |
 | `15dias` | Front: `data_inicial` + 14 dias | Semanal até `data_final` | Não | Reunião replicada pelos próximos 15 dias |
 | `1mes` | Front: `data_inicial` + 1 mês (calendário) | Semanal até `data_final` | Não | Oficina replicada por 1 mês |
 | `personalizado` | **Usuário** | Semanal até `data_final` | **Sim** | Aulas em ter/qui por 3 meses |
@@ -51,7 +51,7 @@ Total: 2 horários (nenhuma expansão)
 
 - **Criação:** Usuário seleciona uma data inicial e os padrões (agenda + dia da semana + horário).
 - **`data_final`:** Calculada pelo front como `data_inicial` + 14 dias (`addDays(data, 14)`). Não é editável.
-- **Expansão:** Semanal até `data_final` (inclusive). Cada padrão é ancorado na sua menor data selecionada.
+- **Expansão:** Semanal até `data_final` (inclusive). Cada padrão é ancorado na sua menor data selecionada e expande semanalmente enquanto não encontrar uma data futura do mesmo dia da semana com seleção explícita na requisição.
 - **Banco:** N padrões × semanas até `data_final` linhas em `horarios`.
 
 ### Exemplo
@@ -80,7 +80,7 @@ Total: 3 horários. 2026-09-22 fica fora por ser posterior a data_final.
 
 - **Criação:** Usuário seleciona uma data inicial e os padrões.
 - **`data_final`:** Calculada pelo front como `data_inicial` + 1 mês (`addMonths(data, 1)`). Não é editável.
-- **Expansão:** Semanal até `data_final`.
+- **Expansão:** Semanal até `data_final`, parando antes de qualquer semana futura do mesmo dia da semana que já possua seleção explícita na requisição.
 - **Banco:** N padrões × (~4-5 semanas) linhas.
 
 ### Exemplo
@@ -111,7 +111,7 @@ Total: 5 horários. 2026-10-01 é quinta-feira, então não entra na sequência 
 
 - **Criação:** Usuário seleciona o intervalo (`data_inicial` e `data_final`, ambas editáveis) e os padrões (dias da semana + horários).
 - **`data_final`:** Editável pelo usuário. O sistema não calcula.
-- **Expansão:** Semanal até o `data_final` informado.
+- **Expansão:** Semanal até o `data_final` informado, parando antes de qualquer semana futura do mesmo dia da semana que já possua seleção explícita na requisição.
 - **Frontend:** Dois `DatePicker` (intervalo) e seleção de múltiplos dias da semana.
 - **Banco:** N padrões × semanas no intervalo linhas.
 
@@ -137,7 +137,7 @@ Total: 9 horários. A quinta 01/10 fica fora do período.
 
 ### Por que expande semanalmente
 
-`15dias`, `1mes` e `personalizado` são **períodos**, não frequências. `ExpansaoHorariosService::expandindoSemanalmente()` repete cada padrão a cada 7 dias até `data_final`. Assim, `personalizado` segue a mesma semântica dos outros dois tipos, com o intervalo escolhido pelo usuário. Uma seleção livre de datas avulsas não é `personalizado`; se for necessária, deve ser um novo tipo de recorrência, sem alterar este.
+`15dias`, `1mes` e `personalizado` são **períodos**, não frequências. `ExpansaoHorariosService::expandindoSemanalmente()` repete cada padrão a cada 7 dias até `data_final` (ou até a semana imediatamente anterior à próxima data do mesmo dia da semana que possua seleção explícita no payload). Assim, `personalizado` segue a mesma semântica dos outros dois tipos, com o intervalo escolhido pelo usuário, e seleções explícitas por semana nunca são sobrescritas pela semana anterior. Uma seleção livre de datas avulsas não é `personalizado`; se for necessária, deve ser um novo tipo de recorrência, sem alterar este.
 
 ---
 

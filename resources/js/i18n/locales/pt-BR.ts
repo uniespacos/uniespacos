@@ -220,8 +220,8 @@ export const ptBR = {
             noite: 'Noite',
         },
         recorrencia: {
-            unica: 'Apenas esta semana',
-            unica_desc: 'A reserva será feita apenas para os dias selecionados nesta semana.',
+            unica: 'Apenas os horários selecionados',
+            unica_desc: 'A reserva será feita somente nas datas e horários marcados no calendário, sem repetição semanal.',
             quinze_dias: 'Próximos 15 dias',
             quinze_dias_desc: 'A reserva será replicada pelos próximos 15 dias corridos.',
             um_mes: '1 mês',

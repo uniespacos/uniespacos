@@ -222,8 +222,8 @@ export const es = {
             noite: 'Noche',
         },
         recorrencia: {
-            unica: 'Solo esta semana',
-            unica_desc: 'La reserva se realizará solo para los días seleccionados esta semana.',
+            unica: 'Solo los horarios seleccionados',
+            unica_desc: 'La reserva se realizará únicamente en las fechas y horarios marcados en el calendario, sin repetición semanal.',
             quinze_dias: 'Próximos 15 días',
             quinze_dias_desc: 'La reserva se repetirá durante los próximos 15 días corridos.',
             um_mes: '1 mes',

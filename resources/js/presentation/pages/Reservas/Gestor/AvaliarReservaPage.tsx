@@ -247,7 +247,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
 
                 {!isCancelada && (
                     <>
-                        <ConflictAlertBox conflictCache={todosOsConflitos} />
+                        <ConflictAlertBox conflicts={todosOsConflitos} />
 
                         <ConflictCacheSnapshotPanel snapshot={conflictCacheSnapshot} />
 

@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
-import type { SupportedLocale } from '@/i18n';
+import type { SupportedLocale, TranslationKey } from '@/i18n';
 import type {
     SituacaoReservaType,
     SituacaoHorarioType,
@@ -334,8 +334,8 @@ export interface SlotCalendario {
 
 export interface OpcoesRecorrencia {
     valor: ValorOcorrenciaType;
-    label: string;
-    descricao: string;
+    labelKey: TranslationKey;
+    descricaoKey: TranslationKey;
     calcularDataFinal: (dataInicial: Date) => Date;
 }
 

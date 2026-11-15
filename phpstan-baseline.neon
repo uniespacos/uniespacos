@@ -1717,42 +1717,6 @@ parameters:
 			path: app/Services/EspacoService.php
 
 		-
-			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot call method lte\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot call method toDateString\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Parameter \#2 \$array of function implode expects array\<string\>, array\<int, mixed\> given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
 			message: '#^Method App\\Services\\HomeService\:\:buildRecentReservasQuery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			count: 1

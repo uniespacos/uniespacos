@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
 import type { ConflictInfo } from '@/types';
+import { render, screen } from '@testing-library/react';
 import { ConflictAlertBox } from './ConflictAlertBox';
 
 describe('ConflictAlertBox', () => {
-    it('renders conflict list when conflictCache has entries', () => {
+    it('renders conflict list when conflicts has entries', () => {
         const mockConflicts: Record<string, ConflictInfo> = {
             '1': {
                 horario_checado_id: 100,
@@ -17,7 +17,7 @@ describe('ConflictAlertBox', () => {
             },
         };
 
-        render(<ConflictAlertBox conflictCache={mockConflicts} />);
+        render(<ConflictAlertBox conflicts={mockConflicts} />);
 
         expect(screen.getByText(/Atenção:/i)).toBeInTheDocument();
         expect(screen.getByText('Aula de Yoga')).toBeInTheDocument();
@@ -26,13 +26,13 @@ describe('ConflictAlertBox', () => {
         expect(screen.getByText(/Maria Santos/)).toBeInTheDocument();
     });
 
-    it('renders nothing when conflictCache is null', () => {
-        const { container } = render(<ConflictAlertBox conflictCache={null} />);
+    it('renders nothing when conflicts is null', () => {
+        const { container } = render(<ConflictAlertBox conflicts={null} />);
         expect(container.firstChild).toBeNull();
     });
 
-    it('renders nothing when conflictCache is empty object', () => {
-        const { container } = render(<ConflictAlertBox conflictCache={{}} />);
+    it('renders nothing when conflicts is empty object', () => {
+        const { container } = render(<ConflictAlertBox conflicts={{}} />);
         expect(container.firstChild).toBeNull();
     });
 });

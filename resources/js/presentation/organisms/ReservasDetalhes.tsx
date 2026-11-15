@@ -88,8 +88,8 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
 
     const labelRecorrencia = useMemo(() => {
         const op = opcoesRecorrencia.find((o) => o.valor === selectedReserva.recorrencia);
-        return op?.label ?? selectedReserva.recorrencia;
-    }, [selectedReserva.recorrencia]);
+        return op ? t(op.labelKey) : selectedReserva.recorrencia;
+    }, [selectedReserva.recorrencia, t]);
 
     const navegarParaSemana = (novaData: Date) => {
         setSemanaVisivel(novaData);

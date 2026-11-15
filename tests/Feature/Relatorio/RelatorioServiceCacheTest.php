@@ -267,26 +267,15 @@ final class RelatorioServiceCacheTest extends TestCase
 
     public function test_listener_esta_registrado_no_framework(): void
     {
-        $listeners = Event::getListeners(ReservaAlterada::class);
+        $rawListeners = Event::getRawListeners();
+        /** @var array<int, mixed> $listenersDoEvento */
+        $listenersDoEvento = $rawListeners[ReservaAlterada::class] ?? [];
 
-        $registrado = false;
-        foreach ($listeners as $listener) {
-            if (is_string($listener) && $listener === InvalidarCacheRelatoriosAoAtualizarReserva::class) {
-                $registrado = true;
-                break;
-            }
-            if (is_array($listener) && isset($listener[0]) && $listener[0] instanceof InvalidarCacheRelatoriosAoAtualizarReserva) {
-                $registrado = true;
-                break;
-            }
-            if ($listener instanceof \Closure) {
-                // Closure listener
-                $registrado = true;
-                break;
-            }
-        }
-
-        $this->assertTrue($registrado || count($listeners) > 0, 'Listener de invalidação deve estar registrado para ReservaAlterada.');
+        $this->assertContains(
+            InvalidarCacheRelatoriosAoAtualizarReserva::class,
+            $listenersDoEvento,
+            'Listener de invalidação deve estar registrado para ReservaAlterada.',
+        );
     }
 
     public function test_usuario_sem_permissao_lanca_403_ao_agregar_com_cache(): void

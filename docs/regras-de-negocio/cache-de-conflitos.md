@@ -124,7 +124,7 @@ Arquivo: `resources/js/presentation/pages/Reservas/Gestor/AvaliarReservaPage.tsx
 
 ```tsx
 // Conflitos ao vivo (fonte de verdade, apenas informativo)
-<ConflictAlertBox conflictCache={todosOsConflitos} />
+<ConflictAlertBox conflicts={todosOsConflitos} />
 
 // Snapshot histórico (informativo, não bloqueia)
 <ConflictCacheSnapshotPanel snapshot={conflictCacheSnapshot} />

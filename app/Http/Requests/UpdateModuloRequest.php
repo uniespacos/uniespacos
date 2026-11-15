@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Facades\Auth;
+
 class UpdateModuloRequest extends StoreModuloRequest
 {
     /**
@@ -11,6 +13,6 @@ class UpdateModuloRequest extends StoreModuloRequest
      */
     public function authorize(): bool
     {
-        return parent::authorize();
+        return Auth::user()?->hasPermissionTo('modulos.atualizar') ?? false;
     }
 }

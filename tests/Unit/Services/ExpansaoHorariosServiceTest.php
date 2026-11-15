@@ -290,4 +290,78 @@ class ExpansaoHorariosServiceTest extends TestCase
         $this->assertSame(count($chaves), count(array_unique($chaves)), 'Nao deve gerar linhas duplicadas ao expandir semanas distintas no mesmo dia da semana.');
         $this->assertCount(5, $linhasPersonalizado, 'Tercas 01, 08, 15 (sem duplicar 15) + quintas 10, 17.');
     }
+
+    public function test_periodica_respeita_selecao_explicita_em_semana_futura_sem_sobrescrever(): void
+    {
+        $slots = [
+            $this->slot('2026-11-15', '18:20:00', '19:10:00'),
+            $this->slot('2026-11-15', '19:10:00', '20:00:00'),
+            $this->slot('2026-11-15', '20:00:00', '20:50:00'),
+            $this->slot('2026-11-20', '18:20:00', '19:10:00'),
+            $this->slot('2026-11-21', '19:10:00', '20:00:00'),
+            $this->slot('2026-11-22', '19:10:00', '20:00:00'),
+        ];
+
+        [$linhas] = $this->service->montar(
+            $slots,
+            $this->agendas(),
+            '15dias',
+            Carbon::parse('2026-11-29'),
+            7,
+            fn () => 'em_analise'
+        );
+
+        $porData = [];
+        foreach ($linhas as $linha) {
+            $porData[$linha['data']][] = $linha['horario_inicio'];
+        }
+        foreach ($porData as &$horarios) {
+            sort($horarios);
+        }
+        unset($horarios);
+
+        $this->assertSame(['18:20:00', '19:10:00', '20:00:00'], $porData['2026-11-15'] ?? []);
+        $this->assertSame(['19:10:00'], $porData['2026-11-22'] ?? [], 'Domingo 22/11 selecionado explicitamente nao deve receber os outros horarios de 15/11.');
+        $this->assertSame(['19:10:00'], $porData['2026-11-29'] ?? [], 'Domingo 29/11 deve replicar apenas o padrao mais recente selecionado em 22/11.');
+        $this->assertSame(['18:20:00'], $porData['2026-11-20'] ?? []);
+        $this->assertSame(['18:20:00'], $porData['2026-11-27'] ?? []);
+        $this->assertSame(['19:10:00'], $porData['2026-11-21'] ?? []);
+        $this->assertSame(['19:10:00'], $porData['2026-11-28'] ?? []);
+        $this->assertCount(9, $linhas);
+    }
+
+    public function test_datas_expandidas_para_slot_1mes_expande_ate_data_final(): void
+    {
+        $slot = $this->slot('2026-09-01', '10:00:00', '11:00:00');
+        $datas = $this->service->datasExpandidasParaSlot($slot, [$slot], '1mes', '2026-10-01');
+
+        $this->assertSame(
+            ['2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29'],
+            $datas
+        );
+    }
+
+    public function test_datas_expandidas_para_slot_para_antes_de_selecao_explicita_futura(): void
+    {
+        $slotSemana1 = $this->slot('2026-11-15', '18:20:00', '19:10:00');
+        $slotSemana2 = $this->slot('2026-11-22', '19:10:00', '20:00:00');
+        $todos = [$slotSemana1, $slotSemana2];
+
+        $this->assertSame(
+            ['2026-11-15'],
+            $this->service->datasExpandidasParaSlot($slotSemana1, $todos, '15dias', '2026-11-29')
+        );
+        $this->assertSame(
+            ['2026-11-22', '2026-11-29'],
+            $this->service->datasExpandidasParaSlot($slotSemana2, $todos, '15dias', '2026-11-29')
+        );
+    }
+
+    public function test_datas_expandidas_para_slot_unica_retorna_apenas_propria_data(): void
+    {
+        $slot = $this->slot('2026-09-01', '10:00:00', '11:00:00');
+        $datas = $this->service->datasExpandidasParaSlot($slot, [$slot], 'unica', '2026-10-01');
+
+        $this->assertSame(['2026-09-01'], $datas);
+    }
 }
