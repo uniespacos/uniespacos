@@ -1,9 +1,10 @@
 import { opcoesRecorrencia } from '@/constants/recorrencia';
 import { useSlotSelection } from '@/hooks/use-slot-selection';
+import { parseDataLocal } from '@/lib/utils';
 import { type Espaco, type Reserva, type SlotCalendario, type ValorOcorrenciaType } from '@/types';
 import { type ReservaFormData } from '@/types/reserva-stepper';
 import { useForm } from '@inertiajs/react';
-import { addMonths, format, parse } from 'date-fns';
+import { addMonths, format, isBefore, parse, startOfDay } from 'date-fns';
 import { type SyntheticEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -69,8 +70,8 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     const { data, setData, post, patch, processing, reset } = useForm<AgendaSelectionFormData>({
         titulo: reserva?.titulo ?? '',
         descricao: reserva?.descricao ?? '',
-        data_inicial: reserva?.data_inicial ? new Date(reserva.data_inicial) : hoje,
-        data_final: reserva?.data_final ? new Date(reserva.data_final) : addMonths(hoje, 1),
+        data_inicial: reserva?.data_inicial ? parseDataLocal(reserva.data_inicial) : hoje,
+        data_final: reserva?.data_final ? parseDataLocal(reserva.data_final) : addMonths(hoje, 1),
         recorrencia: reserva?.recorrencia ?? 'unica',
         horarios_solicitados: [],
         edit_scope: 'recurring',
@@ -90,17 +91,28 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         }));
 
         setData((prevData) => {
-            const novaDataInicial =
-                slotsSelecao.length > 0 ? new Date(Math.min(...slotsSelecao.map((s) => s.data.getTime()))) : prevData.data_inicial;
+            if (slotsSelecao.length === 0) {
+                return {
+                    ...prevData,
+                    horarios_solicitados: horariosParaEnviar,
+                };
+            }
+
+            const timestamps = slotsSelecao.map((s) => s.data.getTime());
+            const novaDataInicial = new Date(Math.min(...timestamps));
+            const maiorData = new Date(Math.max(...timestamps));
 
             let novaDataFinal = prevData.data_final;
-            if (slotsSelecao.length > 0 && prevData.recorrencia !== 'personalizado') {
+            if (prevData.recorrencia === 'personalizado') {
+                const limiteMinimo = isBefore(startOfDay(novaDataInicial), startOfDay(maiorData)) ? maiorData : novaDataInicial;
+                if (!novaDataFinal || isBefore(startOfDay(novaDataFinal), startOfDay(limiteMinimo))) {
+                    novaDataFinal = limiteMinimo;
+                }
+            } else {
                 const opcaoRecorrencia = opcoesRecorrencia.find((op) => op.valor === prevData.recorrencia);
-                if (opcaoRecorrencia && novaDataInicial) {
-                    novaDataFinal =
-                        prevData.recorrencia === 'unica'
-                            ? new Date(Math.max(...slotsSelecao.map((s) => s.data.getTime())))
-                            : opcaoRecorrencia.calcularDataFinal(novaDataInicial);
+                if (opcaoRecorrencia) {
+                    const calculada = prevData.recorrencia === 'unica' ? maiorData : opcaoRecorrencia.calcularDataFinal(novaDataInicial);
+                    novaDataFinal = isBefore(startOfDay(calculada), startOfDay(maiorData)) ? maiorData : calculada;
                 }
             }
 
@@ -116,20 +128,32 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     useEffect(() => {
         if (slotsSelecao.length === 0) return;
 
+        const maiorData = new Date(Math.max(...slotsSelecao.map((s) => s.data.getTime())));
+
         setData((prevData) => {
-            if (prevData.recorrencia === 'personalizado') return prevData;
+            const dataIni = prevData.data_inicial ?? new Date();
+
+            if (prevData.recorrencia === 'personalizado') {
+                const limiteMinimo = isBefore(startOfDay(dataIni), startOfDay(maiorData)) ? maiorData : dataIni;
+                if (!prevData.data_final || isBefore(startOfDay(prevData.data_final), startOfDay(limiteMinimo))) {
+                    return { ...prevData, data_final: limiteMinimo };
+                }
+                return prevData;
+            }
 
             const opcaoRecorrencia = opcoesRecorrencia.find((op) => op.valor === prevData.recorrencia);
             if (!opcaoRecorrencia) return prevData;
 
-            const novaDataFinal =
-                prevData.recorrencia === 'unica'
-                    ? new Date(Math.max(...slotsSelecao.map((s) => s.data.getTime())))
-                    : opcaoRecorrencia.calcularDataFinal(prevData.data_inicial ?? new Date());
+            const calculada = prevData.recorrencia === 'unica' ? maiorData : opcaoRecorrencia.calcularDataFinal(dataIni);
+            const novaDataFinal = isBefore(startOfDay(calculada), startOfDay(maiorData)) ? maiorData : calculada;
+
+            if (prevData.data_final?.getTime() === novaDataFinal.getTime()) {
+                return prevData;
+            }
 
             return { ...prevData, data_final: novaDataFinal };
         });
-    }, [data.recorrencia, slotsSelecao, setData]);
+    }, [data.recorrencia, data.data_inicial, slotsSelecao, setData]);
 
     const handleFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();

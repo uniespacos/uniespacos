@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { PERMISSION_RESERVAS_AVALIAR } from '@/constants/permissions';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { TURNOS_ORDENADOS } from '@/constants/turnos';
 import { SituacaoReserva } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { Can } from '@/lib/auth-can';
-import { diasDaSemana } from '@/lib/utils';
+import { diasDaSemana, parseDataLocal } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { mapearStatusBackendParaSlot } from '@/lib/utils/reserva-status.helpers';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
@@ -25,7 +26,6 @@ import {
     ExternalLink,
     FileText,
     Info,
-    Loader2,
     MapPin,
     Repeat,
     User as UserIcon,
@@ -45,18 +45,11 @@ export interface ReservaDetalhesProps {
     routeName: string;
 }
 
-export default function ReservaDetalhes({
-    isOpen,
-    onOpenChange,
-    selectedReserva,
-    isGestor = false,
-    setRemoverReserva,
-    routeName,
-}: ReservaDetalhesProps) {
+export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva, isGestor = false, setRemoverReserva }: ReservaDetalhesProps) {
     const { t, formatDate } = useTranslation();
     const { semana } = usePage<{ semana?: { referencia: string } }>().props;
+    const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
-    const [isLoading, setIsLoading] = useState(false);
     const [semanaVisivel, setSemanaVisivel] = useState(() => {
         const primeiroHorarioData = selectedReserva.horarios[0]?.data;
         if (primeiroHorarioData) {
@@ -83,7 +76,8 @@ export default function ReservaDetalhes({
             selectedReserva.horarios
                 .map((horario) => horario.agenda)
                 .filter((agenda): agenda is Agenda => agenda !== undefined)
-                .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), []),
+                .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), [])
+                .sort((a, b) => TURNOS_ORDENADOS.indexOf(a.turno) - TURNOS_ORDENADOS.indexOf(b.turno)),
         [selectedReserva.horarios],
     );
 
@@ -99,22 +93,10 @@ export default function ReservaDetalhes({
 
     const navegarParaSemana = (novaData: Date) => {
         setSemanaVisivel(novaData);
-        const params: { reserva: number; semana: string } = {
-            reserva: selectedReserva.id,
-            semana: format(novaData, 'yyyy-MM-dd'),
-        };
-        router.get(route(routeName), params, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            onStart: () => {
-                setIsLoading(true);
-            },
-            onFinish: () => {
-                setIsLoading(false);
-            },
-            only: ['reservaToShow', 'semana'],
-        });
+        const url = new URL(window.location.href);
+        url.searchParams.set('reserva', String(selectedReserva.id));
+        url.searchParams.set('semana', format(novaData, 'yyyy-MM-dd'));
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     };
 
     const handleSemanaAnterior = () => {
@@ -124,8 +106,8 @@ export default function ReservaDetalhes({
         navegarParaSemana(addDays(semanaVisivel, 7));
     };
 
-    const dataInicialReserva = useMemo(() => new Date(selectedReserva.data_inicial), [selectedReserva.data_inicial]);
-    const dataFinalReserva = useMemo(() => new Date(selectedReserva.data_final), [selectedReserva.data_final]);
+    const dataInicialReserva = useMemo(() => parseDataLocal(selectedReserva.data_inicial), [selectedReserva.data_inicial]);
+    const dataFinalReserva = useMemo(() => parseDataLocal(selectedReserva.data_final), [selectedReserva.data_final]);
     const podeVoltar = useMemo(
         () => isAfter(startOfWeek(semanaVisivel, { weekStartsOn: 1 }), dataInicialReserva),
         [dataInicialReserva, semanaVisivel],
@@ -388,22 +370,17 @@ export default function ReservaDetalhes({
                             semanaAtual={semanaVisivel}
                             onAnterior={handleSemanaAnterior}
                             onProxima={handleProximaSemana}
-                            desabilitarAnterior={!podeVoltar || isLoading}
-                            desabilitarProxima={!podeAvancar || isLoading}
+                            desabilitarAnterior={!podeVoltar}
+                            desabilitarProxima={!podeAvancar}
                         />
                     </div>
 
                     <div className="border-border/80 relative overflow-hidden rounded-xl border">
                         <CalendarReservationDetails
                             agendas={agendas}
-                            diasSemana={diasDaSemana(semanaVisivel, new Date())}
+                            diasSemana={diasDaSemana(semanaVisivel, hoje)}
                             slotsSolicitados={slotsSelecao}
                         />
-                        {isLoading && (
-                            <div className="bg-background/70 absolute inset-0 z-20 flex items-center justify-center rounded-xl backdrop-blur-xs">
-                                <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                            </div>
-                        )}
                     </div>
                 </div>
 

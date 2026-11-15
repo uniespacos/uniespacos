@@ -53,7 +53,7 @@ export function derivarSlotsDoTurno(
         const [horario_inicio_str, horario_fim_str] = horaLabel.split(' - ').map((s) => s.trim() + ':00');
 
         diasSemana.forEach((dia) => {
-            const diaFormatado = format(dia.data, 'yyyy-MM-dd');
+            const diaFormatado = dia.valor.includes('-') ? dia.valor : format(dia.data, 'yyyy-MM-dd');
             const chave = `${diaFormatado}|${horario_inicio_str}`;
             const isPast = new Date(`${diaFormatado}T${horario_inicio_str}`) < agora;
 

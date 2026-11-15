@@ -8,9 +8,17 @@ interface UseAgendaNavigationProps {
     routeParams?: Record<string, unknown>;
     dataInicial?: Date;
     dataFinal?: Date;
+    only?: string[];
 }
 
-export function useAgendaNavigation({ semanaInicial, routeName, routeParams = {}, dataInicial, dataFinal }: UseAgendaNavigationProps) {
+export function useAgendaNavigation({
+    semanaInicial,
+    routeName,
+    routeParams = {},
+    dataInicial,
+    dataFinal,
+    only = ['espaco', 'semana'],
+}: UseAgendaNavigationProps) {
     const [semanaVisivel, setSemanaVisivel] = useState<Date>(semanaInicial);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -33,7 +41,7 @@ export function useAgendaNavigation({ semanaInicial, routeName, routeParams = {}
             route(routeName, routeParams),
             { semana: format(novaData, 'yyyy-MM-dd') },
             {
-                only: ['espaco', 'semana'],
+                only,
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,

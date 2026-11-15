@@ -1,8 +1,8 @@
-import { derivarSlotsDoTurno } from '@/lib/utils/derivar-slots-do-turno';
 import { cn } from '@/lib/utils';
+import { derivarSlotsDoTurno } from '@/lib/utils/derivar-slots-do-turno';
 import CalendarSlotCell from '@/presentation/molecules/CalendarSlotCell';
 import { Agenda, AgendaDiasSemanaType, SlotCalendario } from '@/types';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 interface CalendarShiftSectionProps {
     titulo: string;
@@ -23,7 +23,12 @@ export default function CalendarShiftSection({
     slotsSolicitados,
 }: CalendarShiftSectionProps) {
     const isSlotSelecionadoFn = isSlotSelecionado || (() => false);
-    const alternarSelecaoSlotFn = alternarSelecaoSlot || (() => {});
+    const handleSelectSlot = useCallback(
+        (slot: SlotCalendario) => {
+            alternarSelecaoSlot?.(slot);
+        },
+        [alternarSelecaoSlot],
+    );
 
     const derivados = useMemo(() => derivarSlotsDoTurno(agenda, diasSemana, slotsSolicitados), [agenda, diasSemana, slotsSolicitados]);
 
@@ -57,14 +62,7 @@ export default function CalendarShiftSection({
                     <div className="text-muted-foreground border-r p-2 pr-3 text-right text-xs">{horaLabel}</div>
 
                     {slots.map((slot) => (
-                        <CalendarSlotCell
-                            key={slot.id}
-                            slot={slot}
-                            isSelecionado={isSlotSelecionadoFn(slot)}
-                            onSelect={() => {
-                                alternarSelecaoSlotFn(slot);
-                            }}
-                        />
+                        <CalendarSlotCell key={slot.id} slot={slot} isSelecionado={isSlotSelecionadoFn(slot)} onSelectSlot={handleSelectSlot} />
                     ))}
                 </div>
             ))}
