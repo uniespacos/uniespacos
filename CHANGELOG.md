@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0-rc.119](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.118...v1.5.0-rc.119) (2026-11-15)
+
+
+### Bug Fixes
+
+* corrigir recorrência multi-semana, i18n e itens rápidos do backlog ([5142f04](https://github.com/uniespacos/uniespacos/commit/5142f0475941e6f9be5efbada36ab349bbd6eb3f))
+* usar i18n na recorrencia e preservar selecoes explicitas por semana ([f9204c9](https://github.com/uniespacos/uniespacos/commit/f9204c91dafa9a18bdc3d4f336832dade3aca6bc))
+* validar recorrencia no envio e concluir itens rapidos do backlog ([e035b46](https://github.com/uniespacos/uniespacos/commit/e035b46f3bf661c280a1d3d30bb7ce6401303eeb))
+
 ## [1.5.0-rc.118](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.117...v1.5.0-rc.118) (2026-11-15)
 
 
