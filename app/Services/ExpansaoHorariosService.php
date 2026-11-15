@@ -121,7 +121,8 @@ class ExpansaoHorariosService
 
             while ($cursor->lte($dataFinal)) {
                 $dataStr = $cursor->toDateString();
-                $chaveLinha = implode('|', [$base['agenda_id'], $dataStr, $base['horario_inicio']]);
+                $horarioInicio = is_string($base['horario_inicio'] ?? null) ? $base['horario_inicio'] : '';
+                $chaveLinha = $agenda->id.'|'.$dataStr.'|'.$horarioInicio;
                 if (! isset($chavesGeradas[$chaveLinha])) {
                     $chavesGeradas[$chaveLinha] = true;
                     $linhas[] = $this->linha($base, $dataStr, $reservaId, $situacao, $userId);
