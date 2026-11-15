@@ -108,9 +108,8 @@ class ReservaService
         $reserva->load([
             'user:id,name,setor_id',
             'user.setor:id,nome,sigla',
-            'horarios' => function ($query) use ($weekStart, $weekEnd) {
-                $query->whereBetween('data', [$weekStart, $weekEnd])
-                    ->orderBy('data')->orderBy('horario_inicio')
+            'horarios' => function ($query) {
+                $query->orderBy('data')->orderBy('horario_inicio')
                     ->with('agenda');
             },
         ]);
@@ -400,13 +399,14 @@ class ReservaService
 
         $conflitosMap = $this->conflictService->findConflictsFor($reserva->id);
 
-        $horariosDaSemana = $reserva->horarios()
+        $horariosDaReserva = $reserva->horarios()
             ->whereIn('agenda_id', $agendaIds)
-            ->whereBetween('data', [$weekStart, $weekEnd])
-            ->with('agenda.espaco')
+            ->orderBy('data')
+            ->orderBy('horario_inicio')
+            ->with('agenda.espaco.andar.modulo')
             ->get();
 
-        foreach ($horariosDaSemana as $horario) {
+        foreach ($horariosDaReserva as $horario) {
             $horario->is_conflicted = false;
             if ($conflitosMap->has($horario->id)) {
                 $horario->is_conflicted = true;
@@ -415,7 +415,7 @@ class ReservaService
         }
 
         $reserva->load(['user']);
-        $reserva->setRelation('horarios', $horariosDaSemana);
+        $reserva->setRelation('horarios', $horariosDaReserva);
         $reserva->existing_justification = $reserva->horarios()
             ->whereNotNull('justificativa')
             ->where('justificativa', '!=', '')
@@ -423,7 +423,7 @@ class ReservaService
 
         return [
             'reserva' => $reserva,
-            'semana' => ['referencia' => $reference],
+            'semana' => ['inicio' => $weekStart, 'fim' => $weekEnd, 'referencia' => $reference],
             'todosOsConflitos' => $conflitosMap,
             'conflictCacheSnapshot' => $reserva->conflict_cache,
         ];

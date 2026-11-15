@@ -57,6 +57,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
                 {fallback}
                 {selectedReserva && (
                     <ReservaDetalhes
+                        key={selectedReserva.id}
                         isOpen={Boolean(selectedReserva)}
                         onOpenChange={(open) => {
                             if (!open) {
@@ -80,9 +81,10 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     const handleAbrirDetalhes = (reserva: Reserva) => {
         setSelectedReserva(reserva);
         const semanaAncora = reserva.horarios[0]?.data ?? String(reserva.data_inicial);
+        const currentParams = Object.fromEntries(new URLSearchParams(window.location.search).entries());
         router.get(
             route(routeName),
-            { reserva: reserva.id, semana: semanaAncora },
+            { ...currentParams, reserva: reserva.id, semana: semanaAncora },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -93,15 +95,10 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
 
     const handleFecharDetalhes = () => {
         setSelectedReserva(undefined);
-        router.get(
-            route(routeName),
-            {},
-            {
-                preserveState: true,
-                preserveScroll: true,
-                only: ['reservaToShow', 'semana'],
-            },
-        );
+        const url = new URL(window.location.href);
+        url.searchParams.delete('reserva');
+        url.searchParams.delete('semana');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     };
 
     const renderActions = (reserva: Reserva) => {
@@ -254,6 +251,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
 
             {selectedReserva && (
                 <ReservaDetalhes
+                    key={selectedReserva.id}
                     isOpen={Boolean(selectedReserva)}
                     onOpenChange={(open) => {
                         if (!open) {

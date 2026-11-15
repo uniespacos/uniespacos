@@ -121,4 +121,70 @@ describe('useAgendaSelection: recorrencia e data inicial', () => {
         expect(result.current.formData.data_inicial).toEqual(new Date(2026, 5, 3));
         expect(result.current.formData.horarios_solicitados).toHaveLength(2);
     });
+
+    it('mantem data_final cobrindo o maior slot ao selecionar multiplas semanas e periodos', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 5, 1),
+            }),
+        );
+
+        const slotNoiteOutroTurno: SlotCalendario = {
+            ...criarSlot(new Date(2026, 5, 25), '19:00:00'),
+            horario_fim: '19:50:00',
+            agenda_id: 3,
+        };
+
+        act(() => {
+            result.current.alternarSelecaoSlot(criarSlot(new Date(2026, 5, 3)));
+        });
+
+        act(() => {
+            result.current.alternarSelecaoSlot(slotNoiteOutroTurno);
+        });
+
+        expect(result.current.formData.horarios_solicitados).toHaveLength(2);
+        expect(result.current.formData.data_inicial).toEqual(new Date(2026, 5, 3));
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 25));
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.QUINZE_DIAS);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 25));
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.PERSONALIZADO);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 25));
+    });
+
+    it('recalcula data_final quando data_inicial muda com recorrencia predefinida ativa', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 5, 1),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot(criarSlot(new Date(2026, 5, 3)));
+        });
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.QUINZE_DIAS);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 17));
+
+        act(() => {
+            result.current.setFormData('data_inicial', new Date(2026, 5, 10));
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 24));
+    });
 });

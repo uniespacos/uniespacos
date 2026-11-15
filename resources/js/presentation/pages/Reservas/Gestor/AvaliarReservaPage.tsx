@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TURNOS_ORDENADOS } from '@/constants/turnos';
 import { SituacaoReserva, ValidationStatus, type SituacaoReservaType } from '@/contracts';
 import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
 import { useAvaliarReserva } from '@/hooks/use-avaliar-reserva';
@@ -8,7 +9,7 @@ import { useReservaRefreshOnEvent } from '@/hooks/use-reserva-refresh-on-event';
 import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import { useReservationSlots } from '@/hooks/use-reservation-slots';
 import { useTranslation } from '@/i18n';
-import { diasDaSemana, getStatusReservaColor, getStatusReservaText } from '@/lib/utils';
+import { diasDaSemana, getStatusReservaColor, getStatusReservaText, parseDataLocal } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { verificarStatusReserva } from '@/lib/utils/reserva-status.helpers';
 import { SituacaoIcon } from '@/presentation/atoms/SituacaoIcon';
@@ -61,7 +62,8 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
         return reserva.horarios
             .map((horario) => horario.agenda)
             .filter((agenda): agenda is Agenda => agenda !== undefined)
-            .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), []);
+            .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), [])
+            .sort((a, b) => TURNOS_ORDENADOS.indexOf(a.turno) - TURNOS_ORDENADOS.indexOf(b.turno));
     }, [reserva.horarios]);
 
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
@@ -74,8 +76,8 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
     const { setData } = form;
 
     const semanaInicial = useMemo(() => parseISO(semana.referencia), [semana.referencia]);
-    const dataInicialReserva = useMemo(() => new Date(reserva.data_inicial), [reserva.data_inicial]);
-    const dataFinalReserva = useMemo(() => new Date(reserva.data_final), [reserva.data_final]);
+    const dataInicialReserva = useMemo(() => parseDataLocal(reserva.data_inicial), [reserva.data_inicial]);
+    const dataFinalReserva = useMemo(() => parseDataLocal(reserva.data_final), [reserva.data_final]);
 
     const { semanaVisivel, isLoading, podeVoltar, podeAvancar, irParaSemanaAnterior, irParaProximaSemana } = useAgendaNavigation({
         semanaInicial,
@@ -83,6 +85,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
         routeParams: useMemo(() => ({ reserva: reserva.id }), [reserva.id]),
         dataInicial: dataInicialReserva,
         dataFinal: dataFinalReserva,
+        only: useMemo(() => ['reserva', 'semana', 'todosOsConflitos'], []),
     });
 
     useEffect(() => {

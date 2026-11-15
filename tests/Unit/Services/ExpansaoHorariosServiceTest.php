@@ -251,4 +251,43 @@ class ExpansaoHorariosServiceTest extends TestCase
             $this->assertLessThanOrEqual('2026-09-30', $data, 'Nenhum horario pode ultrapassar data_final.');
         }
     }
+
+    public function test_unica_e_personalizado_preservam_semanas_e_turnos_distintos_sem_duplicar(): void
+    {
+        $slots = [
+            $this->slot('2026-09-01', '08:20:00', '09:10:00', agendaId: 1),
+            $this->slot('2026-09-10', '14:00:00', '14:50:00', agendaId: 2),
+            $this->slot('2026-09-15', '08:20:00', '09:10:00', agendaId: 1),
+        ];
+        $agendas = $this->agendas([1, 2]);
+
+        [$linhasUnica, $agendasUnica] = $this->service->montar(
+            $slots,
+            $agendas,
+            'unica',
+            Carbon::parse('2026-09-15'),
+            7,
+            fn () => 'em_analise'
+        );
+
+        $this->assertCount(3, $linhasUnica);
+        $this->assertCount(2, $agendasUnica);
+
+        [$linhasPersonalizado] = $this->service->montar(
+            $slots,
+            $agendas,
+            'personalizado',
+            Carbon::parse('2026-09-17'),
+            7,
+            fn () => 'em_analise'
+        );
+
+        $chaves = array_map(
+            fn (array $linha): string => implode('|', [$linha['agenda_id'], $linha['data'], $linha['horario_inicio']]),
+            $linhasPersonalizado
+        );
+
+        $this->assertSame(count($chaves), count(array_unique($chaves)), 'Nao deve gerar linhas duplicadas ao expandir semanas distintas no mesmo dia da semana.');
+        $this->assertCount(5, $linhasPersonalizado, 'Tercas 01, 08, 15 (sem duplicar 15) + quintas 10, 17.');
+    }
 }

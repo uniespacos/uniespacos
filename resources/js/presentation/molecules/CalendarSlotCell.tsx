@@ -3,12 +3,13 @@ import { ESTILO_SLOT } from '@/constants/situacao-reserva';
 import { cn } from '@/lib/utils';
 import { CalendarSlotHoverCard } from '@/presentation/molecules/CalendarSlotHoverCard';
 import { SituacaoReserva, SlotCalendario } from '@/types';
-import { JSX } from 'react';
+import { JSX, memo } from 'react';
 
 interface CalendarSlotCellProps {
     slot: SlotCalendario;
     isSelecionado: boolean;
-    onSelect: () => void;
+    onSelect?: () => void;
+    onSelectSlot?: (slot: SlotCalendario) => void;
 }
 
 const FUNDO_STATUS: Record<SlotCalendario['status'], string> = {
@@ -29,8 +30,16 @@ const TEXTO_STATUS: Record<SlotCalendario['status'], string> = {
     indeferida: 'text-destructive-accent',
 };
 
-export default function CalendarSlotCell({ slot, isSelecionado, onSelect }: CalendarSlotCellProps) {
+function CalendarSlotCell({ slot, isSelecionado, onSelect, onSelectSlot }: CalendarSlotCellProps) {
     const isClickable = slot.status !== 'reservado' && !slot.isLocked && !slot.isPast;
+
+    const handleClick = () => {
+        if (onSelectSlot) {
+            onSelectSlot(slot);
+            return;
+        }
+        onSelect?.();
+    };
 
     const renderSlotContent = (): JSX.Element | null => {
         if (slot.isPast && slot.status === 'livre') {
@@ -89,7 +98,7 @@ export default function CalendarSlotCell({ slot, isSelecionado, onSelect }: Cale
     return (
         <div
             key={slot.id}
-            onClick={isClickable ? onSelect : undefined}
+            onClick={isClickable ? handleClick : undefined}
             className={cn(
                 'relative flex h-12 items-center justify-center border-l p-1 text-center transition-all duration-200',
                 isSelecionado && 'border-success-accent bg-success-subtle hover:bg-success-subtle/70 shadow-md',
@@ -117,3 +126,5 @@ export default function CalendarSlotCell({ slot, isSelecionado, onSelect }: Cale
         </div>
     );
 }
+
+export default memo(CalendarSlotCell);

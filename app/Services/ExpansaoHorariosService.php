@@ -94,6 +94,7 @@ class ExpansaoHorariosService
         callable $resolverSituacao,
     ): array {
         $linhas = [];
+        $chavesGeradas = [];
         $agendasUsadas = collect();
 
         $padroes = collect($slots)->groupBy(
@@ -119,7 +120,13 @@ class ExpansaoHorariosService
                 ->first();
 
             while ($cursor->lte($dataFinal)) {
-                $linhas[] = $this->linha($base, $cursor->toDateString(), $reservaId, $situacao, $userId);
+                $dataStr = $cursor->toDateString();
+                $horarioInicio = is_string($base['horario_inicio'] ?? null) ? $base['horario_inicio'] : '';
+                $chaveLinha = $agenda->id.'|'.$dataStr.'|'.$horarioInicio;
+                if (! isset($chavesGeradas[$chaveLinha])) {
+                    $chavesGeradas[$chaveLinha] = true;
+                    $linhas[] = $this->linha($base, $dataStr, $reservaId, $situacao, $userId);
+                }
                 $cursor = $cursor->copy()->addWeek();
             }
         }

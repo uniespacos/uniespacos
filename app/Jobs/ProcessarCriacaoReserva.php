@@ -155,6 +155,24 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
                 if ($linhas !== []) {
                     Horario::insert($linhas);
+
+                    $datasGeradas = array_values(array_filter(
+                        array_map(fn (array $linha): ?string => is_string($linha['data'] ?? null) ? $linha['data'] : null, $linhas)
+                    ));
+                    if ($datasGeradas !== []) {
+                        $minDataGerada = min($datasGeradas);
+                        $maxDataGerada = max($datasGeradas);
+                        $atualizarPeriodo = [];
+                        if ($minDataGerada < $dataInicial) {
+                            $atualizarPeriodo['data_inicial'] = $minDataGerada;
+                        }
+                        if ($maxDataGerada > $dataFinal) {
+                            $atualizarPeriodo['data_final'] = $maxDataGerada;
+                        }
+                        if ($atualizarPeriodo !== []) {
+                            $reserva->update($atualizarPeriodo);
+                        }
+                    }
                 }
 
                 // Agenda sem gestor atribuido nao entra na conta — antes disso

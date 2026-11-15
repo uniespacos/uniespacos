@@ -1,15 +1,16 @@
-import React, { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Building2, Calendar, FileText, CheckCircle2, Sparkles, Users } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Espaco, SlotCalendario } from '@/types';
-import { ReservaFormData } from '@/types/reserva-stepper';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
 import { useTranslation } from '@/i18n';
+import { parseDataLocal } from '@/lib/utils';
+import { Espaco, SlotCalendario } from '@/types';
+import { ReservaFormData } from '@/types/reserva-stepper';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Building2, Calendar, CheckCircle2, FileText, Sparkles, Users } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 export interface StepRevisaoConfirmacaoProps {
     espaco: Espaco;
@@ -34,16 +35,8 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
     }, [formData.recorrencia]);
 
     const periodoFormatado = useMemo(() => {
-        const dataIni = formData.data_inicial
-            ? formData.data_inicial instanceof Date
-                ? formData.data_inicial
-                : parseISO(String(formData.data_inicial))
-            : null;
-        const dataFim = formData.data_final
-            ? formData.data_final instanceof Date
-                ? formData.data_final
-                : parseISO(String(formData.data_final))
-            : null;
+        const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
+        const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
 
         return {
             inicio: dataIni ? format(dataIni, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
@@ -51,15 +44,21 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
         };
     }, [formData.data_inicial, formData.data_final]);
 
+    const slotsOrdenados = useMemo(
+        () =>
+            [...slotsSelecao].sort(
+                (a, b) => parseDataLocal(a.data).getTime() - parseDataLocal(b.data).getTime() || a.horario_inicio.localeCompare(b.horario_inicio),
+            ),
+        [slotsSelecao],
+    );
+
     return (
         <div className="space-y-4">
             {/* Cabeçalho de Status / Modo */}
             <div className="bg-primary/10 border-primary/20 flex items-center gap-2.5 rounded-xl border p-3 text-xs">
                 <Sparkles className="text-primary h-4 w-4 shrink-0" />
                 <span className="text-foreground">
-                    {isEditMode
-                        ? t('reservas.stepper.review_edit_mode')
-                        : t('reservas.stepper.review_create_mode')}
+                    {isEditMode ? t('reservas.stepper.review_edit_mode') : t('reservas.stepper.review_create_mode')}
                 </span>
             </div>
 
@@ -88,7 +87,8 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
                     <div className="space-y-0.5 pl-6">
                         <p className="text-foreground text-xs font-medium">{rotuloRecorrencia}</p>
                         <p className="text-muted-foreground text-[11px]">
-                            {periodoFormatado.inicio} até {periodoFormatado.fim} ({String(slotsSelecao.length)} slots/semana)
+                            {periodoFormatado.inicio} até {periodoFormatado.fim} ({String(slotsSelecao.length)}{' '}
+                            {slotsSelecao.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural')})
                         </p>
                     </div>
                 </div>
@@ -127,8 +127,8 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
                 </div>
                 <ScrollArea className="border-border/80 bg-card h-24 rounded-xl border p-2.5">
                     <div className="flex flex-wrap gap-1.5">
-                        {slotsSelecao.map((slot) => {
-                            const dataObj = slot.data instanceof Date ? slot.data : parseISO(String(slot.data));
+                        {slotsOrdenados.map((slot) => {
+                            const dataObj = parseDataLocal(slot.data);
                             return (
                                 <Badge
                                     key={slot.id}

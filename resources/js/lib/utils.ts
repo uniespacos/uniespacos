@@ -3,7 +3,7 @@ import { Turno, TurnoType } from '@/contracts/turnos.contract';
 import { assertNever } from '@/lib/utils/exhaustive';
 import { Horario, SituacaoReserva } from '@/types';
 import { type ClassValue, clsx } from 'clsx';
-import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
+import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -122,4 +122,14 @@ export function diasDaSemana(dataReferencia: Date, hoje: Date) {
 
 export function calcularDataInicioSemana(data: Date) {
     return startOfWeek(data, { weekStartsOn: 1 });
+}
+
+/** Converte Date ou string ISO (ex.: YYYY-MM-DD) para Date local sem deslocamento UTC-3. */
+export function parseDataLocal(valor: Date | string): Date {
+    if (valor instanceof Date) {
+        return valor;
+    }
+
+    const parsed = parseISO(valor);
+    return Number.isNaN(parsed.getTime()) ? new Date(valor) : parsed;
 }
