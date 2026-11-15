@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main` e produção na v1.6.1 (14/11/2026) · `develop` e staging na `1.5.0-rc.116` (14/11/2026, com #525 mergeada).
-> **Atualizado em:** 2026-11-14.
+> **Atualizado em:** 2026-11-15.
 
 ## Como ler
 
@@ -17,7 +17,7 @@
 
 - **Em produção:** v1.6.1 desde 14/11/2026 (Onda 3, parte 1: S26 e S14, #518). Backup manual cifrado antes do deploy, com teste de abertura completo e cópia externa conferidos (o primeiro com as duas conferências); fila vazia antes do deploy. Pós-deploy conferido nos serviços (imagem 1.6.1, banco não recriado, worker recriado pelo deploy, sem reinício explícito), com 0 erros em 15 min e `failed_jobs` vazio nos 30 min seguintes. Smoke por papel e teste do modal com dois papéis OK, e a orientação I4 foi retirada (aviso aos institucionais em 14/11/2026). Da 1.6.0 segue valendo: a rotina de retenção diária roda sem intervenção.
 - **Em staging:** rc.116 (Onda 2, parte 2 e modernização de frontend, #525/#526).
-- **Próximo passo:** a PR **#525** (`feat/onda-2-lgpd-lote-2`, base da **1.7.0**) já foi mergeada em `develop` (`rc.116` em staging); a branch complementar `fix/reserva-cancelada-e-performance` traz a correção do erro 403 em reserva cancelada, o pacote de performance do Mozilla Profiler e o fechamento da `T-31c`, seguida pela Onda 3 parte 2. Também: as conferências da #525 em staging (`T-19d`, `T-35`); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
+- **Próximo passo:** a PR **#525** (`feat/onda-2-lgpd-lote-2`, base da **1.7.0**) já foi mergeada em `develop` (`rc.116` em staging); a branch complementar `fix/reserva-cancelada-e-performance` traz a correção do erro 403 em reserva cancelada, o pacote de performance do Mozilla Profiler e o fechamento da `T-31c`; a branch `fix/recorrencia-selecao-multi-semana` traz os ajustes do fluxo de solicitação de reserva em múltiplas semanas (`i18n` dos rótulos de recorrência, preservação de seleções explícitas por semana, `RR-H2`) e o lote de itens fechados (`S73`, `S72`, `RR-F04`, `S26c`, `DOC-01`, `DOC-02`), seguida pela Onda 3 parte 2. Também: as conferências da #525 em staging (`T-19d`, `T-35`); a leitura restante da T-08; a T-05b em 16/11/2026; a resposta da TI sobre a guarda e as cópias externas (T-23).
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
@@ -177,14 +177,8 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **RR-H3** · Fechar a brecha de reserva dupla sob concorrência — `P2` · médio · bug
   O lock só alcança linhas que já existem e não há restrição no banco; duas criações simultâneas no mesmo horário vazio podem passar. **Abordagem decidida pelo responsável em 08/11/2026:** lock consultivo do PostgreSQL (advisory lock) por agenda e dia.
   **Pronto quando:** um teste com duas conexões reais não grava dois horários deferidos sobrepostos.
-- [ ] **RR-H2** · Validar no envio todas as semanas da recorrência — `P2` · médio · bug
-  A validação síncrona olha só a primeira data; um conflito em semana posterior aparece no job como falha genérica.
-  **Pronto quando:** uma reserva de um mês com conflito na terceira semana volta erro de validação no envio, sem criar a reserva.
 - [ ] **B69, B71, B72** · Revisar validação e autorização dos FormRequests de atualização (espaço, módulo, unidade, instituição) — `P2` · médio · segurança
   Testes de caracterização primeiro (S30).
-- [ ] **S73** · Editar módulo exige a permissão de atualização, não a de criação — `P2` · pequeno · bug
-  `UpdateModuloRequest::authorize()` chama o `authorize()` padrão, que exige `modulos.criar`, enquanto `ModuloPolicy::update` exige `modulos.atualizar`. Um papel com só a atualização recebe 403 ao editar módulo; hoje é latente, porque o papel `institucional` tem as duas. Ligado à revisão da B69, B71 e B72.
-  **Pronto quando:** `UpdateModuloRequest` usa `modulos.atualizar`, e um teste cobre a edição com um papel que tem só essa permissão.
 - [ ] **S41** · Endurecer os workflows de deploy (verificação de host, versões fixadas, origem da imagem) — `P2` · pequeno · segurança
   Inclui unificar os Caddyfiles e corrigir o `workflow_dispatch` de staging, que implanta a imagem da última RC em vez da branch escolhida (B79). Depende da D-EST-24. = B68, B79, E1-33.
 - [ ] **S46 → S48–S50** · Isolamento por instituição nas operações de escrita: ADR e implementação — `P2` · grande · segurança
@@ -207,8 +201,6 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 
 - [ ] **B26** · Testes de caracterização dos módulos que a v2 vai alterar — `P2` · grande · teste
   `EspacoService` (S18), `ConflictDetectionService` (S19), `NotificationController` (S20), exportações PDF, XLSX e CSV (S24; hoje só existe um teste mínimo de exportação em PDF), CRUD de espaços (S30), de instituição e unidade (S32), de módulo e setor (S47). Junto: B77 (editar espaço renotifica gestores; confirmar na S18) e B73 (exclusão de instituição sem erro tratado; na S32). É gate da v2. = E2-10 a E2-17.
-- [ ] **S26c** · Teste de registro do listener de cache de relatórios quase nunca falha — `P4` · pequeno · teste
-  A asserção aceita qualquer listener registrado no evento. Trocar por uma que confira o listener de cache no evento de domínio. Achado na S26 (04/11/2026).
 - [ ] **AF-6.3b** · Testes de conteúdo dos 4 tipos de relatório — `P3` · médio · teste · depende da S38
 - [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
   Desde 31/10 (#489), os seeders de desenvolvimento só rodam em local, development e testing. A CI ainda roda os seeders de desenvolvimento.
@@ -229,16 +221,12 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Produção usa os limites padrão do PHP, abaixo do limite que a aplicação valida. Depende da pergunta D (memória do host). = B18, B75, DT-07, E1-22.
 - [ ] **S28, S31** · Retrato do RBAC de produção versionado, paridade dos seeders na CI e catálogo de permissões do front — `P3` · médio · débito técnico
   O catálogo do front (`resources/js/constants/permissions.ts`) já tem os 4 tipos de relatório e `secao.relatorios`, mas faltam `relatorios.escopo-agendas` e `relatorios.escopo-instituicao`. Depende da pergunta C (exportar a matriz de produção). = B11, B12, E1-09, E1-10.
-- [ ] **DOC-01** · Tirar `docs/` do contexto de build da imagem de produção — `P3` · pequeno · operação
-  O `.dockerignore` exclui só `docs/auditoria*` e `docs/plano-*`; os cerca de 25 MB de `docs/UniEspaço Web/` entram na imagem.
 
 **Débitos técnicos e limpeza**
 
 - [ ] **S64** · Reduzir as supressões do ESLint, com ratchet — `P3` · médio · débito técnico
   Reconferido em 01/11: 73 supressões em 33 arquivos no `eslint-suppressions.json` (`npm run lint:debt`), mais 6 `eslint-disable` inline: 5 `eslint-disable-next-line` em dois arquivos de teste (`hooks/use-espaco-live-updates.test.ts` e `presentation/pages/Espacos/VisualizarEspacoPage.test.tsx`) e 1 `/* eslint-disable */` em `ssr.tsx`.
   Detalhe, DEB-L1: quitar as 24 supressões de `prefer-nullish-coalescing` em 12 arquivos (pequeno). Trocar `||` por `??` muda o comportamento com string vazia; refazer a partir do `lint:debt`, caso a caso. Uma branch antiga com a tentativa existe, mas está defasada demais para reaproveitar.
-- [ ] **DOC-02** · Sincronizar o `GEMINI.md` com o `CLAUDE.md` — `P3` · pequeno · docs
-  O `GEMINI.md` é uma cópia antiga do `CLAUDE.md`: faltam os checks de PR e as armadilhas novas, e ele afirma que as supressões foram "100% purgadas".
 - [ ] **DEB-L2** · `LoginRequest` e `AuthenticatedSessionController` são código morto — `P4` · pequeno · débito técnico
   Nenhum código usa as duas classes além delas mesmas; as rotas que as usavam estão dentro de um bloco comentado em `routes/auth.php`. O login real é o do Fortify. Remover junto com a S65, que cobre o resto de `Auth/` (conferir antes, porque o arquivo de rotas tem outras partes). Achado em 06/11/2026.
 - [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
@@ -248,12 +236,8 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
 - [ ] **RR-D3** · Comando de auditoria dos horários com data anterior à criação, com `--dry-run` — `P4` · pequeno · depende de decisão sobre o destino desses registros.
 - [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno. Entra no PR da I18N-F1, que traduz as Rules.
-- [ ] **RR-F04** · Renomear a prop `conflictCache` do `ConflictAlertBox`, que recebe conflitos calculados na hora — `P4` · pequeno.
 - [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
   Hoje só existe o log de cache miss, em nível info, que não aparece em produção (nível warning). Não há registro de acerto.
-- [ ] **S72** · Remover o código legado de unicidade de nome de andar — `P3` · pequeno · débito técnico
-  `app/Rules/UniqueNormalizedFloorName.php` e `Andar::normalizarNome()` não têm uso. A Rule consulta a coluna `nome_normalizado`, que não existe em `andars`: resíduo do CRUD avulso de andar removido no #251.
-  **Pronto quando:** os dois arquivos e as referências saem do código, e a suíte passa.
 - [ ] **S74** · Garantir a unicidade de andar por módulo no banco, com testes — `P3` · médio · débito técnico
   A regra existe só na aplicação (`StoreModuloRequest::validateAndaresUniqueness` e `updateOrCreate` em `ModuloService::update`). Não há índice único `(modulo_id, nome)` em `andars`, e não há testes de criação ou edição de módulo. Antes da migration, conferir duplicatas em produção (no banco de dev não há nenhuma).
   **Pronto quando:** há testes de feature de criação e edição de módulo; a unicidade é decidida (índice único ou só aplicação) e, se for índice, a migration roda sem duplicatas em produção.
@@ -418,6 +402,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **15/11** · `fix/recorrencia-selecao-multi-semana` (branch a partir de `develop` / `rc.116`, aguardando PR): ajustes do fluxo de solicitação em múltiplas semanas e itens do backlog (`RR-H2`, `S73`, `S72`, `RR-F04`, `S26c`, `DOC-01`, `DOC-02`). Inclui conversão das opções de `RecorrenciaReserva` para chaves tipadas de `i18n` em `pt-BR`/`en`/`es`, preservação de seleções explícitas em semanas futuras do mesmo dia da semana em `ExpansaoHorariosService`, validação síncrona de conflitos em todas as datas geradas pela expansão da recorrência em `HorarioDisponivel` (`RR-H2`, respeitando `edit_scope === 'single'` e seleções explícitas), autorização de `UpdateModuloRequest` exigindo `modulos.atualizar` (`S73`), remoção do código legado `UniqueNormalizedFloorName` e `Andar::normalizarNome()` (`S72`), renomeação da prop `conflictCache` para `conflicts` em `ConflictAlertBox` (`RR-F04`), verificação exata de `InvalidarCacheRelatoriosAoAtualizarReserva` via `Event::getRawListeners()` em `RelatorioServiceCacheTest` (`S26c`), exclusão de `docs` no `.dockerignore` (`DOC-01`), sincronização de `GEMINI.md` com `CLAUDE.md` (`DOC-02`) e atualização da documentação de domínio (`recorrencia.md`, `validacao.md`, `cache-de-conflitos.md`).
 - **14/11** · `fix/reserva-cancelada-e-performance` (complemento da 1.7.0 após a #525, aguardando PR em `develop`): T-31c concluída (asserções exatas por linha em `ReprocessarFotosDePerfilTest` e `profile_pic` vazio por padrão em `UserSeeder` e `UserFactory`), correção do erro 403 ao abrir reserva cancelada por link de notificação (`ReservaPolicy::viewForGestor` vs. `evaluateForGestor`, aviso informativo em `AvaliarReservaPage`, `ReservasDetalhes` e `ReservasList`, traduções em `pt-BR`/`en`/`es` e atualização de `docs/regras-de-negocio/autorizacao.md`) e otimizações de performance do Mozilla Profiler (persistência do canal privado Echo entre navegações Inertia em `app.tsx`, validação de caminho e cache de falha em `UserAvatar`, remoção do debounce na troca de aba e preload dos gráficos em `useDadosRelatorio`, `manualChunks` por família no `vite.config.ts`, memoização em `AppSidebar`, compressão de `espaco.png` em 55% e `loadMissing` de permissões em `HandleInertiaRequests`). Validado em 14/11/2026 sobre a `develop` (`rc.116`): 765 testes de backend (`--exclude-group=pre-existing`, 5.228 asserções), Pint (419 arquivos), PHPStan nível 9 (220/220), `npx tsc --noEmit`, ESLint (`lint:check`, sem supressão nova), 127 suítes / 668 testes de frontend e `npm run build` OK.
 - **14/11** · #525 e #526 Onda 2, parte 2 e modernização de frontend (mergeadas em `develop`, em staging como `1.5.0-rc.116`, base da 1.7.0): T-19e (jobs pendentes não reservados apagados após 90 dias; conferência do `.env` em produção segue via T-19g), T-19h (alerta `jobs_pendentes_antigos` ignora jobs reservados), T-19i (teste dos padrões de `config/retencao.php` e `config/logging.php` sem variáveis de ambiente), T-38 (fonte Instrument Sans servida localmente via `@fontsource/instrument-sans`; provedor externo deixa de operar com o deploy da 1.7.0, ver F-10), T-46 (bloco de privacidade no template de PR e skills), T-29b (aviso e link de redefinição no cadastro com e-mail existente) e modernização de frontend (viewport dinâmico `dvh`, `text-scale`, `color-scheme` e tokens Latte/Frappé no boot, `<search>`, foco visível e `aria-pressed` em senhas, vínculo de erro `aria-describedby`, `aria-sort`/`scope="col"` em tabelas, `UserSearchComboBox` sem controles aninhados, `prefers-reduced-motion`, `fetchPriority` em imagens e `text-balance`/`text-pretty`). Também entregam o código na #525 e seguem com passos pós-deploy em staging/produção: T-31 (`fotos:reprocessar`), T-35 (`app:check-env`), T-41 (`base:anonimizar`), T-19c, T-19d (`agendador:executar`), T-19g (padrões em 90 dias) e T-29 (parte a). Validado no merge com a `develop` 1.6.1: 764 testes de backend (5.213 asserções), Pint (419 arquivos), PHPStan nível 9 (220/220), `npx tsc --noEmit`, ESLint (`lint:check`, sem supressão nova), 127 suítes / 664 testes de frontend e `modern-web-guidance` (0 achados).
 - **14/11** · #523 sincronização `main` → `develop` depois da 1.6.1 e backlog do release.
@@ -461,7 +446,7 @@ Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` est
 | --- | --- | --- | --- |
 | Auditoria de issues e backlog anterior | ago/2026 | concluído | #46, #49, #98, #104, #107, GAP-06 a GAP-10 |
 | Áreas de foco | 28/08 | concluído (#403) | AF-6.3a, AF-6.3b, S38, DEB-D2 |
-| Regras de reserva | 29/08 | concluído (#406) | RR-H2, RR-H3, RR-D3, RR-F01, RR-F04, S36 |
+| Regras de reserva | 29/08 | concluído (#406) | RR-H3, RR-D3, RR-F01, S36 |
 | Débitos técnicos 2026-09 | 24–29/09 | fases 01 a 08 no #432; fase 09 parada | DEB-D2, DEB-A1, DEB-D3, DEB-R4, S39 |
 | Board e roadmap | 30/09 | absorvido pela estabilização e pela LGPD | decisões D-1 a D-9 |
 | Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |

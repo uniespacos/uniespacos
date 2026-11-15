@@ -33,8 +33,12 @@ Este documento descreve as Rules customizadas, os FormRequests que as usam e ond
 
 ```php
 // Simplificado de app/Rules/HorarioDisponivel.php
+$datasParaVerificar = $editScope === 'single'
+    ? [$data]
+    : app(ExpansaoHorariosService::class)->datasExpandidasParaSlot($horario, $horariosRaw, $recorrencia, $dataFinalRaw);
+
 DB::table('horarios')
-    ->where('data', $data)
+    ->whereIn('data', $datasParaVerificar)
     ->where('agenda_id', $agendaId)
     ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)  // Apenas deferida bloqueia
     ->where('horario_inicio', '<', $horarioFim)                // Sobreposição de intervalo
@@ -42,7 +46,7 @@ DB::table('horarios')
     ->exists();                                                 // + reserva_id != $ignorarReservaId, se informado
 ```
 
-Dois horários conflitam quando seus intervalos se sobrepõem. Intervalos adjacentes (um termina no instante em que o outro começa) não conflitam. Na edição, `UpdateReservaRequest` passa o ID da reserva ao construtor (`new HorarioDisponivel($reservaId)`), e os horários da própria reserva são excluídos da checagem. Na criação, `StoreReservaRequest` usa `new HorarioDisponivel` sem argumento.
+Dois horários conflitam quando seus intervalos se sobrepõem. Intervalos adjacentes (um termina no instante em que o outro começa) não conflitam. Para recorrências periódicas (`15dias`, `1mes`, `personalizado`), cada slot enviado tem suas datas expandidas via `ExpansaoHorariosService::datasExpandidasParaSlot()` (até `data_final`, parando antes de seleções explícitas em semanas futuras do mesmo dia da semana) e todas são checadas já no envio — exceto na edição de ocorrência única (`edit_scope === 'single'`), que verifica somente a data editada. Na edição, `UpdateReservaRequest` passa o ID da reserva ao construtor (`new HorarioDisponivel($reservaId)`), e os horários da própria reserva são excluídos da checagem. Na criação, `StoreReservaRequest` usa `new HorarioDisponivel` sem argumento.
 
 #### Caso de Uso: Cenário Prático
 
@@ -213,10 +217,6 @@ O `withValidator` também impõe a integridade da sequência: não pode haver ga
 - A tabela `andars` tem apenas a chave primária. Não há índice único em `(modulo_id, nome)` e não há coluna de nome normalizado.
 - A unicidade depende só da aplicação. Na criação não há corrida possível, porque cada requisição cria um módulo novo. Na edição, duas requisições simultâneas para o mesmo módulo podem, em tese, executar o `updateOrCreate` ao mesmo tempo (nenhuma encontra o andar e as duas o inserem), gerando duplicatas. Não há lock nem constraint que impeça isso. Esse é o risco residual conhecido. A constraint no banco está prevista no [backlog](../backlog.md) (S74).
 
-#### Código Legado Sem Uso
-
-`app/Rules/UniqueNormalizedFloorName.php` é resíduo do antigo CRUD de andar, removido no #251. Nenhum código a usa. Ela consulta a coluna `nome_normalizado`, que não existe na tabela, então ligá-la hoje quebraria com erro de SQL. O método `Andar::normalizarNome()` só é usado por ela. Ambos podem ser removidos juntos; a remoção está no [backlog](../backlog.md) (S72).
-
 ---
 
 ## FormRequests e Suas Rules
@@ -322,13 +322,23 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 ---
 
+### StoreModuloRequest e UpdateModuloRequest
+
+**Localização:** `app/Http/Requests/StoreModuloRequest.php` e `app/Http/Requests/UpdateModuloRequest.php`
+
+**Autorização:**
+- `StoreModuloRequest::authorize()` exige `modulos.criar`.
+- `UpdateModuloRequest` estende `StoreModuloRequest` (mesmas regras de campos e andares), mas sobrescreve `authorize()` para exigir `modulos.atualizar`, em alinhamento com `ModuloPolicy::update()`.
+
+---
+
 ## Onde cada verificação de conflito acontece
 
 A sobreposição com horário `deferida` é verificada em quatro pontos, todos no backend. A condição é a mesma nos quatro: mesma agenda, mesma data e `horario_inicio < fim AND horario_fim > inicio`.
 
 | Ponto | Onde | Quando | Efeito |
 |---|---|---|---|
-| Envio | `HorarioDisponivel` em `StoreReservaRequest` e `UpdateReservaRequest` | No POST/PUT | Rejeita com 422. Olha só os horários enviados; a expansão da recorrência acontece depois, no job (pendência RR-H2 no [backlog](../backlog.md)). |
+| Envio | `HorarioDisponivel` em `StoreReservaRequest` e `UpdateReservaRequest` | No POST/PUT | Rejeita com 422. Verifica todas as datas geradas pela expansão da recorrência (`ExpansaoHorariosService::datasExpandidasParaSlot()`), respeitando seleções explícitas por semana e checando só a data do slot quando `edit_scope === 'single'`. |
 | Processamento | `ProcessarCriacaoReserva` e `UpdateReservaJob`, sob lock | Na fila | Revalida antes de gravar; o conflito faz o job falhar e o solicitante é notificado. Ver [fluxo de reservas](./fluxo-de-reservas.md). |
 | Avaliação | `AvaliarReservaJob`, via `ConflictDetectionService::findConflictsFor()` | Quando o gestor avalia | O horário em conflito com um `deferida` é marcado `indeferida` automaticamente. |
 | Tela de avaliação e snapshot | `ReservaService` (prop `todosOsConflitos`) e `ValidateReservationConflictsJob` | Ao abrir a avaliação; depois de criar, editar, avaliar ou cancelar | O gestor vê os conflitos no `ConflictAlertBox`, que é só informativo; o snapshot fica em `conflict_cache` ([cache de conflitos](./cache-de-conflitos.md)). |

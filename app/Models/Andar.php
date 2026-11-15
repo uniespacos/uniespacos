@@ -43,12 +43,4 @@ class Andar extends Model
     {
         return $this->hasMany(Espaco::class);
     }
-
-    /**
-     * Normalizes a floor name for uniqueness comparison (lowercase + trim).
-     */
-    public static function normalizarNome(string $nome): string
-    {
-        return mb_strtolower(trim($nome));
-    }
 }

@@ -44,8 +44,15 @@ npx prettier --write <arquivo>
 - **Nunca criar a PR sozinho ao terminar uma tarefa.** Deixe branch e commit prontos, rode as
   verificações, e pare — só abra a PR quando o usuário validar o trabalho e autorizar explicitamente
   a criação. Commitar/pushar a branch de trabalho é ok; `gh pr create` não.
+- **Checks obrigatórios de PR** (para `develop` e `main`): `🔍 Lint & Static Analysis` (Pint, tsc, ESLint,
+  PHPStan) e `✅ Tests` (backend com Postgres 16 + frontend com Jest, workflow `tests.yml`). Também roda
+  todo dia útil em `develop` (`schedule`), para pegar teste dependente de data. Marcar `✅ Tests` como
+  obrigatório na proteção de branch é ação do responsável.
 - **A PR do `release-please` é aprovada e mergeada manualmente pelo usuário.** Não aprove, não
   aprove-e-mergeie, não faça squash/merge nela por conta própria.
+- **Backlog reativo:** `docs/backlog.md` é atualizado no mesmo branch/PR de cada mudança de status de um
+  item (iniciado, bloqueado, adiado, decidido, concluído), e pendência importante vira item na hora. Regra
+  completa em [`docs/processo/auditorias-e-planos.md`](docs/processo/auditorias-e-planos.md#backlog-reativo).
 
 ## Arquitetura
 
@@ -54,16 +61,19 @@ npx prettier --write <arquivo>
 - **Frontend em atomic design:** `resources/js/presentation/{atoms,molecules,organisms,pages,templates}`.
   Primitivos shadcn ficam em `resources/js/components/ui`.
 - **Linter & Qualidade:** ESLint 9 Flat Config (`strict-type-checked`). **Tolerância Zero a Suppressions**:
-  `eslint-suppressions.json` está 100% purgado; novos arquivos ou linhas alteradas nunca devem introduzir
-  supressões no linter.
+  Tolerância zero a novas supressões. Débito existente (medido em 2026-09-01, reconferido em
+  2026-11-01): 73 supressões em 33 arquivos no `eslint-suppressions.json`, mais 6 ocorrências
+  inline. Verificação pura: `npm run lint:check` (nunca `npm run lint`, que aplica `--fix` e altera
+  o código-fonte). Débito: `npm run lint:debt`.
 
 Detalhe de convenção mora nas skills (carregam sob demanda, não pesam no contexto):
-`backend-conventions`, `frontend-conventions`, `testing-and-env`.
+`backend-conventions`, `frontend-conventions`, `testing-and-env`. Para auditoria de privacidade e dados
+pessoais contra a LGPD, com plano de adequação, use `lgpd-audit` (método somente leitura, com evidência).
 
 ## Agentes
 
-O projeto define os próprios agentes em `.agents/plugins/uniespacos/agents/`: `master` (orquestrador de sessão),
-`planner`, `frontend`, `backend`, `docs`.
+O projeto define os próprios agentes em `.agents/plugins/uniespacos/agents/` (espelhados em `.claude/agents/`):
+`master` (orquestrador de sessão), `planner`, `frontend`, `backend`, `docs`.
 
 Cada um já declara o `model` e o `effort` adequados à sua função. **Ao delegar, não sobrescreva o
 modelo** — a definição do agente prevalece (isto é uma exceção deliberada à preferência global de
@@ -71,8 +81,6 @@ usar sempre o modelo mais leve).
 
 ## Armadilhas conhecidas
 
-- `ErrorHandlingTest > inertia request does not receive the envelope` falha localmente quando existe
-  `public/build/manifest.json`. É pré-existente, não é regressão sua.
 - O Vite às vezes passa a servir um módulo **vazio** (~167 bytes) depois de um arquivo ser reescrito;
   a tela quebra com `Element type is invalid`. Confirme com
   `curl -s http://localhost:5173/<caminho>.tsx | wc -c` e resolva com `touch` no arquivo.
@@ -85,3 +93,30 @@ usar sempre o modelo mais leve).
   commit que introduziu o código. Para broadcast, `docker logs uniespacos-reverb-1 | grep
 "Broadcasting To"` mostra se o evento chegou ao Reverb, separando problema de backend de
   problema de frontend.
+- **Ambiente local muito lento (requisições 1-8s, "Queued" minutos no Network tab).** Causas conjugadas:
+  (1) Xdebug em modo pesado (`coverage`+`profile`) em toda requisição real — diagnóstico:
+  `docker exec uniespacos-app-1 php -i | grep xdebug.mode` (esperado: `develop,debug` apenas);
+  fix permanente: rebuild da imagem (já corrigido em `docker/development/php-fpm/Dockerfile`, ARG
+  `XDEBUG_MODE` e `clear_env=no` adicionado). (2) Pool PHP-FPM subdimensionado (`pm.max_children=5`
+  em máquina de 12 núcleos) — diagnóstico: `docker exec uniespacos-app-1 grep -nE "^pm"
+/usr/local/etc/php-fpm.d/www.conf`; fix permanente: rebuild (já corrigido, `pm.max_children`
+  5→20, `pm.start_servers` 2→4, `pm.min_spare_servers` 1→2, `pm.max_spare_servers` 3→8).
+  (3) Telescope vazado em `reverb-1` e `queue-worker-1` mesmo com `TELESCOPE_ENABLED=false` — eles
+  carregam config ao boot e mantêm em memória; diagnóstico: `docker exec uniespacos-workspace-1
+tail -f storage/logs/laravel.log | grep telescope_entries`; fix ao vivo: `docker restart
+  uniespacos-queue-worker-1 uniespacos-reverb-1`. (4) Cold-start pesado (`entrypoint.sh` faz
+  `chown -R /var/www` e `*:clear` em cada boot, bind mount Windows↔WSL2 é lento) — esperado após
+  restart: 8s → 6s → 3s → 0.25s conforme OPcache aquece; não é regressão. (5) **Regra prática no
+  frontend:** `prefetch={['mount', 'hover']}` em `<Link>` dentro de `.map()` dispara visita
+  completa de página em background pra cada item da lista; use `prefetch="hover"` nesses casos.
+- **Reverb parado não derruba mais a suíte backend.** O `phpunit.xml` fixa
+  `BROADCAST_CONNECTION=null` (`force="true"`), então os testes não dependem do container
+  `uniespacos-reverb-1`. Só `BroadcastChannelAuthorizationTest` configura um broadcaster `reverb` com
+  credenciais fake, em memória. Se um teste falhar com `Could not resolve host: reverb`, ele está
+  furando o `phpunit.xml` (ou o `APP_ENV=testing` foi esquecido): corrija o teste, não suba o container.
+  Para exercitar o broadcast de verdade (E2E manual), aí sim o Reverb precisa estar de pé
+  (`docker exec uniespacos-workspace-1 getent hosts reverb`).
+- **Relógio em testes:** nunca use `now()`/`today()`/`Carbon::now()` (PHP) nem `new Date()`/`Date.now()` (Jest)
+  em teste sem congelar o relógio (`Carbon::setTestNow(...)` / `jest.useFakeTimers({ now })`, com
+  `useRealTimers` no `afterEach`). Teste que passa só em certos dias do mês é bomba-relógio. O Jest já
+  roda em `America/Bahia` (`jest.global-setup.js`); no Windows, `TZ=... npx jest` não muda o fuso.

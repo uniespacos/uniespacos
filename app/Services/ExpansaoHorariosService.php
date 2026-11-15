@@ -20,6 +20,39 @@ use Illuminate\Support\Collection;
 class ExpansaoHorariosService
 {
     /**
+     * Retorna todas as datas (Y-m-d) em que um slot especifico sera gravado apos a expansao
+     * da recorrencia, respeitando selecoes explicitas em semanas futuras do mesmo dia da semana.
+     *
+     * @param  array<int|string, mixed>  $slot
+     * @param  array<int|string, mixed>  $horariosData
+     * @return list<string>
+     */
+    public function datasExpandidasParaSlot(
+        array $slot,
+        array $horariosData,
+        string $recorrencia,
+        ?string $dataFinalRaw,
+    ): array {
+        $dataSlot = $this->parseDataSegura($this->valorString($slot['data'] ?? null));
+        if (! $dataSlot instanceof Carbon) {
+            return [];
+        }
+
+        if ($recorrencia === 'unica' || $dataFinalRaw === null || trim($dataFinalRaw) === '') {
+            return [$dataSlot->toDateString()];
+        }
+
+        $dataFinal = $this->parseDataSegura($dataFinalRaw);
+        if (! $dataFinal instanceof Carbon || $dataFinal->lt($dataSlot)) {
+            return [$dataSlot->toDateString()];
+        }
+
+        $datasPorDiaSemana = $this->agruparDatasExplicitasPorDiaDaSemana($horariosData);
+
+        return $this->expandirDatasSlot($dataSlot, $dataFinal, $datasPorDiaSemana);
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $slots  Itens de `horarios_solicitados`.
      * @param  Collection<int, Agenda>  $agendasMap  Agendas pre-carregadas, chaveadas por id.
      * @param  callable(Agenda): (string|array{situacao: string, user_id: ?int})  $resolverSituacao  Decide a situacao inicial de cada linha. Pode retornar string (legado) ou array com situacao e user_id.
@@ -92,24 +125,7 @@ class ExpansaoHorariosService
         int $reservaId,
         callable $resolverSituacao,
     ): array {
-        /** @var array<int, array<string, Carbon>> $mapaPorDiaSemana */
-        $mapaPorDiaSemana = [];
-        foreach ($slots as $slot) {
-            $dataStrSlot = $this->valorString($slot['data'] ?? null);
-            if ($dataStrSlot === '') {
-                continue;
-            }
-            $dataCarbon = Carbon::parse($dataStrSlot)->startOfDay();
-            $diaSemana = $dataCarbon->dayOfWeek;
-            $mapaPorDiaSemana[$diaSemana][$dataCarbon->toDateString()] = $dataCarbon;
-        }
-
-        /** @var array<int, list<Carbon>> $datasPorDiaSemana */
-        $datasPorDiaSemana = [];
-        foreach ($mapaPorDiaSemana as $diaSemana => $mapaDatas) {
-            ksort($mapaDatas);
-            $datasPorDiaSemana[$diaSemana] = array_values($mapaDatas);
-        }
+        $datasPorDiaSemana = $this->agruparDatasExplicitasPorDiaDaSemana($slots);
 
         $linhas = [];
         $chavesGeradas = [];
@@ -126,8 +142,8 @@ class ExpansaoHorariosService
                 continue;
             }
 
-            $dataStrInicial = $this->valorString($slot['data'] ?? null);
-            if ($dataStrInicial === '') {
+            $dataInicialSlot = $this->parseDataSegura($this->valorString($slot['data'] ?? null));
+            if (! $dataInicialSlot instanceof Carbon) {
                 continue;
             }
 
@@ -135,30 +151,99 @@ class ExpansaoHorariosService
             $resultado = $resolverSituacao($agenda);
             [$situacao, $userId] = $this->normalizarResultado($resultado);
 
-            $dataInicialSlot = Carbon::parse($dataStrInicial)->startOfDay();
-            $proximaDataExplicita = null;
-            foreach ($datasPorDiaSemana[$dataInicialSlot->dayOfWeek] ?? [] as $dataCandidata) {
-                if ($dataCandidata->gt($dataInicialSlot)) {
-                    $proximaDataExplicita = $dataCandidata;
-                    break;
-                }
-            }
-
-            $cursor = $dataInicialSlot->copy();
             $horarioInicio = $this->valorString($slot['horario_inicio'] ?? null);
 
-            while ($cursor->lte($dataFinal) && (! $proximaDataExplicita instanceof Carbon || $cursor->lt($proximaDataExplicita))) {
-                $dataStr = $cursor->toDateString();
+            foreach ($this->expandirDatasSlot($dataInicialSlot, $dataFinal, $datasPorDiaSemana) as $dataStr) {
                 $chaveLinha = $agenda->id.'|'.$dataStr.'|'.$horarioInicio;
                 if (! isset($chavesGeradas[$chaveLinha])) {
                     $chavesGeradas[$chaveLinha] = true;
                     $linhas[] = $this->linha($slot, $dataStr, $reservaId, $situacao, $userId);
                 }
-                $cursor = $cursor->copy()->addWeek();
             }
         }
 
         return [$linhas, $agendasUsadas->unique('id')->values()];
+    }
+
+    /**
+     * Agrupa, em ordem crescente por dia da semana, todas as datas explicitamente selecionadas.
+     *
+     * @param  array<int|string, mixed>  $horariosData
+     * @return array<int, list<Carbon>>
+     */
+    private function agruparDatasExplicitasPorDiaDaSemana(array $horariosData): array
+    {
+        /** @var array<int, array<string, Carbon>> $mapaPorDiaSemana */
+        $mapaPorDiaSemana = [];
+        foreach ($horariosData as $slot) {
+            if (! is_array($slot)) {
+                continue;
+            }
+            $dataCarbon = $this->parseDataSegura($this->valorString($slot['data'] ?? null));
+            if (! $dataCarbon instanceof Carbon) {
+                continue;
+            }
+            $diaSemana = $dataCarbon->dayOfWeek;
+            $mapaPorDiaSemana[$diaSemana][$dataCarbon->toDateString()] = $dataCarbon;
+        }
+
+        /** @var array<int, list<Carbon>> $datasPorDiaSemana */
+        $datasPorDiaSemana = [];
+        foreach ($mapaPorDiaSemana as $diaSemana => $mapaDatas) {
+            ksort($mapaDatas);
+            $datasPorDiaSemana[$diaSemana] = array_values($mapaDatas);
+        }
+
+        return $datasPorDiaSemana;
+    }
+
+    /**
+     * Expande semanalmente a partir de `$dataSlot` ate `$dataFinal`, parando antes da
+     * proxima data explicita do mesmo dia da semana (se houver).
+     *
+     * @param  array<int, list<Carbon>>  $datasPorDiaSemana
+     * @return list<string>
+     */
+    private function expandirDatasSlot(Carbon $dataSlot, CarbonInterface $dataFinal, array $datasPorDiaSemana): array
+    {
+        $proximaDataExplicita = $this->encontrarProximaDataExplicita($datasPorDiaSemana[$dataSlot->dayOfWeek] ?? [], $dataSlot);
+        $datas = [];
+        $cursor = $dataSlot->copy();
+
+        while ($cursor->lte($dataFinal) && (! $proximaDataExplicita instanceof Carbon || $cursor->lt($proximaDataExplicita))) {
+            $datas[] = $cursor->toDateString();
+            $cursor = $cursor->copy()->addWeek();
+        }
+
+        return $datas;
+    }
+
+    /**
+     * @param  list<Carbon>  $datasCandidatas
+     */
+    private function encontrarProximaDataExplicita(array $datasCandidatas, Carbon $dataReferencia): ?Carbon
+    {
+        foreach ($datasCandidatas as $dataCandidata) {
+            if ($dataCandidata->gt($dataReferencia)) {
+                return $dataCandidata;
+            }
+        }
+
+        return null;
+    }
+
+    private function parseDataSegura(string $valor): ?Carbon
+    {
+        $limpo = trim($valor);
+        if ($limpo === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($limpo)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
