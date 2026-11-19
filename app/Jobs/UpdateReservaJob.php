@@ -46,9 +46,12 @@ class UpdateReservaJob implements ShouldQueue
      * O servico e injetado aqui, e nao no construtor: o job e serializado para a
      * fila e so as propriedades do construtor viajam junto.
      *
-     * No escopo 'single', data_inicial e data_final sao recalculadas a partir do
-     * MIN/MAX dos horarios restantes apos a edicao, garantindo que nenhum horario
-     * fique fora do range. No escopo 'recurring', as datas vem do validatedData.
+     * No escopo 'single', a edicao vale so para a semana de edited_week_date e a
+     * identidade de cada horario e agenda|data|horario_inicio (a mesma do indice
+     * unico da tabela). Slots enviados para outras semanas sao ignorados. No escopo
+     * 'single', data_inicial e data_final sao recalculadas a partir do MIN/MAX dos
+     * horarios restantes apos a edicao. No escopo 'recurring', as datas vem do
+     * validatedData.
      */
     public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
     {
@@ -79,92 +82,93 @@ class UpdateReservaJob implements ShouldQueue
                     $inicioSemana = $dataReferencia->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
                     $fimSemana = $dataReferencia->copy()->endOfWeek(Carbon::SUNDAY)->toDateString();
 
-                    $horariosAtuaisNaSemana = $this->reserva->horarios()
-                        ->whereBetween('data', [$inicioSemana, $fimSemana])
-                        ->get();
+                    $slotsDaSemana = $horariosSolicitados
+                        ->map(fn (array $slot): array => $this->normalizarSlot($slot))
+                        ->filter(fn (array $slot): bool => $slot['data'] !== '' && $slot['data'] >= $inicioSemana && $slot['data'] <= $fimSemana)
+                        ->unique(fn (array $slot): string => $this->chaveHorario($slot['agenda_id'], $slot['data'], $slot['horario_inicio']))
+                        ->values();
 
-                    $idsSolicitadosNaSemana = $horariosSolicitados->whereNotNull('id')->pluck('id');
-
-                    foreach ($horariosAtuaisNaSemana as $horarioAtual) {
-                        if (! $idsSolicitadosNaSemana->contains($horarioAtual->id)) {
-                            $horarioAtual->delete();
-                        }
-                    }
-
-                    // Adquirir lock pessimista sobre horarios da semana afetada
-                    $agendasAfetodasSingle = $horariosSolicitados
-                        ->pluck('agenda_id')
+                    $agendasAfetadasSingle = $slotsDaSemana
+                        ->map(fn (array $slot): int => $slot['agenda_id'])
                         ->unique()
                         ->filter()
                         ->values()
                         ->sort()
                         ->all();
 
-                    if ($agendasAfetodasSingle !== []) {
-                        Horario::whereIn('agenda_id', $agendasAfetodasSingle)
+                    // Adquirir lock pessimista sobre horarios da semana afetada
+                    if ($agendasAfetadasSingle !== []) {
+                        Horario::whereIn('agenda_id', $agendasAfetadasSingle)
                             ->whereBetween('data', [$inicioSemana, $fimSemana])
                             ->lockForUpdate()
                             ->get();
                     }
 
-                    // Mesma regra do escopo recurring: quem administra a agenda e
-                    // o dono da reserva — nunca quem edita — decide se o horario
-                    // novo ja nasce deferido.
-                    $agendasMapSingle = Agenda::whereIn('id', $agendasAfetodasSingle)
+                    $chavesSolicitadas = $slotsDaSemana
+                        ->mapWithKeys(fn (array $slot): array => [$this->chaveHorario($slot['agenda_id'], $slot['data'], $slot['horario_inicio']) => true])
+                        ->all();
+
+                    $horariosAtuaisNaSemana = $this->reserva->horarios()
+                        ->whereBetween('data', [$inicioSemana, $fimSemana])
+                        ->get();
+
+                    $chavesAtuais = [];
+                    foreach ($horariosAtuaisNaSemana as $horarioAtual) {
+                        $chave = $this->chaveHorario((int) $horarioAtual->agenda_id, (string) $horarioAtual->data, (string) $horarioAtual->horario_inicio);
+                        $chavesAtuais[$chave] = true;
+
+                        if (! isset($chavesSolicitadas[$chave])) {
+                            $horarioAtual->delete();
+                        }
+                    }
+
+                    $agendasMapSingle = Agenda::whereIn('id', $agendasAfetadasSingle)
                         ->get()
                         ->keyBy('id');
 
-                    foreach ($horariosSolicitados->whereNull('id') as $novoHorario) {
-                        $agendaIdRaw = $novoHorario['agenda_id'] ?? 0;
-                        $dataRaw = $novoHorario['data'] ?? '';
-                        $horarioFimRaw = $novoHorario['horario_fim'] ?? '';
-                        $horarioInicioRaw = $novoHorario['horario_inicio'] ?? '';
+                    foreach ($slotsDaSemana as $slot) {
+                        $chave = $this->chaveHorario($slot['agenda_id'], $slot['data'], $slot['horario_inicio']);
 
-                        // Convertendo após atribuição para não confundir PHPStan
-                        if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
-                            $agendaIdRaw = 0;
+                        if (isset($chavesAtuais[$chave])) {
+                            continue;
                         }
-                        if (! is_string($dataRaw)) {
-                            $dataRaw = '';
-                        }
-                        if (! is_string($horarioFimRaw)) {
-                            $horarioFimRaw = '';
-                        }
-                        if (! is_string($horarioInicioRaw)) {
-                            $horarioInicioRaw = '';
-                        }
-
-                        $agendaId = (int) $agendaIdRaw;
-                        $data = (string) $dataRaw;
-                        $horarioFim = (string) $horarioFimRaw;
-                        $horarioInicio = (string) $horarioInicioRaw;
 
                         // Revalidar conflito sob lock, antes de inserir
-                        $conflito = Horario::where('agenda_id', $agendaId)
-                            ->where('data', $data)
+                        $conflito = Horario::where('agenda_id', $slot['agenda_id'])
+                            ->where('data', $slot['data'])
                             ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
                             ->where('reserva_id', '!=', $this->reserva->id)
-                            ->where('horario_inicio', '<', $horarioFim)
-                            ->where('horario_fim', '>', $horarioInicio)
+                            ->where('horario_inicio', '<', $slot['horario_fim'])
+                            ->where('horario_fim', '>', $slot['horario_inicio'])
                             ->exists();
 
                         if ($conflito) {
-                            $msg = 'Conflito detectado sob lock para agenda '.$agendaId.' em '.$data.'. Outra reserva pode ter sido editada simultaneamente.';
+                            $msg = 'Conflito detectado sob lock para agenda '.$slot['agenda_id'].' em '.$slot['data'].'. Outra reserva pode ter sido editada simultaneamente.';
 
                             throw new Exception($msg);
                         }
 
-                        $agenda = $agendasMapSingle->get($agendaId);
+                        // Mesma regra do escopo recurring: quem administra a agenda e
+                        // o dono da reserva — nunca quem edita — decide se o horario
+                        // novo ja nasce deferido.
+                        $agenda = $agendasMapSingle->get($slot['agenda_id']);
                         if ($agenda !== null) {
                             $resultado = $autoAprovacao->resolverSituacaoEAvaliador($agenda, (int) $this->reserva->user_id);
-                            $novoHorario['situacao'] = $resultado['situacao'];
-                            $novoHorario['user_id'] = $resultado['user_id'];
+                            $situacao = $resultado['situacao'];
+                            $avaliadorId = $resultado['user_id'];
                         } else {
-                            $novoHorario['situacao'] = SituacaoReservaEnum::EM_ANALISE->value;
-                            $novoHorario['user_id'] = null;
+                            $situacao = SituacaoReservaEnum::EM_ANALISE->value;
+                            $avaliadorId = null;
                         }
 
-                        $this->reserva->horarios()->create($novoHorario);
+                        $this->reserva->horarios()->create([
+                            'agenda_id' => $slot['agenda_id'],
+                            'data' => $slot['data'],
+                            'horario_inicio' => $slot['horario_inicio'],
+                            'horario_fim' => $slot['horario_fim'],
+                            'situacao' => $situacao,
+                            'user_id' => $avaliadorId,
+                        ]);
                     }
 
                     $dataInicial = $this->reserva->horarios()->min('data')
@@ -331,6 +335,29 @@ class UpdateReservaJob implements ShouldQueue
             ]);
             $this->fail($e);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $slot
+     * @return array{agenda_id: int, data: string, horario_inicio: string, horario_fim: string}
+     */
+    private function normalizarSlot(array $slot): array
+    {
+        $agendaIdRaw = $slot['agenda_id'] ?? 0;
+        $dataRaw = $slot['data'] ?? '';
+        $horarioInicioRaw = $slot['horario_inicio'] ?? '';
+        $horarioFimRaw = $slot['horario_fim'] ?? '';
+
+        $data = is_string($dataRaw) && $dataRaw !== ''
+            ? Carbon::parse($dataRaw)->toDateString()
+            : '';
+
+        return [
+            'agenda_id' => is_int($agendaIdRaw) || is_string($agendaIdRaw) ? (int) $agendaIdRaw : 0,
+            'data' => $data,
+            'horario_inicio' => is_string($horarioInicioRaw) ? $horarioInicioRaw : '',
+            'horario_fim' => is_string($horarioFimRaw) ? $horarioFimRaw : '',
+        ];
     }
 
     /**
