@@ -83,7 +83,11 @@ export default function CalendarShiftSection({
                     return (
                         <div
                             key={`${agenda.turno}-${dia.valor}`}
-                            className={cn('bg-muted/50 border-l p-2 text-center text-xs font-medium', dia.ehHoje && 'bg-primary/5')}
+                            className={cn(
+                                'bg-muted/50 border-l text-center text-xs font-medium',
+                                definirSelecaoDeVarios ? 'p-1' : 'p-2',
+                                dia.ehHoje && 'bg-primary/5',
+                            )}
                         >
                             {definirSelecaoDeVarios ? (
                                 <button
@@ -98,13 +102,13 @@ export default function CalendarShiftSection({
                                         definirSelecaoDeVarios(selecionaveis, !todosMarcados);
                                     }}
                                     className={cn(
-                                        'flex w-full flex-col items-center gap-0.5 rounded-md py-1 transition-colors',
+                                        'flex h-full w-full flex-col items-center gap-1 rounded-md px-1 py-2 transition-colors',
                                         'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                                         'hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50',
                                     )}
                                 >
                                     {conteudoDia}
-                                    <span className="text-primary text-[10px] leading-none font-semibold">
+                                    <span className="text-primary text-xs leading-tight font-semibold">
                                         {t(todosMarcados ? 'agenda.turno.desmarcar_curto' : 'agenda.turno.marcar_curto')}
                                     </span>
                                 </button>

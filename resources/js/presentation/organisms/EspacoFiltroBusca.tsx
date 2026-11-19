@@ -356,6 +356,7 @@ export default function EspacoFiltroBusca({
                                 disabled={(date) => isBefore(date, startOfToday())}
                                 modal={modalNoDrawer}
                                 placeholder={t('espacos.filtros.selecione_data')}
+                                className="border-input hover:text-foreground h-9 bg-transparent px-3 py-2 text-sm hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
                             />
                         </div>
 
