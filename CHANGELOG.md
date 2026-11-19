@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.121](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.120...v1.5.0-rc.121) (2026-11-19)
+
+
+### Bug Fixes
+
+* corrige achados do QA da rc.120 pré-merge para main ([457a067](https://github.com/uniespacos/uniespacos/commit/457a0676e1bbb73c84e81cd89de9caed74db101b))
+* corrige achados do QA da rc.120 pré-merge para main ([bcc1e37](https://github.com/uniespacos/uniespacos/commit/bcc1e371a53ebfae2725ff0183cc2d8dc7971201))
+
 ## [1.5.0-rc.120](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.119...v1.5.0-rc.120) (2026-11-19)
 
 
