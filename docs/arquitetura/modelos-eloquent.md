@@ -30,6 +30,11 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 | `user_id` | int | FK para solicitante |
 | `validation_status` | string | `pending`, `completed`, etc. (estado do job de validação de conflitos) |
 | `conflict_cache` | array (JSON) | Cache dos conflitos detectados |
+| `publico_estimado` | int \| null | Público estimado (1 a 5000). Opcional |
+| `categoria` | string \| null | Tipo de uso em texto livre (até 100 caracteres). Anonimizada por `base:anonimizar` |
+| `termo_aceito_em` | datetime \| null | Instante do aceite do termo de responsabilidade. Oculto na serialização |
+
+**Fillable, casts e serialização:** os três campos novos estão em `$fillable`. `publico_estimado` tem cast `integer` e `termo_aceito_em` tem cast `datetime`. `termo_aceito_em` está em `$hidden`: a reserva serializada não expõe o aceite, que serve só de registro (nenhuma tela o mostra). Origem e gravação estão em [fluxo de reservas, 4.2.2](../regras-de-negocio/fluxo-de-reservas.md#422-dados-da-solicitação-e-aceite-do-termo).
 
 **Nota sobre `conflict_cache`:** Este é um snapshot histórico gravado por `ValidateReservationConflictsJob` no momento do processamento, exposto na interface do gestor como informação secundária de auditoria — não é fonte de verdade. Veja [cache de conflitos](../regras-de-negocio/cache-de-conflitos.md) para contrato completo, incluso divergência esperada com conflitos recalculados ao vivo.
 

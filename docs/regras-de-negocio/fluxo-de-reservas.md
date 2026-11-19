@@ -129,12 +129,12 @@ Ver seção [10. Eixos de Filtro](#eixos-de-filtro) e [`arquivamento.md`](./arqu
 
 ```mermaid
 stateDiagram-v2
-    [*] --> em_analise : Solicitante submete reserva\n(ProcessarCriacaoReserva Job)
-    em_analise --> deferida : Todos os horários deferidos\n(AvaliarReservaJob)
-    em_analise --> indeferida : Todos os horários indeferidos\n(AvaliarReservaJob)
-    em_analise --> parcialmente_deferida : Mix de deferidos + outros\n(AvaliarReservaJob)
-    em_analise --> inativa : Solicitante cancela\n(ReservaService.cancel)
-    deferida --> inativa : Solicitante cancela\n(ReservaService.cancel)
+    [*] --> em_analise : Solicitante submete reserva<br/>(ProcessarCriacaoReserva Job)
+    em_analise --> deferida : Todos os horários deferidos<br/>(AvaliarReservaJob)
+    em_analise --> indeferida : Todos os horários indeferidos<br/>(AvaliarReservaJob)
+    em_analise --> parcialmente_deferida : Mix de deferidos + outros<br/>(AvaliarReservaJob)
+    em_analise --> inativa : Solicitante cancela<br/>(ReservaService.cancel)
+    deferida --> inativa : Solicitante cancela<br/>(ReservaService.cancel)
     parcialmente_deferida --> deferida : Reavaliação → todos deferidos
     parcialmente_deferida --> indeferida : Reavaliação → todos indeferidos
     parcialmente_deferida --> inativa : Solicitante cancela
@@ -155,20 +155,47 @@ Se o solicitante for o único gestor de todas as agendas da reserva, a reserva e
 
 ## 4. Fluxo Completo de Criação de Reserva {#fluxo-criação}
 
-### 4.1 Frontend — Seleção de Slots
+### 4.1 Frontend — Seleção de Slots e modal de solicitação
 
 ```mermaid
 graph TD
-    A["EspacosPage\n(Listagem de Espaços)"] --> B["VisualizarEspacoPage\n(Detalhe do Espaço)"]
-    B --> C["EspacoAgenda\n(Organism)"]
-    C --> D["AgendaCalendario\n(Organism)\nExibe grid semanal"]
-    D --> E["calendar-slot-cell\n(Molecule)\nSlot clicável por turno/dia"]
-    E -->|"alternarSelecaoSlot()"| F["Estado: slotsSelecao[]"]
-    F --> G["AgendaNavegacao\n(Molecule)\nNavegação entre semanas"]
-    F -->|">0 slots selecionados"| H["AgendaDialogReserva\n(Organism)\nModal de confirmação"]
-    H --> I["Formulário: título, descrição,\nrecorrência, datas"]
-    I -->|"onSubmit() → useForm.post()"| J["POST /reservas\n(ReservaController.store)"]
+    A["EspacosPage<br/>(filtro Quando?: data e turno)"] -->|"card: N horários livres"| B["VisualizarEspacoPage<br/>(?semana=data)"]
+    B --> C["EspacoAgenda<br/>(Organism)"]
+    C --> D["AgendaCalendario<br/>(Organism)<br/>Grid semanal"]
+    D -->|"clique, Shift+clique (desktop)<br/>ou marcar o turno do dia"| E["Estado: slotsSelecao[]"]
+    E -->|">0 slots selecionados"| F["AgendaDialogReserva<br/>→ ReservaStepperModal"]
+    F -->|"passo 1: Detalhes"| G["Revisar"]
+    G -->|"passo 2: Revisão"| H["Enviar solicitação<br/>POST /reservas"]
+    H --> I["Tela de sucesso<br/>no próprio modal"]
 ```
+
+#### 4.1.1 Passos do modal de solicitação
+
+O modal tem dois passos (`useReservaStepper`): **Detalhes** e **Revisão**. Na edição, o passo 1 também traz o escopo da alteração e o CTA do passo 2 vira "Salvar alterações".
+
+| Passo | O que a pessoa faz | Regra |
+|---|---|---|
+| 1. Detalhes | Título, detalhes para o gestor, público estimado, categoria e a recorrência | Obrigatórios: ao menos um slot, datas válidas e título. Público estimado, se preenchido, precisa ser válido. Detalhes e categoria são opcionais. A recorrência tem padrão `unica`. "Revisar" só avança sem erro neste passo |
+| 2. Revisão | Confere o resumo e os horários a gravar, resolve conflitos e aceita o termo | Envio bloqueado enquanto houver conflito por slot. Termo obrigatório |
+
+```mermaid
+flowchart TD
+    A["Passo 1: Detalhes"] -->|"Revisar"| B{"Erro no passo 1?"}
+    B -->|"sim"| A
+    B -->|"não"| C["Passo 2: Revisão"]
+    C --> D{"Algum slot em conflito?"}
+    D -->|"sim"| E["Remover horários em conflito<br/>ou voltar aos detalhes"]
+    E --> C
+    D -->|"não"| F{"Termo aceito?"}
+    F -->|"não"| C
+    F -->|"sim"| G["Enviar solicitação"]
+    G --> H["Tela de sucesso:<br/>Ver minhas reservas ou<br/>Fazer outra solicitação"]
+```
+
+- **Resumo:** no passo 2, horários contíguos do mesmo dia viram um período só ("Qui, 20/11 · 13:10–15:40"). O total de horários a gravar considera a recorrência escolhida.
+- **Recorrência:** o switch "Repetir esta reserva?" grava `recorrencia`. Desligado = `unica`. Ligado = `15dias`, `1mes` ou `personalizado` (esta última com data final editável). A expansão não mudou: ver [recorrência](./recorrencia.md#visão-geral).
+- **Conflitos:** cada slot em conflito é marcado. O conflito vem de horários já deferidos (dados já carregados na tela) e também da checagem em tempo real. O botão "Remover horários em conflito" tira esses slots da seleção. A checagem em tempo real só roda no passo 2.
+- **Sucesso:** na criação, o `store` devolve `back()` e o modal troca para "Solicitação enviada!" (`sucessoCriacao`). Na edição, o modal fecha com toast. Os textos estão em `pt-BR`, `en` e `es`.
 
 ### 4.2 Backend — Processamento Assíncrono
 
@@ -186,7 +213,7 @@ sequenceDiagram
     Browser->>ReservaController: POST /reservas (dados validados)
     ReservaController->>ReservaService: create(data, user)
     ReservaService->>Queue: ProcessarCriacaoReserva::dispatch(data, user)
-    ReservaController-->>Browser: redirect → espacos.index (flash "processando")
+    ReservaController-->>Browser: back() (sem redirect; a tela de sucesso aparece no modal)
 
     Queue->>ProcessarCriacaoReserva: handle()
     ProcessarCriacaoReserva->>DB: BEGIN TRANSACTION
@@ -226,6 +253,19 @@ A mesma estratégia de lock e revalidação foi aplicada em `UpdateReservaJob.ph
 - **Escopo `single`:** o job considera só os slots cuja data cai na semana (seg–dom) de `edited_week_date`, e compara com os horários dessa semana pela chave `agenda_id|data|horario_inicio` (não usa `id`). Apaga os horários que saíram do payload, cria os que entraram e mantém os coincidentes, preservando situação, justificativa e avaliador. Lock sobre os horários das agendas afetadas na semana (entre `startOfWeek()` e `endOfWeek()`). A revalidação ocorre para cada horário novo, imediatamente antes do `create()`, e exclui horários da própria reserva da verificação de conflito. Ao final, `data_inicial` e `data_final` são recalculadas pelo menor e pelo maior horário restante.
 - **Escopos e propagação:** a diferença entre os dois escopos, a propagação do escopo `recurring` às demais semanas e o trade-off de editar só uma semana estão em [`recorrencia.md`, seção 5](./recorrencia.md#5-edição-de-reserva-escopos).
 
+### 4.2.2 Dados da solicitação e aceite do termo
+
+O modal grava três dados novos na própria reserva. Migration `2026_11_19_120000`: colunas nullable, sem default e sem índice.
+
+| Campo na reserva | Origem no request | Como é gravado | Visibilidade |
+|---|---|---|---|
+| `publico_estimado` (int) | `publico_estimado` (1 a 5000) | Valor informado, ou `null` | Gestor (`ReservaInfoCard`) e solicitante (`ReservasDetalhes`), só quando preenchido |
+| `categoria` (varchar 100) | `categoria` | Texto livre, ou `null` | Igual ao público. Neutralizada por `base:anonimizar` |
+| `termo_aceito_em` (timestamp) | `termo_responsabilidade` (`accepted`) | `ReservaService` converte o aceite em instante (`now()` no request) e remove o campo do payload. O job grava o instante | Oculto na serialização (`$hidden`). Nenhuma tela mostra |
+
+- Na edição, se o termo vier de novo, o instante é regravado.
+- Jobs enfileirados antes do deploy não trazem as chaves novas: `ProcessarCriacaoReserva` grava `null`, e `UpdateReservaJob` só grava as chaves presentes, para não apagar dado existente.
+
 ### 4.3 Pipeline de Validação de Conflitos
 
 O field `validation_status` acompanha o progresso do `ValidateReservationConflictsJob`:
@@ -252,6 +292,31 @@ Os efeitos externos de uma alteração de reserva só rodam depois que a transa�
 
 O tempo real é sempre o último passo. A exceção de status é `validated`: depois de gravar `completed`, falha de broadcast não regrava `failed`. O cancelamento segue a mesma regra, com a revalidação de reservas em conflito antes da publicação (ver [seção 8](#cancelamento)).
 
+### Disponibilidade na lista de espaços
+
+O filtro "Quando?" da lista de espaços mostra só os espaços com ao menos um horário livre na data e no turno escolhidos. É uma opção da página do usuário comum: a listagem administrativa não usa o filtro. O filtro roda em SQL, no `EspacoRepositoryEloquent::getPaginatedForPublic`, antes da paginação.
+
+```mermaid
+flowchart TD
+    A["Slot da grade do turno<br/>(config reservas.horarios_por_turno)"] --> B{"Agenda tem gestor?"}
+    B -->|"não"| X["Não conta"]
+    B -->|"sim"| C{"Há horário deferido<br/>na agenda, na data e com o<br/>mesmo horario_inicio?"}
+    C -->|"sim"| X
+    C -->|"não"| D{"A data é hoje e<br/>o slot já começou?"}
+    D -->|"sim"| X
+    D -->|"não"| E["Slot livre"]
+```
+
+| Regra | Detalhe |
+|---|---|
+| Ocupação | Só `deferida` ocupa. `em_analise` não ocupa (ver [validação](./validacao.md#horários-em-análise-107)) |
+| "Hoje" | Calculado no fuso `config('reservas.fuso_horario')`, America/Bahia. Slots já iniciados não contam |
+| Turno | Opcional. Sem data, o turno é ignorado |
+| Resultado | Espaços com ao menos um slot livre. Cada espaço da página recebe `horarios_livres` (número), em uma consulta agrupada |
+| Na tela | Selo "N horários livres" no card, com link para `/espacos/{id}?semana=<data>` |
+
+A grade fica em `config/reservas.php`, espelho do `HORARIOS_PADRAO` de `resources/js/constants/turnos.ts`. Os dois mudam juntos: o calendário e o filtro precisam mostrar os mesmos slots. O `app.timezone` é UTC, por isso a regra usa o fuso próprio.
+
 ---
 
 ## 5. Fluxo de Avaliação pelo Gestor {#fluxo-avaliação}
@@ -260,12 +325,12 @@ O tempo real é sempre o último passo. A exceção de status é `validated`: de
 
 ```mermaid
 graph TD
-    A["ReservasGestorPage\n(Listagem com filtros)"] -->|"Ver detalhes"| B["AvaliarReservaPage\n(Página de Avaliação)"]
-    B --> C["Card de Informações\nda Reserva (título, solicitante, período)"]
-    B --> D["AgendaNavegacaoGestor\n(Molecule)\nNavegação semana a semana"]
-    B --> E["CalendarReservationDetails\n(Molecule)\nCalendário de slots com status visual"]
-    E -->|"avaliarSlot()"| F["useReservationSlots Hook\nEstado: slotsSelecao[]"]
-    F -->|Sincroniza| G["EvaluationForm\n(Organism)"]
+    A["ReservasGestorPage<br/>(Listagem com filtros)"] -->|"Ver detalhes"| B["AvaliarReservaPage<br/>(Página de Avaliação)"]
+    B --> C["Card de Informações<br/>da Reserva (título, solicitante, período)"]
+    B --> D["AgendaNavegacaoGestor<br/>(Molecule)<br/>Navegação semana a semana"]
+    B --> E["CalendarReservationDetails<br/>(Molecule)<br/>Calendário de slots com status visual"]
+    E -->|"avaliarSlot()"| F["useReservationSlots Hook<br/>Estado: slotsSelecao[]"]
+    F -->|Sincroniza| G["EvaluationForm<br/>(Organism)"]
     G --> H["Escopo: 'single' ou 'recurring'"]
     G --> I["Decisão global: Deferir / Indeferir"]
     G --> J["Campo Motivo (condicional se indeferir)"]
@@ -290,7 +355,7 @@ sequenceDiagram
     participant Notification
 
     Browser->>GestorCtrl: PATCH /gestor/reservas/{id} (horarios_avaliados, evaluation_scope, motivo)
-    GestorCtrl->>GestorCtrl: authorize('viewForGestor', reserva)\nVerifica se gestor gerencia alguma agenda da reserva
+    GestorCtrl->>GestorCtrl: authorize('viewForGestor', reserva)<br/>Verifica se gestor gerencia alguma agenda da reserva
     GestorCtrl->>ReservaService: evaluate(reserva, data, gestor)
     ReservaService->>Queue: AvaliarReservaJob::dispatch(reserva, data, gestor)
     GestorCtrl-->>Browser: redirect → gestor.reservas.index (flash "processando")
@@ -302,16 +367,16 @@ sequenceDiagram
 
     alt evaluation_scope === 'single'
         loop Para cada horario na semana visível
-            AvaliarJob->>DB: UPDATE horarios (situacao, justificativa, user_id)\nSe conflitante → força 'indeferida'
+            AvaliarJob->>DB: UPDATE horarios (situacao, justificativa, user_id)<br/>Se conflitante → força 'indeferida'
         end
     else evaluation_scope === 'recurring'
         AvaliarJob->>DB: UPDATE horarios conflitantes → 'indeferida' + justificativa
         loop Para cada padrão único (agenda_id + horario_inicio + dia_da_semana)
-            AvaliarJob->>DB: UPDATE todos os horarios recorrentes não conflitantes\nPropaga status para toda a série
+            AvaliarJob->>DB: UPDATE todos os horarios recorrentes não conflitantes<br/>Propaga status para toda a série
         end
     end
 
-    AvaliarJob->>AvaliarJob: updateReservaOverallStatus()\nRecalcula situacao da Reserva pelo agregado dos Horarios
+    AvaliarJob->>AvaliarJob: updateReservaOverallStatus()<br/>Recalcula situacao da Reserva pelo agregado dos Horarios
     
     alt Algum horário foi aprovado (deferida)?
         AvaliarJob->>AvaliarJob: triggerConflictRevalidation()
@@ -338,7 +403,7 @@ flowchart TD
     D -->|Sim| E["situacao = 'indeferida'"]
     D -->|Não| F{"Algum 'em_analise'?"}
     F -->|Sim| G["situacao = 'em_analise'"]
-    F -->|Não| H["situacao = 'parcialmente_deferida'\n(mix de deferida + indeferida)"]
+    F -->|Não| H["situacao = 'parcialmente_deferida'<br/>(mix de deferida + indeferida)"]
 ```
 
 ### 6.1 Exibição para o Gestor
@@ -385,9 +450,9 @@ Quando o gestor aprova horários (`deferida`), o sistema automaticamente revalid
 
 ```mermaid
 graph TD
-    A["AvaliarReservaJob aprova Horários\nda Reserva A"] -->|Identifica aprovações| B["Lista de slots aprovados:\ndata, agenda_id, horario_inicio/fim"]
-    B -->|Busca afetadas| C["Query: Reservas em_analise,\nvalidation_status=completed,\nque compartilham slots"]
-    C -->|Para cada reserva| D["ValidateReservationConflictsJob\ndispatchado"]
+    A["AvaliarReservaJob aprova Horários<br/>da Reserva A"] -->|Identifica aprovações| B["Lista de slots aprovados:<br/>data, agenda_id, horario_inicio/fim"]
+    B -->|Busca afetadas| C["Query: Reservas em_analise,<br/>validation_status=completed,<br/>que compartilham slots"]
+    C -->|Para cada reserva| D["ValidateReservationConflictsJob<br/>dispatchado"]
     D -->|Atualiza| E["conflict_cache da reserva"]
     
     style A fill:#e1f5ff
@@ -563,6 +628,18 @@ Na avaliação pelo gestor, `AvaliarReservaJob` marca como `indeferida` os horá
 
 Os componentes seguem Atomic Design em `resources/js/presentation/` (primitivos em `resources/js/components/ui/`). As convenções estão na skill [`frontend-conventions`](../../.claude/skills/frontend-conventions/SKILL.md).
 
+| Componente | Papel no fluxo de solicitação |
+|---|---|
+| `useReservaStepper` (hook) | Passos, validação do passo 1, conflitos e remoção dos slots em conflito |
+| `AgendaDialogReserva` (organism) | Abre o modal com os slots selecionados |
+| `ReservaStepperModal` (organism) | Passos Detalhes e Revisão, tela de sucesso e CTAs |
+| `StepRevisaoConfirmacao` (molecule) | Resumo, horários a gravar, conflitos e termo |
+| `ReservaRecorrenciaField` (molecule) | Switch "Repetir esta reserva?" e opções de período |
+| `CalendarShiftSection` (molecule) | Marcar o turno do dia e Shift+clique |
+| `EspacoFiltroBusca` (organism) | Filtro "Quando?" (opt-in da página do usuário) |
+| `EspacoCard` (organism) | Selo "N horários livres" e link "Consultar horários" |
+| `ReservaInfoCard` (organism) | Público estimado e categoria na avaliação do gestor |
+
 ---
 
 ## 13. Arquitetura Backend {#arquitetura}
@@ -587,6 +664,8 @@ Pendências e próximos passos: [`../backlog.md`](../backlog.md).
 | [`ProcessarCriacaoReserva.php`](../../app/Jobs/ProcessarCriacaoReserva.php) | Job de criação assíncrona |
 | [`UpdateReservaJob.php`](../../app/Jobs/UpdateReservaJob.php) | Job de atualização assíncrona |
 | [`AvaliarReservaJob.php`](../../app/Jobs/AvaliarReservaJob.php) | Job de avaliação do gestor |
+| [`EspacoRepositoryEloquent.php`](../../app/Repositories/EspacoRepositoryEloquent.php) | Filtro de disponibilidade e `horarios_livres` da lista pública |
+| [`config/reservas.php`](../../config/reservas.php) | Fuso de negócio e grade de horários por turno (espelho do front) |
 | [`ValidateReservationConflictsJob.php`](../../app/Jobs/ValidateReservationConflictsJob.php) | Job de validação de conflitos |
 | [`ConflictDetectionService.php`](../../app/Services/ConflictDetectionService.php) | SQL de detecção de conflitos |
 | [`ReservaPolicy.php`](../../app/Policies/ReservaPolicy.php) | Autorização de ações na reserva |

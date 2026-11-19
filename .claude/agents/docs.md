@@ -38,6 +38,7 @@ Antes de criar qualquer documento novo, verifique se o assunto pertence a um dos
 | `docs/operacao/anonimizacao-de-bases.md` | Comando `base:anonimizar`: guardas de ambiente, tratamento por tabela e uso. |
 | `docs/privacidade/pagina-de-privacidade.md` | Página pública `/privacidade`. |
 | `docs/processo/auditorias-e-planos.md` | Como conduzir auditoria e plano em fases, fechar o ciclo no backlog e a regra de backlog reativo. |
+| `docs/processo/ux/analise-solicitacao-usuario-comum.md` | Análise de UX da solicitação de espaço pelo usuário comum: jornada antes e depois, achados `UX-xx` e validação das migrations. |
 
 ## Diretrizes de Execução
 

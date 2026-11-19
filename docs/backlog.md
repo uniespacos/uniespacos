@@ -10,13 +10,14 @@
 - **Prioridade:** `P0` bloqueia o próximo release ou é risco imediato · `P1` alto impacto, próximo ciclo · `P2` importante, planejar · `P3` melhoria · `P4` ideia ou baixo impacto.
 - **Esforço:** pequeno (até 1 dia) · médio (alguns dias) · grande (uma semana ou mais).
 - **Situação:** marcador no começo do texto do item; o checkbox não muda. 🚀 código pronto = mergeado em `develop`, falta staging ou produção · 🔧 em andamento = trabalho aberto, com a branch citada no item · ⏸ parado = aguarda terceiro, com o motivo · ⏳ aguarda decisão = depende de uma decisão de [Decisões pendentes](#decisões-pendentes-não-é-código) · sem marcador = não iniciado.
-- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação · `QA119-xx` achados do QA da rc.119 (recorrência e edição de reserva). Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
+- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação · `QA119-xx` achados do QA da rc.119 (recorrência e edição de reserva) · `UX-xx` achados da análise de UX da solicitação de espaço pelo usuário comum (19/11/2026, [análise](./processo/ux/analise-solicitacao-usuario-comum.md)). Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
 - **Segurança:** o repositório é público. Itens de segurança descrevem o objetivo, sem detalhe de exploração; o detalhe fica nos planos locais (ver [Origem dos itens](#origem-dos-itens)).
 
 ## Agora
 
 - **Em produção:** v1.6.1 desde 14/11/2026 (Onda 3, parte 1: S26 e S14, #518). Backup manual cifrado antes do deploy, com teste de abertura completo e cópia externa conferidos (o primeiro com as duas conferências); fila vazia antes do deploy. Pós-deploy conferido nos serviços (imagem 1.6.1, banco não recriado, worker recriado pelo deploy, sem reinício explícito), com 0 erros em 15 min e `failed_jobs` vazio nos 30 min seguintes. Smoke por papel e teste do modal com dois papéis OK, e a orientação I4 foi retirada (aviso aos institucionais em 14/11/2026). Da 1.6.0 segue valendo: a rotina de retenção diária roda sem intervenção.
 - **Em staging:** rc.120 (1.7.0 em validação: #525/#526, #527, #529, #531 e #534), com deploy feito pelo responsável em 19/11/2026. O QA da rc.119 encontrou 4 problemas (E-01, E-02, P-04 e C-02/C-03); as correções entraram pela #534 (mergeada em `develop` em 19/11/2026, `rc.120`): E-01 e E-02 (edição com escopo "Todas as ocorrências" e "Apenas esta semana"), P-04 (período dos horários) e C-02/C-03 (mensagem de conflito com a data e a faixa).
+- **Em branch (sem PR ainda):** `feat/ux-solicitacao-usuario`, com a solicitação de espaço pelo usuário comum (itens `UX-01` a `UX-17`, na Onda 7). O código está pronto e fica aberto até a PR, que só entra na `develop` depois do deploy da 1.7.0 em produção (com versão em staging, nenhuma PR de código entra antes da `develop` → `main`). Não muda o próximo passo abaixo.
 - **Próximo passo:** validar a 1.7.0 em staging (rc.120): rodar o roteiro [`processo/qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) (reteste R e lacunas N a W), as conferências da #525 (`T-19d` e `T-35`), o fluxo de reservas em várias semanas e turnos (#529 e #531) e o aviso de reserva cancelada para o gestor (#527). Depois, com autorização do responsável, o deploy da 1.7.0 em produção (backup manual cifrado, fila vazia e PR `develop` → `main`). Seguem: a leitura restante da T-08; a T-05b (gatilho hoje, 16/11/2026, a confirmar pelo responsável); a T-23, aguardando a resposta da TI; e, depois da 1.7.0, a Onda 3 parte 2.
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
@@ -30,6 +31,7 @@
   | Depois do deploy em staging (sem data) | Rodar `app:check-env` no container de staging e revisar os falsos positivos | Responsável | T-35 |
   | Depois do deploy da correção do QA da rc.119 em staging (sem data) | Conferir as reservas de teste do QA (#3687 com E-01 parcial e #3697 com E-02 sem efeito, entre outras) e limpar as reservas "QA ..." só com autorização do responsável | Responsável | QA119-F3 |
   | Depois do release 1.7.0 em produção (sem data) | Conferir no `.env` de produção se algum padrão de retenção ou de logs (90 dias) está sobrescrito; se estiver, decidir e registrar no inventário e na política | Responsável | T-19g |
+| Depois do deploy da 1.7.0 em produção (sem data) | Conferir que o `queue-worker` subiu com a imagem nova (`docker inspect uniespacos-queue-worker-1 --format '{{.State.StartedAt}}'`, em UTC, depois do horário do deploy) e que a migration `2026_11_19_120000` foi aplicada, sem pendência. O `queue:work` não relê código | Responsável | UX-01 a UX-17 |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
 - **Parado:** trilha de backup (T-23), aguardando a TI · remoção do fallback da `RelatorioPolicy` (DEB-D2), aguardando consulta em produção.
@@ -161,6 +163,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026. Reproduzido no teste da S14 em staging (06/11/2026): uma agenda escolhida por engano no modal passou para a conta de teste sem nenhum aviso (estava sem gestor, sem prejuízo). Até a correção, quem usa o modal confere a agenda antes de salvar.
 - [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
   Isso deixava testes de permissão instáveis (o usuário do teste ganhava gestor antes da requisição). Isolar o efeito para quem precisa dele. Achado em 04/11/2026.
+  **Reforço (19/11/2026):** a mesma factory promove a gestor um usuário existente sorteado, e isso causou falha intermitente num teste do fluxo de solicitação. Pronto quando a factory cria gestor próprio, sem sortear usuário existente.
 - [ ] **S14d** · Aplicar no modal de permissões a regra "gestor só com agenda vinculada" — `P2` · pequeno · bug
   **Decidido pelo responsável em 08/11/2026 (B44):** o acúmulo de papéis é estado válido e não se normaliza. Regra: o usuário só é gestor se tiver ao menos uma agenda vinculada. Quem acumula papéis sem ser gestor vira gestor ao receber agenda. Quem é comum e gestor e perde todas as agendas perde o papel de gestor. A seleção múltipla de papéis no modal não foi decidida e fica em aberto (pendência menor deste item).
   **Achado no código (08/11/2026):** o vínculo pelo espaço (`EspacoService`) já segue a regra. O modal (`UserService::updatePermissions`, `atualizarPapelUnico` e `atualizarAgendasDeUsuarioComPapeisAcumulados`) não segue: (a) com papel único `gestor` e lista de agendas vazia, continua gestor; (b) com papéis acumulados que incluem `gestor`, ao perder todas as agendas continua gestor; (c) com papéis acumulados sem `gestor`, não vira gestor ao receber agenda. Regra de negócio em [autorização](./regras-de-negocio/autorizacao.md#decisão-sobre-papéis-acumulados).
@@ -290,7 +293,8 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6d** · Textos do front: reservas e agenda (cerca de 57 strings, incluindo a validação do formulário de reserva) — `P3` · médio · depende da F5
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
-  Inclui também os textos fixos da revisão do passo 3 (`StepRevisaoConfirmacao.tsx`: "pessoas", "Sem título informado" e "Sem justificativa informada") e as 6 mensagens de validação de `useReservaStepper.ts`. = QA119-F6.
+  Inclui também os textos fixos da revisão (antes passo 3; `StepRevisaoConfirmacao.tsx`: "pessoas", "Sem título informado" e "Sem justificativa informada") e as 6 mensagens de validação de `useReservaStepper.ts`. = QA119-F6.
+  **Avanço parcial (19/11/2026, branch `feat/ux-solicitacao-usuario`):** o modal (detalhes, revisão e tela de sucesso), a agenda e as mensagens de conflito estão traduzidos em `pt-BR`, `en` e `es`. Os textos do modal passaram para o passo 2 de 2. Falta o inventário dos demais arquivos do lote.
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6f** · Textos do front: autenticação, componentes comuns e configurações (cerca de 42 strings) — `P3` · pequeno · depende da F5
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
@@ -306,6 +310,11 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   **Pronto quando:** definido conforme o gatilho.
 
 ## Onda 7 — Produto: funcionalidades (`P2`–`P4`)
+
+- [ ] **UX-01 a UX-17** · 🔧 em andamento (branch `feat/ux-solicitacao-usuario`; PR a abrir) · Solicitação de espaço pelo usuário comum com menos esforço — `P2` · médio · produto/UX
+  Achados da análise de UX de 19/11/2026 ([análise](./processo/ux/analise-solicitacao-usuario-comum.md)), com o que a branch entrega: UX-01 busca por disponibilidade (filtro "Quando?" e selo "N horários livres") · UX-02 campos que o backend descartava (migration e exibição) · UX-03 célula da agenda acessível por teclado · UX-04 modal em dois passos · UX-05 descrição opcional, alinhada ao backend · UX-06 CTA "Enviar solicitação" e tela de sucesso · UX-07 Shift+clique e marcar o turno · UX-08 hover neutro e seleção em `primary` · UX-09 título e cabeçalho da agenda · UX-10 conflitos por slot, com remoção · UX-11 atalho duplicado · UX-12 capacidade numérica · UX-13 hierarquia da agenda · UX-14 consistência visual, i18n e tamanhos · UX-15 contraste no tema escuro · UX-16 card sem controles aninhados · UX-17 alvos de toque de 44 px.
+  **É código e só entra na `develop` depois da 1.7.0 ir para produção.** Com versão em staging, nenhuma PR de código entra antes da PR `develop` → `main` (regra de Próximas versões).
+  **Pronto quando:** a branch passa em `npx tsc --noEmit`, `npm run lint:check`, `npx jest` e nos testes de backend; a PR entra na `develop` depois do deploy da 1.7.0; e o roteiro de solicitação em staging não tem regressão. O número da PR entra na própria PR (regra 2).
 
 - [ ] **#107** · Mostrar na agenda as solicitações em análise — `P2` · médio · feature
   Requisito "Must" do escopo original. Decidir o público: solicitante ou gestor (D-2). Armadilha: não ampliar o `ConflictDetectionService` para `em_analise`, porque a avaliação passaria a indeferir automaticamente; usar um serviço à parte.
@@ -325,12 +334,32 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   **Pronto quando:** a decisão está registrada na tabela de decisões; se ela exigir mudança, a expansão e a revisão aplicam a regra, com teste para uma recorrência que cruza feriado.
 - [ ] **#49** · Ir para a sala anterior ou a próxima a partir da agenda — `P3` · pequeno · depende da D-4 (andar ou módulo; ordem).
 - [ ] **#462** · Busca de salas por necessidade (recursos e capacidade) — `P3` · grande · depende de modelar recursos e equipamentos.
+  **Avanço parcial (19/11/2026, branch `feat/ux-solicitacao-usuario`):** capacidade (campo numérico "Quantas pessoas?") e disponibilidade por data e turno (filtro "Quando?") estão resolvidas. Recursos e equipamentos seguem pendentes.
 - [ ] **GAP-07** · Indicador de progresso para o solicitante depois de criar a reserva — `P4` · médio
   A lista já recarrega por evento; a D-EST-18 deixa para a 2.x.
+  **Avanço parcial (19/11/2026, branch `feat/ux-solicitacao-usuario`):** a tela de sucesso dentro do modal responde "o que acontece agora" logo depois de criar, com "Ver minhas reservas" e "Fazer outra solicitação". O indicador de progresso depois disso segue aberto.
 - [ ] **GAP-08** · Hora de pico, mapa de calor e série histórica nos relatórios — `P4` · médio.
 - [ ] **QA119-F5** · Grade de edição não mostra as ocorrências propagadas — `P4` · pequeno · UX
-  Na edição com escopo "Todas as ocorrências", a grade do passo 1 mostra só o horário clicado. O efeito da propagação nas demais semanas aparece só na revisão. Achado do QA da rc.119. Regra em [`regras-de-negocio/recorrencia.md`](./regras-de-negocio/recorrencia.md#51-escopo-recurring-todas-as-ocorrências).
-  **Pronto quando:** a grade ou a lista do passo 1 mostra as ocorrências que a propagação vai alterar antes do envio, e um teste cobre a prévia.
+  Na edição com escopo "Todas as ocorrências", a grade do primeiro passo (Detalhes; o modal tem dois passos desde 19/11/2026: Detalhes e Revisão) mostra só o horário clicado. O efeito da propagação nas demais semanas aparece só na revisão. Achado do QA da rc.119. Regra em [`regras-de-negocio/recorrencia.md`](./regras-de-negocio/recorrencia.md#51-escopo-recurring-todas-as-ocorrências).
+  **Pronto quando:** a grade ou a lista do passo Detalhes mostra as ocorrências que a propagação vai alterar antes do envio, e um teste cobre a prévia.
+- [ ] **UX-18** · Link "Ver detalhes" do tooltip da reserva não recebe foco pelo Tab — `P2` · pequeno · acessibilidade
+  Trocar o tooltip por Popover, que abre pelo foco e pelo toque. Achado da análise de UX de 19/11/2026.
+  **Pronto quando:** o link "Ver detalhes" é alcançável por Tab, e um teste cobre a abertura pelo teclado.
+- [ ] **UX-19** · Nome "UESB" fixo no termo de responsabilidade e como fallback no card do espaço — `P3` · pequeno · bug
+  O nome deve vir da instituição, no lugar do texto fixo.
+  **Pronto quando:** o termo e o card mostram o nome da instituição do espaço, e um teste cobre uma instituição com outro nome.
+- [ ] **UX-20** · Conflito em tempo real só é observado no passo Revisão, e o alerta fica até reabrir o modal — `P3` · pequeno · bug
+  Depois de remover o slot em conflito, o alerta segue visível até o modal ser fechado e aberto de novo.
+  **Pronto quando:** remover o slot em conflito tira o alerta na hora, e um teste cobre o caso.
+- [ ] **UX-21** · Textos do modal de solicitação fora do i18n: chaves `period_recurrence` e `recurrence_pattern` sem namespace próprio, e placeholder e "Limpar data" do DatePicker fixos em PT-BR — `P3` · pequeno · i18n
+  Pode entrar junto com a I18N-6d ou ser item próprio, conforme o lote.
+  **Pronto quando:** nenhuma chave dessas fica fora do namespace e nenhum texto fixo, com paridade em `pt-BR`, `en` e `es`.
+- [ ] **UX-22** · "Hoje" do filtro "Quando?" usa o fuso do navegador, não America/Bahia — `P3` · pequeno · bug
+  Ligar à S36 (fuso de negócio). O backend já usa America/Bahia; falta o front. Perto da meia-noite, a data mínima pode diferir.
+  **Pronto quando:** o front usa o fuso de negócio, e um teste cobre a data à noite com relógio congelado.
+- [ ] **UX-23** · Tela de detalhes do calendário (`CalendarReservationDetails`) sem Shift+clique nem marcar o turno — `P4` · pequeno · decisão
+  Decidir se a tela ganha os atalhos de seleção ou se fica fora do escopo.
+  **Pronto quando:** a decisão está registrada aqui, e, se for fazer, há item de execução.
 
 ## Futuro — v2.0
 

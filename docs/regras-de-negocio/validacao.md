@@ -289,6 +289,9 @@ O `withValidator` também impõe a integridade da sequência: não pode haver ga
 |-------|-------|----------|
 | `titulo` | `required`, `string`, `max:255` | Título descritivo da reserva |
 | `descricao` | `nullable`, `string`, `max:2000` | Justificativa (opcional) |
+| `publico_estimado` | `nullable`, `integer`, `min:1`, `max:5000` | Público estimado. Opcional; a tela só avisa (sem bloquear) quando passa da capacidade do espaço |
+| `categoria` | `nullable`, `string`, `max:100` | Tipo de uso em texto livre (a tela sugere Aula, Palestra, Reunião, Defesa, Evento e Extensão). Não é enum |
+| `termo_responsabilidade` | `required`, `accepted` | Aceite do termo de responsabilidade. O service grava `termo_aceito_em` e não persiste o campo (ver [fluxo de reservas](./fluxo-de-reservas.md#4-fluxo-completo-de-criação-de-reserva)) |
 | `data_inicial` | `required`, `date`, `after_or_equal:today` | Início do período (hoje ou futura) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
 | `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
@@ -316,6 +319,9 @@ O `withValidator` também impõe a integridade da sequência: não pode haver ga
 |-------|-------|----------|
 | `titulo` | `required`, `string`, `max:255` | Título descritivo da reserva |
 | `descricao` | `nullable`, `string`, `max:2000` | Justificativa (opcional) |
+| `publico_estimado` | `nullable`, `integer`, `min:1`, `max:5000` | Mesma regra da criação |
+| `categoria` | `nullable`, `string`, `max:100` | Mesma regra da criação |
+| `termo_responsabilidade` | `sometimes`, `accepted` | A tela sempre envia, então na prática cada edição pede novo aceite. Se vier, `termo_aceito_em` é regravado com o instante do request |
 | `data_inicial` | `required`, `date` | Início do período (sem validação de data passada) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
 | `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
@@ -390,6 +396,21 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 ---
 
+### ListarEspacosRequest
+
+**Localização:** `app/Http/Requests/ListarEspacosRequest.php`
+
+**Context:** Listagem pública de espaços (`/espacos`). Os filtros `data` e `turno` são do filtro "Quando?" da página do usuário comum; a listagem administrativa não os usa.
+
+| Campo | Rules | Propósito |
+|-------|-------|----------|
+| `data` | `nullable`, `date_format:Y-m-d`, `after_or_equal:hoje` | Dia pedido. "Hoje" é calculado no fuso `config('reservas.fuso_horario')` (America/Bahia), não no `app.timezone` (UTC) |
+| `turno` | `nullable`, `in:manha,tarde,noite` | Turno do dia. Sem `data`, o filtro é ignorado |
+
+Sem `data`, a listagem não filtra por disponibilidade. Com `data`, o repositório mantém só os espaços com ao menos um slot livre naquele dia (e no turno, se informado). A regra de slot livre está em [fluxo de reservas](./fluxo-de-reservas.md#disponibilidade-na-lista-de-espaços).
+
+---
+
 ## Onde cada verificação de conflito acontece
 
 A sobreposição com horário `deferida` é verificada em quatro pontos, todos no backend. A condição é a mesma nos quatro: mesma agenda, mesma data e `horario_inicio < fim AND horario_fim > inicio`.
@@ -419,6 +440,8 @@ Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` p
 | `HorariosMesmoEspaco` | Backend (Rule) | ✅ Sim |
 | `HorarioDisponivel` (deferida) | Backend (Rule) | ✅ Sim |
 | `DataDoHorarioNoPeriodo` (Store sempre; Update só `recurring`) | Backend (Rule) | ✅ Sim |
+| `termo_responsabilidade` (`accepted`) | Backend (FormRequest) | ✅ Sim |
+| `publico_estimado` e `categoria` | Backend (FormRequest) | ✅ Sim, só o formato (são opcionais) |
 | Conflitos na tela de avaliação | Backend (`ConflictDetectionService`), exibido ao gestor | ⚠️ Informativo |
 | Conflito na avaliação | Backend (`AvaliarReservaJob`) | ✅ Sim (indefere o horário) |
 | Solicitações em análise | Não implementado (#107) | — |

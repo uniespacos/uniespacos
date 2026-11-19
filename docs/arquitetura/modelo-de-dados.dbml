@@ -55,6 +55,9 @@ Table reservas {
   recorrencia varchar [note: "enum: unica|15dias|1mes|personalizado"]
   observacao text [nullable]
   user_id integer [nullable]
+  publico_estimado integer [nullable, note: "Público estimado (1 a 5000). Opcional; só avisa acima da capacidade na tela"]
+  categoria varchar(100) [nullable, note: "Tipo de uso em texto livre, com sugestões na tela. Anonimizada por base:anonimizar"]
+  termo_aceito_em timestamp [nullable, note: "Instante do aceite do termo de responsabilidade. Oculto na serialização do model"]
   created_at timestamp
   updated_at timestamp
 }

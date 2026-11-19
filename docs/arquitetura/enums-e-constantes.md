@@ -506,6 +506,35 @@ A permissão `reservas.avaliar` permite que um gestor reavaliar horários quanta
 - Quando uma reserva é **avaliada**, o solicitante recebe `ReservationEvaluatedNotification`.
 - Quando uma reserva é **cancelada**, gestores recebem `ReservationCanceledNotification`.
 
+### Grade de horários e fuso de negócio: `config/reservas.php`
+
+Espelho do `HORARIOS_PADRAO` de `resources/js/constants/turnos.ts`. **Os dois mudam juntos**: o calendário do front e o filtro de disponibilidade da lista de espaços precisam mostrar os mesmos slots. Um teste compara a contagem de slots com `config('relatorios.slots_por_turno')`.
+
+| Chave | Valor | Uso |
+|---|---|---|
+| `fuso_horario` | `America/Bahia` | "Hoje" do filtro "Quando?" e slots já iniciados. O `app.timezone` é UTC |
+| `horarios_por_turno.manha` | 6 slots (07:30 a 12:40) | Grade do filtro de disponibilidade |
+| `horarios_por_turno.tarde` | 6 slots (13:10 a 18:20) | Idem |
+| `horarios_por_turno.noite` | 5 slots (18:20 a 22:30) | Idem |
+
+As chaves de turno são as mesmas de `AgendaEnum` (`manha`, `tarde`, `noite`). Regra de disponibilidade em [fluxo de reservas](../regras-de-negocio/fluxo-de-reservas.md#disponibilidade-na-lista-de-espaços).
+
+### Estilo dos slots do calendário: `ESTILO_SLOT`
+
+Definido em `resources/js/constants/situacao-reserva.ts`. Cada estado tem quatro classes Tailwind (`EstiloSlot`): `solido` (faixa lateral e marcador da legenda), `fundo`, `borda` e `texto`. Desde 19/11/2026:
+
+- `selecionado` usa `primary` em todas as telas. O verde fica só para `deferida`.
+- Os rótulos de estado não são literais: `chaveEstadoSlot()` (`resources/js/lib/utils/slot-calendario.ts`) devolve chaves `agenda.slot.estado.*` de i18n.
+
+| Chave | Cor sólida | Significado |
+|---|---|---|
+| `livre` | `muted-foreground/25` | Slot disponível |
+| `reservado` | `info` | Reservado por terceiro (não é situação de reserva) |
+| `selecionado` | `primary` | Marcado pela pessoa, em qualquer tela |
+| `solicitado` | `warning` | Solicitação pendente |
+| `deferida` | `success` | Aprovado |
+| `indeferida` | `destructive` | Negado |
+
 ---
 
 ## Referências Cruzadas
