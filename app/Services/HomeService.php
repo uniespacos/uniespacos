@@ -111,7 +111,41 @@ class HomeService
             'indeferida' => (clone $base)->where('situacao', 'indeferida')->count(),
         ];
 
-        return compact('user', 'espacosFavoritos', 'statusDasReservas', 'reservas');
+        $espacosRecentes = $this->espacosRecentesDoUsuario($user);
+
+        return compact('user', 'espacosFavoritos', 'statusDasReservas', 'reservas', 'espacosRecentes');
+    }
+
+    /**
+     * Espacos distintos das reservas ativas do usuario, da reserva mais recente para a mais antiga.
+     *
+     * @return list<array{id: int, nome: string, andar: array{modulo: array{nome: string}}}>
+     */
+    private function espacosRecentesDoUsuario(User $user): array
+    {
+        return Espaco::query()
+            ->select('espacos.id', 'espacos.nome', 'espacos.andar_id')
+            ->join('agendas', 'agendas.espaco_id', '=', 'espacos.id')
+            ->join('horarios', 'horarios.agenda_id', '=', 'agendas.id')
+            ->join('reservas', 'reservas.id', '=', 'horarios.reserva_id')
+            ->where('reservas.user_id', $user->id)
+            ->where('reservas.situacao', '!=', 'inativa')
+            ->groupBy('espacos.id', 'espacos.nome', 'espacos.andar_id')
+            ->orderByRaw('MAX(reservas.created_at) DESC')
+            ->limit(3)
+            ->with(['andar:id,modulo_id', 'andar.modulo:id,nome'])
+            ->get()
+            ->map(fn (Espaco $espaco): array => [
+                'id' => $espaco->id,
+                'nome' => $espaco->nome,
+                'andar' => [
+                    'modulo' => [
+                        'nome' => $espaco->andar->modulo->nome,
+                    ],
+                ],
+            ])
+            ->values()
+            ->all();
     }
 
     /**

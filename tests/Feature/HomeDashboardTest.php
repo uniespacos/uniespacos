@@ -184,4 +184,82 @@ class HomeDashboardTest extends TestCase
             ->where('statusDasReservas.indeferida', 1)
         );
     }
+
+    public function test_usuario_comum_recebe_espacos_recentes_distintos_do_mais_recente_ao_mais_antigo(): void
+    {
+        // Os espaços vêm antes do usuário: o afterCreating do EspacoFactory sorteia um
+        // usuário existente da instituição como gestor das agendas e lhe dá o papel
+        // `gestor`. Se o solicitante já existisse, podia ser sorteado e o painel
+        // renderizado passaria a ser o do gestor (falha intermitente).
+        $espacoA = Espaco::factory()->create();
+        $espacoB = Espaco::factory()->create();
+        $espacoInativo = Espaco::factory()->create();
+        $espacoD = Espaco::factory()->create();
+
+        $user = User::factory()->create();
+
+        Carbon::setTestNow('2026-01-10 10:00:00');
+        $this->reservaEmEspaco($user, 'em_analise', $espacoA);
+
+        Carbon::setTestNow('2026-01-11 10:00:00');
+        $this->reservaEmEspaco($user, 'deferida', $espacoB);
+
+        Carbon::setTestNow('2026-01-12 10:00:00');
+        $this->reservaEmEspaco($user, 'deferida', $espacoA);
+
+        Carbon::setTestNow('2026-01-13 10:00:00');
+        $this->reservaEmEspaco($user, 'inativa', $espacoInativo);
+
+        Carbon::setTestNow('2026-01-14 10:00:00');
+        $this->reservaEmEspaco($user, 'parcialmente_deferida', $espacoD);
+
+        $this->assertFalse($user->fresh()?->hasRole('gestor'), 'O solicitante não pode ter virado gestor pelas factories.');
+
+        Carbon::setTestNow('2026-01-15 10:00:00');
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $recentes = $response->viewData('page')['props']['espacosRecentes'];
+
+        $this->assertSame([$espacoD->id, $espacoA->id, $espacoB->id], array_column($recentes, 'id'));
+        $this->assertSame($espacoD->nome, $recentes[0]['nome']);
+        $this->assertSame(
+            $espacoD->andar->modulo->nome,
+            $recentes[0]['andar']['modulo']['nome'],
+        );
+        $this->assertSame(['id', 'nome', 'andar'], array_keys($recentes[0]));
+    }
+
+    public function test_usuario_sem_reservas_recebe_espacos_recentes_vazio(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame([], $response->viewData('page')['props']['espacosRecentes']);
+    }
+
+    private function reservaEmEspaco(User $user, string $situacao, Espaco $espaco): Espaco
+    {
+        $agenda = Agenda::factory()->create([
+            'espaco_id' => $espaco->id,
+            'turno' => 'manha',
+            'user_id' => User::factory()->create()->id,
+        ]);
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'situacao' => $situacao,
+        ]);
+        Horario::create([
+            'agenda_id' => $agenda->id,
+            'reserva_id' => $reserva->id,
+            'data' => '2026-02-02',
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '10:00:00',
+            'situacao' => 'deferida',
+        ]);
+
+        return $espaco;
+    }
 }
