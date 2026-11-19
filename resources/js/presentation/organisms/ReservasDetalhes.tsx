@@ -16,7 +16,7 @@ import CalendarReservationDetails from '@/presentation/molecules/CalendarReserva
 import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { Agenda, Reserva, SlotCalendario } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { addDays, endOfWeek, format, isAfter, isBefore, parseISO, startOfWeek, subDays } from 'date-fns';
+import { addDays, endOfWeek, format, isAfter, isBefore, isValid, parseISO, startOfWeek, subDays } from 'date-fns';
 import {
     AlertCircle,
     Building2,
@@ -36,6 +36,28 @@ import { useMemo, useState } from 'react';
 
 declare function route(name: string, params?: unknown): string;
 
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+function lerSemanaDaUrl(reservaId: number): Date | undefined {
+    if (typeof window === 'undefined') {
+        return undefined;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const reservaNaUrl = params.get('reserva');
+    if (reservaNaUrl !== null && reservaNaUrl !== String(reservaId)) {
+        return undefined;
+    }
+
+    const semana = params.get('semana');
+    if (!semana || !DATA_ISO.test(semana)) {
+        return undefined;
+    }
+
+    const data = parseISO(semana);
+    return isValid(data) ? data : undefined;
+}
+
 export interface ReservaDetalhesProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -51,6 +73,11 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
     const [semanaVisivel, setSemanaVisivel] = useState(() => {
+        const semanaDaUrl = lerSemanaDaUrl(selectedReserva.id);
+        if (semanaDaUrl) {
+            return semanaDaUrl;
+        }
+
         const primeiroHorarioData = selectedReserva.horarios[0]?.data;
         if (primeiroHorarioData) {
             return parseISO(primeiroHorarioData);

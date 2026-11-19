@@ -42,12 +42,10 @@ export default function CalendarReservationDetails({ diasSemana, agendas, slotsS
                     <div className="min-w-[800px] rounded-xl">
                         <div className="bg-background sticky grid grid-cols-[80px_repeat(7,1fr)] border-b">
                             <div className="text-muted-foreground text-center text-sm font-medium"></div>
-
                         </div>
                         {agendas.map((agenda) => (
                             <CalendarShiftSection
                                 key={agenda.id}
-                                titulo={agenda.turno}
                                 agenda={agenda}
                                 diasSemana={diasSemana}
                                 slotsSolicitados={slotsSolicitados}

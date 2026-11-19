@@ -1,3 +1,4 @@
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { derivarSlotsDoTurno } from '@/lib/utils/derivar-slots-do-turno';
 import CalendarSlotCell from '@/presentation/molecules/CalendarSlotCell';
@@ -5,7 +6,6 @@ import { Agenda, AgendaDiasSemanaType, SlotCalendario } from '@/types';
 import { useCallback, useMemo } from 'react';
 
 interface CalendarShiftSectionProps {
-    titulo: string;
     agenda: Agenda;
     diasSemana: AgendaDiasSemanaType[];
     isSlotSelecionado?: (slot: SlotCalendario) => boolean;
@@ -15,13 +15,13 @@ interface CalendarShiftSectionProps {
 }
 
 export default function CalendarShiftSection({
-    titulo,
     agenda,
     diasSemana,
     isSlotSelecionado,
     alternarSelecaoSlot,
     slotsSolicitados,
 }: CalendarShiftSectionProps) {
+    const { t } = useTranslation();
     const isSlotSelecionadoFn = isSlotSelecionado || (() => false);
     const handleSelectSlot = useCallback(
         (slot: SlotCalendario) => {
@@ -45,10 +45,10 @@ export default function CalendarShiftSection({
     return (
         <div key={agenda.id}>
             <div className="bg-muted/50 grid grid-cols-[80px_repeat(7,1fr)] border-b">
-                <div className="p-2 text-center text-xs font-semibold">{titulo.charAt(0).toUpperCase() + titulo.slice(1)}</div>
+                <div className="p-2 text-center text-xs font-semibold">{t(`reservas.turnos.${agenda.turno}`)}</div>
                 {diasSemana.map((dia) => (
                     <div
-                        key={`${titulo}-${dia.valor}`}
+                        key={`${agenda.turno}-${dia.valor}`}
                         className={cn('bg-muted/50 border-l p-2 text-center text-xs font-medium', dia.ehHoje && 'bg-primary/5')}
                     >
                         <div className="capitalize">{dia.abreviado}</div>

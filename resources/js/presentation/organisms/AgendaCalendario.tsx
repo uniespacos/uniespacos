@@ -65,7 +65,6 @@ export default function AgendaCalendario({
                         {agendasPorTurno.map((agenda) => (
                             <CalendarShiftSection
                                 key={agenda.id}
-                                titulo={agenda.turno}
                                 diasSemana={diasSemana}
                                 isSlotSelecionado={isSlotSelecionado}
                                 alternarSelecaoSlot={alternarSelecaoSlot}
