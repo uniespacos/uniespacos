@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { SituacaoReserva, type SituacaoReservaType } from '@/contracts';
+import { EscopoRecorrencia, type EscopoRecorrenciaType, isEscopoRecorrencia, SituacaoReserva, type SituacaoReservaType } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { FormField } from '@/presentation/molecules/FormField';
 import { SlotCalendario } from '@/types';
@@ -18,7 +18,7 @@ interface FormData {
     situacao: string;
     motivo: string;
     observacao: string;
-    evaluation_scope: 'single' | 'recurring';
+    evaluation_scope: EscopoRecorrenciaType;
 }
 
 interface EvaluationFormProps {
@@ -75,19 +75,21 @@ export default function EvaluationForm({
                         <Label className="font-medium">{t('reservas.avaliacao.escopo_edicao')}:</Label>
                         <RadioGroup
                             value={data.evaluation_scope}
-                            onValueChange={(value: 'single' | 'recurring') => {
-                                setData('evaluation_scope', value);
+                            onValueChange={(value) => {
+                                if (isEscopoRecorrencia(value)) {
+                                    setData('evaluation_scope', value);
+                                }
                             }}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="recurring" id="scope-recurring" />
+                                <RadioGroupItem value={EscopoRecorrencia.RECURRING} id="scope-recurring" />
                                 <Label htmlFor="scope-recurring" className="cursor-pointer">
                                     {t('reservas.avaliacao.escopo_todas')}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="single" id="scope-single" />
+                                <RadioGroupItem value={EscopoRecorrencia.SINGLE} id="scope-single" />
                                 <Label htmlFor="scope-single" className="cursor-pointer">
                                     {t('reservas.avaliacao.escopo_semana')}
                                 </Label>

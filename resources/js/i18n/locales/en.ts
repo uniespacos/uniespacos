@@ -290,13 +290,14 @@ export const en = {
             escopo_semana: 'Only slots of this week',
             cancelada_titulo: 'Reservation request canceled',
             cancelada_descricao:
-                'This reservation request was canceled before it could be evaluated or completed. The requested time slots have been released and no action is required.',
+                'This reservation has been canceled. The reserved time slots have been released and no further action is required.',
             voltar_listagem: 'Back to Manage Reservations',
         },
         gestor: {
             conflicts_detected: 'Warning: {{count}} time slot(s) of this reservation overlap(s) with another reservation(s).',
             conflict_with_user: 'Requester: {{user}}',
-            conflicts_note: 'You may choose to defer even with conflicts. Consider analyzing conflicting reservations before proceeding.',
+            conflicts_note:
+                'Time slots conflicting with another approved reservation are blocked from approval and will be automatically rejected when saving the evaluation.',
             conflict_cache_snapshot_title: 'Conflict Snapshot ({{count}} detected)',
             conflict_cache_snapshot_note:
                 'This is a historical snapshot from the moment the reservation was processed by the system. It may be outdated. Current conflicts are shown above.',
@@ -354,6 +355,15 @@ export const en = {
             terms_title: 'Terms of Commitment and Responsibility',
             terms_description:
                 'I declare that I am aware of the rules governing the use of {{institution_name}} physical spaces and commit to their care and preservation.',
+            error_slots_required: 'Select at least one time slot on the grid.',
+            error_start_date_required: 'Start date is required.',
+            error_end_date_required: 'End date is required.',
+            error_titulo_required: 'Reservation title is required.',
+            error_titulo_max: 'Title cannot exceed {{max}} characters.',
+            error_descricao_required: 'Justification/description is required.',
+            error_descricao_max: 'Description cannot exceed {{max}} characters.',
+            error_publico_estimado_invalido: 'Enter a whole number between 1 and 5000.',
+            error_terms_required: 'You must accept the terms of responsibility.',
         },
         card: {
             horarios_count: '{{count}} time slots',

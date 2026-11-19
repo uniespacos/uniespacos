@@ -3,14 +3,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
-import { RecorrenciaReserva } from '@/contracts/recorrencia.contract';
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { parseDataLocal } from '@/lib/utils';
 import { expandirHorariosRecorrencia } from '@/lib/utils/expandir-horarios-recorrencia';
 import { Espaco } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Building2, Calendar, CheckCircle2, FileText, Sparkles, Users } from 'lucide-react';
 import React, { useMemo } from 'react';
 
@@ -22,32 +20,42 @@ export interface StepRevisaoConfirmacaoProps {
 }
 
 export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ espaco, formData, setFormData, isEditMode = false }) => {
-    const { t } = useTranslation();
+    const { t, formatDate } = useTranslation();
 
     const rotuloRecorrencia = useMemo(() => {
         const op = opcoesRecorrencia.find((o) => o.valor === formData.recorrencia);
         return op ? t(op.labelKey) : formData.recorrencia;
     }, [formData.recorrencia, t]);
 
+    const isSingleScopeEdit = isEditMode && formData.edit_scope === EscopoRecorrencia.SINGLE;
+
+    const horariosGravados = useMemo(() => {
+        return expandirHorariosRecorrencia(
+            formData.horarios_solicitados,
+            isSingleScopeEdit ? RecorrenciaReserva.UNICA : formData.recorrencia,
+            formData.data_final,
+        );
+    }, [isSingleScopeEdit, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
+
     const periodoFormatado = useMemo(() => {
+        if (isSingleScopeEdit && horariosGravados.length > 0) {
+            const primeiraData = parseDataLocal(horariosGravados[0].data);
+            const ultimaData = parseDataLocal(horariosGravados[horariosGravados.length - 1].data);
+
+            return {
+                inicio: formatDate(primeiraData),
+                fim: formatDate(ultimaData),
+            };
+        }
+
         const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
         const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
 
         return {
-            inicio: dataIni ? format(dataIni, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
-            fim: dataFim ? format(dataFim, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
+            inicio: dataIni ? formatDate(dataIni) : 'N/I',
+            fim: dataFim ? formatDate(dataFim) : 'N/I',
         };
-    }, [formData.data_inicial, formData.data_final]);
-
-    const horariosGravados = useMemo(() => {
-        const semExpansao = isEditMode && formData.edit_scope === 'single';
-
-        return expandirHorariosRecorrencia(
-            formData.horarios_solicitados,
-            semExpansao ? RecorrenciaReserva.UNICA : formData.recorrencia,
-            formData.data_final,
-        );
-    }, [isEditMode, formData.edit_scope, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
+    }, [isSingleScopeEdit, horariosGravados, formData.data_inicial, formData.data_final, formatDate]);
 
     const quantidadeHorarios = String(horariosGravados.length);
     const unidadeHorarios = horariosGravados.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural');
@@ -94,7 +102,7 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ 
             </div>
 
             {/* Resumo dos Dados do Evento */}
-            <div className="bg-card border-border/80 space-y-2 rounded-xl border p-3.5 shadow-xs">
+            <div className="bg-card border-border/80 min-w-0 space-y-2 rounded-xl border p-3.5 shadow-xs">
                 <div className="flex items-center justify-between">
                     <div className="text-foreground flex items-center gap-2 text-xs font-semibold">
                         <FileText className="text-primary h-4 w-4" />
@@ -107,9 +115,11 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ 
                         </Badge>
                     ) : null}
                 </div>
-                <div className="space-y-1 pl-6">
-                    <p className="text-foreground text-xs font-semibold">{formData.titulo || 'Sem título informado'}</p>
-                    <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed whitespace-pre-wrap">
+                <div className="min-w-0 space-y-1 pl-6">
+                    <p className="text-foreground text-xs font-semibold break-words [overflow-wrap:anywhere]">
+                        {formData.titulo || 'Sem título informado'}
+                    </p>
+                    <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere]">
                         {formData.descricao || 'Sem justificativa informada'}
                     </p>
                 </div>
@@ -132,7 +142,7 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ 
                                 variant="outline"
                                 className="bg-muted/40 border-border text-foreground px-2 py-0.5 font-mono text-[11px]"
                             >
-                                {format(parseDataLocal(horario.data), 'dd/MM', { locale: ptBR })} • {horario.horario_inicio.slice(0, 5)}-
+                                {formatDate(parseDataLocal(horario.data), 'dd/MM')} • {horario.horario_inicio.slice(0, 5)}-
                                 {horario.horario_fim.slice(0, 5)}
                             </Badge>
                         ))}

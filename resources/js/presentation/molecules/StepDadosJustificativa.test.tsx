@@ -46,11 +46,27 @@ describe('StepDadosJustificativa', () => {
                 errors={{
                     titulo: 'O título é obrigatório.',
                     descricao: 'A descrição é obrigatória.',
+                    publico_estimado: 'Informe um número inteiro entre 1 e 5000.',
                 }}
             />,
         );
 
         expect(screen.getByText('O título é obrigatório.')).toBeInTheDocument();
         expect(screen.getByText('A descrição é obrigatória.')).toBeInTheDocument();
+        expect(screen.getByText('Informe um número inteiro entre 1 e 5000.')).toBeInTheDocument();
+        expect(screen.getByLabelText(/Público Estimado/i)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('exibe limite de 2000 caracteres na descricao e propaga valor bruto de publico_estimado', () => {
+        const handleSetFormData = jest.fn();
+        render(<StepDadosJustificativa formData={mockFormData} setFormData={handleSetFormData} />);
+
+        const textarea = screen.getByLabelText(/Justificativa e Detalhamento das Atividades/i);
+        expect(textarea).toHaveAttribute('maxLength', '2000');
+        expect(screen.getByText('0/2000')).toBeInTheDocument();
+
+        const publicoInput = screen.getByLabelText(/Público Estimado/i);
+        fireEvent.change(publicoInput, { target: { value: '1.5' } });
+        expect(handleSetFormData).toHaveBeenCalledWith('publico_estimado', '1.5');
     });
 });

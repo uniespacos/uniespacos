@@ -60,12 +60,16 @@ export function ConflictCacheSnapshotPanel({ snapshot }: ConflictCacheSnapshotPa
                                 <span className="font-medium text-foreground">
                                     {conflict.conflito_reserva_titulo}
                                 </span>
-                                {' — '}
-                                <span>
-                                    {t('reservas.gestor.conflict_with_user', {
-                                        user: conflict.conflito_user_name,
-                                    })}
-                                </span>
+                                {conflict.conflito_user_name ? (
+                                    <>
+                                        {' — '}
+                                        <span>
+                                            {t('reservas.gestor.conflict_with_user', {
+                                                user: conflict.conflito_user_name,
+                                            })}
+                                        </span>
+                                    </>
+                                ) : null}
                             </li>
                         ))}
                     </ul>

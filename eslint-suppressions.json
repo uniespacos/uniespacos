@@ -170,11 +170,6 @@
       "count": 1
     }
   },
-  "resources/js/presentation/pages/Reservas/Gestor/AvaliarReservaPage.tsx": {
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 1
-    }
-  },
   "resources/js/presentation/pages/settings/profile.tsx": {
     "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 2

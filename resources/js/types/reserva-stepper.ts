@@ -1,3 +1,4 @@
+import { type EscopoRecorrenciaType } from '@/contracts';
 import { Horario, ValorOcorrenciaType } from '@/types';
 
 export type ReservaStepId = 'horarios_recorrencia' | 'dados_justificativa' | 'revisao_confirmacao';
@@ -30,7 +31,7 @@ export interface ReservaFormData {
     recorrencia: ValorOcorrenciaType;
     data_inicial?: Date | null;
     data_final?: Date | null;
-    edit_scope?: 'single' | 'recurring';
+    edit_scope?: EscopoRecorrenciaType;
     edited_week_date?: string;
     slots?: SlotReservaItem[];
     horarios_solicitados:

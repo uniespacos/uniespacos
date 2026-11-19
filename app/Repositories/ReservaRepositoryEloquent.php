@@ -58,7 +58,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ->with([
                 'horarios' => function ($query) {
                     $query->orderBy('data')->orderBy('horario_inicio')
-                        ->with(['agenda.espaco.andar.modulo']);
+                        ->with(['agenda.espaco.andar.modulo', 'agenda.user:id,name', 'avaliador:id,name']);
                 },
                 'user:id,name',
             ])
@@ -130,7 +130,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
                         ->with([
                             'agenda' => function ($q) {
                                 $q->select('id', 'espaco_id', 'turno', 'user_id')
-                                    ->with('espaco.andar.modulo');
+                                    ->with(['espaco.andar.modulo', 'user:id,name']);
                             },
                             'avaliador:id,name',
                         ]);

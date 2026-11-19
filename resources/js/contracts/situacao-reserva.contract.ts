@@ -23,3 +23,14 @@ export const SITUACOES_DE_AVALIACAO: readonly SituacaoReservaType[] = [
     SituacaoReserva.DEFERIDA,
     SituacaoReserva.INDEFERIDA,
 ] as const;
+
+export type DecisaoAvaliacaoType = typeof SituacaoReserva.DEFERIDA | typeof SituacaoReserva.INDEFERIDA;
+
+export const DECISOES_DE_AVALIACAO: readonly DecisaoAvaliacaoType[] = [
+    SituacaoReserva.DEFERIDA,
+    SituacaoReserva.INDEFERIDA,
+] as const;
+
+export function isDecisaoAvaliacao(valor: unknown): valor is DecisaoAvaliacaoType {
+    return valor === SituacaoReserva.DEFERIDA || valor === SituacaoReserva.INDEFERIDA;
+}

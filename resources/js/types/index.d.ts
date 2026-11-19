@@ -158,7 +158,7 @@ export interface BreadcrumbItem {
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
-    conflito_user_name: string;
+    conflito_user_name?: string;
 }
 
 // =============================================================================

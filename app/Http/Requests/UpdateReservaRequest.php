@@ -43,6 +43,7 @@ class UpdateReservaRequest extends FormRequest
         return [
             'titulo' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string', 'max:2000'],
+            'publico_estimado' => ['nullable', 'integer', 'min:1', 'max:5000'],
             'data_inicial' => ['required', 'date'],
             'data_final' => ['required', 'date', 'after_or_equal:data_inicial'],
             'recorrencia' => ['required', 'in:unica,15dias,1mes,personalizado'],
@@ -73,6 +74,9 @@ class UpdateReservaRequest extends FormRequest
             'edit_scope.in' => 'O escopo de edição deve ser "single" ou "recurring".',
             'edited_week_date.required_if' => 'A data da semana editada é obrigatória para edição de ocorrência única.',
             'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
+            'publico_estimado.integer' => __('The estimated audience must be an integer.'),
+            'publico_estimado.min' => __('The estimated audience must be at least :min.', ['min' => 1]),
+            'publico_estimado.max' => __('The estimated audience may not be greater than :max.', ['max' => 5000]),
             'data_inicial.required' => 'A data inicial é obrigatória.',
             'data_inicial.date' => 'A data inicial deve ser uma data válida.',
             'data_final.required' => 'A data final é obrigatória.',

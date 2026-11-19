@@ -154,4 +154,26 @@ describe('ReservaStepperModal', () => {
 
         expect(handleSubmit).toHaveBeenCalled();
     });
+
+    it('mantem classes de foco visivel nos botoes de acao do rodape do modal', () => {
+        render(
+            <ReservaStepperModal
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                onSubmit={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+                isSubmitting={false}
+                espaco={mockEspaco}
+                formData={mockFormData}
+                setFormData={jest.fn()}
+            />,
+        );
+
+        const cancelarBtn = screen.getByRole('button', { name: /cancelar/i });
+        const avancarBtn = screen.getByRole('button', { name: /avançar/i });
+
+        expect(cancelarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+        expect(avancarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+    });
 });

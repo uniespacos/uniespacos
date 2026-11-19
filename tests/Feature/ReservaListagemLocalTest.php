@@ -97,6 +97,8 @@ class ReservaListagemLocalTest extends TestCase
             ->where('reservas.data.0.horarios.0.agenda.espaco.nome', self::ESPACO)
             ->where('reservas.data.0.horarios.0.agenda.espaco.andar.nome', self::ANDAR)
             ->where('reservas.data.0.horarios.0.agenda.espaco.andar.modulo.nome', self::MODULO)
+            ->where('reservas.data.0.horarios.0.agenda.user.id', $gestor->id)
+            ->where('reservas.data.0.horarios.0.agenda.user.name', $gestor->name)
         );
     }
 

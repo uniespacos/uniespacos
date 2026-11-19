@@ -290,13 +290,14 @@ export const es = {
             escopo_semana: 'Solo horarios de esta semana',
             cancelada_titulo: 'Solicitud de reserva cancelada',
             cancelada_descricao:
-                'Esta solicitud de reserva fue cancelada antes de que pudiera ser evaluada o completada. Los horarios solicitados fueron liberados y no se requiere ninguna acción.',
+                'Esta reserva ha sido cancelada. Los horarios reservados fueron liberados y no se requiere ninguna acción adicional.',
             voltar_listagem: 'Volver a Gestionar Reservas',
         },
         gestor: {
             conflicts_detected: 'Advertencia: {{count}} franja(s) horaria(s) de esta reserva se superpone(n) con otra(s) reserva(s).',
             conflict_with_user: 'Solicitante: {{user}}',
-            conflicts_note: 'Puede optar por deferir incluso con conflictos. Considere analizar las reservas conflictivas antes de continuar.',
+            conflicts_note:
+                'Los horarios en conflicto con otra reserva aprobada quedan bloqueados para aprobación y se rechazan automáticamente al guardar la evaluación.',
             conflict_cache_snapshot_title: 'Captura de Conflictos ({{count}} detectados)',
             conflict_cache_snapshot_note:
                 'Esta es una captura histórica del momento en que el sistema procesó la reserva. Puede estar desactualizada. Los conflictos actuales se muestran arriba.',
@@ -354,6 +355,15 @@ export const es = {
             terms_title: 'Término de Compromiso y Responsabilidad',
             terms_description:
                 'Declaro que conozco las normas de utilización de los espacios físicos de {{institution_name}} y me comprometo con el cuidado y conservación del lugar durante el período reservado.',
+            error_slots_required: 'Seleccione al menos un horario en la cuadrícula.',
+            error_start_date_required: 'La fecha inicial es obligatoria.',
+            error_end_date_required: 'La fecha final es obligatoria.',
+            error_titulo_required: 'El título de la reserva es obligatorio.',
+            error_titulo_max: 'El título no puede superar los {{max}} caracteres.',
+            error_descricao_required: 'La justificación/descripción es obligatoria.',
+            error_descricao_max: 'La descripción no puede superar los {{max}} caracteres.',
+            error_publico_estimado_invalido: 'Ingrese un número entero entre 1 y 5000.',
+            error_terms_required: 'Es obligatorio aceptar el término de responsabilidad.',
         },
         card: {
             horarios_count: '{{count}} horarios',
