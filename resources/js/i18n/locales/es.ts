@@ -281,6 +281,7 @@ export const es = {
             indeferir: 'Rechazar Solicitud',
             parecer: 'Dictamen / Justificación',
             parecer_placeholder: 'Describa las razones institucionales de la decisión...',
+            parecer_conflito_linha: '- Horario de las {{horario}} del día {{data}}: Rechazado. {{detalhe}}',
             observacao: 'Observaciones Adicionales',
             observacao_placeholder: 'Notas para el solicitante (opcional)...',
             salvar: 'Guardar Decisión',

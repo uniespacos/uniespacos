@@ -279,6 +279,7 @@ export const ptBR = {
             indeferir: 'Indeferir Solicitação',
             parecer: 'Parecer / Justificativa',
             parecer_placeholder: 'Descreva as razões institucionais da decisão...',
+            parecer_conflito_linha: '- Horário das {{horario}} do dia {{data}}: Indeferido. {{detalhe}}',
             observacao: 'Observações Adicionais',
             observacao_placeholder: 'Observações para o solicitante (opcional)...',
             salvar: 'Salvar Decisão',
@@ -287,8 +288,7 @@ export const ptBR = {
             escopo_todas: 'Todas as ocorrências da recorrência',
             escopo_semana: 'Apenas horários desta semana',
             cancelada_titulo: 'Solicitação de reserva cancelada',
-            cancelada_descricao:
-                'Esta reserva foi cancelada. Os horários reservados foram liberados e nenhuma ação adicional é necessária.',
+            cancelada_descricao: 'Esta reserva foi cancelada. Os horários reservados foram liberados e nenhuma ação adicional é necessária.',
             voltar_listagem: 'Voltar para Gerenciar Reservas',
         },
         gestor: {

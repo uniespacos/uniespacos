@@ -1,5 +1,4 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TURNOS_ORDENADOS } from '@/constants/turnos';
 import { EscopoRecorrencia, isDecisaoAvaliacao, SituacaoReserva, ValidationStatus, type SituacaoReservaType } from '@/contracts';
@@ -9,10 +8,10 @@ import { useReservaRefreshOnEvent } from '@/hooks/use-reserva-refresh-on-event';
 import { useReservationLiveUpdates } from '@/hooks/use-reservation-live-updates';
 import { useReservationSlots } from '@/hooks/use-reservation-slots';
 import { useTranslation } from '@/i18n';
-import { diasDaSemana, getStatusReservaColor, getStatusReservaText, parseDataLocal } from '@/lib/utils';
+import { diasDaSemana, parseDataLocal } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { verificarStatusReserva } from '@/lib/utils/reserva-status.helpers';
-import { SituacaoIcon } from '@/presentation/atoms/SituacaoIcon';
+import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
 import AgendaNavegacao from '@/presentation/molecules/AgendaNavegacao';
 import CalendarReservationDetails from '@/presentation/molecules/CalendarReservationDetails';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
@@ -23,7 +22,7 @@ import { ReservaInfoCard } from '@/presentation/organisms/ReservaInfoCard';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Agenda, Reserva, type BreadcrumbItem, type ConflictInfo, type SlotCalendario } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { endOfWeek, format, parse, parseISO, startOfWeek } from 'date-fns';
+import { endOfWeek, format, parseISO, startOfWeek } from 'date-fns';
 import { ArrowLeft, Clock, Info, Loader2 } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -122,10 +121,14 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                     if (!horarioOriginal) return null;
 
                     const horarioFormatado = horarioOriginal.horario_inicio.substring(0, 5);
-                    const dataFormatada = format(parse(horarioOriginal.data, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy');
+                    const dataFormatada = format(parseDataLocal(horarioOriginal.data), 'dd/MM/yyyy');
                     const detalheDoConflito = t('reservas.conflito_outra_reserva_deferida');
 
-                    return `- Horário das ${horarioFormatado} do dia ${dataFormatada}: Indeferido. ${detalheDoConflito}`;
+                    return t('reservas.avaliacao.parecer_conflito_linha', {
+                        horario: horarioFormatado,
+                        data: dataFormatada,
+                        detalhe: detalheDoConflito,
+                    });
                 })
                 .filter(Boolean)
                 .join('\n');
@@ -201,17 +204,8 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={tituloAvaliacao} />
-            <div className="mx-auto flex h-full w-full max-w-4xl flex-1 flex-col gap-6 rounded-xl p-4">
-                <GenericHeader
-                    titulo={tituloAvaliacao}
-                    descricao={descricaoAvaliacao}
-                    actions={
-                        <Badge className={`${getStatusReservaColor(situacaoHeader)} flex items-center gap-1`}>
-                            <SituacaoIcon situacao={situacaoHeader} />
-                            {getStatusReservaText(situacaoHeader)}
-                        </Badge>
-                    }
-                />
+            <div className="mx-auto flex h-full w-full max-w-4xl min-w-0 flex-1 flex-col gap-6 rounded-xl p-4">
+                <GenericHeader titulo={tituloAvaliacao} descricao={descricaoAvaliacao} actions={<SituacaoBadge situacao={situacaoHeader} />} />
 
                 {isCancelada && (
                     <Alert data-testid="reserva-cancelada-alert" className="border-warning-accent/30 bg-warning-subtle/80 text-foreground">
