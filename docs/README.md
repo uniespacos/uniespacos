@@ -13,6 +13,7 @@ Sistema de reserva de espaços da UESB. Esta pasta é a fonte de verdade sobre o
 | Convenções de código (backend, frontend, testes, git) | skills em [`.claude/skills/`](../.claude/skills/) |
 | Auditoria de privacidade e dados pessoais contra a LGPD | skill [`lgpd-audit`](../.claude/skills/lgpd-audit/SKILL.md) |
 | Anonimizar uma base de teste ou de staging | [`operacao/anonimizacao-de-bases.md`](./operacao/anonimizacao-de-bases.md) |
+| Testar o fluxo de reservas em staging (reteste da rc.119 e fluxos não convencionais) | [`processo/qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) |
 
 ## Mapa
 
@@ -61,6 +62,7 @@ O inventário de dados e o runbook de incidente entram nesta pasta quando forem 
 | Documento | Assunto |
 | --- | --- |
 | [`auditorias-e-planos.md`](./processo/auditorias-e-planos.md) | Como conduzir uma auditoria e um plano em fases, como fechar o ciclo no backlog e a regra de backlog reativo. |
+| [`qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) | Roteiro de QA de reservas em staging: reteste das correções do QA da rc.119 e fluxos não convencionais (navegação, datas, edição, conflitos, papéis). Inclui o prompt pronto para o QA. |
 
 ### Material acadêmico — `UniEspaço Web/`
 

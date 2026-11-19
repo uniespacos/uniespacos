@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main` e produção na v1.6.1 (14/11/2026) · `develop` e staging na `1.5.0-rc.119` (16/11/2026, com #525, #527, #529 e #531 mergeadas).
-> **Atualizado em:** 2026-11-16.
+> **Atualizado em:** 2026-11-19.
 
 ## Como ler
 
@@ -10,14 +10,14 @@
 - **Prioridade:** `P0` bloqueia o próximo release ou é risco imediato · `P1` alto impacto, próximo ciclo · `P2` importante, planejar · `P3` melhoria · `P4` ideia ou baixo impacto.
 - **Esforço:** pequeno (até 1 dia) · médio (alguns dias) · grande (uma semana ou mais).
 - **Situação:** marcador no começo do texto do item; o checkbox não muda. 🚀 código pronto = mergeado em `develop`, falta staging ou produção · 🔧 em andamento = trabalho aberto, com a branch citada no item · ⏸ parado = aguarda terceiro, com o motivo · ⏳ aguarda decisão = depende de uma decisão de [Decisões pendentes](#decisões-pendentes-não-é-código) · sem marcador = não iniciado.
-- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação. Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
+- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação · `QA119-xx` achados do QA da rc.119 (recorrência e edição de reserva). Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
 - **Segurança:** o repositório é público. Itens de segurança descrevem o objetivo, sem detalhe de exploração; o detalhe fica nos planos locais (ver [Origem dos itens](#origem-dos-itens)).
 
 ## Agora
 
 - **Em produção:** v1.6.1 desde 14/11/2026 (Onda 3, parte 1: S26 e S14, #518). Backup manual cifrado antes do deploy, com teste de abertura completo e cópia externa conferidos (o primeiro com as duas conferências); fila vazia antes do deploy. Pós-deploy conferido nos serviços (imagem 1.6.1, banco não recriado, worker recriado pelo deploy, sem reinício explícito), com 0 erros em 15 min e `failed_jobs` vazio nos 30 min seguintes. Smoke por papel e teste do modal com dois papéis OK, e a orientação I4 foi retirada (aviso aos institucionais em 14/11/2026). Da 1.6.0 segue valendo: a rotina de retenção diária roda sem intervenção.
-- **Em staging:** rc.119 (1.7.0 em validação: #525/#526, #527, #529 e #531).
-- **Próximo passo:** validar a 1.7.0 em staging: as conferências da #525 (`T-19d` e `T-35`), o fluxo de reservas em várias semanas e turnos (#529 e #531) e o aviso de reserva cancelada para o gestor (#527). Depois, com autorização do responsável, o deploy da 1.7.0 em produção (backup manual cifrado, fila vazia e PR `develop` → `main`). Seguem: a leitura restante da T-08; a T-05b (gatilho hoje, 16/11/2026, a confirmar pelo responsável); a T-23, aguardando a resposta da TI; e, depois da 1.7.0, a Onda 3 parte 2.
+- **Em staging:** rc.119 (1.7.0 em validação: #525/#526, #527, #529 e #531). O QA da rc.119 encontrou 4 problemas (E-01, E-02, P-04 e C-02/C-03) e as correções estão na branch `fix/qa-rc119-recorrencia`, complemento da 1.7.0 com PR a abrir: E-01 e E-02 (edição com escopo "Todas as ocorrências" e "Apenas esta semana"), P-04 (período dos horários) e C-02/C-03 (mensagem de conflito com a data e a faixa).
+- **Próximo passo:** validar a 1.7.0 em staging: as conferências da #525 (`T-19d` e `T-35`), o fluxo de reservas em várias semanas e turnos (#529 e #531) e o aviso de reserva cancelada para o gestor (#527). Depois do merge da branch `fix/qa-rc119-recorrencia`, rodar o roteiro [`processo/qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) em staging (reteste R e lacunas N a W). Depois, com autorização do responsável, o deploy da 1.7.0 em produção (backup manual cifrado, fila vazia e PR `develop` → `main`). Seguem: a leitura restante da T-08; a T-05b (gatilho hoje, 16/11/2026, a confirmar pelo responsável); a T-23, aguardando a resposta da TI; e, depois da 1.7.0, a Onda 3 parte 2.
 - **Verificações e passos agendados** (em ordem de data; quem pede uma verificação com data confere a data atual antes):
 
   | Data ou gatilho | O que fazer | Quem | ID |
@@ -28,6 +28,7 @@
   | Depois do release que levar a PR da Onda 2 (sem data) | Cópia prévia da pasta de fotos, `--dry-run` revisado pelo responsável e execução do reprocessamento das fotos antigas | Responsável | T-31 |
   | Depois do merge da PR da Onda 2 em `develop` e do deploy em staging (sem data) | Parar o agendador durante uma rodada. Esperado: saída 0 sem 137, logs `agendador.parada_solicitada` e `agendador.parada_concluida`, e rodada seguinte normal | Responsável | T-19d |
   | Depois do deploy em staging (sem data) | Rodar `app:check-env` no container de staging e revisar os falsos positivos | Responsável | T-35 |
+  | Depois do deploy da correção do QA da rc.119 em staging (sem data) | Conferir as reservas de teste do QA (#3687 com E-01 parcial e #3697 com E-02 sem efeito, entre outras) e limpar as reservas "QA ..." só com autorização do responsável | Responsável | QA119-F3 |
   | Depois do release 1.7.0 em produção (sem data) | Conferir no `.env` de produção se algum padrão de retenção ou de logs (90 dias) está sobrescrito; se estiver, decidir e registrar no inventário e na política | Responsável | T-19g |
   | 02/05/2027 | Revisar o prazo do snapshot de auditoria: renovar com justificativa anotada ou destruir | Responsável | T-05 |
 
@@ -166,6 +167,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   **Pronto quando:** no modal, perder a última agenda tira o papel de gestor, e a notificação de remoção sai depois do commit; receber agenda dá o papel de gestor, inclusive para quem acumula papéis; há testes de feature para os três casos.
 - [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
   Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
+- [ ] **QA119-F4** · Falha da edição de reserva não aparece na tela — `P2` · pequeno · observabilidade/UX
+  Quando o `UpdateReservaJob` falha depois das retentativas, o solicitante só recebe a `ReservationUpdateFailedNotification`. Na tela, o botão segue em "Atualizando…" e nada indica a falha (achado do QA da rc.119). Relacionado à S33, que trata os erros dos jobs.
+  **Pronto quando:** a tela da reserva mostra o estado de falha da edição sem depender da notificação, e um teste de feature cobre o caminho de falha.
 
 ## Onda 4 — Regras de negócio e segurança (`P2`)
 
@@ -207,6 +211,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **S57, S58** · Factories autossuficientes e CI só com seeders de produção — `P3` · médio · teste
   Desde 31/10 (#489), os seeders de desenvolvimento só rodam em local, development e testing. A CI ainda roda os seeders de desenvolvimento.
   = B38, B52, I11.
+- [ ] **QA119-D1** · Parâmetro `edited_week_date` sem efeito nos testes de `UpdateReservaJobTest` — `P4` · pequeno · teste
+  O padrão `dados(...) + ['edited_week_date' => X]` não muda nada, porque o `+` mantém a chave da esquerda (o helper já define `edited_week_date`). Usar o parâmetro `$semanaEditada` do helper. Achado do QA da rc.119.
+  **Pronto quando:** os casos de escopo `single` informam a semana pelo parâmetro do helper, e a suíte segue verde.
 
 **Operação**
 
@@ -217,6 +224,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - [ ] **OP-02** · Conferir o pcntl e alinhar o compose de desenvolvimento com o de produção, para exercitar o `agendador:executar` localmente — `P4` · pequeno · operação
   O Dockerfile do `php-fpm` de desenvolvimento já instala a extensão pcntl, mas o compose de desenvolvimento segue com `schedule:work`. Conferido em 06/11/2026: o container `app` em uso tem pcntl, e os containers `scheduler` e `workspace` não têm (o `scheduler` foi construído antes do Dockerfile atual; o `workspace` usa outro Dockerfile). Reconstruir o `scheduler` de dev e, se for útil, trocar o comando dele para `agendador:executar`. Achado em 06/11/2026.
   **Pronto quando:** `agendador:executar` roda no container de dev e sai com 0 ao receber SIGTERM durante uma rodada.
+- [ ] **QA119-F3** · Conferir e limpar as reservas de teste do QA da rc.119 em staging — `P4` · pequeno · operação
+  Depois do deploy da correção em staging, reconferir as reservas criadas no QA: #3687 (edição com escopo "Todas as ocorrências" que só alterou um horário) e #3697 (edição "Apenas esta semana" sem efeito), entre outras. As reservas com título "QA ..." saem de staging só com autorização do responsável. Verificação na tabela de passos agendados.
+  **Pronto quando:** as reservas de teste de staging foram conferidas, e a limpeza tem a autorização do responsável registrada.
 - [ ] **S27** · Limite de taxa, teto diário e retentativa dos e-mails de notificação — `P2` · médio · bug
   O backoff já existe (#451). Depende das perguntas A e B (tipo de conta SMTP) e da I6. = B47.
 - [ ] **S29** · Limites de upload e pool do php-fpm na imagem de produção — `P2` · pequeno · operação
@@ -237,7 +247,9 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
   Controllers `Auth/` e `routes/auth.php` (conferir antes: o arquivo tem rotas ativas), `docker/production/nginx`, `compose.test.yml` e `versions.txt`; Prettier com o plugin do Tailwind (B34, B48; conferir depois da atualização do Prettier); Jest em worktree com ponto no caminho (B49); resposta das rotas `show` removidas (B39).
 - [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
 - [ ] **RR-D3** · Comando de auditoria dos horários com data anterior à criação, com `--dry-run` — `P4` · pequeno · depende de decisão sobre o destino desses registros.
-- [ ] **RR-F01** · A mensagem de conflito diz "ou em análise", mas só horários deferidos bloqueiam — `P4` · pequeno. Entra no PR da I18N-F1, que traduz as Rules.
+- [ ] **QA119-D2** · No escopo `single`, a chave do horário ignora `horario_fim` — `P4` · pequeno · débito técnico
+  A identidade do horário é `agenda_id|data|horario_inicio`. Mudar só o fim, mantendo o início, mantém a linha antiga. Hoje não tem efeito, porque a grade é fixa (o início define o fim). Revisar junto com o #104, se os templates de horário entrarem. Achado do QA da rc.119.
+  **Pronto quando:** a chave passa a incluir `horario_fim`, com teste de mudança só no fim; ou o #104 confirma que a grade fixa continua e o caso fica fora do escopo.
 - [ ] **AF-6.3a** · Telemetria de acerto e falha do cache de relatórios — `P4` · pequeno.
   Hoje só existe o log de cache miss, em nível info, que não aparece em produção (nível warning). Não há registro de acerto.
 - [ ] **S74** · Garantir a unicidade de andar por módulo no banco, com testes — `P3` · médio · débito técnico
@@ -252,7 +264,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   Enum de locale único; `users.locale` com `HasLocalePreference`; a prop `locale` do Inertia sempre em `pt-BR`/`en`/`es`; remove a prop `quote`, que não é usada; `<html lang>` acompanha a troca de idioma; cria `docs/arquitetura/internacionalizacao.md` com a convenção decidida.
   **Pronto quando:** a escolha de idioma persiste entre sessões; a prop `locale` nunca sai fora de `pt-BR`/`en`/`es`; `<html lang>` muda junto com o idioma; há testes cobrindo.
 - [ ] **I18N-F1** · Arquivos de idioma, validação e testes de paridade — `P2` · médio · depende da F0
-  `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais. Inclui a RR-F01.
+  `lang/pt_BR/` no lugar de `lang/pt/` e `lang/pt.json`; `lang/en` e `lang/es` completos; `es.json` com as chaves do framework que faltam (e-mails de senha e verificação); nomes de campo em `validation.attributes`; FormRequests e Rules traduzíveis; testes genéricos de paridade e de chave usada no lugar das listas manuais.
   **Pronto quando:** a validação em `es` sai em espanhol, e remover uma chave de `es.json` faz um teste falhar.
 - [ ] **I18N-F1b** · Mensagens de redefinição de senha em `es` e `en` — `P3` · pequeno · depende da F1
   `lang/es` e `lang/en` não têm `passwords.php`. As mensagens de redefinição caem no `pt`, que é o idioma de fallback. Entra junto com a F1 (paridade dos arquivos de idioma). Achado em 06/11/2026.
@@ -278,6 +290,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6d** · Textos do front: reservas e agenda (cerca de 57 strings, incluindo a validação do formulário de reserva) — `P3` · médio · depende da F5
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
+  Inclui também os textos fixos da revisão do passo 3 (`StepRevisaoConfirmacao.tsx`: "pessoas", "Sem título informado" e "Sem justificativa informada") e as 6 mensagens de validação de `useReservaStepper.ts`. = QA119-F6.
   **Pronto quando:** o inventário não lista arquivos do lote, e as traduções en/es foram revisadas por uma pessoa.
 - [ ] **I18N-6f** · Textos do front: autenticação, componentes comuns e configurações (cerca de 42 strings) — `P3` · pequeno · depende da F5
   Um PR por lote: o PR remove do inventário só os arquivos deste lote.
@@ -296,6 +309,8 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 
 - [ ] **#107** · Mostrar na agenda as solicitações em análise — `P2` · médio · feature
   Requisito "Must" do escopo original. Decidir o público: solicitante ou gestor (D-2). Armadilha: não ampliar o `ConflictDetectionService` para `em_analise`, porque a avaliação passaria a indeferir automaticamente; usar um serviço à parte.
+  Achado do QA da rc.119 (obs. 1 e 9): um horário com solicitação pendente de outro usuário não aparece nem avisa quem solicita, e o envio é aceito. Ficam duas pendentes concorrentes no mesmo horário, e a decisão cai toda no gestor. = QA119-F2.
+  **Pronto quando:** quem solicita vê, antes de enviar, que há pendência no mesmo horário, sem nome de terceiro enquanto a F-05 não for decidida; e um teste cobre o aviso.
 - [ ] **GAP-10** · Trilha de auditoria das avaliações (quem, quando e por quê) — `P2` · médio · feature
   A reavaliação sobrescreve avaliador e justificativa. Bloqueia o #46; é o requisito 14 da v2. Ver também a T-45.
 - [ ] **#98** · Versão de build no rodapé, só para administradores — `P2` · pequeno · feature. = S68, E2-I.
@@ -305,11 +320,17 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
   A label `P0` do GitHub não reflete o plano ("fora da 2.0", D-EST-09). O template precisa ser respeitado por `HorarioDisponivel` e `ConflictDetectionService`; destrava a DEB-A1.
 - [ ] **GAP-09** · Fluxo para reserva parcialmente deferida — `P3` · médio · decisão primeiro
   Resumo de horários deferidos e indeferidos, com ação sobre os indeferidos. Inclui decidir se `ReservaPolicy::update` permite editar reserva com horário já avaliado (GAP-06).
+- [ ] **QA119-F1** · ⏳ aguarda decisão · Feriados na recorrência: a expansão não considera feriados — `P3` · médio · regra de negócio
+  O QA da rc.119 (M-05) criou uma reserva de 1 mês que incluiu 08/12, marcado como feriado no período. O código não trata feriado. Falta decidir se a data é pulada, se o solicitante é avisado ou se o feriado é ignorado, e de onde vem o calendário (nacional, estadual ou municipal). Decisão em [Decisões pendentes](#decisões-pendentes-não-é-código).
+  **Pronto quando:** a decisão está registrada na tabela de decisões; se ela exigir mudança, a expansão e a revisão aplicam a regra, com teste para uma recorrência que cruza feriado.
 - [ ] **#49** · Ir para a sala anterior ou a próxima a partir da agenda — `P3` · pequeno · depende da D-4 (andar ou módulo; ordem).
 - [ ] **#462** · Busca de salas por necessidade (recursos e capacidade) — `P3` · grande · depende de modelar recursos e equipamentos.
 - [ ] **GAP-07** · Indicador de progresso para o solicitante depois de criar a reserva — `P4` · médio
   A lista já recarrega por evento; a D-EST-18 deixa para a 2.x.
 - [ ] **GAP-08** · Hora de pico, mapa de calor e série histórica nos relatórios — `P4` · médio.
+- [ ] **QA119-F5** · Grade de edição não mostra as ocorrências propagadas — `P4` · pequeno · UX
+  Na edição com escopo "Todas as ocorrências", a grade do passo 1 mostra só o horário clicado. O efeito da propagação nas demais semanas aparece só na revisão. Achado do QA da rc.119. Regra em [`regras-de-negocio/recorrencia.md`](./regras-de-negocio/recorrencia.md#51-escopo-recurring-todas-as-ocorrências).
+  **Pronto quando:** a grade ou a lista do passo 1 mostra as ocorrências que a propagação vai alterar antes do envio, e um teste cobre a prévia.
 
 ## Futuro — v2.0
 
@@ -367,6 +388,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
+| QA119-F1 · Feriados na recorrência: pular a data, avisar ou ignorar; fonte do calendário (nacional, estadual ou municipal) | QA119-F1 (Onda 7) |
 
 ## Gestão do repositório (não é código)
 
@@ -450,7 +472,7 @@ Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` est
 | --- | --- | --- | --- |
 | Auditoria de issues e backlog anterior | ago/2026 | concluído | #46, #49, #98, #104, #107, GAP-06 a GAP-10 |
 | Áreas de foco | 28/08 | concluído (#403) | AF-6.3a, AF-6.3b, S38, DEB-D2 |
-| Regras de reserva | 29/08 | concluído (#406) | RR-H3, RR-D3, RR-F01, S36 |
+| Regras de reserva | 29/08 | concluído (#406) | RR-H3, RR-D3, S36 |
 | Débitos técnicos 2026-09 | 24–29/09 | fases 01 a 08 no #432; fase 09 parada | DEB-D2, DEB-A1, DEB-D3, DEB-R4, S39 |
 | Board e roadmap | 30/09 | absorvido pela estabilização e pela LGPD | decisões D-1 a D-9 |
 | Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |
