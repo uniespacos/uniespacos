@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
 import { SituacaoReserva } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -23,6 +24,7 @@ export interface CalendarSlotHoverCardProps {
 }
 
 export const CalendarSlotHoverCard: React.FC<CalendarSlotHoverCardProps> = ({ data, canViewDetails = true }) => {
+    const { t } = useTranslation();
     const initials =
         data.solicitanteNome
             .split(' ')
@@ -72,7 +74,7 @@ export const CalendarSlotHoverCard: React.FC<CalendarSlotHoverCardProps> = ({ da
                 <div className="border-border flex justify-end border-t pt-1">
                     <Button asChild variant="ghost" size="sm" className="text-primary hover:text-primary h-7 gap-1 px-2 text-xs">
                         <Link href={`/reservas/${String(data.reservaId)}`}>
-                            <span>Ver Detalhes</span>
+                            <span>{t('agenda.detalhes.ver_reserva')}</span>
                             <ExternalLink className="h-3 w-3" />
                         </Link>
                     </Button>

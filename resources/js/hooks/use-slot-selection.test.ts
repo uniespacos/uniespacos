@@ -100,3 +100,130 @@ describe('useSlotSelection', () => {
         expect(result.current.slotsSelecao).toHaveLength(0);
     });
 });
+
+describe('useSlotSelection: intervalo com Shift e marcacao em lote', () => {
+    const hoje = parseISO('2026-06-02');
+
+    const slotEm = (dia: string, inicio: string, status: SlotCalendario['status'] = 'livre'): SlotCalendario => ({
+        id: `${dia}|${inicio}`,
+        status,
+        data: parseISO(dia),
+        horario_inicio: inicio,
+        horario_fim: inicio,
+        agenda_id: 1,
+        isLocked: false,
+        isPast: false,
+    });
+
+    const secao = [
+        slotEm('2026-06-03', '07:30:00'),
+        slotEm('2026-06-03', '08:20:00'),
+        slotEm('2026-06-03', '09:10:00'),
+        slotEm('2026-06-03', '10:00:00'),
+        slotEm('2026-06-04', '08:20:00'),
+    ];
+
+    const idsSelecionados = (slots: SlotCalendario[]) => slots.map((s) => s.id);
+
+    it('Shift+clique com a ancora selecionada seleciona todo o intervalo do mesmo dia', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.alternarSelecaoSlot(secao[0]);
+        });
+        act(() => {
+            result.current.alternarSelecaoIntervalo(secao[2], secao);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[0].id, secao[1].id, secao[2].id]);
+    });
+
+    it('Shift+clique com a ancora desmarcada desmarca o intervalo', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje, slotsIniciais: [secao[0], secao[1], secao[2]] }));
+
+        act(() => {
+            result.current.alternarSelecaoSlot(secao[0]);
+        });
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[1].id, secao[2].id]);
+
+        act(() => {
+            result.current.alternarSelecaoIntervalo(secao[2], secao);
+        });
+
+        expect(result.current.slotsSelecao).toEqual([]);
+    });
+
+    it('Shift+clique em outro dia comporta-se como clique simples', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.alternarSelecaoSlot(secao[0]);
+        });
+        act(() => {
+            result.current.alternarSelecaoIntervalo(secao[4], secao);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[0].id, secao[4].id]);
+    });
+
+    it('Shift+clique sem ancora comporta-se como clique simples', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.alternarSelecaoIntervalo(secao[2], secao);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[2].id]);
+    });
+
+    it('limparSelecao descarta a ancora, e o proximo Shift+clique vira clique simples', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.alternarSelecaoSlot(secao[0]);
+        });
+        act(() => {
+            result.current.limparSelecao();
+        });
+        act(() => {
+            result.current.alternarSelecaoIntervalo(secao[2], secao);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[2].id]);
+    });
+
+    it('intervalo nao inclui slots reservados', () => {
+        const comReservado = [secao[0], slotEm('2026-06-03', '08:20:00', 'reservado'), secao[2]];
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.alternarSelecaoSlot(comReservado[0]);
+        });
+        act(() => {
+            result.current.alternarSelecaoIntervalo(comReservado[2], comReservado);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[0].id, secao[2].id]);
+    });
+
+    it('definirSelecaoDeVarios marca os selecionaveis e ignora reservados', () => {
+        const comReservado = [secao[0], secao[1], slotEm('2026-06-03', '09:10:00', 'reservado')];
+        const { result } = renderHook(() => useSlotSelection({ hoje }));
+
+        act(() => {
+            result.current.definirSelecaoDeVarios(comReservado, true);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[0].id, secao[1].id]);
+    });
+
+    it('definirSelecaoDeVarios com false desmarca apenas os slots indicados', () => {
+        const { result } = renderHook(() => useSlotSelection({ hoje, slotsIniciais: [secao[0], secao[1], secao[2]] }));
+
+        act(() => {
+            result.current.definirSelecaoDeVarios([secao[0], secao[1]], false);
+        });
+
+        expect(idsSelecionados(result.current.slotsSelecao)).toEqual([secao[2].id]);
+    });
+});

@@ -1,112 +1,102 @@
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
 import { act, render, screen } from '@testing-library/react';
-import { ReservaConflictAlert } from './ReservaConflictAlert';
+import { ReservaConflictAlert, SlotConflitavel } from './ReservaConflictAlert';
 
 jest.mock('@/lib/echo-channel-registry', () => ({
     acquirePrivateChannel: jest.fn(),
     releasePrivateChannel: jest.fn(),
 }));
 
+interface EventoOcupado {
+    data: string;
+    horario_inicio: string;
+}
+
+type Listener = (evento: EventoOcupado) => void;
+
+const mockAcquire = acquirePrivateChannel as jest.Mock;
+const mockRelease = releasePrivateChannel as jest.Mock;
+
 describe('ReservaConflictAlert', () => {
-    let mockChannel: {
-        listen: jest.Mock;
-        stopListening: jest.Mock;
-    };
+    let listeners: Record<string, Listener>;
+    let channel: { listen: jest.Mock; stopListening: jest.Mock };
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        mockChannel = {
-            listen: jest.fn(),
+        listeners = {};
+        channel = {
+            listen: jest.fn((nome: string, callback: Listener) => {
+                listeners[nome] = callback;
+            }),
             stopListening: jest.fn(),
         };
-        (acquirePrivateChannel as jest.Mock).mockReturnValue(mockChannel);
+        mockAcquire.mockReturnValue(channel);
     });
 
-    it('returns null when there are no conflicts and no events', () => {
-        const { container } = render(
-            <ReservaConflictAlert espacoId={1} selectedSlots={[{ data: '2026-08-25', horario_inicio: '08:00', horario_fim: '09:00' }]} />,
-        );
-
-        expect(container.firstChild).toBeNull();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('displays static conflicts when conflictingDates are passed', () => {
-        render(
-            <ReservaConflictAlert
-                espacoId={1}
-                selectedSlots={[{ data: '2026-08-25', horario_inicio: '08:00', horario_fim: '09:00' }]}
-                conflictingDates={['25/08/2026', '26/08/2026']}
-            />,
-        );
+    const slotSelecionado: SlotConflitavel = { id: '2026-06-03|08:20:00', data: '2026-06-03', horario_inicio: '08:20:00', horario_fim: '09:10:00' };
 
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-        expect(screen.getByText(/Conflito de Horários Existente/i)).toBeInTheDocument();
-        expect(screen.getByText(/25\/08\/2026, 26\/08\/2026/i)).toBeInTheDocument();
+    it('não renderiza nada quando não há conflito', () => {
+        render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotSelecionado]} />);
+
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it('listens to Reverb HorarioOcupadoEvent and alerts when matching slot is broadcast', () => {
-        const handleConflict = jest.fn();
-        let capturedCallback: ((event: { data: string; horario_inicio: string }) => void) | undefined;
-        mockChannel.listen.mockImplementation((_eventName: string, cb: (event: { data: string; horario_inicio: string }) => void) => {
-            capturedCallback = cb;
-        });
+    it('exibe o conflito estático com as datas informadas', () => {
+        render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotSelecionado]} conflictingDates={['25/08/2026', '01/09/2026']} />);
 
-        render(
-            <ReservaConflictAlert
-                espacoId={10}
-                selectedSlots={[{ data: '2026-08-25', horario_inicio: '08:00:00', horario_fim: '09:00:00' }]}
-                onConflictDetected={handleConflict}
-            />,
-        );
+        expect(screen.getByRole('alert')).toHaveTextContent('Já existem reservas aprovadas');
+        expect(screen.getByRole('alert')).toHaveTextContent('25/08/2026, 01/09/2026');
+    });
 
-        expect(acquirePrivateChannel).toHaveBeenCalledWith('App.Models.Espaco.10');
-        expect(mockChannel.listen).toHaveBeenCalledWith('.HorarioOcupadoEvent', expect.any(Function));
+    it('exibe o conflito em tempo real e informa o slot afetado pelo id', () => {
+        const onRealtimeSlotsConflict = jest.fn();
+
+        render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotSelecionado]} onRealtimeSlotsConflict={onRealtimeSlotsConflict} />);
 
         act(() => {
-            capturedCallback?.({
-                data: '2026-08-25',
-                horario_inicio: '08:00:00',
-            });
+            listeners['.HorarioOcupadoEvent']({ data: '2026-06-03', horario_inicio: '08:20:00' });
         });
 
-        expect(screen.getByText(/Conflito em Tempo Real/i)).toBeInTheDocument();
-        expect(screen.getByText(/O horário das 08:00 em 2026-08-25 acabou de ser reservado/i)).toBeInTheDocument();
-        expect(handleConflict).toHaveBeenCalledWith(true);
+        expect(screen.getByRole('alert')).toHaveTextContent('Conflito em tempo real');
+        expect(screen.getByRole('alert')).toHaveTextContent('O horário das 08:20 em 03/06/2026 acabou de ser reservado por outro usuário.');
+        expect(onRealtimeSlotsConflict).toHaveBeenCalledWith(['2026-06-03|08:20:00']);
     });
 
-    it('matches Date objects using local calendar date instead of UTC date shift', () => {
-        const handleConflict = jest.fn();
-        let capturedCallback: ((event: { data: string; horario_inicio: string }) => void) | undefined;
-        mockChannel.listen.mockImplementation((_eventName: string, cb: (event: { data: string; horario_inicio: string }) => void) => {
-            capturedCallback = cb;
-        });
+    it('ignora evento que não corresponde a nenhum slot selecionado', () => {
+        const onRealtimeSlotsConflict = jest.fn();
 
-        render(
-            <ReservaConflictAlert
-                espacoId={10}
-                selectedSlots={[{ data: new Date(2026, 7, 25, 22, 0, 0), horario_inicio: '22:00:00', horario_fim: '23:00:00' }]}
-                onConflictDetected={handleConflict}
-            />,
-        );
+        render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotSelecionado]} onRealtimeSlotsConflict={onRealtimeSlotsConflict} />);
 
         act(() => {
-            capturedCallback?.({
-                data: '2026-08-25',
-                horario_inicio: '22:00:00',
-            });
+            listeners['.HorarioOcupadoEvent']({ data: '2026-06-04', horario_inicio: '08:20:00' });
         });
 
-        expect(handleConflict).toHaveBeenCalledWith(true);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(onRealtimeSlotsConflict).not.toHaveBeenCalled();
     });
 
-    it('releases channel on unmount', () => {
-        const { unmount } = render(
-            <ReservaConflictAlert espacoId={10} selectedSlots={[{ data: '2026-08-25', horario_inicio: '08:00', horario_fim: '09:00' }]} />,
-        );
+    it('compara Date pela data local, sem deslocamento para UTC', () => {
+        const onRealtimeSlotsConflict = jest.fn();
+        const slotComDate: SlotConflitavel = { id: 'dt', data: new Date(2026, 5, 3), horario_inicio: '08:20:00', horario_fim: '09:10:00' };
+
+        render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotComDate]} onRealtimeSlotsConflict={onRealtimeSlotsConflict} />);
+
+        act(() => {
+            listeners['.HorarioOcupadoEvent']({ data: '2026-06-03', horario_inicio: '08:20:00' });
+        });
+
+        expect(onRealtimeSlotsConflict).toHaveBeenCalledWith(['dt']);
+    });
+
+    it('libera o canal ao desmontar', () => {
+        const { unmount } = render(<ReservaConflictAlert espacoId={7} selectedSlots={[slotSelecionado]} />);
 
         unmount();
 
-        expect(mockChannel.stopListening).toHaveBeenCalledWith('.HorarioOcupadoEvent');
-        expect(releasePrivateChannel).toHaveBeenCalledWith('App.Models.Espaco.10');
+        expect(channel.stopListening).toHaveBeenCalledWith('.HorarioOcupadoEvent');
+        expect(mockRelease).toHaveBeenCalledWith('App.Models.Espaco.7');
     });
 });

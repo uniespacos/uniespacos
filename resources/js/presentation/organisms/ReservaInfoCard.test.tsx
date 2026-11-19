@@ -1,6 +1,6 @@
+import type { Reserva, User } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ReservaInfoCard } from './ReservaInfoCard';
-import type { Reserva, User } from '@/types';
 
 jest.mock('@/i18n', () => ({
     useTranslation: () => ({
@@ -10,11 +10,15 @@ jest.mock('@/i18n', () => ({
             }
             return date.toLocaleDateString('pt-BR');
         },
-        t: (key: string) => {
+        t: (key: string, params?: Record<string, string>) => {
             const translations: Record<string, string> = {
                 'reservas.detalhes.solicitante': 'Solicitante',
+                'reservas.detalhes.publico_estimado': 'Público estimado',
+                'reservas.detalhes.publico_de_capacidade': 'de {{count}} lugares',
+                'reservas.detalhes.categoria': 'Categoria',
+                'espacos.pessoas': '{{count}} pessoas',
             };
-            return translations[key] || key;
+            return (translations[key] || key).replace('{{count}}', params?.count ?? '');
         },
     }),
 }));
@@ -137,9 +141,51 @@ describe('ReservaInfoCard', () => {
         render(
             <ReservaInfoCard reserva={mockReservaWithContact}>
                 <div>Child content</div>
-            </ReservaInfoCard>
+            </ReservaInfoCard>,
         );
 
         expect(screen.getByText('Child content')).toBeInTheDocument();
+    });
+
+    it('exibe público estimado comparado à capacidade do espaço e a categoria quando informados', () => {
+        const reserva = {
+            ...mockReservaWithContact,
+            publico_estimado: 80,
+            categoria: 'Palestra',
+            horarios: [{ agenda: { espaco: { capacidade_pessoas: 100 } } }] as unknown as Reserva['horarios'],
+        } satisfies Reserva;
+
+        render(<ReservaInfoCard reserva={reserva} />);
+
+        expect(screen.getByText('Público estimado')).toBeInTheDocument();
+        expect(screen.getByText('80 pessoas')).toBeInTheDocument();
+        expect(screen.getByText(/de 100 lugares/)).toBeInTheDocument();
+        expect(screen.getByText('Categoria')).toBeInTheDocument();
+        expect(screen.getByText('Palestra')).toBeInTheDocument();
+    });
+
+    it('não exibe público estimado nem categoria quando são nulos', () => {
+        const reserva = {
+            ...mockReservaWithContact,
+            publico_estimado: null,
+            categoria: null,
+        } satisfies Reserva;
+
+        render(<ReservaInfoCard reserva={reserva} />);
+
+        expect(screen.queryByText('Público estimado')).not.toBeInTheDocument();
+        expect(screen.queryByText('Categoria')).not.toBeInTheDocument();
+    });
+
+    it('omite a comparação de capacidade quando o payload não traz o espaço', () => {
+        const reserva = {
+            ...mockReservaWithContact,
+            publico_estimado: 30,
+        } satisfies Reserva;
+
+        render(<ReservaInfoCard reserva={reserva} />);
+
+        expect(screen.getByText('30 pessoas')).toBeInTheDocument();
+        expect(screen.queryByText(/de \d+ lugares/)).not.toBeInTheDocument();
     });
 });

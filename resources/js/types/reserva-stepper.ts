@@ -1,6 +1,10 @@
 import { Horario, ValorOcorrenciaType } from '@/types';
 
-export type ReservaStepId = 'horarios_recorrencia' | 'dados_justificativa' | 'revisao_confirmacao';
+export type ReservaStepId = 'detalhes' | 'revisao';
+
+export type CampoErroEtapa = 'slots' | 'data_inicial' | 'data_final' | 'titulo' | 'publico_estimado' | 'termo_responsabilidade';
+
+export type ErrosEtapa = Partial<Record<CampoErroEtapa, string>>;
 
 export interface StepperStep {
     id: ReservaStepId;
@@ -25,8 +29,8 @@ export interface ReservaFormData {
     titulo: string;
     descricao: string;
     justificativa?: string;
-    publico_estimado?: number | string;
-    categoria?: string;
+    publico_estimado?: number | string | null;
+    categoria?: string | null;
     recorrencia: ValorOcorrenciaType;
     data_inicial?: Date | null;
     data_final?: Date | null;

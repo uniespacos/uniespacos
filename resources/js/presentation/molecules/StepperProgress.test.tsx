@@ -1,60 +1,49 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { StepperProgress } from './StepperProgress';
 import { StepperStep } from '@/types/reserva-stepper';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { StepperProgress } from './StepperProgress';
 
 describe('StepperProgress', () => {
-    const mockSteps: StepperStep[] = [
-        {
-            id: 'horarios_recorrencia',
-            title: 'Horários',
-            description: 'Período e frequência',
-            isValid: true,
-            isCompleted: true,
-        },
-        {
-            id: 'dados_justificativa',
-            title: 'Dados',
-            description: 'Finalidade',
-            isValid: true,
-            isCompleted: false,
-        },
-        {
-            id: 'revisao_confirmacao',
-            title: 'Revisão',
-            description: 'Confirmação',
-            isValid: false,
-            isCompleted: false,
-        },
+    const steps: StepperStep[] = [
+        { id: 'detalhes', title: 'Detalhes', description: 'O que vai acontecer', isCompleted: false, isValid: true },
+        { id: 'revisao', title: 'Revisar', description: 'Conferência e envio', isCompleted: false, isValid: false },
     ];
 
-    it('renders all step titles and active step correctly', () => {
-        render(<StepperProgress steps={mockSteps} currentStepId="dados_justificativa" />);
+    it('renderiza os dois passos e marca o passo atual com aria-current', () => {
+        render(<StepperProgress steps={steps} currentStepId="detalhes" />);
 
-        expect(screen.getByText('Horários')).toBeInTheDocument();
-        expect(screen.getByText('Dados')).toBeInTheDocument();
-        expect(screen.getByText('Revisão')).toBeInTheDocument();
-
-        const activeButton = screen.getByLabelText('Passo 2: Dados');
-        expect(activeButton).toHaveAttribute('aria-current', 'step');
+        expect(screen.getByRole('navigation', { name: 'Etapas da solicitação de reserva' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Passo 1: Detalhes' })).toHaveAttribute('aria-current', 'step');
+        expect(screen.getByRole('button', { name: 'Passo 2: Revisar' })).not.toHaveAttribute('aria-current');
     });
 
-    it('triggers onStepClick when clicking a completed or current step', () => {
-        const handleStepClick = jest.fn();
-        render(<StepperProgress steps={mockSteps} currentStepId="dados_justificativa" onStepClick={handleStepClick} />);
+    it('mostra o contador de passo para telas pequenas', () => {
+        render(<StepperProgress steps={steps} currentStepId="revisao" />);
 
-        const step1Button = screen.getByLabelText('Passo 1: Horários');
-        fireEvent.click(step1Button);
-        expect(handleStepClick).toHaveBeenCalledWith('horarios_recorrencia');
+        expect(screen.getByText('Passo 2 de 2: Revisar')).toBeInTheDocument();
     });
 
-    it('does not trigger onStepClick for uncompleted future steps', () => {
-        const handleStepClick = jest.fn();
-        render(<StepperProgress steps={mockSteps} currentStepId="dados_justificativa" onStepClick={handleStepClick} />);
+    it('dispara onStepClick ao clicar no passo atual ou concluído', () => {
+        const onStepClick = jest.fn();
+        const stepsConcluidos = steps.map((step) => ({ ...step, isCompleted: step.id === 'detalhes' }));
 
-        const step3Button = screen.getByLabelText('Passo 3: Revisão');
-        expect(step3Button).toBeDisabled();
-        fireEvent.click(step3Button);
-        expect(handleStepClick).not.toHaveBeenCalled();
+        render(<StepperProgress steps={stepsConcluidos} currentStepId="revisao" onStepClick={onStepClick} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Passo 1: Detalhes' }));
+        expect(onStepClick).toHaveBeenCalledWith('detalhes');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Passo 2: Revisar' }));
+        expect(onStepClick).toHaveBeenCalledWith('revisao');
+    });
+
+    it('desabilita passo futuro não concluído', () => {
+        const onStepClick = jest.fn();
+
+        render(<StepperProgress steps={steps} currentStepId="detalhes" onStepClick={onStepClick} />);
+
+        const passoRevisao = screen.getByRole('button', { name: 'Passo 2: Revisar' });
+        expect(passoRevisao).toBeDisabled();
+
+        fireEvent.click(passoRevisao);
+        expect(onStepClick).not.toHaveBeenCalled();
     });
 });

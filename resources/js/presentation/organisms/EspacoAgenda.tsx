@@ -36,11 +36,14 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
     const {
         slotsSelecao,
         alternarSelecaoSlot,
+        alternarSelecaoIntervalo,
+        definirSelecaoDeVarios,
         isSlotSelecionado,
         limparSelecao,
         setSlotsSelecao,
         dialogAberto,
         setDialogAberto,
+        sucessoCriacao,
         formData,
         setFormData,
         processing,
@@ -85,6 +88,8 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
                     diasSemana={diasSemana}
                     isSlotSelecionado={isSlotSelecionado}
                     alternarSelecaoSlot={alternarSelecaoSlot}
+                    alternarSelecaoIntervalo={alternarSelecaoIntervalo}
+                    definirSelecaoDeVarios={definirSelecaoDeVarios}
                     semanaInicio={semanaVisivel}
                     agendas={agendas || []}
                     slotsDaReserva={slotsSelecao}
@@ -121,6 +126,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
                 formData={formData}
                 setFormData={setFormData}
                 setSlotsSelecao={setSlotsSelecao}
+                sucessoCriacao={sucessoCriacao}
             />
         </div>
     );

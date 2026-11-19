@@ -152,11 +152,11 @@ describe('VisualizarEspacoPage', () => {
         expect(getByTestId('agenda-espaco')).toBeInTheDocument();
     });
 
-    it('usa_titulo_da_agenda_no_head_e_como_h1', () => {
+    it('usa_titulo_da_agenda_no_head_sem_repetir o nome do espaco como cabecalho da pagina', () => {
         render(<VisualizarEspaço espaco={mockEspaco} semana={mockSemana} />);
 
         const titulosHead = jest.mocked(InertiaReact.Head).mock.calls.map(([props]) => props.title);
         expect(titulosHead).toContain('Agenda - Sala de Reuniões');
-        expect(screen.getByRole('heading', { level: 1, name: 'Agenda - Sala de Reuniões' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     });
 });

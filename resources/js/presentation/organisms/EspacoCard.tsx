@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import type { Espaco, User } from '@/types';
 import { Link, router } from '@inertiajs/react';
-import { Building2, ChevronRight, Edit, Heart, Layers, MapPin, Trash2, Users } from 'lucide-react';
+import { Building2, CalendarCheck, ChevronRight, Edit, Heart, Layers, MapPin, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 declare function route(name: string, params?: unknown): string;
@@ -25,6 +25,7 @@ interface CardEspacoProps {
     handleEditarEspaco?: (espacoId: string) => void;
     handleExcluirEspaco?: (espacoId: string) => void;
     showFavoritar?: boolean;
+    semanaDestino?: string;
 }
 
 export default function EspacoCard({
@@ -35,6 +36,7 @@ export default function EspacoCard({
     handleEditarEspaco,
     handleExcluirEspaco,
     showFavoritar = true,
+    semanaDestino,
 }: CardEspacoProps) {
     const { t } = useTranslation();
     const [isFavorited, setIsFavorited] = useState<boolean>(espaco.is_favorited_by_user ?? false);
@@ -96,27 +98,25 @@ export default function EspacoCard({
     const isModoGerenciamento = Boolean(isGerenciarEspacos) && hasPermission(user, PERMISSION_ESPACOS_ATUALIZAR);
     const isClicavel = !isModoGerenciamento;
 
+    const urlAgenda = semanaDestino
+        ? `/espacos/${String(espaco.id)}?${new URLSearchParams({ semana: semanaDestino }).toString()}`
+        : `/espacos/${String(espaco.id)}`;
+
     const handleCardClick = () => {
         if (isClicavel) {
             if (handleSolicitarReserva) {
                 handleSolicitarReserva(String(espaco.id));
             } else {
-                router.get(`/espacos/${String(espaco.id)}`);
+                router.get(urlAgenda);
             }
         }
     };
 
+    const horariosLivres = espaco.horarios_livres;
+
     return (
         <Card
-            role={isClicavel ? 'button' : undefined}
-            tabIndex={isClicavel ? 0 : undefined}
             onClick={handleCardClick}
-            onKeyDown={(e) => {
-                if (isClicavel && (e.key === 'Enter' || e.key === ' ')) {
-                    e.preventDefault();
-                    handleCardClick();
-                }
-            }}
             className={cn(
                 'group border-border/80 bg-card flex flex-col overflow-hidden rounded-2xl border transition-all duration-300',
                 isClicavel && 'hover:border-primary/40 cursor-pointer hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]',
@@ -136,7 +136,7 @@ export default function EspacoCard({
                                 <CarouselItem key={index} className="h-full pl-0">
                                     <img
                                         src={src}
-                                        alt={`Foto ${String(index + 1)} de ${espaco.nome}`}
+                                        alt={t('espacos.card.foto_alt', { numero: String(index + 1), nome: espaco.nome })}
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         loading="lazy"
                                         decoding="async"
@@ -192,7 +192,7 @@ export default function EspacoCard({
                 </CardTitle>
                 <div className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
                     <MapPin className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{modulo ? `${modulo} • ${andarLabel ?? 'Térreo'}` : t('common.status.unknown')}</span>
+                    <span className="truncate">{modulo ? `${modulo} • ${andarLabel ?? t('espacos.card.terreo')}` : t('common.status.unknown')}</span>
                 </div>
             </CardHeader>
 
@@ -211,6 +211,14 @@ export default function EspacoCard({
                         <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium">
                             <Layers className="h-3.5 w-3.5 shrink-0" />
                             {andarLabel}
+                        </span>
+                    )}
+                    {horariosLivres !== undefined && (
+                        <span className="bg-success-subtle text-success-accent inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-medium">
+                            <CalendarCheck className="h-3.5 w-3.5 shrink-0" />
+                            {horariosLivres === 1
+                                ? t('espacos.card.horario_livre')
+                                : t('espacos.card.horarios_livres', { count: String(horariosLivres) })}
                         </span>
                     )}
                 </div>
@@ -239,10 +247,11 @@ export default function EspacoCard({
             ) : (
                 <CardFooter className="border-border/40 text-primary flex items-center justify-between border-t p-4 pt-2 text-xs font-medium">
                     <Link
-                        href={`/espacos/${String(espaco.id)}`}
+                        href={urlAgenda}
                         prefetch="hover"
                         className="text-primary flex w-full items-center justify-between group-hover:underline"
                         onClick={(e) => {
+                            e.stopPropagation();
                             if (handleSolicitarReserva) {
                                 e.preventDefault();
                                 handleSolicitarReserva(String(espaco.id));

@@ -1,154 +1,65 @@
-import { Espaco, SlotCalendario } from '@/types';
+import { SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { StepHorariosRecorrencia } from './StepHorariosRecorrencia';
 
-jest.mock('@/lib/echo-channel-registry', () => ({
-    acquirePrivateChannel: jest.fn(() => ({
-        listen: jest.fn(),
-        stopListening: jest.fn(),
-    })),
-    releasePrivateChannel: jest.fn(),
-}));
+function criarFormData(overrides: Partial<ReservaFormData> = {}): ReservaFormData {
+    return {
+        titulo: 'Aula',
+        descricao: '',
+        recorrencia: 'unica',
+        data_inicial: new Date(2026, 10, 20),
+        data_final: new Date(2026, 10, 20),
+        horarios_solicitados: [],
+        ...overrides,
+    };
+}
+
+function criarSlot(id: string, data: Date, inicio: string, fim: string): SlotCalendario {
+    return { id, status: 'selecionado', data, horario_inicio: inicio, horario_fim: fim, agenda_id: 1 };
+}
 
 describe('StepHorariosRecorrencia', () => {
-    let mockEspaco: Espaco;
-    let mockFormData: ReservaFormData;
-    let mockSlots: SlotCalendario[];
-
-    beforeEach(() => {
-        mockEspaco = {
-            id: 1,
-            nome: 'Auditório',
-            capacidade_pessoas: 100,
-            agendas: [],
-            descricao: '',
-            imagens: [],
-            main_image_index: null,
-        };
-
-        mockSlots = [
-            {
-                id: '2026-08-25|08:00',
-                data: new Date('2026-08-25T00:00:00'),
-                horario_inicio: '08:00:00',
-                horario_fim: '09:00:00',
-                status: 'selecionado',
-                agenda_id: 1,
-            },
+    it('mostra o resumo agrupado por dia, unindo períodos contíguos', () => {
+        const slots = [
+            criarSlot('a', new Date(2026, 10, 20), '13:10:00', '14:00:00'),
+            criarSlot('b', new Date(2026, 10, 20), '14:00:00', '15:40:00'),
+            criarSlot('c', new Date(2026, 10, 21), '08:00:00', '09:00:00'),
         ];
 
-        mockFormData = {
-            titulo: 'Evento',
-            descricao: 'Desc',
-            recorrencia: 'unica',
-            data_inicial: new Date('2026-08-25T00:00:00'),
-            data_final: new Date('2026-08-31T00:00:00'),
-            horarios_solicitados: [],
-            termo_responsabilidade: false,
-        };
+        render(<StepHorariosRecorrencia formData={criarFormData()} setFormData={jest.fn()} slotsSelecao={slots} />);
+
+        expect(screen.getByText('Sex, 20/11')).toBeInTheDocument();
+        expect(screen.getByText('13:10–15:40')).toBeInTheDocument();
+        expect(screen.queryByText('13:10–14:00')).not.toBeInTheDocument();
+        expect(screen.getByText('Sáb, 21/11')).toBeInTheDocument();
+        expect(screen.getByText('08:00–09:00')).toBeInTheDocument();
+        expect(screen.getByText('3 horários selecionados')).toBeInTheDocument();
     });
 
-    it('renders recurrence options and slot list grouped by day', () => {
-        render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={mockFormData}
-                setFormData={jest.fn()}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-            />,
-        );
+    it('indica quando não há horário selecionado', () => {
+        render(<StepHorariosRecorrencia formData={criarFormData()} setFormData={jest.fn()} slotsSelecao={[]} />);
 
-        expect(screen.getByText(/Padrão de Recorrência/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Apenas os horários selecionados/i).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText(/próximos 15 dias/i).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getByText('08:00 - 09:00')).toBeInTheDocument();
+        expect(screen.getByText('Nenhum horário selecionado.')).toBeInTheDocument();
     });
 
-    it('changes recurrence pattern when clicking radio options', () => {
-        const handleSetFormData = jest.fn();
-        render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={mockFormData}
-                setFormData={handleSetFormData}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-            />,
-        );
+    it('não exibe o escopo de edição fora do modo edição', () => {
+        render(<StepHorariosRecorrencia formData={criarFormData()} setFormData={jest.fn()} slotsSelecao={[]} />);
 
-        const rec15Dias = screen.getByText('Próximos 15 dias');
-        fireEvent.click(rec15Dias);
-        expect(handleSetFormData).toHaveBeenCalledWith('recorrencia', '15dias');
+        expect(screen.queryByText('Escopo da Edição')).not.toBeInTheDocument();
     });
 
-    it('renders edit_scope radio cards when isEditMode is true', () => {
+    it('exibe o escopo de edição e propaga a troca de escopo', () => {
+        const setFormData = jest.fn();
+
         render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={{ ...mockFormData, edit_scope: 'recurring' }}
-                setFormData={jest.fn()}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-                isEditMode={true}
-            />,
+            <StepHorariosRecorrencia formData={criarFormData({ edit_scope: 'recurring' })} setFormData={setFormData} slotsSelecao={[]} isEditMode />,
         );
 
-        expect(screen.getByText(/Escopo da Edição/i)).toBeInTheDocument();
-        expect(screen.getByText(/Todas as ocorrências/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Apenas os horários selecionados/i).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText(/Apenas esta semana/i).length).toBe(1);
-    });
+        expect(screen.getByText('Escopo da Edição')).toBeInTheDocument();
 
-    it.each(['unica', '15dias', '1mes', 'personalizado'] as const)('desabilita a data inicial na recorrencia %s', (recorrencia) => {
-        render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={{ ...mockFormData, recorrencia }}
-                setFormData={jest.fn()}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-            />,
-        );
+        fireEvent.click(screen.getByLabelText(/Apenas esta semana/));
 
-        expect(screen.getByRole('button', { name: /Data Inicial/i })).toBeDisabled();
-    });
-
-    it.each([
-        ['unica', true],
-        ['personalizado', false],
-    ] as const)('data final na recorrencia %s desabilitada: %s', (recorrencia, desabilitada) => {
-        render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={{ ...mockFormData, recorrencia }}
-                setFormData={jest.fn()}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-            />,
-        );
-
-        const botaoDataFinal = screen.getByRole('button', { name: '31/08/2026' });
-        if (desabilitada) {
-            expect(botaoDataFinal).toBeDisabled();
-        } else {
-            expect(botaoDataFinal).toBeEnabled();
-        }
-    });
-
-    it('nao exibe mais o rotulo de ajuste na data inicial e indica que ela e calculada', () => {
-        render(
-            <StepHorariosRecorrencia
-                espaco={mockEspaco}
-                formData={{ ...mockFormData, recorrencia: 'personalizado' }}
-                setFormData={jest.fn()}
-                slotsSelecao={mockSlots}
-                hoje={new Date('2026-08-25T00:00:00')}
-            />,
-        );
-
-        expect(screen.queryByText(/ajusta horários/i)).not.toBeInTheDocument();
-        expect(screen.getByText(/Data Inicial \(calculada\)/i)).toBeInTheDocument();
+        expect(setFormData).toHaveBeenCalledWith('edit_scope', 'single');
     });
 });

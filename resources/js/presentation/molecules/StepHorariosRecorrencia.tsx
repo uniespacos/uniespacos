@@ -1,149 +1,79 @@
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { RadioGroup } from '@/components/ui/radio-group';
 import { useTranslation } from '@/i18n';
-import { cn, parseDataLocal } from '@/lib/utils';
-import { DatePicker } from '@/presentation/molecules/DatePicker';
-import { ReservaConflictAlert } from '@/presentation/molecules/ReservaConflictAlert';
-import { Espaco, SlotCalendario } from '@/types';
+import { agruparPeriodosPorDia } from '@/lib/utils/agrupar-periodos-por-dia';
+import { OpcaoRadioCard } from '@/presentation/molecules/OpcaoRadioCard';
+import { SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { format, isBefore, max, startOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar, Info, Repeat } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { Calendar, Repeat } from 'lucide-react';
+import React, { useId, useMemo } from 'react';
 
 export interface StepHorariosRecorrenciaProps {
-    espaco: Espaco;
     formData: ReservaFormData;
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
     slotsSelecao: SlotCalendario[];
-    hoje: Date;
     isEditMode?: boolean;
-    conflictingDates?: string[];
-    onConflictDetected?: (hasConflict: boolean) => void;
-    setSlotsSelecao?: (slots: SlotCalendario[]) => void;
-    showRecurrenceAlert?: boolean;
 }
 
-interface GrupoDiaSlot {
-    data: Date;
-    slots: SlotCalendario[];
+function primeiraLetraMaiuscula(texto: string): string {
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-function OpcaoRadioCard({
-    value,
-    id,
-    titulo,
-    descricao,
-    selecionado,
-}: {
-    value: string;
-    id: string;
-    titulo: string;
-    descricao?: string;
-    selecionado: boolean;
-}) {
-    return (
-        <Label
-            htmlFor={id}
-            className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all duration-200',
-                selecionado
-                    ? 'border-primary bg-primary/10 ring-primary/30 shadow-xs ring-1'
-                    : 'border-border hover:bg-muted/40 hover:border-border/80',
-            )}
-        >
-            <RadioGroupItem value={value} id={id} className="mt-0.5" />
-            <div className="grid gap-0.5">
-                <span className="text-foreground text-xs font-medium sm:text-sm">{titulo}</span>
-                {descricao && <span className="text-muted-foreground text-[11px] leading-tight">{descricao}</span>}
-            </div>
-        </Label>
-    );
-}
+export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = ({ formData, setFormData, slotsSelecao, isEditMode = false }) => {
+    const { t, formatDate } = useTranslation();
+    const resumoId = useId();
 
-export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = ({
-    espaco,
-    formData,
-    setFormData,
-    slotsSelecao,
-    hoje,
-    isEditMode = false,
-    conflictingDates = [],
-    onConflictDetected,
-    showRecurrenceAlert = false,
-}) => {
-    const { t } = useTranslation();
-
-    const slotsAgrupadosPorDia = useMemo(() => {
-        const agrupamento: Record<string, GrupoDiaSlot | undefined> = {};
-
-        slotsSelecao.forEach((slot) => {
-            const dataObj = parseDataLocal(slot.data);
-            const diaKey = format(dataObj, 'yyyy-MM-dd');
-            const grupo = agrupamento[diaKey];
-
-            if (!grupo) {
-                agrupamento[diaKey] = {
-                    data: dataObj,
-                    slots: [slot],
-                };
-            } else {
-                grupo.slots.push(slot);
-            }
-        });
-
-        const listaGrupos: Record<string, GrupoDiaSlot> = {};
-        Object.entries(agrupamento)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .forEach(([key, val]) => {
-                if (val) {
-                    val.slots.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
-                    listaGrupos[key] = val;
-                }
-            });
-
-        return listaGrupos;
-    }, [slotsSelecao]);
-
-    const maiorDataSelecionada = useMemo(() => {
-        if (slotsSelecao.length === 0) return undefined;
-        return new Date(Math.max(...slotsSelecao.map((s) => parseDataLocal(s.data).getTime())));
-    }, [slotsSelecao]);
-
-    const periodoFormatado = useMemo(() => {
-        const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
-        const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
-
-        return {
-            inicio: dataIni ? format(dataIni, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
-            fim: dataFim ? format(dataFim, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
-        };
-    }, [formData.data_inicial, formData.data_final]);
+    const gruposPorDia = useMemo(() => agruparPeriodosPorDia(slotsSelecao), [slotsSelecao]);
 
     return (
-        <div className="space-y-4">
-            {/* Alerta de Conflitos em Tempo Real */}
-            <ReservaConflictAlert
-                espacoId={espaco.id}
-                selectedSlots={slotsSelecao}
-                conflictingDates={conflictingDates}
-                onConflictDetected={onConflictDetected}
-            />
+        <div className="space-y-5">
+            <section aria-labelledby={resumoId} className="bg-card border-border/80 space-y-3 rounded-xl border p-3.5 shadow-xs">
+                <div className="space-y-0.5">
+                    <h3 id={resumoId} className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                        <Calendar className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
+                        {t('reservas.stepper.selected_slots')}
+                    </h3>
+                    <p className="text-muted-foreground pl-6 text-xs">
+                        {slotsSelecao.length === 1
+                            ? t('reservas.stepper.slot_selected')
+                            : t('reservas.stepper.slots_selected', { count: String(slotsSelecao.length) })}
+                    </p>
+                </div>
 
-            {/* Escopo de Edição (apenas em modo de edição) */}
+                {gruposPorDia.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">{t('reservas.stepper.no_slots_selected')}</p>
+                ) : (
+                    <ul className="space-y-2">
+                        {gruposPorDia.map((grupo) => (
+                            <li key={grupo.chave} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-4">
+                                <span className="text-foreground min-w-36 text-sm font-medium">
+                                    {`${primeiraLetraMaiuscula(formatDate(grupo.data, 'EEE').slice(0, 3))}, ${formatDate(grupo.data, 'dd/MM')}`}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {grupo.periodos.map((periodo) => (
+                                        <span
+                                            key={`${periodo.inicio}-${periodo.fim}`}
+                                            className="bg-muted/40 border-border text-foreground rounded-md border px-2 py-0.5 font-mono text-sm"
+                                        >
+                                            {`${periodo.inicio}–${periodo.fim}`}
+                                        </span>
+                                    ))}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+
             {isEditMode && (
-                <div className="bg-muted/30 border-border/80 space-y-2 rounded-xl border p-3">
-                    <Label className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                        <Repeat className="text-primary h-3.5 w-3.5" />
+                <div className="space-y-2">
+                    <p className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
+                        <Repeat className="text-primary h-4 w-4" aria-hidden="true" />
                         {t('reservas.stepper.edit_scope_label')}
-                    </Label>
+                    </p>
                     <RadioGroup
                         value={formData.edit_scope ?? 'recurring'}
-                        onValueChange={(v) => {
-                            setFormData('edit_scope', v);
+                        onValueChange={(valor) => {
+                            setFormData('edit_scope', valor);
                         }}
                         className="grid grid-cols-1 gap-2 sm:grid-cols-2"
                     >
@@ -164,134 +94,6 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                     </RadioGroup>
                 </div>
             )}
-
-            {/* Seleção do Padrão de Recorrência */}
-            <div className="space-y-2">
-                <Label className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                    <Repeat className="text-primary h-3.5 w-3.5" />
-                    {t('reservas.stepper.recurrence_pattern')}
-                </Label>
-                <RadioGroup
-                    value={formData.recorrencia}
-                    onValueChange={(v) => {
-                        setFormData('recorrencia', v);
-                    }}
-                    className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-                >
-                    {opcoesRecorrencia.map((opcao) => (
-                        <OpcaoRadioCard
-                            key={opcao.valor}
-                            value={opcao.valor}
-                            id={`rec-${opcao.valor}`}
-                            titulo={t(opcao.labelKey)}
-                            descricao={t(opcao.descricaoKey)}
-                            selecionado={formData.recorrencia === opcao.valor}
-                        />
-                    ))}
-                </RadioGroup>
-            </div>
-
-            {/* Seletor de Intervalo de Datas */}
-            <div className="bg-muted/30 border-border/70 grid grid-cols-1 gap-3 rounded-xl border p-3.5 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                    <Label htmlFor="data-inicial" className="text-foreground text-xs font-medium">
-                        {t('reservas.stepper.start_date')} {t('reservas.stepper.calculated')}
-                    </Label>
-                    <DatePicker
-                        id="data-inicial"
-                        modal
-                        value={formData.data_inicial ? parseDataLocal(formData.data_inicial) : undefined}
-                        buttonDisabled
-                        placeholder={t('reservas.stepper.select_start_date')}
-                    />
-                </div>
-
-                <div className="space-y-1.5">
-                    <Label htmlFor="data-final" className="text-foreground text-xs font-medium">
-                        {t('reservas.stepper.end_date')} {formData.recorrencia !== 'personalizado' && t('reservas.stepper.calculated')}
-                    </Label>
-                    <DatePicker
-                        modal
-                        value={formData.data_final ? parseDataLocal(formData.data_final) : undefined}
-                        onSelect={(date) => {
-                            setFormData('data_final', date);
-                        }}
-                        buttonDisabled={formData.recorrencia !== 'personalizado'}
-                        disabled={(date) => {
-                            const limiteMinimo = max([
-                                startOfDay(hoje),
-                                ...(formData.data_inicial ? [startOfDay(parseDataLocal(formData.data_inicial))] : []),
-                                ...(maiorDataSelecionada ? [startOfDay(maiorDataSelecionada)] : []),
-                            ]);
-                            return isBefore(startOfDay(date), limiteMinimo);
-                        }}
-                        placeholder={t('reservas.stepper.select_end_date')}
-                    />
-                </div>
-            </div>
-
-            {/* Banner Informativo do Período Calculado */}
-            <div className="bg-card border-border/70 flex items-start gap-2.5 rounded-xl border p-3 text-xs">
-                <Info className="text-primary mt-0.5 h-4 w-4 shrink-0" />
-                <div className="flex-1 space-y-0.5">
-                    <span className="text-foreground font-semibold">{t('reservas.stepper.period_validity')}</span>
-                    <p className="text-muted-foreground">
-                        {t('reservas.stepper.period_from')} <span className="text-foreground font-medium">{periodoFormatado.inicio}</span>{' '}
-                        {t('reservas.stepper.period_to')} <span className="text-foreground font-medium">{periodoFormatado.fim}</span>.
-                    </p>
-                </div>
-            </div>
-
-            {showRecurrenceAlert && (
-                <div className="bg-warning/10 border-warning-accent/30 text-foreground flex items-start gap-2.5 rounded-xl border p-3 text-xs">
-                    <Repeat className="text-warning-accent mt-0.5 h-4 w-4 shrink-0" />
-                    <p className="text-muted-foreground">{t('reservas.stepper.recurrence_notice')}</p>
-                </div>
-            )}
-
-            {/* Lista dos Horários Selecionados */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <Label className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                        <Calendar className="text-primary h-3.5 w-3.5" />
-                        {t('reservas.stepper.selected_slots')}
-                    </Label>
-                    <Badge variant="secondary" className="text-[11px] font-medium">
-                        {slotsSelecao.length}{' '}
-                        {slotsSelecao.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural')}
-                    </Badge>
-                </div>
-
-                <ScrollArea className="border-border/80 bg-card h-36 rounded-xl border p-3">
-                    {Object.entries(slotsAgrupadosPorDia).length === 0 ? (
-                        <div className="text-muted-foreground flex h-full items-center justify-center py-6 text-xs">
-                            {t('reservas.stepper.no_slots_selected')}
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {Object.entries(slotsAgrupadosPorDia).map(([diaKey, { data, slots }]) => (
-                                <div key={diaKey} className="space-y-1.5">
-                                    <span className="text-foreground flex items-center gap-1.5 text-xs font-semibold capitalize">
-                                        <div className="bg-primary h-1.5 w-1.5 rounded-full" />
-                                        {format(data, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
-                                    </span>
-                                    <div className="flex flex-wrap gap-1.5 pl-3">
-                                        {slots.map((slot) => (
-                                            <Badge
-                                                key={slot.id}
-                                                variant="outline"
-                                                className="bg-muted/40 border-border text-foreground px-2 py-0.5 font-mono text-[11px]"
-                                            >
-                                                {slot.horario_inicio.slice(0, 5)} - {slot.horario_fim.slice(0, 5)}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </ScrollArea>
-            </div>
         </div>
     );
 };

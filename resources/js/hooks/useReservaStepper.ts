@@ -1,218 +1,191 @@
 import { useTranslation } from '@/i18n';
+import { datasEmConflito, recorrenciaParaGravar, slotsEmConflito } from '@/lib/utils/conflitos-reserva';
+import { publicoEstimadoValido } from '@/lib/utils/publico-estimado';
 import { Espaco, SlotCalendario } from '@/types';
-import { ReservaFormData, ReservaStepId, StepperStep } from '@/types/reserva-stepper';
-import { format, parseISO } from 'date-fns';
+import { ErrosEtapa, ReservaFormData, ReservaStepId, StepperStep } from '@/types/reserva-stepper';
+import { startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 
 export interface UseReservaStepperProps {
     espaco: Espaco;
     formData: ReservaFormData;
     slotsSelecao: SlotCalendario[];
-    initialStep?: ReservaStepId;
     isEditMode?: boolean;
+    setSlotsSelecao?: (slots: SlotCalendario[]) => void;
+    initialStep?: ReservaStepId;
 }
 
-export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep = 'horarios_recorrencia' }: UseReservaStepperProps) {
+function dataValida(data: Date | null | undefined): data is Date {
+    return data instanceof Date && !Number.isNaN(data.getTime());
+}
+
+export function useReservaStepper({
+    espaco,
+    formData,
+    slotsSelecao,
+    isEditMode = false,
+    setSlotsSelecao,
+    initialStep = 'detalhes',
+}: UseReservaStepperProps) {
     const { t } = useTranslation();
     const [currentStepId, setCurrentStepId] = useState<ReservaStepId>(initialStep);
-    const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
-    const [hasRealtimeConflict, setHasRealtimeConflict] = useState(false);
+    const [stepErrors, setStepErrors] = useState<ErrosEtapa>({});
+    const [slotIdsRealtime, setSlotIdsRealtime] = useState<ReadonlySet<string>>(() => new Set());
 
     const stepDefinitions = useMemo<Omit<StepperStep, 'isCompleted' | 'isValid'>[]>(
         () => [
             {
-                id: 'horarios_recorrencia',
+                id: 'detalhes',
                 title: t('reservas.stepper.step1_title'),
                 description: t('reservas.stepper.step1_desc'),
-                iconName: 'calendar',
-            },
-            {
-                id: 'dados_justificativa',
-                title: t('reservas.stepper.step2_title'),
-                description: t('reservas.stepper.step2_desc'),
                 iconName: 'file-text',
             },
             {
-                id: 'revisao_confirmacao',
-                title: t('reservas.stepper.step3_title'),
-                description: t('reservas.stepper.step3_desc'),
+                id: 'revisao',
+                title: t('reservas.stepper.step2_title'),
+                description: t('reservas.stepper.step2_desc'),
                 iconName: 'check-circle-2',
             },
         ],
         [t],
     );
 
-    // Validação estática in-memory contra conflitos existentes nas agendas do espaço
-    const conflictingDates = useMemo(() => {
-        const conflitos: string[] = [];
+    const errosDetalhes = useMemo<ErrosEtapa>(() => {
+        const erros: ErrosEtapa = {};
 
-        formData.horarios_solicitados.forEach((hSol) => {
-            const dataSol = hSol.data;
-            const hInicio = hSol.horario_inicio;
-            const hFim = hSol.horario_fim;
-            if (!dataSol || !hInicio || !hFim) return;
+        if (slotsSelecao.length === 0) {
+            erros.slots = t('reservas.stepper.errors.select_slot');
+        }
+        if (!dataValida(formData.data_inicial)) {
+            erros.data_inicial = t('reservas.stepper.errors.start_date_required');
+        }
+        if (!dataValida(formData.data_final)) {
+            erros.data_final = t('reservas.stepper.errors.end_date_required');
+        } else if (dataValida(formData.data_inicial) && startOfDay(formData.data_final) < startOfDay(formData.data_inicial)) {
+            erros.data_final = t('reservas.stepper.errors.end_before_start');
+        }
+        if (!formData.titulo.trim()) {
+            erros.titulo = t('reservas.stepper.errors.title_required');
+        }
+        if (!publicoEstimadoValido(formData.publico_estimado)) {
+            erros.publico_estimado = t('reservas.stepper.errors.public_invalid');
+        }
 
-            let agendaId: number | undefined;
-            if ('agenda_id' in hSol && typeof hSol.agenda_id === 'number') {
-                agendaId = hSol.agenda_id;
-            } else if ('agenda' in hSol && hSol.agenda && typeof hSol.agenda === 'object' && 'id' in hSol.agenda) {
-                agendaId = (hSol.agenda as { id?: number }).id;
-            }
+        return erros;
+    }, [slotsSelecao.length, formData.data_inicial, formData.data_final, formData.titulo, formData.publico_estimado, t]);
 
-            if (!agendaId) return;
+    const recorrenciaGravada = recorrenciaParaGravar(formData.recorrencia, isEditMode && formData.edit_scope === 'single');
 
-            espaco.agendas?.forEach((agenda) => {
-                if (agenda.id === agendaId) {
-                    agenda.horarios?.forEach((hExist) => {
-                        if (
-                            hExist.data === dataSol &&
-                            hExist.situacao === 'deferida' &&
-                            hExist.horario_inicio < hFim &&
-                            hExist.horario_fim > hInicio
-                        ) {
-                            try {
-                                const dataFormatada = format(parseISO(dataSol), 'dd/MM/yyyy');
-                                if (!conflitos.includes(dataFormatada)) {
-                                    conflitos.push(dataFormatada);
-                                }
-                            } catch {
-                                if (!conflitos.includes(dataSol)) {
-                                    conflitos.push(dataSol);
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-        });
-
-        return conflitos;
-    }, [espaco.agendas, formData.horarios_solicitados]);
-
-    // Verificação de validade por etapa
-    const isStep1Valid = useMemo(() => {
-        return (
-            slotsSelecao.length > 0 &&
-            formData.data_inicial !== null &&
-            formData.data_inicial !== undefined &&
-            formData.data_final !== null &&
-            formData.data_final !== undefined
-        );
-    }, [slotsSelecao.length, formData.data_inicial, formData.data_final]);
-
-    const isStep2Valid = useMemo(() => {
-        return Boolean(formData.titulo.trim()) && Boolean(formData.descricao.trim());
-    }, [formData.titulo, formData.descricao]);
-
-    const isStep3Valid = useMemo(() => {
-        return isStep1Valid && isStep2Valid && Boolean(formData.termo_responsabilidade);
-    }, [isStep1Valid, isStep2Valid, formData.termo_responsabilidade]);
-
-    const stepValidityMap: Record<ReservaStepId, boolean> = useMemo(
-        () => ({
-            horarios_recorrencia: isStep1Valid,
-            dados_justificativa: isStep2Valid,
-            revisao_confirmacao: isStep3Valid,
-        }),
-        [isStep1Valid, isStep2Valid, isStep3Valid],
+    const conflictingDates = useMemo(
+        () => datasEmConflito(formData.horarios_solicitados, espaco.agendas),
+        [formData.horarios_solicitados, espaco.agendas],
     );
+
+    const slotIdsEstaticos = useMemo(
+        () =>
+            slotsEmConflito({
+                slots: slotsSelecao,
+                agendas: espaco.agendas,
+                recorrencia: recorrenciaGravada,
+                dataFinal: formData.data_final,
+            }),
+        [slotsSelecao, espaco.agendas, recorrenciaGravada, formData.data_final],
+    );
+
+    const conflictingSlotIds = useMemo(() => {
+        const idsEmConflito = new Set([...slotIdsEstaticos, ...slotIdsRealtime]);
+
+        return slotsSelecao.map((slot) => slot.id).filter((id) => idsEmConflito.has(id));
+    }, [slotsSelecao, slotIdsEstaticos, slotIdsRealtime]);
+
+    const hasAnyConflict = conflictingDates.length > 0 || conflictingSlotIds.length > 0;
+
+    const termoAceito = Boolean(formData.termo_responsabilidade);
+
+    const bloqueios = useMemo(
+        () => ({
+            detalhes: Object.keys(errosDetalhes).length > 0,
+            conflito: hasAnyConflict,
+            termo: !termoAceito,
+        }),
+        [errosDetalhes, hasAnyConflict, termoAceito],
+    );
+
+    const canSubmit = !bloqueios.detalhes && !bloqueios.conflito && !bloqueios.termo;
+    const canAdvance = slotsSelecao.length > 0;
 
     const currentStepIndex = useMemo(() => stepDefinitions.findIndex((s) => s.id === currentStepId), [stepDefinitions, currentStepId]);
 
     const steps: StepperStep[] = useMemo(() => {
+        const validade: Record<ReservaStepId, boolean> = {
+            detalhes: !bloqueios.detalhes,
+            revisao: canSubmit,
+        };
+
         return stepDefinitions.map((stepDef, idx) => {
-            const isValid = stepValidityMap[stepDef.id];
+            const isValid = validade[stepDef.id];
             const isCompleted = idx < currentStepIndex && isValid;
 
-            return {
-                ...stepDef,
-                isValid,
-                isCompleted,
-            };
+            return { ...stepDef, isValid, isCompleted };
         });
-    }, [stepDefinitions, stepValidityMap, currentStepIndex]);
+    }, [stepDefinitions, bloqueios.detalhes, canSubmit, currentStepIndex]);
 
     const isFirstStep = currentStepIndex === 0;
     const isLastStep = currentStepIndex === stepDefinitions.length - 1;
 
-    const canAdvance = useMemo(() => {
-        if (currentStepId === 'horarios_recorrencia') return isStep1Valid;
-        if (currentStepId === 'dados_justificativa') return isStep2Valid;
-        return isStep3Valid;
-    }, [currentStepId, isStep1Valid, isStep2Valid, isStep3Valid]);
-
-    const validateCurrentStep = useCallback((): boolean => {
-        const errors: Record<string, string> = {};
-
-        if (currentStepId === 'horarios_recorrencia') {
-            if (slotsSelecao.length === 0) {
-                errors.slots = 'Selecione pelo menos um horário na grade.';
-            }
-            if (!formData.data_inicial) {
-                errors.data_inicial = 'Data inicial é obrigatória.';
-            }
-            if (!formData.data_final) {
-                errors.data_final = 'Data final é obrigatória.';
-            }
-        } else if (currentStepId === 'dados_justificativa') {
-            if (!formData.titulo.trim()) {
-                errors.titulo = 'O título da reserva é obrigatório.';
-            }
-            if (!formData.descricao.trim()) {
-                errors.descricao = 'A justificativa/descrição é obrigatória.';
-            }
-        } else {
-            if (!formData.termo_responsabilidade) {
-                errors.termo_responsabilidade = 'É obrigatório aceitar o termo de responsabilidade.';
-            }
-        }
-
-        setStepErrors(errors);
-        return Object.keys(errors).length === 0;
-    }, [currentStepId, slotsSelecao.length, formData]);
-
-    const goToStep = useCallback(
-        (stepId: ReservaStepId) => {
-            const targetIdx = stepDefinitions.findIndex((s) => s.id === stepId);
-            // Só permite avançar livremente para passos anteriores ou para o próximo se o passo atual estiver válido
-            if (targetIdx <= currentStepIndex || canAdvance) {
-                setCurrentStepId(stepId);
-                setStepErrors({});
-            }
-        },
-        [stepDefinitions, currentStepIndex, canAdvance],
-    );
+    const prevStep = useCallback(() => {
+        setCurrentStepId('detalhes');
+        setStepErrors({});
+    }, []);
 
     const nextStep = useCallback((): boolean => {
-        if (!validateCurrentStep()) {
+        if (currentStepId !== 'detalhes') {
             return false;
         }
 
-        if (currentStepIndex < stepDefinitions.length - 1) {
-            const nextDef = stepDefinitions[currentStepIndex + 1];
-            setCurrentStepId(nextDef.id);
-            setStepErrors({});
-            return true;
+        if (Object.keys(errosDetalhes).length > 0) {
+            setStepErrors(errosDetalhes);
+            return false;
         }
-        return false;
-    }, [validateCurrentStep, currentStepIndex, stepDefinitions]);
 
-    const prevStep = useCallback(() => {
-        if (currentStepIndex > 0) {
-            const prevDef = stepDefinitions[currentStepIndex - 1];
-            setCurrentStepId(prevDef.id);
-            setStepErrors({});
-        }
-    }, [currentStepIndex, stepDefinitions]);
-
-    const resetStepper = useCallback(() => {
-        setCurrentStepId('horarios_recorrencia');
+        setCurrentStepId('revisao');
         setStepErrors({});
-        setHasRealtimeConflict(false);
+        return true;
+    }, [currentStepId, errosDetalhes]);
+
+    const goToStep = useCallback(
+        (stepId: ReservaStepId) => {
+            if (stepId === 'detalhes') {
+                prevStep();
+            } else {
+                nextStep();
+            }
+        },
+        [nextStep, prevStep],
+    );
+
+    const removerSlotsEmConflito = useCallback(() => {
+        if (!setSlotsSelecao || conflictingSlotIds.length === 0) {
+            return;
+        }
+
+        const remover = new Set(conflictingSlotIds);
+        setSlotsSelecao(slotsSelecao.filter((slot) => !remover.has(slot.id)));
+        setSlotIdsRealtime((anteriores) => new Set([...anteriores].filter((id) => !remover.has(id))));
+    }, [setSlotsSelecao, conflictingSlotIds, slotsSelecao]);
+
+    const onRealtimeSlotsConflict = useCallback((ids: string[]) => {
+        if (ids.length === 0) {
+            return;
+        }
+
+        setSlotIdsRealtime((anteriores) => new Set([...anteriores, ...ids]));
     }, []);
 
-    const onConflictDetected = useCallback((hasConflict: boolean) => {
-        setHasRealtimeConflict(hasConflict);
+    const resetStepper = useCallback(() => {
+        setCurrentStepId('detalhes');
+        setStepErrors({});
+        setSlotIdsRealtime(new Set());
     }, []);
 
     return {
@@ -222,16 +195,18 @@ export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep 
         isFirstStep,
         isLastStep,
         canAdvance,
+        canSubmit,
+        bloqueios,
         stepErrors,
         conflictingDates,
-        hasRealtimeConflict,
-        hasAnyConflict: conflictingDates.length > 0 || hasRealtimeConflict,
+        conflictingSlotIds,
+        hasAnyConflict,
         goToStep,
         nextStep,
         prevStep,
         resetStepper,
-        validateCurrentStep,
-        onConflictDetected,
+        removerSlotsEmConflito,
+        onRealtimeSlotsConflict,
     };
 }
 

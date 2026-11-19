@@ -1,5 +1,6 @@
 import { opcoesRecorrencia } from '@/constants/recorrencia';
 import { useSlotSelection } from '@/hooks/use-slot-selection';
+import { useTranslation } from '@/i18n';
 import { parseDataLocal } from '@/lib/utils';
 import { propagarEdicaoRecorrente } from '@/lib/utils/propagar-edicao-recorrente';
 import { type Espaco, type Reserva, type SlotCalendario, type ValorOcorrenciaType } from '@/types';
@@ -37,8 +38,8 @@ interface AgendaSelectionFormData {
     edit_scope?: 'single' | 'recurring';
     edited_week_date?: string;
     termo_responsabilidade?: boolean;
-    publico_estimado?: number | string;
-    categoria?: string;
+    publico_estimado?: number | string | null;
+    categoria?: string | null;
     [key: string]: string | number | boolean | Date | null | undefined | AgendaHorarioPayload[];
 }
 
@@ -50,6 +51,7 @@ interface UseAgendaSelectionProps {
 }
 
 export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAgendaSelectionProps) {
+    const { t } = useTranslation();
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
     const semanaVisivelIso = format(semanaVisivel, 'yyyy-MM-dd');
 
@@ -72,19 +74,29 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         }));
     }, [reserva]);
 
-    const { slotsSelecao, alternarSelecaoSlot, isSlotSelecionado, limparSelecao, setSlotsSelecao } = useSlotSelection({ hoje, slotsIniciais });
+    const { slotsSelecao, alternarSelecaoSlot, alternarSelecaoIntervalo, definirSelecaoDeVarios, isSlotSelecionado, limparSelecao, setSlotsSelecao } =
+        useSlotSelection({ hoje, slotsIniciais });
 
-    const [dialogAberto, setDialogAberto] = useState(false);
+    const [dialogAbertoEstado, setDialogAbertoEstado] = useState(false);
+    const [sucessoCriacao, setSucessoCriacao] = useState(false);
+
+    const setDialogAberto = useCallback((aberto: boolean) => {
+        setSucessoCriacao(false);
+        setDialogAbertoEstado(aberto);
+    }, []);
 
     const { data, setData, post, patch, processing, reset } = useForm<AgendaSelectionFormData>({
         titulo: reserva?.titulo ?? '',
         descricao: reserva?.descricao ?? '',
+        publico_estimado: reserva?.publico_estimado ?? '',
+        categoria: reserva?.categoria ?? '',
         data_inicial: reserva?.data_inicial ? parseDataLocal(reserva.data_inicial) : hoje,
         data_final: reserva?.data_final ? parseDataLocal(reserva.data_final) : addMonths(hoje, 1),
         recorrencia: reserva?.recorrencia ?? 'unica',
         horarios_solicitados: [],
         edit_scope: 'recurring',
         edited_week_date: semanaVisivelIso,
+        termo_responsabilidade: false,
     });
 
     useEffect(() => {
@@ -177,26 +189,35 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     const handleFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
         if (data.horarios_solicitados.length === 0) {
-            toast.error('Selecione pelo menos um horário para reservar.');
+            toast.error(t('reservas.stepper.errors.select_slot_toast'));
             return;
         }
 
-        const options = {
-            onSuccess: () => {
-                limparSelecao();
-                setDialogAberto(false);
-                reset();
-                toast.success(isEditMode ? 'Sua solicitação de alteração foi enviada!' : 'Solicitação de reserva enviada com sucesso!');
-            },
-            onError: (formErrors: Record<string, string>) => {
-                toast.error(Object.values(formErrors)[0] || 'Ocorreu um erro de validação.', { duration: 8000 });
-            },
+        const onError = (formErrors: Record<string, string>) => {
+            toast.error(Object.values(formErrors)[0] || t('reservas.stepper.errors.generic_validation'), { duration: 8000 });
         };
 
         if (isEditMode) {
-            patch(route('reservas.update', { reserva: reserva?.id }), options);
+            patch(route('reservas.update', { reserva: reserva?.id }), {
+                onSuccess: () => {
+                    limparSelecao();
+                    setDialogAberto(false);
+                    reset();
+                    toast.success(t('reservas.stepper.success_updated'));
+                },
+                onError,
+            });
         } else {
-            post(route('reservas.store'), { ...options, preserveScroll: true, preserveState: true });
+            post(route('reservas.store'), {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    limparSelecao();
+                    reset();
+                    setSucessoCriacao(true);
+                },
+                onError,
+            });
         }
     };
 
@@ -215,11 +236,14 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     return {
         slotsSelecao,
         alternarSelecaoSlot,
+        alternarSelecaoIntervalo,
+        definirSelecaoDeVarios,
         isSlotSelecionado,
         limparSelecao,
         setSlotsSelecao,
-        dialogAberto,
+        dialogAberto: dialogAbertoEstado,
         setDialogAberto,
+        sucessoCriacao,
         formData,
         setFormData,
         processing,

@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { chaveTurnoFiltro, formatarDataFiltro, parseTurnoFiltro } from '@/lib/utils/disponibilidade-filtro';
 import { EmptyState } from '@/presentation/molecules/EmptyState';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import PaginacaoListas from '@/presentation/molecules/PaginacaoListas';
@@ -9,16 +10,11 @@ import AppLayout from '@/presentation/templates/AppLayout';
 import { Andar, Espaco, Modulo, Unidade, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { RotateCcw, SearchX } from 'lucide-react';
-
-const breadcrumbs = [
-    {
-        title: 'Consultar Espaços',
-        href: '/espacos',
-    },
-];
+import { useMemo } from 'react';
 
 export default function EspacosPage() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo(() => [{ title: t('espacos.consultar_espacos'), href: '/espacos' }], [t]);
     const {
         andares,
         modulos,
@@ -26,7 +22,6 @@ export default function EspacosPage() {
         user,
         espacos: { data: espacos, links },
         filters,
-        capacidadeEspacos,
     } = usePage<{
         espacos: {
             data: Espaco[];
@@ -42,9 +37,10 @@ export default function EspacosPage() {
             modulo?: string;
             andar?: string;
             capacidade?: string;
+            data?: string;
+            turno?: string;
         };
         user: User;
-        capacidadeEspacos: number[];
     }>().props;
 
     const hasActiveFilters =
@@ -52,10 +48,22 @@ export default function EspacosPage() {
         Boolean(filters.unidade && filters.unidade !== 'all') ||
         Boolean(filters.modulo && filters.modulo !== 'all') ||
         Boolean(filters.andar && filters.andar !== 'all') ||
-        Boolean(filters.capacidade && filters.capacidade !== 'qualquer');
+        Boolean(filters.capacidade && filters.capacidade !== 'qualquer') ||
+        Boolean(filters.data) ||
+        Boolean(filters.turno);
+
+    const turnoFiltrado = parseTurnoFiltro(filters.turno);
+    const resumoDisponibilidade = filters.data
+        ? turnoFiltrado
+            ? t('espacos.filtros.disponibilidade_resumo_turno', {
+                  data: formatarDataFiltro(filters.data),
+                  turno: t(chaveTurnoFiltro(turnoFiltrado)).toLowerCase(),
+              })
+            : t('espacos.filtros.disponibilidade_resumo', { data: formatarDataFiltro(filters.data) })
+        : null;
 
     const handleSolicitarReserva = (espacoId: string) => {
-        router.get(route('espacos.show', espacoId));
+        router.get(route('espacos.show', espacoId), filters.data ? { semana: filters.data } : {});
     };
 
     return (
@@ -70,14 +78,21 @@ export default function EspacosPage() {
                     modulos={modulos}
                     andares={andares}
                     filters={filters}
-                    capacidadeEspacos={capacidadeEspacos}
+                    disponibilidade
                 />
 
                 {espacos.length > 0 ? (
                     <>
+                        {resumoDisponibilidade && <p className="text-muted-foreground -mt-2 text-sm">{resumoDisponibilidade}</p>}
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                             {espacos.map((espaco) => (
-                                <EspacoCard key={espaco.id} espaco={espaco} user={user} handleSolicitarReserva={handleSolicitarReserva} />
+                                <EspacoCard
+                                    key={espaco.id}
+                                    espaco={espaco}
+                                    user={user}
+                                    handleSolicitarReserva={handleSolicitarReserva}
+                                    semanaDestino={filters.data}
+                                />
                             ))}
                         </div>
 
