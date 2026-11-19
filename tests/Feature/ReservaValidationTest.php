@@ -841,11 +841,13 @@ class ReservaValidationTest extends TestCase
     public function it_rejects_invalid_publico_estimado_in_store_and_update(): void
     {
         $usuario = User::factory()->create();
-        $agenda = Agenda::factory()->create();
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
         $amanha = today()->addDay()->toDateString();
 
         $reserva = Reserva::factory()->create([
             'user_id' => $usuario->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
             'data_inicial' => $amanha,
             'data_final' => $amanha,
             'recorrencia' => 'unica',
@@ -853,6 +855,7 @@ class ReservaValidationTest extends TestCase
         Horario::factory()->create([
             'reserva_id' => $reserva->id,
             'agenda_id' => $agenda->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
             'data' => $amanha,
             'horario_inicio' => '08:00:00',
             'horario_fim' => '09:00:00',
@@ -903,11 +906,13 @@ class ReservaValidationTest extends TestCase
     public function it_accepts_valid_or_null_publico_estimado_in_store_and_update(): void
     {
         $usuario = User::factory()->create();
-        $agenda = Agenda::factory()->create();
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
         $amanha = today()->addDay()->toDateString();
 
         $reserva = Reserva::factory()->create([
             'user_id' => $usuario->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
             'data_inicial' => $amanha,
             'data_final' => $amanha,
             'recorrencia' => 'unica',
@@ -915,22 +920,25 @@ class ReservaValidationTest extends TestCase
         Horario::factory()->create([
             'reserva_id' => $reserva->id,
             'agenda_id' => $agenda->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
             'data' => $amanha,
             'horario_inicio' => '08:00:00',
             'horario_fim' => '09:00:00',
         ]);
 
-        foreach ([null, '', 1, 5000] as $valido) {
+        foreach ([null, '', 1, 5000] as $indice => $valido) {
+            $dataStore = today()->addDays($indice + 1)->toDateString();
+
             $storeResponse = $this->actingAs($usuario)->post(route('reservas.store'), [
                 'titulo' => 'Teste Público Válido',
                 'descricao' => 'Justificativa',
                 'publico_estimado' => $valido,
-                'data_inicial' => $amanha,
-                'data_final' => $amanha,
+                'data_inicial' => $dataStore,
+                'data_final' => $dataStore,
                 'recorrencia' => 'unica',
                 'horarios_solicitados' => [
                     [
-                        'data' => $amanha,
+                        'data' => $dataStore,
                         'horario_inicio' => '10:00:00',
                         'horario_fim' => '11:00:00',
                         'agenda_id' => $agenda->id,
@@ -938,6 +946,7 @@ class ReservaValidationTest extends TestCase
                 ],
             ]);
             $storeResponse->assertSessionHasNoErrors();
+            $storeResponse->assertRedirect();
 
             $updateResponse = $this->actingAs($usuario)->put(route('reservas.update', $reserva->id), [
                 'titulo' => 'Teste Update Público Válido',
@@ -958,6 +967,7 @@ class ReservaValidationTest extends TestCase
                 ],
             ]);
             $updateResponse->assertSessionHasNoErrors();
+            $updateResponse->assertRedirect();
         }
     }
 }
