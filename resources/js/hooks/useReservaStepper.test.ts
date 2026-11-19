@@ -1,7 +1,7 @@
-import { renderHook, act } from '@testing-library/react';
-import { useReservaStepper } from './useReservaStepper';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { act, renderHook } from '@testing-library/react';
+import { useReservaStepper } from './useReservaStepper';
 
 describe('useReservaStepper', () => {
     let mockEspaco: Espaco;
@@ -60,6 +60,23 @@ describe('useReservaStepper', () => {
             ],
             termo_responsabilidade: false,
         };
+    });
+
+    it('exposes the step titles and descriptions from the i18n dictionary', () => {
+        const { result } = renderHook(() =>
+            useReservaStepper({
+                espaco: mockEspaco,
+                formData: mockFormData,
+                slotsSelecao: mockSlots,
+            }),
+        );
+
+        expect(result.current.steps.map((step) => step.title)).toEqual(['Horários e Recorrência', 'Dados e Justificativa', 'Revisão e Confirmação']);
+        expect(result.current.steps.map((step) => step.description)).toEqual([
+            'Período e frequência',
+            'Finalidade da solicitação',
+            'Conferência e termos',
+        ]);
     });
 
     it('initializes at step 1 with 3 defined steps', () => {

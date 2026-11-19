@@ -97,15 +97,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
             case 'dados_justificativa':
                 return <StepDadosJustificativa formData={formData} setFormData={setFormData} errors={stepErrors} />;
             case 'revisao_confirmacao':
-                return (
-                    <StepRevisaoConfirmacao
-                        espaco={espaco}
-                        formData={formData}
-                        setFormData={setFormData}
-                        slotsSelecao={slotsSelecao}
-                        isEditMode={isEditMode}
-                    />
-                );
+                return <StepRevisaoConfirmacao espaco={espaco} formData={formData} setFormData={setFormData} isEditMode={isEditMode} />;
             default:
                 return assertNever(currentStepId);
         }
@@ -142,7 +134,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                         disabled={!canAdvance}
                         className="h-9 gap-1.5 px-4 text-xs font-medium shadow-sm"
                     >
-                        <span>Avançar</span>
+                        <span>{t('common.actions.next')}</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                 ) : (
@@ -170,7 +162,9 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         </div>
     );
 
-    const modalTitle = isEditMode ? `Editar Solicitação — ${espaco.nome}` : `Solicitar Reserva — ${espaco.nome}`;
+    const modalTitle = isEditMode
+        ? t('reservas.stepper.title_edit', { espaco: espaco.nome })
+        : t('reservas.stepper.title_create', { espaco: espaco.nome });
 
     return (
         <ResponsiveModal

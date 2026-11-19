@@ -113,20 +113,6 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
         return new Date(Math.max(...slotsSelecao.map((s) => parseDataLocal(s.data).getTime())));
     }, [slotsSelecao]);
 
-    const handleDataInicialChange = (novaData?: Date) => {
-        if (!novaData) return;
-        setFormData('data_inicial', novaData);
-
-        if (formData.recorrencia === 'personalizado') {
-            const limiteMinimo = maiorDataSelecionada ? max([startOfDay(novaData), startOfDay(maiorDataSelecionada)]) : startOfDay(novaData);
-            const dataFinalAtual = formData.data_final ? startOfDay(parseDataLocal(formData.data_final)) : undefined;
-
-            if (!dataFinalAtual || isBefore(dataFinalAtual, limiteMinimo)) {
-                setFormData('data_final', limiteMinimo);
-            }
-        }
-    };
-
     const periodoFormatado = useMemo(() => {
         const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
         const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
@@ -209,13 +195,13 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
             <div className="bg-muted/30 border-border/70 grid grid-cols-1 gap-3 rounded-xl border p-3.5 sm:grid-cols-2">
                 <div className="space-y-1.5">
                     <Label htmlFor="data-inicial" className="text-foreground text-xs font-medium">
-                        {t('reservas.stepper.start_date')} {formData.recorrencia !== 'personalizado' && t('reservas.stepper.adjusts_slots')}
+                        {t('reservas.stepper.start_date')} {t('reservas.stepper.calculated')}
                     </Label>
                     <DatePicker
+                        id="data-inicial"
                         modal
                         value={formData.data_inicial ? parseDataLocal(formData.data_inicial) : undefined}
-                        onSelect={handleDataInicialChange}
-                        disabled={(date) => isBefore(startOfDay(date), startOfDay(hoje))}
+                        buttonDisabled
                         placeholder={t('reservas.stepper.select_start_date')}
                     />
                 </div>

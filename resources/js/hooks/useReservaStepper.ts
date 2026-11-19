@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { useTranslation } from '@/i18n';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData, ReservaStepId, StepperStep } from '@/types/reserva-stepper';
+import { format, parseISO } from 'date-fns';
+import { useCallback, useMemo, useState } from 'react';
 
 export interface UseReservaStepperProps {
     espaco: Espaco;
@@ -11,31 +12,35 @@ export interface UseReservaStepperProps {
     isEditMode?: boolean;
 }
 
-const STEP_DEFINITIONS: Omit<StepperStep, 'isCompleted' | 'isValid'>[] = [
-    {
-        id: 'horarios_recorrencia',
-        title: 'Horários & Recorrência',
-        description: 'Período e frequência',
-        iconName: 'calendar',
-    },
-    {
-        id: 'dados_justificativa',
-        title: 'Dados & Justificativa',
-        description: 'Finalidade da solicitação',
-        iconName: 'file-text',
-    },
-    {
-        id: 'revisao_confirmacao',
-        title: 'Revisão & Envio',
-        description: 'Conferência e termos',
-        iconName: 'check-circle-2',
-    },
-];
-
 export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep = 'horarios_recorrencia' }: UseReservaStepperProps) {
+    const { t } = useTranslation();
     const [currentStepId, setCurrentStepId] = useState<ReservaStepId>(initialStep);
     const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
     const [hasRealtimeConflict, setHasRealtimeConflict] = useState(false);
+
+    const stepDefinitions = useMemo<Omit<StepperStep, 'isCompleted' | 'isValid'>[]>(
+        () => [
+            {
+                id: 'horarios_recorrencia',
+                title: t('reservas.stepper.step1_title'),
+                description: t('reservas.stepper.step1_desc'),
+                iconName: 'calendar',
+            },
+            {
+                id: 'dados_justificativa',
+                title: t('reservas.stepper.step2_title'),
+                description: t('reservas.stepper.step2_desc'),
+                iconName: 'file-text',
+            },
+            {
+                id: 'revisao_confirmacao',
+                title: t('reservas.stepper.step3_title'),
+                description: t('reservas.stepper.step3_desc'),
+                iconName: 'check-circle-2',
+            },
+        ],
+        [t],
+    );
 
     // Validação estática in-memory contra conflitos existentes nas agendas do espaço
     const conflictingDates = useMemo(() => {
@@ -112,10 +117,10 @@ export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep 
         [isStep1Valid, isStep2Valid, isStep3Valid],
     );
 
-    const currentStepIndex = useMemo(() => STEP_DEFINITIONS.findIndex((s) => s.id === currentStepId), [currentStepId]);
+    const currentStepIndex = useMemo(() => stepDefinitions.findIndex((s) => s.id === currentStepId), [stepDefinitions, currentStepId]);
 
     const steps: StepperStep[] = useMemo(() => {
-        return STEP_DEFINITIONS.map((stepDef, idx) => {
+        return stepDefinitions.map((stepDef, idx) => {
             const isValid = stepValidityMap[stepDef.id];
             const isCompleted = idx < currentStepIndex && isValid;
 
@@ -125,10 +130,10 @@ export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep 
                 isCompleted,
             };
         });
-    }, [stepValidityMap, currentStepIndex]);
+    }, [stepDefinitions, stepValidityMap, currentStepIndex]);
 
     const isFirstStep = currentStepIndex === 0;
-    const isLastStep = currentStepIndex === STEP_DEFINITIONS.length - 1;
+    const isLastStep = currentStepIndex === stepDefinitions.length - 1;
 
     const canAdvance = useMemo(() => {
         if (currentStepId === 'horarios_recorrencia') return isStep1Valid;
@@ -168,14 +173,14 @@ export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep 
 
     const goToStep = useCallback(
         (stepId: ReservaStepId) => {
-            const targetIdx = STEP_DEFINITIONS.findIndex((s) => s.id === stepId);
+            const targetIdx = stepDefinitions.findIndex((s) => s.id === stepId);
             // Só permite avançar livremente para passos anteriores ou para o próximo se o passo atual estiver válido
             if (targetIdx <= currentStepIndex || canAdvance) {
                 setCurrentStepId(stepId);
                 setStepErrors({});
             }
         },
-        [currentStepIndex, canAdvance],
+        [stepDefinitions, currentStepIndex, canAdvance],
     );
 
     const nextStep = useCallback((): boolean => {
@@ -183,22 +188,22 @@ export function useReservaStepper({ espaco, formData, slotsSelecao, initialStep 
             return false;
         }
 
-        if (currentStepIndex < STEP_DEFINITIONS.length - 1) {
-            const nextDef = STEP_DEFINITIONS[currentStepIndex + 1];
+        if (currentStepIndex < stepDefinitions.length - 1) {
+            const nextDef = stepDefinitions[currentStepIndex + 1];
             setCurrentStepId(nextDef.id);
             setStepErrors({});
             return true;
         }
         return false;
-    }, [validateCurrentStep, currentStepIndex]);
+    }, [validateCurrentStep, currentStepIndex, stepDefinitions]);
 
     const prevStep = useCallback(() => {
         if (currentStepIndex > 0) {
-            const prevDef = STEP_DEFINITIONS[currentStepIndex - 1];
+            const prevDef = stepDefinitions[currentStepIndex - 1];
             setCurrentStepId(prevDef.id);
             setStepErrors({});
         }
-    }, [currentStepIndex]);
+    }, [currentStepIndex, stepDefinitions]);
 
     const resetStepper = useCallback(() => {
         setCurrentStepId('horarios_recorrencia');

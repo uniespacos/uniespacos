@@ -100,4 +100,55 @@ describe('StepHorariosRecorrencia', () => {
         expect(screen.getAllByText(/Apenas os horários selecionados/i).length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByText(/Apenas esta semana/i).length).toBe(1);
     });
+
+    it.each(['unica', '15dias', '1mes', 'personalizado'] as const)('desabilita a data inicial na recorrencia %s', (recorrencia) => {
+        render(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={{ ...mockFormData, recorrencia }}
+                setFormData={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: /Data Inicial/i })).toBeDisabled();
+    });
+
+    it.each([
+        ['unica', true],
+        ['personalizado', false],
+    ] as const)('data final na recorrencia %s desabilitada: %s', (recorrencia, desabilitada) => {
+        render(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={{ ...mockFormData, recorrencia }}
+                setFormData={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+            />,
+        );
+
+        const botaoDataFinal = screen.getByRole('button', { name: '31/08/2026' });
+        if (desabilitada) {
+            expect(botaoDataFinal).toBeDisabled();
+        } else {
+            expect(botaoDataFinal).toBeEnabled();
+        }
+    });
+
+    it('nao exibe mais o rotulo de ajuste na data inicial e indica que ela e calculada', () => {
+        render(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={{ ...mockFormData, recorrencia: 'personalizado' }}
+                setFormData={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+            />,
+        );
+
+        expect(screen.queryByText(/ajusta horários/i)).not.toBeInTheDocument();
+        expect(screen.getByText(/Data Inicial \(calculada\)/i)).toBeInTheDocument();
+    });
 });

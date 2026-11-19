@@ -3,9 +3,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { RecorrenciaReserva } from '@/contracts/recorrencia.contract';
 import { useTranslation } from '@/i18n';
 import { parseDataLocal } from '@/lib/utils';
-import { Espaco, SlotCalendario } from '@/types';
+import { expandirHorariosRecorrencia } from '@/lib/utils/expandir-horarios-recorrencia';
+import { Espaco } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,17 +18,10 @@ export interface StepRevisaoConfirmacaoProps {
     espaco: Espaco;
     formData: ReservaFormData;
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
-    slotsSelecao: SlotCalendario[];
     isEditMode?: boolean;
 }
 
-export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
-    espaco,
-    formData,
-    setFormData,
-    slotsSelecao,
-    isEditMode = false,
-}) => {
+export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ espaco, formData, setFormData, isEditMode = false }) => {
     const { t } = useTranslation();
 
     const rotuloRecorrencia = useMemo(() => {
@@ -44,13 +39,18 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
         };
     }, [formData.data_inicial, formData.data_final]);
 
-    const slotsOrdenados = useMemo(
-        () =>
-            [...slotsSelecao].sort(
-                (a, b) => parseDataLocal(a.data).getTime() - parseDataLocal(b.data).getTime() || a.horario_inicio.localeCompare(b.horario_inicio),
-            ),
-        [slotsSelecao],
-    );
+    const horariosGravados = useMemo(() => {
+        const semExpansao = isEditMode && formData.edit_scope === 'single';
+
+        return expandirHorariosRecorrencia(
+            formData.horarios_solicitados,
+            semExpansao ? RecorrenciaReserva.UNICA : formData.recorrencia,
+            formData.data_final,
+        );
+    }, [isEditMode, formData.edit_scope, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
+
+    const quantidadeHorarios = String(horariosGravados.length);
+    const unidadeHorarios = horariosGravados.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural');
 
     return (
         <div className="space-y-4">
@@ -87,8 +87,7 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
                     <div className="space-y-0.5 pl-6">
                         <p className="text-foreground text-xs font-medium">{rotuloRecorrencia}</p>
                         <p className="text-muted-foreground text-[11px]">
-                            {periodoFormatado.inicio} até {periodoFormatado.fim} ({String(slotsSelecao.length)}{' '}
-                            {slotsSelecao.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural')})
+                            {periodoFormatado.inicio} até {periodoFormatado.fim} ({quantidadeHorarios} {unidadeHorarios})
                         </p>
                     </div>
                 </div>
@@ -116,29 +115,27 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
                 </div>
             </div>
 
-            {/* Resumo dos Horários Selecionados */}
+            {/* Resumo dos Horários que serão gravados */}
             <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                     <span className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
                         <CheckCircle2 className="text-primary h-3.5 w-3.5" />
                         {t('reservas.stepper.reservation_slots')}
                     </span>
-                    <span className="text-muted-foreground text-[11px]">{slotsSelecao.length} selecionados</span>
+                    <span className="text-muted-foreground text-[11px]">{t('reservas.stepper.total_a_gravar', { count: quantidadeHorarios })}</span>
                 </div>
                 <ScrollArea className="border-border/80 bg-card h-24 rounded-xl border p-2.5">
                     <div className="flex flex-wrap gap-1.5">
-                        {slotsOrdenados.map((slot) => {
-                            const dataObj = parseDataLocal(slot.data);
-                            return (
-                                <Badge
-                                    key={slot.id}
-                                    variant="outline"
-                                    className="bg-muted/40 border-border text-foreground px-2 py-0.5 font-mono text-[11px]"
-                                >
-                                    {format(dataObj, 'dd/MM', { locale: ptBR })} • {slot.horario_inicio.slice(0, 5)}-{slot.horario_fim.slice(0, 5)}
-                                </Badge>
-                            );
-                        })}
+                        {horariosGravados.map((horario) => (
+                            <Badge
+                                key={`${String(horario.agenda_id ?? '')}|${horario.data}|${horario.horario_inicio}`}
+                                variant="outline"
+                                className="bg-muted/40 border-border text-foreground px-2 py-0.5 font-mono text-[11px]"
+                            >
+                                {format(parseDataLocal(horario.data), 'dd/MM', { locale: ptBR })} • {horario.horario_inicio.slice(0, 5)}-
+                                {horario.horario_fim.slice(0, 5)}
+                            </Badge>
+                        ))}
                     </div>
                 </ScrollArea>
             </div>
