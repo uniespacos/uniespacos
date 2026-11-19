@@ -95,7 +95,8 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ 
                     <div className="space-y-0.5 pl-6">
                         <p className="text-foreground text-xs font-medium">{rotuloRecorrencia}</p>
                         <p className="text-muted-foreground text-[11px]">
-                            {periodoFormatado.inicio} até {periodoFormatado.fim} ({quantidadeHorarios} {unidadeHorarios})
+                            {periodoFormatado.inicio} {t('reservas.stepper.period_to')} {periodoFormatado.fim} ({quantidadeHorarios} {unidadeHorarios}
+                            )
                         </p>
                     </div>
                 </div>
@@ -116,10 +117,10 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ 
                     ) : null}
                 </div>
                 <div className="min-w-0 space-y-1 pl-6">
-                    <p className="text-foreground text-xs font-semibold break-words [overflow-wrap:anywhere]">
+                    <p className="text-foreground text-xs font-semibold [overflow-wrap:anywhere] break-words">
                         {formData.titulo || 'Sem título informado'}
                     </p>
-                    <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere]">
+                    <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
                         {formData.descricao || 'Sem justificativa informada'}
                     </p>
                 </div>

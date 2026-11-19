@@ -1,6 +1,7 @@
 import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { Espaco } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { usePage } from '@inertiajs/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { StepRevisaoConfirmacao } from './StepRevisaoConfirmacao';
 
@@ -28,6 +29,15 @@ describe('StepRevisaoConfirmacao', () => {
         horarios_solicitados: [{ data: '2026-08-25', ...horarioManha }],
         termo_responsabilidade: false,
     };
+
+    afterEach(() => {
+        jest.mocked(usePage).mockReturnValue({
+            props: { auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+    });
 
     it('renders space summary and submitted fields', () => {
         render(<StepRevisaoConfirmacao espaco={mockEspaco} formData={mockFormData} setFormData={jest.fn()} />);
@@ -152,5 +162,34 @@ describe('StepRevisaoConfirmacao', () => {
 
         expect(screen.getByText(/24\/11\/2026 até 01\/12\/2026/)).toBeInTheDocument();
         expect(screen.queryByText(/08\/12\/2026/)).not.toBeInTheDocument();
+    });
+
+    it.each([
+        ['en', /11\/03\/2027 to 11\/03\/2027 \(1 slot\)/i],
+        ['es', /11\/03\/2027 hasta 11\/03\/2027 \(1 horario\)/i],
+    ] as const)('traduz conector de periodo na revisao em %s sem manter "até" (B-03)', (locale, esperado) => {
+        jest.mocked(usePage).mockReturnValue({
+            props: { locale, auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+
+        render(
+            <StepRevisaoConfirmacao
+                espaco={mockEspaco}
+                formData={{
+                    ...mockFormData,
+                    recorrencia: RecorrenciaReserva.UNICA,
+                    data_inicial: new Date('2027-03-11T00:00:00'),
+                    data_final: new Date('2027-03-11T00:00:00'),
+                    horarios_solicitados: [{ data: '2027-03-11', ...horarioManha }],
+                }}
+                setFormData={jest.fn()}
+            />,
+        );
+
+        expect(screen.getByText(esperado)).toBeInTheDocument();
+        expect(screen.queryByText(/até/i)).not.toBeInTheDocument();
     });
 });

@@ -281,6 +281,7 @@ export const en = {
             indeferir: 'Reject Request',
             parecer: 'Feedback / Reason',
             parecer_placeholder: 'Describe the institutional reasons for the decision...',
+            parecer_conflito_linha: '- {{horario}} slot on {{data}}: Rejected. {{detalhe}}',
             observacao: 'Additional Notes',
             observacao_placeholder: 'Notes for the requester (optional)...',
             salvar: 'Save Decision',
@@ -289,8 +290,7 @@ export const en = {
             escopo_todas: 'All recurrence occurrences',
             escopo_semana: 'Only slots of this week',
             cancelada_titulo: 'Reservation request canceled',
-            cancelada_descricao:
-                'This reservation has been canceled. The reserved time slots have been released and no further action is required.',
+            cancelada_descricao: 'This reservation has been canceled. The reserved time slots have been released and no further action is required.',
             voltar_listagem: 'Back to Manage Reservations',
         },
         gestor: {

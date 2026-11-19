@@ -5,6 +5,9 @@ import * as UseAvaliarReservaModule from '@/hooks/use-avaliar-reserva';
 import * as UseReservaRefreshOnEventModule from '@/hooks/use-reserva-refresh-on-event';
 import * as UseReservationLiveUpdatesModule from '@/hooks/use-reservation-live-updates';
 import * as UseReservationSlotsModule from '@/hooks/use-reservation-slots';
+import * as UseI18nModule from '@/i18n';
+import type { TranslationKey } from '@/i18n/schema';
+import type { SupportedLocale, TranslationParams } from '@/i18n/types';
 import { __resetEchoChannelRegistryForTests } from '@/lib/echo-channel-registry';
 import type { Reserva, SlotCalendario } from '@/types';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -167,10 +170,60 @@ describe('AvaliarReservaPage', () => {
         referencia: '2024-08-22',
     };
 
+    const actualI18n = jest.requireActual<typeof import('@/i18n')>('@/i18n');
+
+    const mockUseTranslationWithLocale = (locale: SupportedLocale) => {
+        jest.mocked(UseI18nModule.useTranslation).mockReturnValue({
+            t: (key: TranslationKey, params?: TranslationParams) => actualI18n.translate(key, params, locale),
+            locale,
+            formatDate: (date, pattern) => actualI18n.formatDate(date, pattern, locale),
+            formatDateTime: (date) => actualI18n.formatDateTime(date, locale),
+            formatNumber: (value, options) => actualI18n.formatNumber(value, locale, options),
+        });
+    };
+
     beforeEach(() => {
         jest.clearAllMocks();
         capturedEvaluationFormProps = {};
         __resetEchoChannelRegistryForTests();
+        jest.mocked(UseI18nModule.useTranslation).mockReturnValue({
+            t: (key: string) => key,
+            locale: 'pt-BR',
+            formatDate: (date, pattern) => actualI18n.formatDate(date, pattern, 'pt-BR'),
+            formatDateTime: (date) => actualI18n.formatDateTime(date, 'pt-BR'),
+            formatNumber: (value, options) => actualI18n.formatNumber(value, 'pt-BR', options),
+        });
+        jest.mocked(UseAgendaNavigationModule.useAgendaNavigation).mockReturnValue({
+            semanaVisivel: new Date(2024, 7, 19),
+            isLoading: false,
+            podeVoltar: true,
+            podeAvancar: true,
+            irParaSemanaAnterior: jest.fn(),
+            irParaProximaSemana: jest.fn(),
+            irParaSemanaAtual: jest.fn(),
+        });
+        jest.mocked(UseReservationSlotsModule.useReservationSlots).mockReturnValue({
+            initialSlots: [],
+            slotsSelecao: [],
+            avaliarSlot: jest.fn(),
+            handleDecisaoGlobalChange: jest.fn(),
+            restaurarSlotsForaDoEscopo: jest.fn(),
+        });
+        jest.mocked(UseAvaliarReservaModule.useAvaliarReserva).mockReturnValue({
+            form: {
+                data: {
+                    evaluation_scope: EscopoRecorrencia.RECURRING,
+                    motivo: '',
+                    observacao: '',
+                    situacao: SituacaoReserva.EM_ANALISE,
+                    horarios_avaliados: [],
+                },
+                setData: jest.fn(),
+                processing: false,
+                errors: {},
+            } as unknown as ReturnType<typeof UseAvaliarReservaModule.useAvaliarReserva>['form'],
+            submitEvaluation: jest.fn(),
+        });
     });
 
     afterEach(() => {
@@ -315,12 +368,7 @@ describe('AvaliarReservaPage', () => {
             submitEvaluation: jest.fn(),
         });
 
-        render(
-            <AvaliarReservaPage
-                reserva={reservaMultiSemana}
-                semana={{ inicio: '2026-11-23', fim: '2026-11-29', referencia: '2026-11-24' }}
-            />,
-        );
+        render(<AvaliarReservaPage reserva={reservaMultiSemana} semana={{ inicio: '2026-11-23', fim: '2026-11-29', referencia: '2026-11-24' }} />);
 
         fireEvent.click(screen.getByTestId('mock-deferir-btn'));
 
@@ -336,5 +384,65 @@ describe('AvaliarReservaPage', () => {
         const atualizado = lastUpdater({ evaluation_scope: EscopoRecorrencia.SINGLE });
         expect(atualizado.situacao).toBe(SituacaoReserva.DEFERIDA);
         expect(atualizado.horarios_avaliados).toEqual([{ id: 11, status: SituacaoReserva.DEFERIDA }]);
+    });
+
+    it.each([
+        ['pt-BR', 'Inativa / Cancelada'],
+        ['en', 'Inactive / Canceled'],
+        ['es', 'Inactiva / Cancelada'],
+    ] as const)('traduz badge superior de situacao da reserva para %s usando SituacaoBadge (Obs. 1)', (locale, esperado) => {
+        mockUseTranslationWithLocale(locale);
+
+        render(
+            <AvaliarReservaPage
+                reserva={{
+                    ...mockReserva,
+                    situacao: SituacaoReserva.INATIVA,
+                }}
+                semana={mockSemana}
+            />,
+        );
+
+        expect(screen.getByText(esperado)).toBeInTheDocument();
+    });
+
+    it.each([
+        ['pt-BR', '- Horário das 10:00 do dia 20/08/2024: Indeferido. Conflito com outra reserva deferida neste horário.'],
+        ['en', '- 10:00 slot on 20/08/2024: Rejected. Conflict with another approved reservation at this time.'],
+        ['es', '- Horario de las 10:00 del día 20/08/2024: Rechazado. Conflicto con otra reserva aprobada en este horario.'],
+    ] as const)('preenche parecer automatico de conflito inteiramente traduzido em %s (Obs. 2)', (locale, esperado) => {
+        mockUseTranslationWithLocale(locale);
+
+        const setDataSpy = jest.fn();
+        jest.mocked(UseAvaliarReservaModule.useAvaliarReserva).mockReturnValue({
+            form: {
+                data: {
+                    situacao: SituacaoReserva.EM_ANALISE,
+                    motivo: '',
+                    observacao: '',
+                    horarios_avaliados: [],
+                    evaluation_scope: EscopoRecorrencia.RECURRING,
+                },
+                setData: setDataSpy,
+                processing: false,
+                errors: {},
+            } as unknown as ReturnType<typeof UseAvaliarReservaModule.useAvaliarReserva>['form'],
+            submitEvaluation: jest.fn(),
+        });
+
+        render(
+            <AvaliarReservaPage
+                reserva={mockReserva}
+                semana={mockSemana}
+                todosOsConflitos={{
+                    1: {
+                        horario_checado_id: 1,
+                        conflito_reserva_titulo: 'Reserva Concorrente',
+                    },
+                }}
+            />,
+        );
+
+        expect(setDataSpy).toHaveBeenCalledWith('motivo', esperado);
     });
 });
