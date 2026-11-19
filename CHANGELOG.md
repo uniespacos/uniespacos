@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.120](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.119...v1.5.0-rc.120) (2026-11-19)
+
+
+### Bug Fixes
+
+* **reservas:** 'todas as ocorrências' propaga a edição e detalhes respeitam a semana da URL ([59a085a](https://github.com/uniespacos/uniespacos/commit/59a085ac75138cc7279fedf9fabe4a7234c8e61f))
+* **reservas:** correções do QA da rc.119 no fluxo de recorrência e edição ([e198147](https://github.com/uniespacos/uniespacos/commit/e1981477f76643a6d2d36e4c245f06bd42011f50))
+* **reservas:** edição de uma semana grava por chave e conflito cita data e horário ([906e715](https://github.com/uniespacos/uniespacos/commit/906e715a19109eb907ac97f95042fcf1676e473f))
+* **reservas:** revisão mostra os horários que serão gravados e data inicial derivada dos horários ([ae2abc1](https://github.com/uniespacos/uniespacos/commit/ae2abc1f5ac06cec0a0e8f6fa4739d2ce5d377b5))
+
 ## [1.5.0-rc.119](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.118...v1.5.0-rc.119) (2026-11-15)
 
 
