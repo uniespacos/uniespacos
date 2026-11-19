@@ -759,9 +759,9 @@ Em produção, o serviço `scheduler` executa `php artisan agendador:executar`. 
 
 | Sinal | Comportamento |
 | --- | --- |
-| SIGTERM ou SIGINT | Não dispara rodada nova. Espera as rodadas em curso terminarem, até `--teto-parada` segundos (padrão 100). Para o que ainda estiver rodando e sai com código 0 |
+| SIGTERM, SIGINT ou SIGQUIT | Não dispara rodada nova. Espera as rodadas em curso terminarem, até `--teto-parada` segundos (padrão 100). Para o que ainda estiver rodando e sai com código 0 |
 
-O serviço tem `stop_grace_period: 2m` em `compose.prod.yml`, acima do teto, para que o Docker não encerre o processo antes. Antes desse tratamento, o `schedule:work` não instalava handler para o sinal, e o Docker encerrava o processo com SIGKILL (saída 137). Uma parada no meio da rodada das 03:30 UTC cortava a retenção e podia deixar a trava de sobreposição ativa.
+O serviço tem `stop_grace_period: 2m` e `stop_signal: SIGTERM` em `compose.prod.yml`, acima do teto, para que o Docker não encerre o processo antes (e sem esperar 2 min quando `php:*-fpm` herda `STOPSIGNAL SIGQUIT`, embora `agendador:executar` também trate `SIGQUIT`). Antes desse tratamento, o `schedule:work` não instalava handler para o sinal, e o Docker encerrava o processo com SIGKILL (saída 137). Uma parada no meio da rodada das 03:30 UTC cortava a retenção e podia deixar a trava de sobreposição ativa.
 
 | Log | Quando | Campos |
 | --- | --- | --- |

@@ -74,7 +74,7 @@ Os workflows de PR e de deploy (`tests.yml`, `lint-static-analysis.yml`, `cicd-s
 
 ## Agendador de produção (`agendador:executar`)
 
-O serviço `scheduler` do `compose.prod.yml` roda `php artisan agendador:executar`, que substitui o `schedule:work`. O comando dispara `schedule:run` a cada minuto. Em SIGTERM ou SIGINT, não dispara rodada nova, espera as rodadas em curso (até 100 s, por `--teto-parada`) e sai com código 0. O serviço tem `stop_grace_period: 2m`. Logs e detalhes da parada em [`arquitetura/erros-e-logs.md`](../arquitetura/erros-e-logs.md) (seção "Agendador com parada limpa").
+O serviço `scheduler` do `compose.prod.yml` roda `php artisan agendador:executar`, que substitui o `schedule:work`. O comando dispara `schedule:run` a cada minuto. Em SIGTERM, SIGINT ou SIGQUIT, não dispara rodada nova, espera as rodadas em curso (até 100 s, por `--teto-parada`) e sai com código 0. O serviço tem `stop_grace_period: 2m`. Os serviços CLI baseados na imagem `app` (`scheduler`, `reverb` e `queue-worker`) definem `stop_signal: SIGTERM` no `compose.prod.yml` porque a imagem base `php:*-fpm` usa `STOPSIGNAL SIGQUIT` (mantido apenas para o `php-fpm` do serviço `app`). Logs e detalhes da parada em [`arquitetura/erros-e-logs.md`](../arquitetura/erros-e-logs.md) (seção "Agendador com parada limpa").
 
 > **Risco de rollback (T-19d).** O compose novo chama `agendador:executar`, que só existe na imagem nova. Imagem antiga com este compose faz o `scheduler` entrar em loop de restart. Imagem nova com compose antigo funciona, porque o compose antigo usa `schedule:work`. Por isso, o rollback reverte imagem e compose juntos.
 
