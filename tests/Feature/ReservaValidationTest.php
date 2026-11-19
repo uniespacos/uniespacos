@@ -42,6 +42,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $hoje,
             'data_final' => $hoje,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $hoje,
@@ -79,6 +80,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $hoje,
             'data_final' => $hoje,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $hoje,
@@ -217,6 +219,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $data,
             'data_final' => $data,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $data,
@@ -255,6 +258,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $data,
             'data_final' => $data,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $data,
@@ -293,6 +297,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $data,
             'data_final' => $data,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $data,
@@ -321,6 +326,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $hoje,
             'data_final' => $hoje,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $hoje,
@@ -393,6 +399,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $yesterday->format('Y-m-d'),
             'data_final' => $yesterday->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -419,6 +426,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $tomorrow->format('Y-m-d'),
             'data_final' => $today->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -444,6 +452,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $today->format('Y-m-d'),
             'data_final' => $today->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -519,6 +528,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $tomorrow->format('Y-m-d'),
             'data_final' => $tomorrow->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -548,6 +558,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $tomorrow->format('Y-m-d'),
             'data_final' => $tomorrow->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -575,6 +586,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $tomorrow->format('Y-m-d'),
             'data_final' => $tomorrow->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -602,6 +614,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $tomorrow->format('Y-m-d'),
             'data_final' => $tomorrow->format('Y-m-d'),
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'agenda_id' => $agenda->id,
@@ -779,6 +792,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $dataInicial,
             'data_final' => $dataFinal,
             'recorrencia' => '1mes',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $dataInicial,
@@ -818,6 +832,7 @@ class ReservaValidationTest extends TestCase
             'data_inicial' => $dataInicial,
             'data_final' => $dataFinal,
             'recorrencia' => '1mes',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $dataInicial,

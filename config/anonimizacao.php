@@ -37,7 +37,7 @@ return [
 
     'tratadas' => [
         'users' => 'name, email, telefone, profile_pic, password, remember_token e two_factor_* tratados; id, setor_id, papéis e email_verified_at preservados; contas da exclusão de conta puladas',
-        'reservas' => 'titulo, descricao, observacao e conflict_cache tratados',
+        'reservas' => 'titulo, descricao, observacao, categoria e conflict_cache tratados; publico_estimado e termo_aceito_em preservados',
         'horarios' => 'justificativa tratada',
     ],
 

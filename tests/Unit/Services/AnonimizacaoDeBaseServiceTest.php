@@ -88,7 +88,19 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
         $this->assertSame('Reserva 10', $reserva['titulo']);
         $this->assertSame(self::TEXTO_NEUTRO, $reserva['descricao']);
         $this->assertSame(self::TEXTO_NEUTRO, $reserva['observacao']);
+        $this->assertSame(self::TEXTO_NEUTRO, $reserva['categoria']);
         $this->assertNull($reserva['conflict_cache']);
+    }
+
+    public function test_categoria_da_reserva_e_neutralizada_e_campos_nao_textuais_sao_preservados(): void
+    {
+        $this->service->anonimizar(self::HASH, semArquivos: true);
+
+        $reserva = $this->repo->linha('reservas', 10);
+
+        $this->assertSame(self::TEXTO_NEUTRO, $reserva['categoria']);
+        $this->assertSame(40, $reserva['publico_estimado']);
+        $this->assertSame('2026-11-19 13:00:00', $reserva['termo_aceito_em']);
     }
 
     public function test_observacao_nula_da_reserva_permanece_nula(): void
@@ -96,6 +108,21 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
         $this->service->anonimizar(self::HASH, semArquivos: true);
 
         $this->assertNull($this->repo->linha('reservas', 11)['observacao']);
+    }
+
+    public function test_categoria_nula_da_reserva_permanece_nula(): void
+    {
+        $this->service->anonimizar(self::HASH, semArquivos: true);
+
+        $reserva = $this->repo->linha('reservas', 11);
+
+        $this->assertNull($reserva['categoria']);
+
+        foreach ($this->repo->atualizacoes as $atualizacao) {
+            if ($atualizacao['tabela'] === 'reservas' && $atualizacao['id'] === 11) {
+                $this->assertArrayNotHasKey('categoria', $atualizacao['atributos']);
+            }
+        }
     }
 
     public function test_justificativa_de_horario_vira_texto_neutro_e_nula_permanece_nula(): void
@@ -230,6 +257,9 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
                     'titulo' => 'Reunião de teste',
                     'descricao' => 'Descrição com nome de terceiro',
                     'observacao' => 'Observação livre',
+                    'categoria' => 'Palestra do Fulano de Teste',
+                    'publico_estimado' => 40,
+                    'termo_aceito_em' => '2026-11-19 13:00:00',
                     'conflict_cache' => '{"1": {"conflito_user_name": "Outra Pessoa"}}',
                 ],
                 11 => [
@@ -237,6 +267,9 @@ class AnonimizacaoDeBaseServiceTest extends TestCase
                     'titulo' => 'Reserva 11',
                     'descricao' => 'Descrição',
                     'observacao' => null,
+                    'categoria' => null,
+                    'publico_estimado' => null,
+                    'termo_aceito_em' => null,
                     'conflict_cache' => null,
                 ],
             ],

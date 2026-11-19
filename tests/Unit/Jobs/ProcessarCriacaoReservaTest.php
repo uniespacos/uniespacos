@@ -360,4 +360,39 @@ class ProcessarCriacaoReservaTest extends TestCase
             Carbon::setTestNow();
         }
     }
+
+    public function test_payload_antigo_sem_dados_da_solicitacao_continua_criando_a_reserva(): void
+    {
+        $solicitante = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => User::factory()->create()->id]);
+
+        $reserva = $this->executar($this->dados([
+            $this->slot($agenda->id, '2026-09-01'),
+        ], 'unica', '2026-09-01', '2026-09-01'), $solicitante);
+
+        $this->assertCount(1, $reserva->horarios);
+        $this->assertNull($reserva->publico_estimado);
+        $this->assertNull($reserva->categoria);
+        $this->assertNull($reserva->termo_aceito_em);
+    }
+
+    public function test_payload_com_dados_da_solicitacao_grava_publico_categoria_e_termo(): void
+    {
+        $solicitante = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => User::factory()->create()->id]);
+
+        $dados = $this->dados([
+            $this->slot($agenda->id, '2026-09-01'),
+        ], 'unica', '2026-09-01', '2026-09-01') + [
+            'publico_estimado' => 40,
+            'categoria' => 'Palestra',
+            'termo_aceito_em' => '2026-08-30T14:00:00+00:00',
+        ];
+
+        $reserva = $this->executar($dados, $solicitante);
+
+        $this->assertSame(40, $reserva->publico_estimado);
+        $this->assertSame('Palestra', $reserva->categoria);
+        $this->assertSame('2026-08-30 14:00:00', $reserva->termo_aceito_em?->toDateTimeString());
+    }
 }

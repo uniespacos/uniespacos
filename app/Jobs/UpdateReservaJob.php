@@ -32,7 +32,7 @@ class UpdateReservaJob implements ShouldQueue
     public int $tries = 3;
 
     /**
-     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface}  $validatedData
+     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string}  $validatedData  Chaves de dados da solicitacao so sao gravadas se presentes, para jobs antigos nao apagarem dado existente.
      */
     public function __construct(
         protected Reserva $reserva,
@@ -67,6 +67,7 @@ class UpdateReservaJob implements ShouldQueue
                     'titulo' => $this->validatedData['titulo'],
                     'descricao' => $this->validatedData['descricao'] ?? '',
                     'recorrencia' => $this->validatedData['recorrencia'],
+                    ...$this->dadosDaSolicitacaoPresentes(),
                 ]);
 
                 $scope = $this->validatedData['edit_scope'];
@@ -335,6 +336,22 @@ class UpdateReservaJob implements ShouldQueue
             ]);
             $this->fail($e);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function dadosDaSolicitacaoPresentes(): array
+    {
+        $atributos = [];
+
+        foreach (['publico_estimado', 'categoria', 'termo_aceito_em'] as $campo) {
+            if (array_key_exists($campo, $this->validatedData)) {
+                $atributos[$campo] = $this->validatedData[$campo];
+            }
+        }
+
+        return $atributos;
     }
 
     /**

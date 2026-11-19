@@ -924,4 +924,97 @@ class UpdateReservaJobTest extends TestCase
             'situacao' => 'em_analise',
         ], $extra));
     }
+
+    public function test_payload_antigo_sem_dados_da_solicitacao_nao_apaga_publico_nem_categoria(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'publico_estimado' => 120,
+            'categoria' => 'Palestra',
+            'termo_aceito_em' => '2026-08-30 14:00:00',
+        ]);
+
+        $this->executar($reserva, [
+            'titulo' => 'Titulo atualizado',
+            'descricao' => 'Descricao atualizada',
+            'data_inicial' => $reserva->data_inicial,
+            'data_final' => $reserva->data_final,
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $reserva->data_inicial,
+            'horarios_solicitados' => [],
+        ], $user);
+
+        $fresh = $reserva->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertSame('Titulo atualizado', $fresh->titulo);
+        $this->assertSame(120, $fresh->publico_estimado);
+        $this->assertSame('Palestra', $fresh->categoria);
+        $this->assertSame('2026-08-30 14:00:00', $fresh->termo_aceito_em?->toDateTimeString());
+    }
+
+    public function test_payload_com_dados_da_solicitacao_atualiza_publico_categoria_e_termo(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'publico_estimado' => 120,
+            'categoria' => 'Palestra',
+        ]);
+
+        $this->executar($reserva, [
+            'titulo' => 'Titulo atualizado',
+            'descricao' => 'Descricao atualizada',
+            'data_inicial' => $reserva->data_inicial,
+            'data_final' => $reserva->data_final,
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $reserva->data_inicial,
+            'horarios_solicitados' => [],
+            'publico_estimado' => 50,
+            'categoria' => 'Oficina',
+            'termo_aceito_em' => '2026-11-19T13:00:00+00:00',
+        ], $user);
+
+        $fresh = $reserva->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertSame(50, $fresh->publico_estimado);
+        $this->assertSame('Oficina', $fresh->categoria);
+        $this->assertSame('2026-11-19 13:00:00', $fresh->termo_aceito_em?->toDateTimeString());
+    }
+
+    public function test_payload_com_campos_da_solicitacao_nulos_limpa_publico_e_categoria(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $reserva = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'publico_estimado' => 120,
+            'categoria' => 'Palestra',
+        ]);
+
+        $this->executar($reserva, [
+            'titulo' => 'Titulo atualizado',
+            'descricao' => 'Descricao atualizada',
+            'data_inicial' => $reserva->data_inicial,
+            'data_final' => $reserva->data_final,
+            'recorrencia' => $reserva->recorrencia,
+            'edit_scope' => 'single',
+            'edited_week_date' => $reserva->data_inicial,
+            'horarios_solicitados' => [],
+            'publico_estimado' => null,
+            'categoria' => null,
+        ], $user);
+
+        $fresh = $reserva->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertNull($fresh->publico_estimado);
+        $this->assertNull($fresh->categoria);
+    }
 }

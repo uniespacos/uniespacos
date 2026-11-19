@@ -73,7 +73,7 @@ class AnonimizacaoDeBaseService
                 'operacao' => 'anonimizar',
                 'quantidade' => $this->anonimizarTabela(
                     'reservas',
-                    ['id', 'titulo', 'descricao', 'observacao', 'conflict_cache'],
+                    ['id', 'titulo', 'descricao', 'observacao', 'categoria', 'conflict_cache'],
                     fn (array $linha): array => $this->atributosDaReserva($linha),
                     $simular,
                 ),
@@ -179,7 +179,7 @@ class AnonimizacaoDeBaseService
      */
     private function atributosDaReserva(array $linha): array
     {
-        $atributos = $this->textosNeutros($linha, ['descricao', 'observacao']);
+        $atributos = $this->textosNeutros($linha, ['descricao', 'observacao', 'categoria']);
         $titulo = sprintf(self::FORMATO_TITULO_RESERVA, Arr::integer($linha, 'id'));
 
         if (Arr::string($linha, 'titulo') !== $titulo) {

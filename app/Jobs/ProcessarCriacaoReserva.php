@@ -41,7 +41,7 @@ class ProcessarCriacaoReserva implements ShouldQueue
     public int $timeout = 360;
 
     /**
-     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, horarios_solicitados: array<int, array<string, mixed>>}  $dadosRequisicao  Validated data from StoreReservaRequest.
+     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string, horarios_solicitados: array<int, array<string, mixed>>}  $dadosRequisicao  Validated data from StoreReservaRequest. As chaves opcionais ausentes em jobs enfileirados antes do deploy sao tratadas como null.
      * @param  User  $solicitante  The user making the reservation request.
      */
     public function __construct(
@@ -84,6 +84,9 @@ class ProcessarCriacaoReserva implements ShouldQueue
                     'data_inicial' => $this->dadosRequisicao['data_inicial'],
                     'data_final' => $this->dadosRequisicao['data_final'],
                     'recorrencia' => $this->dadosRequisicao['recorrencia'],
+                    'publico_estimado' => $this->dadosRequisicao['publico_estimado'] ?? null,
+                    'categoria' => $this->dadosRequisicao['categoria'] ?? null,
+                    'termo_aceito_em' => $this->dadosRequisicao['termo_aceito_em'] ?? null,
                     'user_id' => $this->solicitante->id,
                     'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
                 ]);
