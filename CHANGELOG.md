@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.123](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.122...v1.5.0-rc.123) (2026-11-19)
+
+
+### Bug Fixes
+
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([f0b55e1](https://github.com/uniespacos/uniespacos/commit/f0b55e19426ff6d5c7a40a03f2de426c8cb5765b))
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([582afbd](https://github.com/uniespacos/uniespacos/commit/582afbd4a37063c86ae9e606dd3cc81c2f38feff))
+
 ## [1.5.0-rc.122](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.121...v1.5.0-rc.122) (2026-11-19)
 
 
