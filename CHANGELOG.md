@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.122](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.121...v1.5.0-rc.122) (2026-11-19)
+
+
+### Bug Fixes
+
+* corrige estouro de titulo e pendencias de i18n do QA regressivo ([b86c37d](https://github.com/uniespacos/uniespacos/commit/b86c37dee64248e4249feb7601c811992d1b84a2))
+* corrige estouro de título e pendências de i18n do QA regressivo pós-[#538](https://github.com/uniespacos/uniespacos/issues/538) ([2734f19](https://github.com/uniespacos/uniespacos/commit/2734f19246d4f0546b5daf0ee6f6cf28b8e41d0b))
+
 ## [1.5.0-rc.121](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.120...v1.5.0-rc.121) (2026-11-19)
 
 
