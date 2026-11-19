@@ -103,6 +103,9 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         }
     };
 
+    const footerButtonFocusClasses =
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
     const footerContent = (
         <div className="border-border flex w-full items-center justify-between gap-2 border-t pt-2">
             {isFirstStep ? (
@@ -113,13 +116,20 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     onClick={() => {
                         onOpenChange(false);
                     }}
-                    className="h-9 px-3 text-xs"
+                    className={`h-9 px-3 text-xs ${footerButtonFocusClasses}`}
                 >
                     <X className="mr-1 h-3.5 w-3.5" />
                     {t('common.actions.cancel')}
                 </Button>
             ) : (
-                <Button type="button" variant="outline" size="sm" onClick={prevStep} disabled={isSubmitting} className="h-9 gap-1.5 px-3 text-xs">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={prevStep}
+                    disabled={isSubmitting}
+                    className={`h-9 gap-1.5 px-3 text-xs ${footerButtonFocusClasses}`}
+                >
                     <ArrowLeft className="h-3.5 w-3.5" />
                     {t('common.actions.back')}
                 </Button>
@@ -132,7 +142,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                         size="sm"
                         onClick={nextStep}
                         disabled={!canAdvance}
-                        className="h-9 gap-1.5 px-4 text-xs font-medium shadow-sm"
+                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
                     >
                         <span>{t('common.actions.next')}</span>
                         <ArrowRight className="h-3.5 w-3.5" />
@@ -143,7 +153,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                         size="sm"
                         disabled={!canAdvance || isSubmitting}
                         onClick={onSubmit}
-                        className="h-9 gap-1.5 px-4 text-xs font-medium shadow-sm"
+                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
                     >
                         {isSubmitting ? (
                             <>

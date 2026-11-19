@@ -38,8 +38,14 @@ export function propagarEdicaoRecorrente({
     const chavesRemovidas = new Set(removidos.map(chaveSlot));
     const diaSemanaRemovidos = new Set(removidos.map(chaveDiaSemana));
     const hojeIso = format(hoje, 'yyyy-MM-dd');
+    const inicioPropagacao = startOfDay(dataInicial.getTime() > hoje.getTime() ? dataInicial : hoje);
+    const fimPropagacao = startOfDay(dataFinal);
+    const fimPropagacaoIso = format(fimPropagacao, 'yyyy-MM-dd');
 
     const resultado = atuais.filter((slot) => {
+        if (slot.data > fimPropagacaoIso) {
+            return false;
+        }
         if (chavesAdicionadas.has(chaveSlot(slot))) {
             return true;
         }
@@ -47,8 +53,6 @@ export function propagarEdicaoRecorrente({
     });
 
     const chavesResultado = new Set(resultado.map(chaveSlot));
-    const inicioPropagacao = startOfDay(dataInicial.getTime() > hoje.getTime() ? dataInicial : hoje);
-    const fimPropagacao = startOfDay(dataFinal);
 
     for (const adicionado of adicionados) {
         const diaSemana = getDay(parseDataLocal(adicionado.data));

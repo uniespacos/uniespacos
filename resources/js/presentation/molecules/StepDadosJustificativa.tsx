@@ -44,12 +44,12 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                         <FileText className="text-primary h-3.5 w-3.5" />
                         Justificativa e Detalhamento das Atividades <span className="text-destructive-accent">*</span>
                     </Label>
-                    <span className="text-muted-foreground text-[11px]">{formData.descricao.length}/1000</span>
+                    <span className="text-muted-foreground text-[11px]">{formData.descricao.length}/2000</span>
                 </div>
                 <Textarea
                     id="descricao"
                     value={formData.descricao}
-                    maxLength={1000}
+                    maxLength={2000}
                     rows={4}
                     onChange={(e) => {
                         setFormData('descricao', e.target.value);
@@ -74,13 +74,18 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                         type="number"
                         min={1}
                         max={5000}
+                        step={1}
                         value={formData.publico_estimado ?? ''}
                         onChange={(e) => {
-                            setFormData('publico_estimado', e.target.value ? Number(e.target.value) : '');
+                            setFormData('publico_estimado', e.target.value);
                         }}
                         placeholder="Ex: 40"
                         className="bg-card h-9 text-xs sm:text-sm"
+                        aria-invalid={Boolean(errors.publico_estimado)}
                     />
+                    {errors.publico_estimado && (
+                        <p className="text-destructive-accent text-[11px] font-medium">{errors.publico_estimado}</p>
+                    )}
                 </div>
 
                 {/* Categoria / Finalidade */}

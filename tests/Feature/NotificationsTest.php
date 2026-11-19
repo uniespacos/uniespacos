@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Agenda;
 use App\Models\Espaco;
 use App\Models\Reserva;
@@ -130,6 +131,34 @@ class NotificationsTest extends TestCase
         $this->assertArrayHasKey('titulo', $broadcastData);
         $this->assertArrayHasKey('descricao', $broadcastData);
         $this->assertArrayHasKey('url', $broadcastData);
+    }
+
+    public function test_reservation_created_notification_para_reserva_auto_deferida_nao_diz_em_analise(): void
+    {
+        $reservaAutoDeferida = Reserva::factory()->for($this->manager)->create([
+            'situacao' => SituacaoReservaEnum::DEFERIDA->value,
+        ]);
+        $reservaAutoDeferida->horarios()->create([
+            'data' => '2026-03-01',
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '09:00:00',
+            'agenda_id' => $this->agenda->id,
+            'situacao' => SituacaoReservaEnum::DEFERIDA->value,
+            'user_id' => $this->manager->id,
+        ]);
+
+        $notification = new ReservationCreatedNotification($reservaAutoDeferida);
+
+        $this->assertSame('Reserva Criada e Deferida', $notification->titulo);
+        $this->assertStringContainsString('deferida automaticamente', $notification->descricao);
+        $this->assertStringNotContainsString('em análise', $notification->descricao);
+
+        $mailMessage = $notification->toMail($this->manager);
+        $this->assertSame('Reserva Criada e Deferida: '.$reservaAutoDeferida->titulo, $mailMessage->subject);
+
+        $mailData = (string) $mailMessage->render();
+        $this->assertStringContainsString('deferida automaticamente', $mailData);
+        $this->assertStringNotContainsString('aguardando avaliação', $mailData);
     }
 
     public function test_reservation_failed_notification_sends_correct_mail_and_broadcast_data()

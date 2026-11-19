@@ -1,8 +1,18 @@
 @extends('emails.layout')
 
 @section('content')
+    @php
+        $isDeferida = $reserva->situacao === \App\Enums\SituacaoReserva\SituacaoReservaEnum::DEFERIDA->value;
+        $isParcialmenteDeferida = $reserva->situacao === \App\Enums\SituacaoReserva\SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value;
+    @endphp
     <p>Prezado(a) {{ $reserva->user?->name ?? __('Unidentified requester') }},</p>
-    <p>Sua solicitação de reserva para <strong>'{{ $reserva->titulo }}'</strong> foi criada com sucesso e está aguardando avaliação.</p>
+    @if($isDeferida)
+        <p>Sua reserva para <strong>'{{ $reserva->titulo }}'</strong> foi criada com sucesso e deferida automaticamente.</p>
+    @elseif($isParcialmenteDeferida)
+        <p>Sua solicitação de reserva para <strong>'{{ $reserva->titulo }}'</strong> foi criada com sucesso, com parte dos horários deferidos automaticamente e os demais aguardando avaliação.</p>
+    @else
+        <p>Sua solicitação de reserva para <strong>'{{ $reserva->titulo }}'</strong> foi criada com sucesso e está aguardando avaliação.</p>
+    @endif
 
     <ul>
         <li><strong>Título da Reserva:</strong> {{ $reserva->titulo }}</li>
@@ -30,7 +40,9 @@
         <li><strong>Status Inicial:</strong> {{ $reserva->situacao_formatada }}</li>
     </ul>
 
-    <p>Você será notificado assim que sua reserva for avaliada pelos gestores responsáveis.</p>
+    @if(!$isDeferida)
+        <p>Você será notificado assim que sua reserva for avaliada pelos gestores responsáveis.</p>
+    @endif
 
     <p>Para acompanhar o status da sua reserva, clique no botão abaixo:</p>
     <div class="cta-container"><a href="{{ $url }}" class="button">Acompanhar Reserva</a></div>

@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { cn, parseDataLocal } from '@/lib/utils';
 import { DatePicker } from '@/presentation/molecules/DatePicker';
@@ -10,7 +11,6 @@ import { ReservaConflictAlert } from '@/presentation/molecules/ReservaConflictAl
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
 import { format, isBefore, max, startOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Calendar, Info, Repeat } from 'lucide-react';
 import React, { useMemo } from 'react';
 
@@ -75,12 +75,27 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
     onConflictDetected,
     showRecurrenceAlert = false,
 }) => {
-    const { t } = useTranslation();
+    const { t, formatDate } = useTranslation();
+
+    const slotsExibidos = useMemo(() => {
+        const devePodarNaPrevia =
+            isEditMode &&
+            formData.edit_scope === EscopoRecorrencia.RECURRING &&
+            (formData.recorrencia === RecorrenciaReserva.QUINZE_DIAS || formData.recorrencia === RecorrenciaReserva.UM_MES) &&
+            Boolean(formData.data_final);
+
+        if (!devePodarNaPrevia || !formData.data_final) {
+            return slotsSelecao;
+        }
+
+        const dataFinalIso = format(parseDataLocal(formData.data_final), 'yyyy-MM-dd');
+        return slotsSelecao.filter((slot) => format(parseDataLocal(slot.data), 'yyyy-MM-dd') <= dataFinalIso);
+    }, [isEditMode, formData.edit_scope, formData.recorrencia, formData.data_final, slotsSelecao]);
 
     const slotsAgrupadosPorDia = useMemo(() => {
         const agrupamento: Record<string, GrupoDiaSlot | undefined> = {};
 
-        slotsSelecao.forEach((slot) => {
+        slotsExibidos.forEach((slot) => {
             const dataObj = parseDataLocal(slot.data);
             const diaKey = format(dataObj, 'yyyy-MM-dd');
             const grupo = agrupamento[diaKey];
@@ -106,29 +121,29 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
             });
 
         return listaGrupos;
-    }, [slotsSelecao]);
+    }, [slotsExibidos]);
 
     const maiorDataSelecionada = useMemo(() => {
-        if (slotsSelecao.length === 0) return undefined;
-        return new Date(Math.max(...slotsSelecao.map((s) => parseDataLocal(s.data).getTime())));
-    }, [slotsSelecao]);
+        if (slotsExibidos.length === 0) return undefined;
+        return new Date(Math.max(...slotsExibidos.map((s) => parseDataLocal(s.data).getTime())));
+    }, [slotsExibidos]);
 
     const periodoFormatado = useMemo(() => {
         const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
         const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
 
         return {
-            inicio: dataIni ? format(dataIni, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
-            fim: dataFim ? format(dataFim, 'dd/MM/yyyy', { locale: ptBR }) : 'N/I',
+            inicio: dataIni ? formatDate(dataIni) : 'N/I',
+            fim: dataFim ? formatDate(dataFim) : 'N/I',
         };
-    }, [formData.data_inicial, formData.data_final]);
+    }, [formData.data_inicial, formData.data_final, formatDate]);
 
     return (
         <div className="space-y-4">
             {/* Alerta de Conflitos em Tempo Real */}
             <ReservaConflictAlert
                 espacoId={espaco.id}
-                selectedSlots={slotsSelecao}
+                selectedSlots={slotsExibidos}
                 conflictingDates={conflictingDates}
                 onConflictDetected={onConflictDetected}
             />
@@ -141,25 +156,25 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                         {t('reservas.stepper.edit_scope_label')}
                     </Label>
                     <RadioGroup
-                        value={formData.edit_scope ?? 'recurring'}
+                        value={formData.edit_scope ?? EscopoRecorrencia.RECURRING}
                         onValueChange={(v) => {
                             setFormData('edit_scope', v);
                         }}
                         className="grid grid-cols-1 gap-2 sm:grid-cols-2"
                     >
                         <OpcaoRadioCard
-                            value="recurring"
+                            value={EscopoRecorrencia.RECURRING}
                             id="edit-scope-recurring"
                             titulo={t('reservas.stepper.scope_all_title')}
                             descricao={t('reservas.stepper.scope_all_desc')}
-                            selecionado={formData.edit_scope === 'recurring'}
+                            selecionado={formData.edit_scope === EscopoRecorrencia.RECURRING}
                         />
                         <OpcaoRadioCard
-                            value="single"
+                            value={EscopoRecorrencia.SINGLE}
                             id="edit-scope-single"
                             titulo={t('reservas.stepper.scope_week_title')}
                             descricao={t('reservas.stepper.scope_week_desc')}
-                            selecionado={formData.edit_scope === 'single'}
+                            selecionado={formData.edit_scope === EscopoRecorrencia.SINGLE}
                         />
                     </RadioGroup>
                 </div>
@@ -208,7 +223,7 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
 
                 <div className="space-y-1.5">
                     <Label htmlFor="data-final" className="text-foreground text-xs font-medium">
-                        {t('reservas.stepper.end_date')} {formData.recorrencia !== 'personalizado' && t('reservas.stepper.calculated')}
+                        {t('reservas.stepper.end_date')} {formData.recorrencia !== RecorrenciaReserva.PERSONALIZADO && t('reservas.stepper.calculated')}
                     </Label>
                     <DatePicker
                         modal
@@ -216,7 +231,7 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                         onSelect={(date) => {
                             setFormData('data_final', date);
                         }}
-                        buttonDisabled={formData.recorrencia !== 'personalizado'}
+                        buttonDisabled={formData.recorrencia !== RecorrenciaReserva.PERSONALIZADO}
                         disabled={(date) => {
                             const limiteMinimo = max([
                                 startOfDay(hoje),
@@ -257,8 +272,8 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                         {t('reservas.stepper.selected_slots')}
                     </Label>
                     <Badge variant="secondary" className="text-[11px] font-medium">
-                        {slotsSelecao.length}{' '}
-                        {slotsSelecao.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural')}
+                        {slotsExibidos.length}{' '}
+                        {slotsExibidos.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural')}
                     </Badge>
                 </div>
 
@@ -273,7 +288,7 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                                 <div key={diaKey} className="space-y-1.5">
                                     <span className="text-foreground flex items-center gap-1.5 text-xs font-semibold capitalize">
                                         <div className="bg-primary h-1.5 w-1.5 rounded-full" />
-                                        {format(data, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
+                                        {formatDate(data, 'EEEE, dd/MM/yyyy')}
                                     </span>
                                     <div className="flex flex-wrap gap-1.5 pl-3">
                                         {slots.map((slot) => (

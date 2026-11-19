@@ -65,6 +65,47 @@ class ProcessarCriacaoReservaNotificationTest extends TestCase
      * @group jobs
      * @group notifications
      */
+    public function test_auto_approved_reservation_by_manager_notifies_without_pending_analysis_text(): void
+    {
+        Bus::fake();
+        Notification::fake();
+
+        $managerUser = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $managerUser->id]);
+
+        $horarioData = [
+            [
+                'agenda_id' => $agenda->id,
+                'horario_inicio' => '07:30:00',
+                'horario_fim' => '08:20:00',
+                'data' => '2026-02-26',
+            ],
+        ];
+
+        $dadosRequisicao = [
+            'titulo' => 'Reserva Autoaprovada Pelo Gestor',
+            'descricao' => 'Gestor reservando a própria agenda.',
+            'data_inicial' => '2026-02-26T03:00:00.000Z',
+            'data_final' => '2026-02-26T03:00:00.000Z',
+            'recorrencia' => 'unica',
+            'horarios' => $horarioData,
+            'horarios_solicitados' => $horarioData,
+        ];
+
+        $job = new ProcessarCriacaoReserva($dadosRequisicao, $managerUser);
+        app()->call([$job, 'handle']);
+
+        Notification::assertSentTo($managerUser, ReservationCreatedNotification::class, function (ReservationCreatedNotification $notification): bool {
+            return $notification->reserva->situacao === 'deferida'
+                && ! str_contains($notification->descricao, 'em análise')
+                && str_contains($notification->descricao, 'deferida automaticamente');
+        });
+    }
+
+    /**
+     * @group jobs
+     * @group notifications
+     */
     public function test_it_correctly_dispatches_failed_notification_on_exception(): void
     {
         Notification::fake();

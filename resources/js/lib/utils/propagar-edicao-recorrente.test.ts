@@ -144,4 +144,26 @@ describe('propagarEdicaoRecorrente', () => {
 
         expect(resumir(resultado)).toEqual([`${T1}|3|13:10:00`, `${T2}|3|13:10:00`]);
     });
+
+    it('poda slots existentes que ultrapassam dataFinal ao encurtar recorrencia', () => {
+        const t4 = '2026-12-15';
+        const t5 = '2026-12-22';
+        const iniciais = [
+            slot(T1, AGENDA_MANHA, MANHA),
+            slot(T2, AGENDA_MANHA, MANHA),
+            slot(T3, AGENDA_MANHA, MANHA),
+            slot(t4, AGENDA_MANHA, MANHA),
+            slot(t5, AGENDA_MANHA, MANHA),
+        ];
+
+        const resultado = propagarEdicaoRecorrente({
+            iniciais,
+            atuais: iniciais,
+            dataInicial: INICIO_PERIODO,
+            dataFinal: FIM_PERIODO,
+            hoje: HOJE_ANTES_DO_PERIODO,
+        });
+
+        expect(resumir(resultado)).toEqual([`${T1}|2|07:30:00`, `${T2}|2|07:30:00`, `${T3}|2|07:30:00`]);
+    });
 });

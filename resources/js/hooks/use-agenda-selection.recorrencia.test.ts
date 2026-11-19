@@ -1,4 +1,4 @@
-import { RecorrenciaReserva } from '@/contracts/recorrencia.contract';
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts/recorrencia.contract';
 import { type Espaco, type Horario, type Reserva, type SlotCalendario, type User } from '@/types';
 import { type ReservaFormData } from '@/types/reserva-stepper';
 import { act, renderHook } from '@testing-library/react';
@@ -389,5 +389,107 @@ describe('useAgendaSelection: propagacao da edicao recorrente', () => {
         });
 
         esperarPayload(result.current.formData.horarios_solicitados, [{ data: '2026-11-24', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA }]);
+    });
+
+    it('encurtar recorrencia de 1 mes para 15 dias em edicao recurring recalcula data_final e poda horarios excedentes (E-11)', () => {
+        const datasCincoSemanas = [T1, T2, T3, new Date(2026, 11, 15), new Date(2026, 11, 22)];
+        const reservaUmMes: Reserva = {
+            ...criarReservaRecorrente(RecorrenciaReserva.UM_MES),
+            data_final: new Date(2026, 11, 22),
+            horarios: datasCincoSemanas.map((data, idx) => ({
+                id: idx + 1,
+                data: format(data, 'yyyy-MM-dd'),
+                horario_inicio: '07:30:00',
+                horario_fim: '08:20:00',
+                situacao: 'em_analise',
+                agenda: { id: AGENDA_MANHA, turno: 'manha' },
+            })),
+        };
+
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: reservaUmMes,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.setFormData('edit_scope', EscopoRecorrencia.RECURRING);
+            result.current.setFormData('recorrencia', RecorrenciaReserva.QUINZE_DIAS);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 11, 8));
+        esperarPayload(result.current.formData.horarios_solicitados, [
+            { data: '2026-11-24', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-01', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-08', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+        ]);
+    });
+
+    it('mudar de 15 dias para unica preserva os horarios marcados (E-10)', () => {
+        const reservaQuinzeDias = criarReservaRecorrente(RecorrenciaReserva.QUINZE_DIAS);
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: reservaQuinzeDias,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.UNICA);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 11, 8));
+        esperarPayload(result.current.formData.horarios_solicitados, [
+            { data: '2026-11-24', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-01', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-08', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+        ]);
+    });
+
+    it('estender de 15 dias para 1 mes nao duplica horarios existentes e atualiza data_final (E-12)', () => {
+        const reservaQuinzeDias = criarReservaRecorrente(RecorrenciaReserva.QUINZE_DIAS);
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: reservaQuinzeDias,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.UM_MES);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 11, 24));
+        esperarPayload(result.current.formData.horarios_solicitados, [
+            { data: '2026-11-24', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-01', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+            { data: '2026-12-08', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+        ]);
+    });
+
+    it('no modo personalizado adicionar slot apos data_final expande data_final (O-09)', () => {
+        const reservaPersonalizada = criarReservaRecorrente(RecorrenciaReserva.PERSONALIZADO);
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: reservaPersonalizada,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        const slotFuturo = slotDoHorario(new Date(2026, 11, 22), AGENDA_MANHA, '07:30:00', '08:20:00');
+        act(() => {
+            result.current.alternarSelecaoSlot(slotFuturo);
+        });
+
+        expect(result.current.formData.data_final).toEqual(new Date(2026, 11, 22));
     });
 });

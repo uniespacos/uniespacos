@@ -1,3 +1,4 @@
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { Espaco } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -116,8 +117,8 @@ describe('StepRevisaoConfirmacao', () => {
                 espaco={mockEspaco}
                 formData={{
                     ...mockFormData,
-                    recorrencia: '15dias',
-                    edit_scope: 'recurring',
+                    recorrencia: RecorrenciaReserva.QUINZE_DIAS,
+                    edit_scope: EscopoRecorrencia.RECURRING,
                     data_final: new Date('2026-12-08T00:00:00'),
                     horarios_solicitados: [{ data: '2026-11-24', ...horarioManha }],
                 }}
@@ -127,5 +128,29 @@ describe('StepRevisaoConfirmacao', () => {
         );
 
         expect(screen.getByText('Total a gravar: 3')).toBeInTheDocument();
+    });
+
+    it('em edicao single exibe na previa do periodo a faixa real dos horarios resultantes (R-04)', () => {
+        render(
+            <StepRevisaoConfirmacao
+                espaco={mockEspaco}
+                formData={{
+                    ...mockFormData,
+                    recorrencia: RecorrenciaReserva.QUINZE_DIAS,
+                    edit_scope: EscopoRecorrencia.SINGLE,
+                    data_inicial: new Date('2026-11-24T00:00:00'),
+                    data_final: new Date('2026-12-08T00:00:00'),
+                    horarios_solicitados: [
+                        { data: '2026-11-24', ...horarioManha },
+                        { data: '2026-12-01', ...horarioManha },
+                    ],
+                }}
+                setFormData={jest.fn()}
+                isEditMode
+            />,
+        );
+
+        expect(screen.getByText(/24\/11\/2026 até 01\/12\/2026/)).toBeInTheDocument();
+        expect(screen.queryByText(/08\/12\/2026/)).not.toBeInTheDocument();
     });
 });

@@ -16,8 +16,8 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 break-words [overflow-wrap:anywhere]">
+                    <FileText className="h-5 w-5 shrink-0" />
                     {reserva.titulo}
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
                 <Separator />
                 <div>
                     <h4 className="text-muted-foreground mb-2 font-medium text-sm">Descrição</h4>
-                    <p className="text-foreground text-sm">{reserva.descricao}</p>
+                    <p className="text-foreground text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{reserva.descricao}</p>
                 </div>
                 {children && (
                     <>

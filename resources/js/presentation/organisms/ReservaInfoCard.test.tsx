@@ -133,6 +133,19 @@ describe('ReservaInfoCard', () => {
         expect(screen.getByText('Uma reserva de teste')).toBeInTheDocument();
     });
 
+    it('preserva quebras de linha na descricao (W-08)', () => {
+        const reservaMultilinha: Reserva = {
+            ...mockReservaWithContact,
+            descricao: 'Primeira linha\nSegunda linha',
+        };
+
+        render(<ReservaInfoCard reserva={reservaMultilinha} />);
+
+        const descricaoEl = screen.getByText(/Primeira linha/);
+        expect(descricaoEl).toHaveClass('whitespace-pre-wrap');
+        expect(descricaoEl.textContent).toBe('Primeira linha\nSegunda linha');
+    });
+
     it('renders children when provided', () => {
         render(
             <ReservaInfoCard reserva={mockReservaWithContact}>

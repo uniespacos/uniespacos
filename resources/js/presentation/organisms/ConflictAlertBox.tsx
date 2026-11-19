@@ -3,8 +3,9 @@
  *
  * Este componente mostra os conflitos calculados no momento em que a página
  * foi carregada via ConflictDetectionService (síncrono a cada acesso via props
- * todosOsConflitos vinda de getForGestorReview()). O dado reflete a detecção
- * mais fresca e é puramente informativo — não bloqueia o deferimento.
+ * todosOsConflitos vinda de getForGestorReview()). Horários em conflito com
+ * outra reserva deferida ficam bloqueados para aprovação e são indeferidos
+ * automaticamente na avaliação.
  */
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,12 +36,16 @@ export function ConflictAlertBox({ conflicts }: ConflictAlertBoxProps): React.Re
                         {conflictEntries.map(([horarioId, conflict]) => (
                             <li key={horarioId}>
                                 <span className="font-medium">{conflict.conflito_reserva_titulo}</span>
-                                {' — '}
-                                <span>
-                                    {t('reservas.gestor.conflict_with_user', {
-                                        user: conflict.conflito_user_name,
-                                    })}
-                                </span>
+                                {conflict.conflito_user_name ? (
+                                    <>
+                                        {' — '}
+                                        <span>
+                                            {t('reservas.gestor.conflict_with_user', {
+                                                user: conflict.conflito_user_name,
+                                            })}
+                                        </span>
+                                    </>
+                                ) : null}
                             </li>
                         ))}
                     </ul>

@@ -14,6 +14,9 @@ class LangJsonChavesTest extends TestCase
         'The reason must be a valid text.',
         'The reason may not have more than :max characters.',
         'The description may not have more than :max characters.',
+        'The estimated audience must be an integer.',
+        'The estimated audience must be at least :min.',
+        'The estimated audience may not be greater than :max.',
         'The uploaded image could not be processed. Please send another file.',
     ];
 

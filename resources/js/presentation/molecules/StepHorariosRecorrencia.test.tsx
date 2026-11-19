@@ -1,5 +1,7 @@
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { usePage } from '@inertiajs/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { StepHorariosRecorrencia } from './StepHorariosRecorrencia';
 
@@ -15,6 +17,15 @@ describe('StepHorariosRecorrencia', () => {
     let mockEspaco: Espaco;
     let mockFormData: ReservaFormData;
     let mockSlots: SlotCalendario[];
+
+    afterEach(() => {
+        jest.mocked(usePage).mockReturnValue({
+            props: { auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+    });
 
     beforeEach(() => {
         mockEspaco = {
@@ -141,7 +152,7 @@ describe('StepHorariosRecorrencia', () => {
         render(
             <StepHorariosRecorrencia
                 espaco={mockEspaco}
-                formData={{ ...mockFormData, recorrencia: 'personalizado' }}
+                formData={{ ...mockFormData, recorrencia: RecorrenciaReserva.PERSONALIZADO }}
                 setFormData={jest.fn()}
                 slotsSelecao={mockSlots}
                 hoje={new Date('2026-08-25T00:00:00')}
@@ -150,5 +161,78 @@ describe('StepHorariosRecorrencia', () => {
 
         expect(screen.queryByText(/ajusta horários/i)).not.toBeInTheDocument();
         expect(screen.getByText(/Data Inicial \(calculada\)/i)).toBeInTheDocument();
+    });
+
+    it('oculta slots alem de data_final ao encurtar recorrencia em edicao recurring', () => {
+        const slotsCincoSemanas: SlotCalendario[] = [
+            { ...mockSlots[0], id: '2026-11-24|08:00', data: new Date('2026-11-24T12:00:00') },
+            { ...mockSlots[0], id: '2026-12-01|08:00', data: new Date('2026-12-01T12:00:00') },
+            { ...mockSlots[0], id: '2026-12-08|08:00', data: new Date('2026-12-08T12:00:00') },
+            { ...mockSlots[0], id: '2026-12-15|08:00', data: new Date('2026-12-15T12:00:00') },
+            { ...mockSlots[0], id: '2026-12-22|08:00', data: new Date('2026-12-22T12:00:00') },
+        ];
+
+        render(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={{
+                    ...mockFormData,
+                    edit_scope: EscopoRecorrencia.RECURRING,
+                    recorrencia: RecorrenciaReserva.QUINZE_DIAS,
+                    data_inicial: new Date('2026-11-24T12:00:00'),
+                    data_final: new Date('2026-12-08T12:00:00'),
+                }}
+                setFormData={jest.fn()}
+                slotsSelecao={slotsCincoSemanas}
+                hoje={new Date('2026-11-19T12:00:00')}
+                isEditMode
+            />,
+        );
+
+        expect(screen.getByText('3 horários')).toBeInTheDocument();
+        expect(screen.getByText(/terça-feira, 08\/12\/2026/i)).toBeInTheDocument();
+        expect(screen.queryByText(/15\/12\/2026/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/22\/12\/2026/)).not.toBeInTheDocument();
+    });
+
+    it('formata dias da semana nos slots de acordo com o idioma ativo (R-13)', () => {
+        const mockUsePage = jest.mocked(usePage);
+        mockUsePage.mockReturnValue({
+            props: { locale: 'en', auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+
+        const { rerender } = render(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={mockFormData}
+                setFormData={jest.fn()}
+                slotsSelecao={[{ ...mockSlots[0], data: new Date('2026-08-25T12:00:00') }]}
+                hoje={new Date('2026-08-25T12:00:00')}
+            />,
+        );
+
+        expect(screen.getByText(/Tuesday, 25\/08\/2026/i)).toBeInTheDocument();
+
+        mockUsePage.mockReturnValue({
+            props: { locale: 'es', auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+
+        rerender(
+            <StepHorariosRecorrencia
+                espaco={mockEspaco}
+                formData={mockFormData}
+                setFormData={jest.fn()}
+                slotsSelecao={[{ ...mockSlots[0], data: new Date('2026-08-25T12:00:00') }]}
+                hoje={new Date('2026-08-25T12:00:00')}
+            />,
+        );
+
+        expect(screen.getByText(/martes, 25\/08\/2026/i)).toBeInTheDocument();
     });
 });

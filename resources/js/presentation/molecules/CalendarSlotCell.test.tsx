@@ -124,4 +124,45 @@ describe('CalendarSlotCell', () => {
 
         expect(onSelect).not.toHaveBeenCalled();
     });
+
+    it('permite operacao por teclado com Enter e Espaco em slots livres', () => {
+        const onSelectSlot = jest.fn();
+        render(
+            <TooltipProvider>
+                <CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={onSelectSlot} />
+            </TooltipProvider>,
+        );
+
+        const cell = screen.getByRole('button', { name: '07/09/2026 07:30-08:20 — Livre' });
+        expect(cell).toHaveAttribute('tabindex', '0');
+        expect(cell).toHaveAttribute('aria-pressed', 'false');
+        expect(cell).toHaveClass('focus-visible:ring-2');
+
+        fireEvent.keyDown(cell, { key: 'Enter' });
+        fireEvent.keyDown(cell, { key: ' ' });
+
+        expect(onSelectSlot).toHaveBeenCalledTimes(2);
+    });
+
+    it('nao expoe role button nem dispara acao por teclado em slots reservados, passados ou travados', () => {
+        const onSelectSlot = jest.fn();
+        const { container } = render(
+            <TooltipProvider>
+                <CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={onSelectSlot} />
+                <CalendarSlotCell slot={{ ...slotLivre, isPast: true }} isSelecionado={false} onSelectSlot={onSelectSlot} />
+                <CalendarSlotCell slot={{ ...slotLivre, isLocked: true }} isSelecionado={false} onSelectSlot={onSelectSlot} />
+            </TooltipProvider>,
+        );
+
+        expect(screen.queryByRole('button')).not.toBeInTheDocument();
+
+        const cells = Array.from(container.children) as HTMLElement[];
+        cells.forEach((cell) => {
+            expect(cell).not.toHaveAttribute('tabindex');
+            fireEvent.keyDown(cell, { key: 'Enter' });
+            fireEvent.keyDown(cell, { key: ' ' });
+        });
+
+        expect(onSelectSlot).not.toHaveBeenCalled();
+    });
 });

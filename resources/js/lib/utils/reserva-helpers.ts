@@ -1,6 +1,11 @@
-import { Reserva, SituacaoReserva } from '@/types';
+import { SituacaoHorario, SituacaoReserva, type SituacaoReservaType } from '@/contracts';
+import { type Reserva } from '@/types';
 
-export function calculateGestorStatus(reserva: Reserva): SituacaoReserva {
+export function calculateGestorStatus(reserva: Reserva): SituacaoReservaType {
+    if (reserva.situacao === SituacaoReserva.INATIVA) {
+        return SituacaoReserva.INATIVA;
+    }
+
     const horarios = reserva.horarios;
 
     if (horarios.length === 0) {
@@ -9,19 +14,23 @@ export function calculateGestorStatus(reserva: Reserva): SituacaoReserva {
 
     const situacoes = horarios.map((h) => h.situacao);
 
-    if (situacoes.includes('em_analise')) {
-        return 'em_analise';
+    if (situacoes.every((s) => s === SituacaoHorario.INATIVA)) {
+        return SituacaoReserva.INATIVA;
     }
 
-    if (situacoes.every((s) => s === 'deferida')) {
-        return 'deferida';
+    if (situacoes.includes(SituacaoHorario.EM_ANALISE)) {
+        return SituacaoReserva.EM_ANALISE;
     }
 
-    if (situacoes.every((s) => s === 'indeferida')) {
-        return 'indeferida';
+    if (situacoes.every((s) => s === SituacaoHorario.DEFERIDA)) {
+        return SituacaoReserva.DEFERIDA;
     }
 
-    return 'parcialmente_deferida';
+    if (situacoes.every((s) => s === SituacaoHorario.INDEFERIDA)) {
+        return SituacaoReserva.INDEFERIDA;
+    }
+
+    return SituacaoReserva.PARCIALMENTE_DEFERIDA;
 }
 
 export function comSituacaoEfetivaDoGestor(reservas: Reserva[]): Reserva[] {

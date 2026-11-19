@@ -1,9 +1,10 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ESTILO_SLOT } from '@/constants/situacao-reserva';
-import { cn } from '@/lib/utils';
+import { cn, parseDataLocal } from '@/lib/utils';
 import { CalendarSlotHoverCard } from '@/presentation/molecules/CalendarSlotHoverCard';
 import { SituacaoReserva, SlotCalendario } from '@/types';
-import { JSX, memo } from 'react';
+import { format } from 'date-fns';
+import { JSX, type KeyboardEvent, memo } from 'react';
 
 interface CalendarSlotCellProps {
     slot: SlotCalendario;
@@ -40,6 +41,16 @@ function CalendarSlotCell({ slot, isSelecionado, onSelect, onSelectSlot }: Calen
         }
         onSelect?.();
     };
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleClick();
+        }
+    };
+
+    const statusLabel = isSelecionado ? ESTILO_SLOT.selecionado.label : ESTILO_SLOT[slot.status].label;
+    const ariaLabel = `${format(parseDataLocal(slot.data), 'dd/MM/yyyy')} ${slot.horario_inicio.slice(0, 5)}-${slot.horario_fim.slice(0, 5)} — ${statusLabel}`;
 
     const renderSlotContent = (): JSX.Element | null => {
         if (slot.isPast && slot.status === 'livre') {
@@ -98,9 +109,15 @@ function CalendarSlotCell({ slot, isSelecionado, onSelect, onSelectSlot }: Calen
     return (
         <div
             key={slot.id}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-pressed={isClickable ? isSelecionado : undefined}
+            aria-label={isClickable ? ariaLabel : undefined}
             onClick={isClickable ? handleClick : undefined}
+            onKeyDown={isClickable ? handleKeyDown : undefined}
             className={cn(
                 'relative flex h-12 items-center justify-center border-l p-1 text-center transition-all duration-200',
+                isClickable && 'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
                 isSelecionado && 'border-success-accent bg-success-subtle hover:bg-success-subtle/70 shadow-md',
 
                 !isSelecionado && [

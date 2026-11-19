@@ -79,5 +79,8 @@
     "An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.": "Ya existe una cuenta con este correo. Si no recuerda la contraseña, use “Olvidó su contraseña” para restablecerla.",
     "The time slot :start–:end on :date is already reserved.": "El horario :start–:end del día :date ya está reservado.",
     "Each time slot date must be on or after the start date.": "La fecha de cada horario debe ser igual o posterior a la fecha inicial.",
-    "Each time slot date must be on or before the end date.": "La fecha de cada horario debe ser igual o anterior a la fecha final."
+    "Each time slot date must be on or before the end date.": "La fecha de cada horario debe ser igual o anterior a la fecha final.",
+    "The estimated audience must be an integer.": "El público estimado debe ser un número entero.",
+    "The estimated audience must be at least :min.": "El público estimado debe ser de al menos :min.",
+    "The estimated audience may not be greater than :max.": "El público estimado no puede ser mayor que :max."
 }
