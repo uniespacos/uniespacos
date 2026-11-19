@@ -20,9 +20,10 @@ use Symfony\Component\Process\Process;
  * pode ficar presa, pulando a rodada seguinte.
  *
  * `init: true` só troca quem recebe o sinal e continua matando à força depois do prazo.
- * `stop_grace_period` sozinho só atrasa o SIGKILL. Este comando instala o handler:
- * SIGTERM/SIGINT apenas marcam a parada, as rodadas em curso terminam dentro de
- * --teto-parada segundos e o processo sai com 0.
+ * `stop_grace_period` sozinho só atrasa o SIGKILL. Este comando instala o handler para
+ * SIGTERM, SIGINT e SIGQUIT (o Dockerfile de produção baseado em `php:*-fpm` define
+ * `STOPSIGNAL SIGQUIT`): os sinais apenas marcam a parada, as rodadas em curso terminam
+ * dentro de --teto-parada segundos e o processo sai com 0.
  */
 class AgendadorExecutarCommand extends Command
 {
@@ -32,16 +33,27 @@ class AgendadorExecutarCommand extends Command
      * @var string
      */
     protected $signature = 'agendador:executar
-        {--teto-parada=100 : Segundos de espera pelas rodadas em curso após SIGTERM/SIGINT}';
+        {--teto-parada=100 : Segundos de espera pelas rodadas em curso após sinal de parada}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Executa o agendador (schedule:run a cada minuto) com parada limpa em SIGTERM';
+    protected $description = 'Executa o agendador (schedule:run a cada minuto) com parada limpa em SIGTERM, SIGINT e SIGQUIT';
 
     private bool $paradaSolicitada = false;
+
+    /**
+     * Sinais POSIX que disparam parada limpa.
+     * Inclui SIGQUIT porque a imagem base php:*-fpm define STOPSIGNAL SIGQUIT.
+     *
+     * @return list<int>
+     */
+    public static function sinaisDeParada(): array
+    {
+        return [SIGTERM, SIGINT, SIGQUIT];
+    }
 
     /**
      * Execute the console command.
@@ -53,8 +65,10 @@ class AgendadorExecutarCommand extends Command
         $marcarParada = function (): void {
             $this->paradaSolicitada = true;
         };
-        pcntl_signal(SIGTERM, $marcarParada);
-        pcntl_signal(SIGINT, $marcarParada);
+
+        foreach (self::sinaisDeParada() as $sinal) {
+            pcntl_signal($sinal, $marcarParada);
+        }
 
         $loop = new AgendadorLoop(
             relogio: fn (): CarbonImmutable => CarbonImmutable::now(),
