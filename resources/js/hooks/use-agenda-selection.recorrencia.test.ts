@@ -1,5 +1,6 @@
 import { RecorrenciaReserva } from '@/contracts/recorrencia.contract';
-import { type Espaco, type SlotCalendario } from '@/types';
+import { type Espaco, type Horario, type Reserva, type SlotCalendario, type User } from '@/types';
+import { type ReservaFormData } from '@/types/reserva-stepper';
 import { act, renderHook } from '@testing-library/react';
 import { format } from 'date-fns';
 import { useAgendaSelection } from './use-agenda-selection';
@@ -186,5 +187,207 @@ describe('useAgendaSelection: recorrencia e data inicial', () => {
         });
 
         expect(result.current.formData.data_final).toEqual(new Date(2026, 5, 24));
+    });
+});
+
+describe('useAgendaSelection: propagacao da edicao recorrente', () => {
+    const AGENDA_MANHA = 2;
+    const AGENDA_TARDE = 3;
+
+    function slotDoHorario(data: Date, agendaId: number, horarioInicio: string, horarioFim: string): SlotCalendario {
+        return {
+            id: `${format(data, 'yyyy-MM-dd')}|${horarioInicio}`,
+            status: 'solicitado',
+            data,
+            horario_inicio: horarioInicio,
+            horario_fim: horarioFim,
+            agenda_id: agendaId,
+            isPast: false,
+        };
+    }
+
+    const T1 = new Date(2026, 10, 24);
+    const T2 = new Date(2026, 11, 1);
+    const T3 = new Date(2026, 11, 8);
+
+    const SLOT_MANHA_T1 = slotDoHorario(T1, AGENDA_MANHA, '07:30:00', '08:20:00');
+    const SLOT_TARDE_T1 = slotDoHorario(T1, AGENDA_TARDE, '13:10:00', '14:00:00');
+
+    function criarReservaRecorrente(recorrencia: Reserva['recorrencia']): Reserva {
+        const horarios: Horario[] = [T1, T2, T3].map((data, idx) => ({
+            id: idx + 1,
+            data: format(data, 'yyyy-MM-dd'),
+            horario_inicio: '07:30:00',
+            horario_fim: '08:20:00',
+            situacao: 'deferida',
+            agenda: { id: AGENDA_MANHA, turno: 'manha' },
+        }));
+
+        return {
+            id: 100,
+            titulo: 'Reserva Recorrente',
+            descricao: '',
+            data_inicial: new Date(2026, 10, 24),
+            data_final: new Date(2026, 11, 8),
+            recorrencia,
+            observacao: '',
+            created_at: '',
+            updated_at: '',
+            situacao: 'em_analise',
+            horarios,
+            user: { id: 10, name: 'Solicitante' } as User,
+        };
+    }
+
+    interface PayloadEsperado {
+        data: string;
+        horario_inicio: string;
+        agenda_id: number;
+    }
+
+    function esperarPayload(horarios: ReservaFormData['horarios_solicitados'], esperados: PayloadEsperado[]) {
+        expect(horarios).toHaveLength(esperados.length);
+        expect(horarios).toEqual(expect.arrayContaining(esperados.map((esperado): unknown => expect.objectContaining(esperado))));
+    }
+
+    const TARDE_NAS_TRES_SEMANAS: PayloadEsperado[] = [
+        { data: '2026-11-24', horario_inicio: '13:10:00', agenda_id: AGENDA_TARDE },
+        { data: '2026-12-01', horario_inicio: '13:10:00', agenda_id: AGENDA_TARDE },
+        { data: '2026-12-08', horario_inicio: '13:10:00', agenda_id: AGENDA_TARDE },
+    ];
+
+    const TROCA_SO_PRIMEIRA_SEMANA: PayloadEsperado[] = [
+        { data: '2026-11-24', horario_inicio: '13:10:00', agenda_id: AGENDA_TARDE },
+        { data: '2026-12-01', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+        { data: '2026-12-08', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA },
+    ];
+
+    let mockEspaco: Espaco;
+
+    beforeEach(() => {
+        jest.useFakeTimers({ now: AGORA_CONGELADO });
+
+        mockEspaco = {
+            id: 1,
+            nome: 'Auditório',
+            agendas: [],
+            capacidade_pessoas: 100,
+            descricao: '',
+            imagens: [],
+            main_image_index: null,
+        };
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    it('troca de turno em uma semana propaga para todas as ocorrencias no escopo recorrente (E-01)', () => {
+        const reserva = criarReservaRecorrente('personalizado');
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_MANHA_T1);
+        });
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_TARDE_T1);
+        });
+
+        esperarPayload(result.current.formData.horarios_solicitados, TARDE_NAS_TRES_SEMANAS);
+    });
+
+    it('remover um horario em uma semana remove as demais ocorrencias do mesmo dia da semana', () => {
+        const reserva = criarReservaRecorrente('personalizado');
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_MANHA_T1);
+        });
+
+        expect(result.current.formData.horarios_solicitados).toEqual([]);
+    });
+
+    it('escopo apenas esta semana nao propaga e alternar de volta ao escopo recorrente recalcula o payload', () => {
+        const reserva = criarReservaRecorrente('personalizado');
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_MANHA_T1);
+        });
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_TARDE_T1);
+        });
+        act(() => {
+            result.current.setFormData('edit_scope', 'single');
+        });
+
+        esperarPayload(result.current.formData.horarios_solicitados, TROCA_SO_PRIMEIRA_SEMANA);
+
+        act(() => {
+            result.current.setFormData('edit_scope', 'recurring');
+        });
+
+        esperarPayload(result.current.formData.horarios_solicitados, TARDE_NAS_TRES_SEMANAS);
+    });
+
+    it('recorrencia unica nao propaga a troca de turno', () => {
+        const reserva = criarReservaRecorrente('unica');
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva,
+                isEditMode: true,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_MANHA_T1);
+        });
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_TARDE_T1);
+        });
+
+        esperarPayload(result.current.formData.horarios_solicitados, TROCA_SO_PRIMEIRA_SEMANA);
+    });
+
+    it('criacao de reserva nao propaga o horario selecionado', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date(2026, 10, 23),
+            }),
+        );
+
+        act(() => {
+            result.current.setFormData('recorrencia', RecorrenciaReserva.PERSONALIZADO);
+        });
+        act(() => {
+            result.current.alternarSelecaoSlot(SLOT_MANHA_T1);
+        });
+
+        esperarPayload(result.current.formData.horarios_solicitados, [{ data: '2026-11-24', horario_inicio: '07:30:00', agenda_id: AGENDA_MANHA }]);
     });
 });

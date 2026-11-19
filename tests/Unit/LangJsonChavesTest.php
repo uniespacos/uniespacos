@@ -69,6 +69,15 @@ class LangJsonChavesTest extends TestCase
         'Questions about your personal data? Contact the UESB Legal Department (provisional channel):',
     ];
 
+    private const CHAVES_DE_CONFLITO_DE_HORARIO = [
+        'The time slot :start–:end on :date is already reserved.',
+    ];
+
+    private const CHAVES_DE_PERIODO_DOS_HORARIOS = [
+        'Each time slot date must be on or after the start date.',
+        'Each time slot date must be on or before the end date.',
+    ];
+
     private const CHAVES_DE_MENSAGENS_FLASH_DOS_CONTROLLERS = [
         'This space does not have a manager defined yet.',
         'Space added to favorites!',
@@ -179,6 +188,18 @@ class LangJsonChavesTest extends TestCase
     public function test_rodape_de_privacidade_do_email_existe_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DO_RODAPE_DE_PRIVACIDADE_DO_EMAIL);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagem_de_conflito_de_horario_existe_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_CONFLITO_DE_HORARIO);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagens_de_periodo_dos_horarios_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_PERIODO_DOS_HORARIOS);
     }
 
     #[DataProvider('arquivosDeIdiomaProvider')]

@@ -8,7 +8,7 @@ import { CalendarIcon } from 'lucide-react';
 
 interface DatePickerProps {
     value?: Date;
-    onSelect: (date: Date | undefined) => void;
+    onSelect?: (date: Date | undefined) => void;
     /** Predicado de dia desabilitado no calendário (não confundir com buttonDisabled). */
     disabled?: (date: Date) => boolean;
     /** Desabilita o próprio campo/gatilho, independente do calendário. */
@@ -56,7 +56,7 @@ export function DatePicker({
                             size="sm"
                             className="w-full justify-center text-xs"
                             onClick={() => {
-                                onSelect(undefined);
+                                onSelect?.(undefined);
                             }}
                         >
                             Limpar data

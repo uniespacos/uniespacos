@@ -1,6 +1,7 @@
 import { opcoesRecorrencia } from '@/constants/recorrencia';
 import { useSlotSelection } from '@/hooks/use-slot-selection';
 import { parseDataLocal } from '@/lib/utils';
+import { propagarEdicaoRecorrente } from '@/lib/utils/propagar-edicao-recorrente';
 import { type Espaco, type Reserva, type SlotCalendario, type ValorOcorrenciaType } from '@/types';
 import { type ReservaFormData } from '@/types/reserva-stepper';
 import { useForm } from '@inertiajs/react';
@@ -15,7 +16,15 @@ interface AgendaHorarioPayload {
     horario_inicio: string;
     horario_fim: string;
     agenda_id?: number;
-    [key: string]: string | number | { id: number; turno: string } | undefined;
+}
+
+function paraPayloadHorario(slot: SlotCalendario): AgendaHorarioPayload {
+    return {
+        data: format(slot.data, 'yyyy-MM-dd'),
+        horario_inicio: slot.horario_inicio,
+        horario_fim: slot.horario_fim,
+        agenda_id: slot.agenda_id,
+    };
 }
 
 interface AgendaSelectionFormData {
@@ -83,25 +92,13 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     }, [semanaVisivelIso, setData]);
 
     useEffect(() => {
-        const horariosParaEnviar: AgendaHorarioPayload[] = slotsSelecao.map((s) => ({
-            data: format(s.data, 'yyyy-MM-dd'),
-            horario_inicio: s.horario_inicio,
-            horario_fim: s.horario_fim,
-            agenda_id: s.agenda_id,
-        }));
+        if (slotsSelecao.length === 0) return;
+
+        const timestamps = slotsSelecao.map((s) => s.data.getTime());
+        const novaDataInicial = new Date(Math.min(...timestamps));
+        const maiorData = new Date(Math.max(...timestamps));
 
         setData((prevData) => {
-            if (slotsSelecao.length === 0) {
-                return {
-                    ...prevData,
-                    horarios_solicitados: horariosParaEnviar,
-                };
-            }
-
-            const timestamps = slotsSelecao.map((s) => s.data.getTime());
-            const novaDataInicial = new Date(Math.min(...timestamps));
-            const maiorData = new Date(Math.max(...timestamps));
-
             let novaDataFinal = prevData.data_final;
             if (prevData.recorrencia === 'personalizado') {
                 const limiteMinimo = isBefore(startOfDay(novaDataInicial), startOfDay(maiorData)) ? maiorData : novaDataInicial;
@@ -118,12 +115,34 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
 
             return {
                 ...prevData,
-                horarios_solicitados: horariosParaEnviar,
                 data_inicial: novaDataInicial,
                 data_final: novaDataFinal,
             };
         });
     }, [slotsSelecao, setData]);
+
+    const { edit_scope, recorrencia, data_inicial, data_final } = data;
+
+    const horariosSolicitados = useMemo<AgendaHorarioPayload[]>(() => {
+        const atuais = slotsSelecao.map(paraPayloadHorario);
+        const propagarEdicao = isEditMode && edit_scope === 'recurring' && recorrencia !== 'unica' && data_inicial !== null && data_final !== null;
+
+        if (!propagarEdicao) {
+            return atuais;
+        }
+
+        return propagarEdicaoRecorrente({
+            iniciais: slotsIniciais.map(paraPayloadHorario),
+            atuais,
+            dataInicial: data_inicial,
+            dataFinal: data_final,
+            hoje,
+        });
+    }, [slotsSelecao, slotsIniciais, isEditMode, edit_scope, recorrencia, data_inicial, data_final, hoje]);
+
+    useEffect(() => {
+        setData((prevData) => ({ ...prevData, horarios_solicitados: horariosSolicitados }));
+    }, [horariosSolicitados, setData]);
 
     useEffect(() => {
         if (slotsSelecao.length === 0) return;
@@ -170,7 +189,7 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
                 toast.success(isEditMode ? 'Sua solicitação de alteração foi enviada!' : 'Solicitação de reserva enviada com sucesso!');
             },
             onError: (formErrors: Record<string, string>) => {
-                toast.error(Object.values(formErrors)[0] || 'Ocorreu um erro de validação.');
+                toast.error(Object.values(formErrors)[0] || 'Ocorreu um erro de validação.', { duration: 8000 });
             },
         };
 

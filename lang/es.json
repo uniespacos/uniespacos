@@ -76,5 +76,8 @@
     "An error occurred while sending the update for processing.": "Ocurrió un error al enviar la actualización para procesamiento.",
     "Reservation cancelled successfully!": "¡Reserva cancelada con éxito!",
     "Error cancelling the reservation. Please try again.": "Error al cancelar la reserva. Por favor, inténtelo de nuevo.",
-    "An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.": "Ya existe una cuenta con este correo. Si no recuerda la contraseña, use “Olvidó su contraseña” para restablecerla."
+    "An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.": "Ya existe una cuenta con este correo. Si no recuerda la contraseña, use “Olvidó su contraseña” para restablecerla.",
+    "The time slot :start–:end on :date is already reserved.": "El horario :start–:end del día :date ya está reservado.",
+    "Each time slot date must be on or after the start date.": "La fecha de cada horario debe ser igual o posterior a la fecha inicial.",
+    "Each time slot date must be on or before the end date.": "La fecha de cada horario debe ser igual o anterior a la fecha final."
 }

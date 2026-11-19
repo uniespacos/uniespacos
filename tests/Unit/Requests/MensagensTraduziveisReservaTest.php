@@ -93,6 +93,32 @@ class MensagensTraduziveisReservaTest extends TestCase
         $this->assertSame('A descrição não pode ter mais de 2000 caracteres.', $mensagem);
     }
 
+    #[Test]
+    #[DataProvider('idiomasDoConflitoDeHorario')]
+    public function conflito_de_horario_mostra_data_e_horario_no_idioma(string $locale, string $esperado): void
+    {
+        app()->setLocale($locale);
+
+        $this->assertSame($esperado, __('The time slot :start–:end on :date is already reserved.', [
+            'start' => '10:00',
+            'end' => '11:00',
+            'date' => '08/09/2026',
+        ]));
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function idiomasDoConflitoDeHorario(): array
+    {
+        return [
+            'pt_BR' => ['pt_BR', 'O horário 10:00–11:00 de 08/09/2026 já está reservado.'],
+            'pt' => ['pt', 'O horário 10:00–11:00 de 08/09/2026 já está reservado.'],
+            'es' => ['es', 'El horario 10:00–11:00 del día 08/09/2026 ya está reservado.'],
+            'en' => ['en', 'The time slot 10:00–11:00 on 08/09/2026 is already reserved.'],
+        ];
+    }
+
     /**
      * @return array<string, array{class-string<FormRequest>}>
      */
