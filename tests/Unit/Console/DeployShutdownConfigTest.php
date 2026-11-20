@@ -76,4 +76,28 @@ class DeployShutdownConfigTest extends TestCase
             $this->assertStringContainsString('ServerAliveCountMax', $script);
         }
     }
+
+    public function test_cicd_staging_implanta_tag_recem_construida_no_workflow_dispatch(): void
+    {
+        $workflow = Yaml::parseFile(base_path('.github/workflows/cicd-staging.yml'));
+        $this->assertIsArray($workflow);
+        $this->assertArrayHasKey('jobs', $workflow);
+        $this->assertIsArray($workflow['jobs']);
+
+        $buildJob = $workflow['jobs']['build-and-push'] ?? null;
+        $this->assertIsArray($buildJob);
+        $this->assertSame('${{ steps.meta_app.outputs.version }}', $buildJob['outputs']['image_tag'] ?? null);
+
+        $deploySteps = $workflow['jobs']['deploy_staging']['steps'] ?? [];
+        $this->assertIsArray($deploySteps);
+
+        $deployStep = collect($deploySteps)->firstWhere('name', 'Deploy to Staging via SSH');
+        $this->assertIsArray($deployStep);
+        $this->assertStringContainsString('${{ needs.build-and-push.outputs.image_tag }}', (string) ($deployStep['run'] ?? ''));
+
+        $promoteStep = collect($deploySteps)->firstWhere('name', 'Promover imagens para a tag `staging`');
+        $this->assertIsArray($promoteStep);
+        $this->assertArrayNotHasKey('if', $promoteStep);
+        $this->assertStringContainsString('${{ needs.build-and-push.outputs.image_tag }}', (string) ($promoteStep['run'] ?? ''));
+    }
 }
