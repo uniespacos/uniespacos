@@ -78,7 +78,7 @@ O serviço `scheduler` do `compose.prod.yml` roda `php artisan agendador:executa
 
 > **Risco de rollback (T-19d).** O compose novo chama `agendador:executar`, que só existe na imagem nova. Imagem antiga com este compose faz o `scheduler` entrar em loop de restart. Imagem nova com compose antigo funciona, porque o compose antigo usa `schedule:work`. Por isso, o rollback reverte imagem e compose juntos.
 
-- Verificação em staging: pendente (T-19d). A linha correspondente está na tabela de verificações do [backlog](../backlog.md).
+- Verificação em staging (`rc.124`, 20/11/2026) e sinais em produção (`1.7.0`, 20/11/2026): parada limpa com código 0 e `StopSignal` conferidos (ver T-19d no [backlog](../backlog.md); pendente decisão sobre o nível de log quando `LOG_LEVEL=warning`).
 - Desenvolvimento: `compose.dev.yml` segue com `schedule:work`. O comando novo não é exercitado localmente (OP-02 no backlog).
 
 ---
@@ -100,5 +100,5 @@ docker exec app-production php artisan app:check-env --estrito
 
 - Sem `--estrito`, o comando sempre sai com 0. Com `--estrito`, sai com 1 se houver `FALHA`.
 - No desenvolvimento, `senha_banco` acusa `FALHA` porque o `.env` usa a senha de exemplo. É o esperado.
-- Os valores da configuração de produção ainda não foram lidos; a lista de checagens é calibrada na T-08 (ver o [backlog](../backlog.md)).
+- Em produção (`1.7.0`, conferido em 20/11/2026), a auditoria registrou `0` falhas e `1` aviso opcional (`session_encrypt`).
 - Antes de rodar o [`base:anonimizar`](./anonimizacao-de-bases.md), confira o ambiente com este comando.
