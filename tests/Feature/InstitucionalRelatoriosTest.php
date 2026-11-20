@@ -92,6 +92,49 @@ final class InstitucionalRelatoriosTest extends TestCase
         $this->assertEquals('application/pdf', $response->headers->get('Content-Type'));
     }
 
+    public function test_institucional_pode_gerar_exportacao_csv_com_content_type_e_acentuacao_utf8(): void
+    {
+        $admin = $this->criarAdmin();
+
+        $response = $this->actingAs($admin)
+            ->post(route('institucional.relatorios.gerar'), [
+                'tipo' => 'indicadores_consolidados',
+                'formato' => 'csv',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('text/csv; charset=UTF-8', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('attachment;', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('.csv', (string) $response->headers->get('Content-Disposition'));
+
+        $conteudo = $response->baseResponse->getFile()->getContent();
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $conteudo);
+        $this->assertStringContainsString('Métrica', $conteudo);
+        $this->assertStringContainsString('Total de Espaços', $conteudo);
+    }
+
+    public function test_gestor_pode_gerar_exportacao_csv_com_content_type_e_acentuacao_utf8(): void
+    {
+        $gestor = $this->criarGestor();
+
+        $response = $this->actingAs($gestor)
+            ->post(route('gestor.relatorios.gerar'), [
+                'tipo' => 'reservas_periodo',
+                'formato' => 'csv',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('text/csv; charset=UTF-8', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('attachment;', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('.csv', (string) $response->headers->get('Content-Disposition'));
+
+        $conteudo = $response->baseResponse->getFile()->getContent();
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $conteudo);
+        $this->assertStringContainsString('Título', $conteudo);
+        $this->assertStringContainsString('Situação', $conteudo);
+        $this->assertStringContainsString('Recorrência', $conteudo);
+    }
+
     public function test_gestor_pode_acessar_index_de_relatorios(): void
     {
         $gestor = $this->criarGestor();

@@ -149,8 +149,8 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **QA126-02** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR e revalidação de `GES-02` em staging) · Selo "Deferida" incorreto no card de avaliação dos gestores para reservas indeferidas ou parciais — `P1` · pequeno · frontend
   `AvaliacaoGestoresResumo.tsx` exibia sempre "Deferida" (verde) quando `avaliados === total`. Passa a contar `deferidos` e `indeferidos` por agenda, exibindo "Deferida" (verde), "Indeferida" (destrutivo), "Parcialmente deferida — X/Y" (âmbar) ou "Em Análise — X/Y".
   **Pronto quando:** o selo reflete a situação real nos 4 cenários (todos deferidos, todos indeferidos, misto e em análise), com chaves em `pt-BR`/`en`/`es`, teste unitário dedicado e revalidação de `GES-02` em staging.
-- [ ] **QA126-03** · Exportação CSV de relatórios com `Content-Type: text/html` — `P1` · pequeno · backend
-  `CsvExporter` chamava `Excel::download(..., Excel::CSV)` sem cabeçalhos explícitos; em staging o navegador bloqueou o download por receber `text/html`.
+- [ ] **QA126-03** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR e revalidação de `REL-02`/`REL-03` em staging) · Exportação CSV de relatórios com `Content-Type` incorreto — `P1` · pequeno · backend
+  `CsvExporter` chamava `Excel::download(..., Excel::CSV)` sem cabeçalhos explícitos; como o `BinaryFileResponse` inferia o MIME a partir de um arquivo temporário sem extensão `.csv`, o cabeçalho saía como `text/plain` localmente e `text/html` em staging. Passa a enviar `['Content-Type' => 'text/csv; charset=UTF-8']`, mantendo `use_bom = true` (`config/excel.php`) para leitura UTF-8 com acentuação no Excel.
   **Pronto quando:** `CsvExporter` envia `Content-Type: text/csv; charset=UTF-8` com BOM UTF-8 ativado, há teste de feature para gestor e institucional validando cabeçalhos e acentuação, e `REL-02`/`REL-03` passam em staging.
 
 ## Onda 4 — Regras de negócio e segurança (`P2`)

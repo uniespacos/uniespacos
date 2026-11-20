@@ -19,6 +19,11 @@ final class CsvExporter implements ExporterInterface
 
     public function exportar(DadosRelatorio $dados, string $nomeArquivo): BinaryFileResponse
     {
-        return Excel::download(new RelatorioExport($dados), $nomeArquivo, \Maatwebsite\Excel\Excel::CSV);
+        return Excel::download(
+            new RelatorioExport($dados),
+            $nomeArquivo,
+            \Maatwebsite\Excel\Excel::CSV,
+            ['Content-Type' => 'text/csv; charset=UTF-8'],
+        );
     }
 }
