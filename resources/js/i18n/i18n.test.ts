@@ -1,3 +1,4 @@
+import { diasDaSemana } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import { renderHook } from '@testing-library/react';
 import {
@@ -113,6 +114,47 @@ describe('i18n Engine & Dictionaries', () => {
 
             expect(missingInEn).toEqual([]);
             expect(missingInEs).toEqual([]);
+        });
+
+        it('en e es devem preservar todos os placeholders {{param}} definidos em pt-BR e nao conter strings vazias', () => {
+            const ptKeys = getKeysRecursively(ptBR) as TranslationKey[];
+            const extrairPlaceholders = (texto: string): string[] => Array.from(texto.matchAll(/\{\{\s*(\w+)\s*\}\}/g), (m) => m[1]).sort();
+
+            for (const key of ptKeys) {
+                const ptVal = translate(key, undefined, 'pt-BR');
+                const enVal = translate(key, undefined, 'en');
+                const esVal = translate(key, undefined, 'es');
+
+                expect(enVal.trim().length).toBeGreaterThan(0);
+                expect(esVal.trim().length).toBeGreaterThan(0);
+                expect(extrairPlaceholders(enVal)).toEqual(extrairPlaceholders(ptVal));
+                expect(extrairPlaceholders(esVal)).toEqual(extrairPlaceholders(ptVal));
+            }
+        });
+
+        it('traduz termos de QUA-02 em en e es sem manter portugues residual', () => {
+            expect(translate('espacos.filtros.todos_andares', undefined, 'es')).toBe('Todos los Pisos');
+            expect(translate('espacos.card.favorito', undefined, 'es')).toBe('Añadir a Favoritos');
+            expect(translate('espacos.card.desfavoritar', undefined, 'es')).toBe('Quitar de Favoritos');
+            expect(translate('common.viewMode.list', undefined, 'en')).toBe('List');
+            expect(translate('common.viewMode.list', undefined, 'es')).toBe('Lista');
+            expect(translate('common.actions.close', undefined, 'en')).toBe('Close');
+            expect(translate('common.actions.close', undefined, 'es')).toBe('Cerrar');
+            expect(translate('reservas.stepper.period_to', undefined, 'en')).toBe('to');
+            expect(translate('reservas.stepper.period_to', undefined, 'es')).toBe('hasta');
+        });
+
+        it('diasDaSemana formata dias abreviados de acordo com o locale ativo', () => {
+            const ref = new Date(2026, 11, 1);
+            const hoje = new Date(2026, 11, 1);
+
+            const ptDias = diasDaSemana(ref, hoje, 'pt-BR').map((d) => d.abreviado);
+            const enDias = diasDaSemana(ref, hoje, 'en').map((d) => d.abreviado);
+            const esDias = diasDaSemana(ref, hoje, 'es').map((d) => d.abreviado);
+
+            expect(ptDias[0]).toBe('seg');
+            expect(enDias[0]).toBe('Mon');
+            expect(esDias[0]).toBe('lun');
         });
     });
 

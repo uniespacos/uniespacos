@@ -3,7 +3,7 @@ import AppLayout from '@/presentation/templates/AppLayout';
 import SettingsLayout from '@/presentation/templates/settings/Layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { SyntheticEvent, useRef } from 'react';
+import { SyntheticEvent, useMemo, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,15 +11,17 @@ import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
 import HeadingSmall from '@/presentation/atoms/HeadingSmall';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Configurações de Senha',
-        href: '/settings/password',
-    },
-];
-
 export default function Password() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('settings.password.title'),
+                href: '/settings/password',
+            },
+        ],
+        [t],
+    );
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 

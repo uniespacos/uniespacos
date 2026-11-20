@@ -69,7 +69,7 @@ export interface ReservaDetalhesProps {
 }
 
 export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva, isGestor = false, setRemoverReserva }: ReservaDetalhesProps) {
-    const { t, formatDate } = useTranslation();
+    const { t, locale, formatDate } = useTranslation();
     const { semana } = usePage<{ semana?: { referencia: string } }>().props;
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
@@ -351,7 +351,7 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
                         <div className="min-w-0 flex-1 text-xs">
                             <p className="text-muted-foreground font-medium">{t('reservas.stepper.period_recurrence')}</p>
                             <p className="text-foreground truncate font-semibold">
-                                {formatDate(selectedReserva.data_inicial)} até {formatDate(selectedReserva.data_final)}
+                                {formatDate(selectedReserva.data_inicial)} {t('reservas.stepper.period_to')} {formatDate(selectedReserva.data_final)}
                             </p>
                         </div>
                     </div>
@@ -407,7 +407,7 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
                         <FileText className="text-muted-foreground h-4 w-4" />
                         <h4 className="text-foreground text-xs font-semibold tracking-wider uppercase">{t('reservas.detalhes.justificativa')}</h4>
                     </div>
-                    <p className="text-foreground text-xs leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] sm:text-sm">
+                    <p className="text-foreground text-xs leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap sm:text-sm">
                         {selectedReserva.descricao.trim() || t('reservas.detalhes.sem_justificativa')}
                     </p>
                 </div>
@@ -432,7 +432,7 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
                     <div className="border-border/80 relative overflow-hidden rounded-xl border">
                         <CalendarReservationDetails
                             agendas={agendas}
-                            diasSemana={diasDaSemana(semanaVisivel, hoje)}
+                            diasSemana={diasDaSemana(semanaVisivel, hoje, locale)}
                             slotsSolicitados={slotsSelecao}
                         />
                     </div>

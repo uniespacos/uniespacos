@@ -180,12 +180,12 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
             header: t('reservas.tabela.espaco'),
             className: 'min-w-[180px] max-w-[320px]',
             cell: (reserva) => (
-                <div className="min-w-0 max-w-[320px] space-y-0.5 whitespace-normal">
-                    <div className="text-foreground line-clamp-2 font-semibold break-words [overflow-wrap:anywhere]" title={reserva.titulo}>
+                <div className="max-w-[320px] min-w-0 space-y-0.5 whitespace-normal">
+                    <div className="text-foreground line-clamp-2 font-semibold [overflow-wrap:anywhere] break-words" title={reserva.titulo}>
                         {reserva.titulo}
                     </div>
                     {reserva.descricao ? (
-                        <p className="text-muted-foreground line-clamp-2 text-xs break-words [overflow-wrap:anywhere]" title={reserva.descricao}>
+                        <p className="text-muted-foreground line-clamp-2 text-xs [overflow-wrap:anywhere] break-words" title={reserva.descricao}>
                             {reserva.descricao}
                         </p>
                     ) : null}
@@ -209,7 +209,9 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
                 <div className="text-sm">
                     <div className="font-medium">{formatDate(reserva.data_inicial)}</div>
                     {reserva.data_inicial !== reserva.data_final && (
-                        <div className="text-muted-foreground text-xs">até {formatDate(reserva.data_final)}</div>
+                        <div className="text-muted-foreground text-xs">
+                            {t('reservas.stepper.period_to')} {formatDate(reserva.data_final)}
+                        </div>
                     )}
                 </div>
             ),

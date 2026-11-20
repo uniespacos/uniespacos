@@ -1,3 +1,4 @@
+import { useTranslation } from '@/i18n';
 import { ConfirmDeleteDialog } from '@/presentation/molecules/ConfirmDeleteDialog';
 import type { Role } from '@/types';
 import { router } from '@inertiajs/react';
@@ -10,6 +11,7 @@ interface DeleteRoleConfirmationProps {
 }
 
 export function DeleteRoleConfirmation({ isOpen, role, onClose }: DeleteRoleConfirmationProps) {
+    const { t } = useTranslation();
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = () => {
@@ -51,7 +53,7 @@ export function DeleteRoleConfirmation({ isOpen, role, onClose }: DeleteRoleConf
             confirmText="Deletar"
             disabled={role?.is_system}
             showCancel={!role?.is_system}
-            closeText={role?.is_system ? 'Fechar' : undefined}
+            closeText={role?.is_system ? t('common.actions.close') : undefined}
         />
     );
 }

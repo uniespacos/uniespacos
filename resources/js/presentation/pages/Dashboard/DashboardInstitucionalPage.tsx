@@ -13,13 +13,6 @@ import { Head, router } from '@inertiajs/react';
 import { ArrowRight, Building2, Calendar, CalendarDays, Globe, Layers, ListChecks, Plus, Star, UserCheck, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Painel Inicial',
-        href: '/dashboard',
-    },
-];
-
 interface DashboardInstitucionalProps {
     user: User;
     users?: User[];
@@ -45,6 +38,15 @@ export default function DashboardInstitucionalPage({
     reservas,
 }: DashboardInstitucionalProps) {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('dashboard.title'),
+                href: '/dashboard',
+            },
+        ],
+        [t],
+    );
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     const filteredEspacosFavoritos = useMemo(() => {

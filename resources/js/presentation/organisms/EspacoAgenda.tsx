@@ -1,5 +1,6 @@
 import { useAgendaNavigation } from '@/hooks/use-agenda-navigation';
 import { useAgendaSelection } from '@/hooks/use-agenda-selection';
+import { useTranslation } from '@/i18n';
 import { cn, diasDaSemana } from '@/lib/utils';
 import AgendaEditModeAlert from '@/presentation/molecules/AgendaEditModeAlert';
 import AgendaHeader from '@/presentation/molecules/AgendaHeader';
@@ -22,6 +23,7 @@ interface AgendaEspacoProps {
 
 export default function AgendaEspaço({ isEditMode = false, espaco, reserva, semana }: AgendaEspacoProps) {
     const { agendas } = espaco;
+    const { locale } = useTranslation();
     const { auth } = usePage<SharedData>().props;
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
@@ -59,7 +61,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
         userId: auth.user.id,
     });
 
-    const diasSemana = useMemo(() => diasDaSemana(semanaVisivel, hoje), [semanaVisivel, hoje]);
+    const diasSemana = useMemo(() => diasDaSemana(semanaVisivel, hoje, locale), [semanaVisivel, hoje, locale]);
 
     const gestoresPorTurno = useMemo(() => {
         const gestores = new Map();

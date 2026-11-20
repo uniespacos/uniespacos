@@ -1,5 +1,5 @@
 import { ESTILO_SLOT } from '@/constants/situacao-reserva';
-import { TURNOS_ORDENADOS, TURNO_LABEL, type Turno } from '@/constants/turnos';
+import { TURNOS_ORDENADOS, type Turno } from '@/constants/turnos';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { derivarSlotsDoTurno, type SlotDerivado } from '@/lib/utils/derivar-slots-do-turno';
@@ -198,7 +198,7 @@ export default function CalendarDiaMobile({
             {slotsPorTurno.map(({ agendaId, turno, slots }) => {
                 const selecionaveisDoTurno = slots.map(({ slot }) => slot).filter(slotPodeSerSelecionado);
                 const todosMarcados = selecionaveisDoTurno.length > 0 && selecionaveisDoTurno.every((slot) => isSlotSelecionado(slot));
-                const rotuloTurno = TURNO_LABEL[turno];
+                const rotuloTurno = t(`reservas.turnos.${turno}`);
 
                 return (
                     <div key={agendaId}>

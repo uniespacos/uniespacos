@@ -101,6 +101,13 @@ export const ptBR = {
             spanish: 'Español',
             selectLanguage: 'Selecionar Idioma',
         },
+        viewMode: {
+            groupAria: 'Modo de visualização',
+            list: 'Lista',
+            listAria: 'Visualização em lista',
+            cards: 'Cards',
+            cardsAria: 'Visualização em cards',
+        },
     },
     nav: {
         dashboard: 'Painel Inicial',

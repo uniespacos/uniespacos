@@ -1,5 +1,5 @@
 import { ESTILO_SITUACAO, SituacaoReserva } from '@/constants/situacao-reserva';
-import { TURNO_LABEL, type Turno } from '@/constants/turnos';
+import { type Turno } from '@/constants/turnos';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Horario } from '@/types';
@@ -138,7 +138,7 @@ export default function AvaliacaoGestoresResumo({ horarios, hideTitle = false }:
                             {apresentacao.icon}
                             <div className="min-w-0 flex-1">
                                 <p className="text-foreground truncate font-semibold">
-                                    {TURNO_LABEL[resumo.turno]} — {resumo.gestor}
+                                    {t(`reservas.turnos.${resumo.turno}`)} — {resumo.gestor}
                                 </p>
                                 <p className={cn('text-[11px] font-medium', apresentacao.textClass)}>{apresentacao.label}</p>
                             </div>
