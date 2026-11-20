@@ -328,6 +328,9 @@ export const ptBR = {
             success_updated: 'Sua solicitação de alteração foi enviada!',
             success_title: 'Solicitação enviada!',
             success_body: 'O gestor do turno vai avaliar seu pedido. Você recebe uma notificação quando houver resposta.',
+            success_body_deferida: 'Sua reserva foi aprovada automaticamente.',
+            success_body_parcialmente_deferida:
+                'Os horários sob sua gestão foram aprovados automaticamente. Os demais turnos aguardam avaliação do gestor responsável.',
             success_my_reservations: 'Ver minhas reservas',
             success_new_request: 'Fazer outra solicitação',
             submit: 'Enviar solicitação',

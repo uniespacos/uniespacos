@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { SituacaoReserva, type SituacaoReservaType } from '@/contracts';
 import { useReservaStepper } from '@/hooks/useReservaStepper';
 import { useTranslation } from '@/i18n';
 import { assertNever } from '@/lib/utils/exhaustive';
@@ -29,6 +30,7 @@ export interface ReservaStepperModalProps {
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
     setSlotsSelecao?: (slots: SlotCalendario[]) => void;
     sucessoCriacao?: boolean;
+    situacaoCriacao?: SituacaoReservaType;
 }
 
 export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
@@ -44,6 +46,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
     setFormData,
     setSlotsSelecao,
     sucessoCriacao = false,
+    situacaoCriacao = SituacaoReserva.EM_ANALISE,
 }) => {
     const { t } = useTranslation();
     const {
@@ -102,13 +105,20 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
     if (sucessoCriacao) {
+        const descricaoSucesso =
+            situacaoCriacao === SituacaoReserva.DEFERIDA
+                ? t('reservas.stepper.success_body_deferida')
+                : situacaoCriacao === SituacaoReserva.PARCIALMENTE_DEFERIDA
+                  ? t('reservas.stepper.success_body_parcialmente_deferida')
+                  : t('reservas.stepper.success_body');
+
         return (
             <ResponsiveModal
                 open={isOpen}
                 onOpenChange={onOpenChange}
                 size="md"
                 title={t('reservas.stepper.success_title')}
-                description={t('reservas.stepper.success_body')}
+                description={descricaoSucesso}
             >
                 <div className="flex flex-col items-center gap-5 py-4 text-center">
                     <span className="bg-success-subtle text-success-accent flex h-14 w-14 items-center justify-center rounded-full">

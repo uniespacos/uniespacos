@@ -331,6 +331,9 @@ export const es = {
             success_updated: '¡Su solicitud de cambio fue enviada!',
             success_title: '¡Solicitud enviada!',
             success_body: 'El gestor del turno evaluará su pedido. Recibirá una notificación cuando haya una respuesta.',
+            success_body_deferida: 'Su reserva fue aprobada automáticamente.',
+            success_body_parcialmente_deferida:
+                'Los horarios bajo su gestión fueron aprobados automáticamente. Los demás turnos esperan la evaluación del gestor responsable.',
             success_my_reservations: 'Ver mis reservas',
             success_new_request: 'Hacer otra solicitud',
             submit: 'Enviar solicitud',

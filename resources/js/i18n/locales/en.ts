@@ -330,6 +330,9 @@ export const en = {
             success_updated: 'Your change request was sent!',
             success_title: 'Request sent!',
             success_body: 'The shift manager will review your request. You will receive a notification when there is an answer.',
+            success_body_deferida: 'Your booking was automatically approved.',
+            success_body_parcialmente_deferida:
+                'The time slots under your management were automatically approved. The remaining shifts await review by the responsible manager.',
             success_my_reservations: 'View my bookings',
             success_new_request: 'Make another request',
             submit: 'Send request',

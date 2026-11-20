@@ -7,7 +7,8 @@ import AgendaNavegacao from '@/presentation/molecules/AgendaNavegacao';
 import { ReservaStickySummaryBar } from '@/presentation/molecules/ReservaStickySummaryBar';
 import AgendaCalendario from '@/presentation/organisms/AgendaCalendario';
 import { ReservaStepperModal } from '@/presentation/organisms/ReservaStepperModal';
-import { Espaco, Reserva } from '@/types';
+import { Espaco, Reserva, SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 import { parseISO } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -21,6 +22,7 @@ interface AgendaEspacoProps {
 
 export default function AgendaEspaço({ isEditMode = false, espaco, reserva, semana }: AgendaEspacoProps) {
     const { agendas } = espaco;
+    const { auth } = usePage<SharedData>().props;
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
     const semanaInicial = useMemo(() => parseISO(semana.referencia), [semana.referencia]);
@@ -44,6 +46,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
         dialogAberto,
         setDialogAberto,
         sucessoCriacao,
+        situacaoCriacao,
         formData,
         setFormData,
         processing,
@@ -53,6 +56,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
         reserva,
         isEditMode,
         semanaVisivel,
+        userId: auth.user.id,
     });
 
     const diasSemana = useMemo(() => diasDaSemana(semanaVisivel, hoje), [semanaVisivel, hoje]);
@@ -127,6 +131,7 @@ export default function AgendaEspaço({ isEditMode = false, espaco, reserva, sem
                 setFormData={setFormData}
                 setSlotsSelecao={setSlotsSelecao}
                 sucessoCriacao={sucessoCriacao}
+                situacaoCriacao={situacaoCriacao}
             />
         </div>
     );
