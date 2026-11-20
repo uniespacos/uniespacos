@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.0-rc.127](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.126...v1.5.0-rc.127) (2026-11-20)
+
+
+### Bug Fixes
+
+* adaptar mensagem de sucesso da solicitacao de reserva conforme auto-aprovacao ([a2007d9](https://github.com/uniespacos/uniespacos/commit/a2007d9c1a988033dc6e32c093829a9f293cbcad))
+* alertar conflito de recorrencia na revisao e filtrar reservas por sobreposicao de intervalo ([06e104e](https://github.com/uniespacos/uniespacos/commit/06e104ea33911928a7868f52a81e43733e28773a))
+* corrigir achados do QA regressivo da rc.126 (QA126-01 a QA126-09) ([ef5ac5b](https://github.com/uniespacos/uniespacos/commit/ef5ac5b428118f3941b410072bd8d8837588dcc2))
+* corrigir erros do PHPStan nas mudancas do QA126 ([ac20c3d](https://github.com/uniespacos/uniespacos/commit/ac20c3d5af096a21978a925393ff65f002cab6fe))
+* corrigir rotulos de modulos, espacos, papeis e atalhos no modulo institucional ([93c2ea6](https://github.com/uniespacos/uniespacos/commit/93c2ea63150f8898e41248cc748e6a6b0693331e))
+* definir Content-Type text/csv; charset=UTF-8 na exportacao de relatorios CSV ([a57a667](https://github.com/uniespacos/uniespacos/commit/a57a667b6c8464391a5b6084dc618374d9f3c626))
+* desconectar WebSocket antes do logout e evitar requisicao 404 em UserAvatar invalido ([3bae326](https://github.com/uniespacos/uniespacos/commit/3bae32657bb40c38f23fbd161d3c12a64442ec42))
+* distinguir deferida, indeferida e parcial no resumo de avaliacao dos gestores ([f02ceea](https://github.com/uniespacos/uniespacos/commit/f02ceeaaec83cd98a92f1f3b7ee457f4936eb376))
+* forcar esquema https em rotas, paginacao e login quando APP_URL usa https ([02ea9f2](https://github.com/uniespacos/uniespacos/commit/02ea9f2ce7271ead68c81ce9fcb6d11019118ed0))
+* traduzir textos residuais em en e es e validar paridade de placeholders i18n ([e1ec9ac](https://github.com/uniespacos/uniespacos/commit/e1ec9ac541e38187dd6a393e9fdcce8c5b595933))
+* validar tipo e tamanho da foto de perfil no cliente mantendo preview anterior ([e915766](https://github.com/uniespacos/uniespacos/commit/e915766d9a473b9062af5de450c0bbacebe90bd1))
+
 ## [1.5.0-rc.126](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.125...v1.5.0-rc.126) (2026-11-20)
 
 
