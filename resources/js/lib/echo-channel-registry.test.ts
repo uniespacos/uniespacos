@@ -2,6 +2,7 @@ import {
     __resetEchoChannelRegistryForTests,
     acquirePrivateChannel,
     acquirePublicChannel,
+    disconnectEcho,
     handleEchoVisibilityChange,
     releasePrivateChannel,
     releasePublicChannel,
@@ -243,6 +244,88 @@ describe('echo-channel-registry', () => {
 
             expect(mockChannel).toHaveBeenCalledTimes(1);
             expect(mockPrivate).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('disconnectEcho and CLOSING/CLOSED WebSocket protection', () => {
+        it('should disconnect window.Echo, clear channel registries, and prevent subsequent leave calls on unmount', () => {
+            const mockDisconnect = jest.fn();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    channel: mockChannel,
+                    private: mockPrivate,
+                    leave: mockLeave,
+                    disconnect: mockDisconnect,
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            acquirePublicChannel('public-1');
+            acquirePrivateChannel('App.Models.User.1');
+
+            disconnectEcho();
+
+            expect(mockDisconnect).toHaveBeenCalledTimes(1);
+            expect((window as Partial<Window>).Echo).toBeUndefined();
+
+            // Subsequent unmount releases must be no-ops and never call leave()
+            releasePublicChannel('public-1');
+            releasePrivateChannel('App.Models.User.1');
+
+            expect(mockLeave).not.toHaveBeenCalled();
+        });
+
+        it('should not call window.Echo.leave when socket readyState is CLOSING (2) or CLOSED (3)', () => {
+            acquirePublicChannel('public-closing');
+            acquirePrivateChannel('private-closed');
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    channel: mockChannel,
+                    private: mockPrivate,
+                    leave: mockLeave,
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'connected',
+                                socket: {
+                                    readyState: 2, // CLOSING
+                                },
+                            },
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            releasePublicChannel('public-closing');
+            expect(mockLeave).not.toHaveBeenCalled();
+
+            Object.defineProperty(window, 'Echo', {
+                value: {
+                    channel: mockChannel,
+                    private: mockPrivate,
+                    leave: mockLeave,
+                    connector: {
+                        pusher: {
+                            connection: {
+                                state: 'disconnected',
+                                socket: {
+                                    readyState: 3, // CLOSED
+                                },
+                            },
+                        },
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            releasePrivateChannel('private-closed');
+            expect(mockLeave).not.toHaveBeenCalled();
         });
     });
     describe('handleEchoVisibilityChange and visibilitychange listener', () => {

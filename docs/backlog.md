@@ -355,9 +355,9 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 - [ ] **QA126-08** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR) · Alerta de conflito na Revisão para recorrência (`SOL-08`) e filtro de reservas por sobreposição de intervalo (`EDI-01`) — `P3` · médio · frontend + backend
   (a) `useReservaStepper` passa a expandir `horarios_solicitados` com `expandirHorariosRecorrencia` antes de calcular `conflictingDates`, `EspacoService::getWithWeekSchedule` e `ReservaService::getEditData` carregam horários deferidos até o horizonte de recorrência (+1 mês) e `ReservaConflictAlert` limpa o conflito em tempo real assim que o slot sai de `selectedSlots` (relacionado ao `UX-20`). (b) `ReservaService::normalizarFiltros` passa a preservar `data_fim >= data_inicio` e `ReservaRepositoryEloquent` (`getPaginatedForUser` e `getPaginatedForGestor`) filtra por sobreposição de intervalo (`data_inicial <= data_fim AND data_final >= data_inicio`).
   **Pronto quando:** testes de frontend (`useReservaStepper.test.ts`, `ReservaConflictAlert.test.tsx`) e de feature no backend (`ReservaFiltroPeriodoTest`) passam na suíte.
-- [ ] **QA126-09** · Ruído de console no logout (WebSocket) e fallback de `UserAvatar` para caminho inválido — `P3` · pequeno · frontend
-  Desconectar o Echo/Reverb antes do `POST /logout` para eliminar `WebSocket is already in CLOSING or CLOSED state` e evitar requisição quebrada em `UserAvatar` quando `profile_pic` não for um caminho válido de imagem.
-  **Pronto quando:** testes unitários cobrem a desconexão no logout e o fallback do `UserAvatar`.
+- [ ] **QA126-09** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR) · Ruído de console no logout (WebSocket) e fallback de `UserAvatar` para caminho inválido — `P3` · pequeno · frontend
+  `disconnectEcho()` desconecta o Echo/Reverb e limpa os registros de canais antes do `POST /logout` (em `UserMenuContent`, `verify-email` e no interceptador `router.on('before')` de `app.tsx`), além de impedir `echo.leave()` quando o socket já está em `CLOSING`/`CLOSED`. `UserAvatar` passa a exigir extensão de imagem válida mesmo em URLs `/storage/...` ou `https://.../storage/...` geradas pelo accessor `User::profilePic` (eliminando `GET /storage/aushaushuahsas` 404).
+  **Pronto quando:** testes unitários em `echo-channel-registry.test.ts` e `UserAvatar.test.tsx` passam na suíte Jest.
 
 ## Futuro — v2.0
 
