@@ -102,3 +102,11 @@ docker exec app-production php artisan app:check-env --estrito
 - No desenvolvimento, `senha_banco` acusa `FALHA` porque o `.env` usa a senha de exemplo. É o esperado.
 - Em produção (`1.7.0`, conferido em 20/11/2026), a auditoria registrou `0` falhas e `1` aviso opcional (`session_encrypt`).
 - Antes de rodar o [`base:anonimizar`](./anonimizacao-de-bases.md), confira o ambiente com este comando.
+
+---
+
+## Esquema HTTPS atrás de proxy (`APP_URL` com `https://`)
+
+Quando `config('app.url')` começa com `https://` (ou `APP_ENV=production`), o `AppServiceProvider` força `URL::forceScheme('https')` e alinha o resolvedor de caminho da paginação (`Paginator::currentPathResolver`) com `URL::current()`. O `CustomLoginResponse` também normaliza `url.intended` e `url.email-verification.intended` de `http://` para `https://`.
+
+Isso garante que redirects pós-login e links de paginação saiam em `https://` mesmo em staging (`APP_ENV=staging`), onde o `Caddyfile.staging` escuta em `:80` atrás do túnel/proxy Cloudflare e encaminha `X-Forwarded-Proto: http` para o `php-fpm`. O `Caddyfile` não repassa `X-Forwarded-Proto` cru do cliente sem `trusted_proxies` configurado na borda (tratado na `S42` do [backlog](../backlog.md)), evitando falsificação de cabeçalho por conexões diretas.

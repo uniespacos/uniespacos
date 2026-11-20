@@ -56,6 +56,7 @@ use App\Repositories\UserRepositoryInterface;
 use App\Support\LogDeConsulta;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -123,8 +124,9 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by('broadcasting|'.(is_scalar($identificador) ? $identificador : $request->ip()));
         });
 
-        if ($this->app->environment('production')) {
+        if ($this->deveForcarHttps()) {
             URL::forceScheme('https');
+            Paginator::currentPathResolver(fn (): string => URL::current());
         }
 
         LogDeConsulta::configurar(
@@ -138,6 +140,12 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->validateEnvVariables();
+    }
+
+    private function deveForcarHttps(): bool
+    {
+        return $this->app->environment('production')
+            || str_starts_with((string) config('app.url'), 'https://');
     }
 
     /**

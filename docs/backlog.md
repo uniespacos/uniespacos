@@ -10,7 +10,7 @@
 - **Prioridade:** `P0` bloqueia o próximo release ou é risco imediato · `P1` alto impacto, próximo ciclo · `P2` importante, planejar · `P3` melhoria · `P4` ideia ou baixo impacto.
 - **Esforço:** pequeno (até 1 dia) · médio (alguns dias) · grande (uma semana ou mais).
 - **Situação:** marcador no começo do texto do item; o checkbox não muda. 🚀 código pronto = mergeado em `develop`, falta staging ou produção · 🔧 em andamento = trabalho aberto, com a branch citada no item · ⏸ parado = aguarda terceiro, com o motivo · ⏳ aguarda decisão = depende de uma decisão de [Decisões pendentes](#decisões-pendentes-não-é-código) · sem marcador = não iniciado.
-- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação · `QA119-xx` achados do QA da rc.119 (recorrência e edição de reserva) · `UX-xx` achados da análise de UX da solicitação de espaço pelo usuário comum (19/11/2026, [análise](./processo/ux/analise-solicitacao-usuario-comum.md)). Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
+- **IDs:** o primeiro é o canônico; depois do `=` vêm os nomes do mesmo item em outros planos. Famílias: `T-xx` plano LGPD · `Sxx` e `Bxx` estabilização v1 · `GAP-xx` lacunas do fluxo de reserva · `#nnn` issue do GitHub · `I18N-*` plano de i18n · `RR-*`, `AF-*` e `DEB-*` sobras dos planos de regras de reserva, áreas de foco e débitos técnicos 2026-09 · `DOC-xx` achados desta consolidação · `QA119-xx` achados do QA da rc.119 (recorrência e edição de reserva) · `UX-xx` achados da análise de UX da solicitação de espaço pelo usuário comum (19/11/2026, [análise](./processo/ux/analise-solicitacao-usuario-comum.md)) · `QA126-xx` achados do QA regressivo da `rc.126` (20/11/2026). Decisões: `F-xx` e `P-xx` (LGPD), `D-EST-xx`, `DT-xx`, `E1-xx` e `Dx` (estabilização e board de 30/09).
 - **Segurança:** o repositório é público. Itens de segurança descrevem o objetivo, sem detalhe de exploração; o detalhe fica nos planos locais (ver [Origem dos itens](#origem-dos-itens)).
 
 ## Agora
@@ -143,6 +143,15 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **QA119-F4** · Falha da edição de reserva não aparece na tela — `P2` · pequeno · observabilidade/UX
   Quando o `UpdateReservaJob` falha depois das retentativas, o solicitante só recebe a `ReservationUpdateFailedNotification`. Na tela, o botão segue em "Atualizando…" e nada indica a falha (achado do QA da rc.119). Relacionado à S33, que trata os erros dos jobs.
   **Pronto quando:** a tela da reserva mostra o estado de falha da edição sem depender da notificação, e um teste de feature cobre o caminho de falha.
+- [ ] **QA126-01** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR e revalidação de `AUT-02` e `ESP-02` em staging) · Links `http://` em staging no redirect pós-login e na paginação — `P1` · pequeno · infra + backend
+  `AppServiceProvider` só forçava `URL::forceScheme('https')` quando `APP_ENV=production`, e o `Paginator::currentPathResolver` usava `$request->url()` (que lia `X-Forwarded-Proto: http` do `Caddyfile.staging`). Passa a forçar HTTPS, alinhar o `Paginator::currentPathResolver` com `URL::current()` e normalizar `url.intended` no `CustomLoginResponse` sempre que `config('app.url')` começar com `https://` (ou em `production`).
+  **Pronto quando:** teste de feature garante rotas, paginação e redirect de login em `https://` com `APP_URL=https://...`, e `AUT-02` / `ESP-02` passam em staging.
+- [ ] **QA126-02** · Selo "Deferida" incorreto no card de avaliação dos gestores para reservas indeferidas ou parciais — `P1` · pequeno · frontend
+  `AvaliacaoGestoresResumo.tsx` exibia sempre "Deferida" (verde) quando `avaliados === total`. Deve distinguir todos deferidos, todos indeferidos e misto ("Parcialmente deferida — X/Y").
+  **Pronto quando:** o selo reflete a situação real nos 4 cenários (todos deferidos, todos indeferidos, misto e em análise), com chaves em `pt-BR`/`en`/`es`, teste unitário dedicado e revalidação de `GES-02` em staging.
+- [ ] **QA126-03** · Exportação CSV de relatórios com `Content-Type: text/html` — `P1` · pequeno · backend
+  `CsvExporter` chamava `Excel::download(..., Excel::CSV)` sem cabeçalhos explícitos; em staging o navegador bloqueou o download por receber `text/html`.
+  **Pronto quando:** `CsvExporter` envia `Content-Type: text/csv; charset=UTF-8` com BOM UTF-8 ativado, há teste de feature para gestor e institucional validando cabeçalhos e acentuação, e `REL-02`/`REL-03` passam em staging.
 
 ## Onda 4 — Regras de negócio e segurança (`P2`)
 
@@ -331,6 +340,24 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 - [ ] **UX-23** · Tela de detalhes do calendário (`CalendarReservationDetails`) sem Shift+clique nem marcar o turno — `P4` · pequeno · decisão
   Decidir se a tela ganha os atalhos de seleção ou se fica fora do escopo.
   **Pronto quando:** a decisão está registrada aqui, e, se for fazer, há item de execução.
+- [ ] **QA126-04** · Foto de perfil inválida sem mensagem de erro — `P2` · pequeno · frontend
+  Em `settings/profile.tsx`, selecionar arquivo que não é imagem ou excede o tamanho limite deve manter a foto anterior, exibir erro traduzido em `pt-BR`/`en`/`es` e limpar o input.
+  **Pronto quando:** validação client-side e testes em `profile.test.tsx` passam, mantendo validação do backend (`FotoPerfilTest`), e `CFG-02` é revalidado em staging.
+- [ ] **QA126-05** · Mensagem de sucesso enganosa na auto-aprovação do gestor — `P2` · pequeno · frontend + i18n
+  Variar a mensagem da tela de sucesso do `ReservaStepperModal` conforme a situação da reserva criada (`deferida`, `parcialmente_deferida` ou `em_analise`) em `pt-BR`/`en`/`es`.
+  **Pronto quando:** `ReservaStepperModal.test.tsx` cobre as três situações e `GES-04` é revalidado em staging.
+- [ ] **QA126-06** · Textos residuais sem tradução em `en` e `es` e teste de paridade de chaves — `P2` · médio · frontend + i18n
+  Traduzir literais em PT-BR detectados no QA da `rc.126` (`QUA-02`: "até" em intervalos, dias da semana abreviados por locale, "Lista", "Ações", breadcrumbs de Espaços/Painel Inicial/Avaliar Reserva, "Todos los Andares", "Adicionar/Remover Favoritos", `aria-label="Fechar"`) e criar teste automatizado de paridade de chaves entre `pt-BR`, `en` e `es`.
+  **Pronto quando:** o teste de paridade de chaves passa na suíte Jest e `QUA-02` é revalidado em staging sem textos em português (exceto `UX-19`).
+- [ ] **QA126-07** · Rótulos incorretos e atalhos "Em breve" no módulo institucional — `P3` · pequeno · frontend
+  Corrigir badge de andar na listagem de módulos, breadcrumb de edição de espaço, textos de Espaços em `/institucional/roles` e botões "Usuários"/"Configurações" no dashboard institucional.
+  **Pronto quando:** rótulos e atalhos estão coerentes e cobertos por testes de frontend.
+- [ ] **QA126-08** · Alerta de conflito na Revisão para recorrência (`SOL-08`) e filtro de reservas por sobreposição de intervalo (`EDI-01`) — `P3` · médio · frontend + backend
+  Garantir detecção de conflito prévia na Revisão considerando todas as datas expandidas da recorrência (sem regredir `UX-20`) e alterar o filtro `data_inicio`/`data_fim` de `/reservas` para sobreposição de intervalos (`data_inicial <= fim_filtro AND data_final >= inicio_filtro`).
+  **Pronto quando:** testes de frontend e de feature no backend cobrem a expansão com conflito e o filtro por sobreposição de intervalo.
+- [ ] **QA126-09** · Ruído de console no logout (WebSocket) e fallback de `UserAvatar` para caminho inválido — `P3` · pequeno · frontend
+  Desconectar o Echo/Reverb antes do `POST /logout` para eliminar `WebSocket is already in CLOSING or CLOSED state` e evitar requisição quebrada em `UserAvatar` quando `profile_pic` não for um caminho válido de imagem.
+  **Pronto quando:** testes unitários cobrem a desconexão no logout e o fallback do `UserAvatar`.
 
 ## Futuro — v2.0
 

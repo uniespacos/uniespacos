@@ -22,17 +22,34 @@ class CustomLoginResponse implements LoginResponseContract
      */
     public function toResponse($request)
     {
-        // Check if there's an intended email verification URL in the session
         if (Session::has('url.email-verification.intended')) {
-            $intendedUrl = Session::pull('url.email-verification.intended');
+            $intendedUrl = $this->normalizarEsquemaUrlIntencionada((string) Session::pull('url.email-verification.intended'));
             Log::info('Login com verificação de e-mail pendente, redirecionando para a verificação', ['user_id' => Auth::id()]);
 
             return redirect()->to($intendedUrl);
         }
 
-        // Otherwise, proceed with the default Fortify redirect
+        if (Session::has('url.intended')) {
+            Session::put(
+                'url.intended',
+                $this->normalizarEsquemaUrlIntencionada((string) Session::get('url.intended'))
+            );
+        }
+
         return $request->wantsJson()
             ? response()->json(['two_factor' => false])
             : redirect()->intended(Fortify::redirects('login'));
+    }
+
+    private function normalizarEsquemaUrlIntencionada(string $url): string
+    {
+        $deveForcarHttps = app()->environment('production')
+            || str_starts_with((string) config('app.url'), 'https://');
+
+        if ($deveForcarHttps && str_starts_with($url, 'http://')) {
+            return 'https://'.substr($url, strlen('http://'));
+        }
+
+        return $url;
     }
 }
