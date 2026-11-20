@@ -268,6 +268,7 @@ export const ptBR = {
             justificativa: 'Justificativa',
             sem_justificativa: 'Nenhuma justificativa informada.',
             avaliacao_gestores: 'Avaliação dos Gestores',
+            parcialmente_deferida_resumo: 'Parcialmente deferida — {{deferidos}}/{{total}}',
             gestor_nao_definido: 'Gestor não definido',
             avaliado_por: 'Avaliado por {{name}} em {{date}}',
             periodo: 'Período',

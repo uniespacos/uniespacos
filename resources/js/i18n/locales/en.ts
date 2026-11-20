@@ -270,6 +270,7 @@ export const en = {
             justificativa: 'Justification',
             sem_justificativa: 'No justification provided.',
             avaliacao_gestores: 'Managers Evaluation',
+            parcialmente_deferida_resumo: 'Partially approved — {{deferidos}}/{{total}}',
             gestor_nao_definido: 'Undefined manager',
             avaliado_por: 'Evaluated by {{name}} on {{date}}',
             periodo: 'Period',

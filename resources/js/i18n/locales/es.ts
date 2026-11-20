@@ -270,6 +270,7 @@ export const es = {
             justificativa: 'Justificación',
             sem_justificativa: 'Ninguna justificación informada.',
             avaliacao_gestores: 'Evaluación de los Gestores',
+            parcialmente_deferida_resumo: 'Parcialmente aprobada — {{deferidos}}/{{total}}',
             gestor_nao_definido: 'Gestor no definido',
             avaliado_por: 'Evaluado por {{name}} el {{date}}',
             periodo: 'Período',
