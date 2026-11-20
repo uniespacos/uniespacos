@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -97,15 +98,29 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             return null;
         }
 
-        $agora = Carbon::now((string) config('reservas.fuso_horario'));
-        $turno = $filters['turno'] ?? null;
-        $turnos = is_string($turno) && $turno !== '' ? [$turno] : array_keys((array) config('reservas.horarios_por_turno', []));
+        $fusoConfig = config('reservas.fuso_horario');
+        $fuso = is_string($fusoConfig) && $fusoConfig !== '' ? $fusoConfig : 'America/Bahia';
+        $agora = Carbon::now($fuso);
 
-        $horariosPorTurno = (array) config('reservas.horarios_por_turno', []);
+        $horariosConfig = config('reservas.horarios_por_turno');
+        $horariosPorTurno = is_array($horariosConfig) ? $horariosConfig : [];
+        $turno = $filters['turno'] ?? null;
+        $turnos = is_string($turno) && $turno !== '' ? [$turno] : array_keys($horariosPorTurno);
+
         $grade = [];
         foreach ($turnos as $turnoGrade) {
-            foreach ((array) ($horariosPorTurno[$turnoGrade] ?? []) as $faixa) {
-                $grade[] = [(string) $turnoGrade, trim(explode('-', (string) $faixa)[0])];
+            if (! is_string($turnoGrade)) {
+                continue;
+            }
+            $faixas = $horariosPorTurno[$turnoGrade] ?? [];
+            if (! is_array($faixas)) {
+                continue;
+            }
+            foreach ($faixas as $faixa) {
+                if (! is_string($faixa)) {
+                    continue;
+                }
+                $grade[] = [$turnoGrade, trim(explode('-', $faixa)[0])];
             }
         }
 
@@ -142,12 +157,17 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
     /**
      * Anexa `horarios_livres` a cada espaco da pagina com uma unica consulta agrupada.
      *
-     * @param  LengthAwarePaginator<int, Espaco>  $paginator
+     * @param  LengthAwarePaginator<int, Model>  $paginator
      * @param  array{sql: string, bindings: list<mixed>}  $disponibilidade
      */
     private function anexarHorariosLivres(LengthAwarePaginator $paginator, array $disponibilidade): void
     {
-        $ids = $paginator->getCollection()->map(fn (Espaco $espaco): int => (int) $espaco->id)->values()->all();
+        $itens = array_values(array_filter(
+            $paginator->items(),
+            static fn (mixed $item): bool => $item instanceof Espaco,
+        ));
+
+        $ids = array_map(static fn (Espaco $espaco): int => (int) $espaco->id, $itens);
 
         $totais = [];
         if ($ids !== []) {
@@ -162,9 +182,9 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             }
         }
 
-        $paginator->getCollection()->each(
-            fn (Espaco $espaco) => $espaco->setAttribute('horarios_livres', $totais[(int) $espaco->id] ?? 0),
-        );
+        foreach ($itens as $espaco) {
+            $espaco->setAttribute('horarios_livres', $totais[(int) $espaco->id] ?? 0);
+        }
     }
 
     /**

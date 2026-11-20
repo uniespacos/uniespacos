@@ -1,5 +1,8 @@
 import {
+    DECISOES_DE_AVALIACAO,
+    ESCOPOS_RECORRENCIA,
     ErrorCode,
+    EscopoRecorrencia,
     FormatoRelatorio,
     MODO_ARQUIVO_DEFAULT,
     ModoArquivo,
@@ -16,6 +19,8 @@ import {
     TipoRelatorio,
     Turno,
     ValidationStatus,
+    isDecisaoAvaliacao,
+    isEscopoRecorrencia,
 } from './index';
 
 describe('Contratos SSOT Frontend', () => {
@@ -45,6 +50,14 @@ describe('Contratos SSOT Frontend', () => {
                 SituacaoReserva.INDEFERIDA,
             ]);
             expect(SITUACOES_DE_AVALIACAO).not.toContain(SituacaoReserva.INATIVA);
+        });
+
+        it('deve expor DECISOES_DE_AVALIACAO e validar com isDecisaoAvaliacao', () => {
+            expect(DECISOES_DE_AVALIACAO).toEqual([SituacaoReserva.DEFERIDA, SituacaoReserva.INDEFERIDA]);
+            expect(isDecisaoAvaliacao(SituacaoReserva.DEFERIDA)).toBe(true);
+            expect(isDecisaoAvaliacao(SituacaoReserva.INDEFERIDA)).toBe(true);
+            expect(isDecisaoAvaliacao(SituacaoReserva.EM_ANALISE)).toBe(false);
+            expect(isDecisaoAvaliacao('invalido')).toBe(false);
         });
     });
 
@@ -129,6 +142,17 @@ describe('Contratos SSOT Frontend', () => {
                 RecorrenciaReserva.UM_MES,
                 RecorrenciaReserva.PERSONALIZADO,
             ]);
+        });
+
+        it('deve conter EscopoRecorrencia e validar com isEscopoRecorrencia', () => {
+            expect(EscopoRecorrencia).toEqual({
+                SINGLE: 'single',
+                RECURRING: 'recurring',
+            });
+            expect(ESCOPOS_RECORRENCIA).toEqual([EscopoRecorrencia.SINGLE, EscopoRecorrencia.RECURRING]);
+            expect(isEscopoRecorrencia(EscopoRecorrencia.SINGLE)).toBe(true);
+            expect(isEscopoRecorrencia(EscopoRecorrencia.RECURRING)).toBe(true);
+            expect(isEscopoRecorrencia('outro')).toBe(false);
         });
     });
 

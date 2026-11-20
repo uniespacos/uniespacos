@@ -84,7 +84,9 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                     }}
                     placeholder={t('reservas.stepper.description_placeholder')}
                     className="bg-card min-h-24 resize-y text-sm"
+                    aria-invalid={Boolean(errors.descricao)}
                 />
+                {errors.descricao && <p className="text-destructive-accent text-sm font-medium">{errors.descricao}</p>}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -101,7 +103,7 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                         step={1}
                         value={formData.publico_estimado ?? ''}
                         onChange={(e) => {
-                            setFormData('publico_estimado', e.target.value === '' ? '' : Number(e.target.value));
+                            setFormData('publico_estimado', e.target.value);
                         }}
                         placeholder={t('reservas.stepper.public_placeholder')}
                         className="bg-card h-10 text-sm"

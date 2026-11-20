@@ -289,6 +289,7 @@ export const ptBR = {
             indeferir: 'Indeferir Solicitação',
             parecer: 'Parecer / Justificativa',
             parecer_placeholder: 'Descreva as razões institucionais da decisão...',
+            parecer_conflito_linha: '- Horário das {{horario}} do dia {{data}}: Indeferido. {{detalhe}}',
             observacao: 'Observações Adicionais',
             observacao_placeholder: 'Observações para o solicitante (opcional)...',
             salvar: 'Salvar Decisão',
@@ -297,14 +298,14 @@ export const ptBR = {
             escopo_todas: 'Todas as ocorrências da recorrência',
             escopo_semana: 'Apenas horários desta semana',
             cancelada_titulo: 'Solicitação de reserva cancelada',
-            cancelada_descricao:
-                'Esta solicitação de reserva foi cancelada antes que pudesse ser avaliada ou concluída. Os horários solicitados foram liberados e nenhuma ação é necessária.',
+            cancelada_descricao: 'Esta reserva foi cancelada. Os horários reservados foram liberados e nenhuma ação adicional é necessária.',
             voltar_listagem: 'Voltar para Gerenciar Reservas',
         },
         gestor: {
             conflicts_detected: 'Atenção: {{count}} horário(s) desta reserva possui(em) sobreposição com outra(s) reserva(s).',
             conflict_with_user: 'Solicitante: {{user}}',
-            conflicts_note: 'Você pode optar por deferir mesmo com conflitos. Considere analisar as reservas conflitantes antes de prosseguir.',
+            conflicts_note:
+                'Horários com conflito contra outra reserva deferida ficam bloqueados para aprovação e são indeferidos automaticamente ao salvar a avaliação.',
             conflict_cache_snapshot_title: 'Snapshot de Conflitos ({{count}} detectados)',
             conflict_cache_snapshot_note:
                 'Este é um snapshot histórico do momento em que a reserva foi processada pelo sistema. Pode estar desatualizado. Os conflitos atualizados são mostrados acima.',
@@ -345,6 +346,7 @@ export const ptBR = {
             no_slots_selected: 'Nenhum horário selecionado.',
             recurrence_pattern: 'Padrão de Recorrência',
             period_recurrence: 'Período & Recorrência',
+            period_to: 'até',
             selected_space: 'Espaço',
             reservation_slots: 'Horários a solicitar',
             period_range: 'de {{inicio}} a {{fim}}',
@@ -400,6 +402,8 @@ export const ptBR = {
                 end_date_required: 'Data final é obrigatória.',
                 end_before_start: 'A data final deve ser igual ou posterior à data inicial.',
                 title_required: 'O título da reserva é obrigatório.',
+                title_max: 'O título não pode exceder {{max}} caracteres.',
+                description_max: 'A descrição não pode exceder {{max}} caracteres.',
                 public_invalid: 'Informe um número inteiro entre 1 e 5000.',
                 details_incomplete: 'Complete os detalhes da solicitação antes de enviar.',
                 generic_validation: 'Ocorreu um erro de validação.',

@@ -73,6 +73,7 @@ describe('CalendarSlotCell', () => {
         expect(botao).toHaveAttribute('type', 'button');
         expect(botao).toBeEnabled();
         expect(botao).toHaveAttribute('aria-pressed', 'false');
+        expect(botao).toHaveClass('focus-visible:ring-2');
     });
 
     it('clique sem Shift seleciona o slot com intervalo false', () => {

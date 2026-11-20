@@ -1,22 +1,33 @@
 import { publicoEstimadoAcimaDaCapacidade, publicoEstimadoValido } from './publico-estimado';
 
 describe('publicoEstimadoValido', () => {
-    it('aceita vazio, pois o campo é opcional', () => {
+    it('aceita vazio ou apenas espaços, pois o campo é opcional', () => {
         expect(publicoEstimadoValido('')).toBe(true);
+        expect(publicoEstimadoValido('   ')).toBe(true);
         expect(publicoEstimadoValido(null)).toBe(true);
         expect(publicoEstimadoValido(undefined)).toBe(true);
     });
 
     it('aceita inteiros entre 1 e 5000 nos limites', () => {
         expect(publicoEstimadoValido(1)).toBe(true);
+        expect(publicoEstimadoValido('1')).toBe(true);
         expect(publicoEstimadoValido('40')).toBe(true);
         expect(publicoEstimadoValido(5000)).toBe(true);
+        expect(publicoEstimadoValido('5000')).toBe(true);
     });
 
-    it('rejeita zero, acima de 5000, decimais e texto', () => {
+    it('rejeita zero, negativos, acima de 5000, decimais, notação científica e texto', () => {
         expect(publicoEstimadoValido(0)).toBe(false);
+        expect(publicoEstimadoValido('0')).toBe(false);
+        expect(publicoEstimadoValido(-1)).toBe(false);
+        expect(publicoEstimadoValido('-5')).toBe(false);
         expect(publicoEstimadoValido(5001)).toBe(false);
+        expect(publicoEstimadoValido(99999)).toBe(false);
+        expect(publicoEstimadoValido('99999')).toBe(false);
+        expect(publicoEstimadoValido(1.5)).toBe(false);
+        expect(publicoEstimadoValido('1.5')).toBe(false);
         expect(publicoEstimadoValido('3.5')).toBe(false);
+        expect(publicoEstimadoValido('1e2')).toBe(false);
         expect(publicoEstimadoValido('abc')).toBe(false);
     });
 });

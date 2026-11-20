@@ -1,3 +1,4 @@
+import { EscopoRecorrencia } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { datasEmConflito, recorrenciaParaGravar, slotsEmConflito } from '@/lib/utils/conflitos-reserva';
 import { publicoEstimadoValido } from '@/lib/utils/publico-estimado';
@@ -5,6 +6,9 @@ import { Espaco, SlotCalendario } from '@/types';
 import { ErrosEtapa, ReservaFormData, ReservaStepId, StepperStep } from '@/types/reserva-stepper';
 import { startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
+
+const TITULO_MAX_LENGTH = 255;
+const DESCRICAO_MAX_LENGTH = 2000;
 
 export interface UseReservaStepperProps {
     espaco: Espaco;
@@ -66,15 +70,20 @@ export function useReservaStepper({
         }
         if (!formData.titulo.trim()) {
             erros.titulo = t('reservas.stepper.errors.title_required');
+        } else if (formData.titulo.length > TITULO_MAX_LENGTH) {
+            erros.titulo = t('reservas.stepper.errors.title_max', { max: TITULO_MAX_LENGTH });
+        }
+        if (formData.descricao.length > DESCRICAO_MAX_LENGTH) {
+            erros.descricao = t('reservas.stepper.errors.description_max', { max: DESCRICAO_MAX_LENGTH });
         }
         if (!publicoEstimadoValido(formData.publico_estimado)) {
             erros.publico_estimado = t('reservas.stepper.errors.public_invalid');
         }
 
         return erros;
-    }, [slotsSelecao.length, formData.data_inicial, formData.data_final, formData.titulo, formData.publico_estimado, t]);
+    }, [slotsSelecao.length, formData.data_inicial, formData.data_final, formData.titulo, formData.descricao, formData.publico_estimado, t]);
 
-    const recorrenciaGravada = recorrenciaParaGravar(formData.recorrencia, isEditMode && formData.edit_scope === 'single');
+    const recorrenciaGravada = recorrenciaParaGravar(formData.recorrencia, isEditMode && formData.edit_scope === EscopoRecorrencia.SINGLE);
 
     const conflictingDates = useMemo(
         () => datasEmConflito(formData.horarios_solicitados, espaco.agendas),
@@ -138,6 +147,50 @@ export function useReservaStepper({
         setStepErrors({});
     }, []);
 
+    const errosAoVivo = useMemo<ErrosEtapa>(() => {
+        if (currentStepId !== 'detalhes') {
+            return {};
+        }
+
+        const erros: ErrosEtapa = {};
+        if (formData.titulo.length > TITULO_MAX_LENGTH) {
+            erros.titulo = t('reservas.stepper.errors.title_max', { max: TITULO_MAX_LENGTH });
+        }
+        if (formData.descricao.length > DESCRICAO_MAX_LENGTH) {
+            erros.descricao = t('reservas.stepper.errors.description_max', { max: DESCRICAO_MAX_LENGTH });
+        }
+        if (!publicoEstimadoValido(formData.publico_estimado)) {
+            erros.publico_estimado = t('reservas.stepper.errors.public_invalid');
+        }
+
+        return erros;
+    }, [currentStepId, formData.titulo, formData.descricao, formData.publico_estimado, t]);
+
+    const mergedStepErrors = useMemo<ErrosEtapa>(() => {
+        const base: ErrosEtapa = {};
+
+        if (stepErrors.slots && errosDetalhes.slots) {
+            base.slots = stepErrors.slots;
+        }
+        if (stepErrors.data_inicial && errosDetalhes.data_inicial) {
+            base.data_inicial = stepErrors.data_inicial;
+        }
+        if (stepErrors.data_final && errosDetalhes.data_final) {
+            base.data_final = stepErrors.data_final;
+        }
+        if (stepErrors.titulo && errosDetalhes.titulo) {
+            base.titulo = stepErrors.titulo;
+        }
+        if (stepErrors.descricao && errosDetalhes.descricao) {
+            base.descricao = stepErrors.descricao;
+        }
+        if (stepErrors.publico_estimado && errosDetalhes.publico_estimado) {
+            base.publico_estimado = stepErrors.publico_estimado;
+        }
+
+        return { ...base, ...errosAoVivo };
+    }, [stepErrors, errosDetalhes, errosAoVivo]);
+
     const nextStep = useCallback((): boolean => {
         if (currentStepId !== 'detalhes') {
             return false;
@@ -197,7 +250,7 @@ export function useReservaStepper({
         canAdvance,
         canSubmit,
         bloqueios,
-        stepErrors,
+        stepErrors: mergedStepErrors,
         conflictingDates,
         conflictingSlotIds,
         hasAnyConflict,

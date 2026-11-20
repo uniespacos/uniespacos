@@ -1,8 +1,9 @@
+import { type EscopoRecorrenciaType } from '@/contracts';
 import { Horario, ValorOcorrenciaType } from '@/types';
 
 export type ReservaStepId = 'detalhes' | 'revisao';
 
-export type CampoErroEtapa = 'slots' | 'data_inicial' | 'data_final' | 'titulo' | 'publico_estimado' | 'termo_responsabilidade';
+export type CampoErroEtapa = 'slots' | 'data_inicial' | 'data_final' | 'titulo' | 'descricao' | 'publico_estimado' | 'termo_responsabilidade';
 
 export type ErrosEtapa = Partial<Record<CampoErroEtapa, string>>;
 
@@ -34,7 +35,7 @@ export interface ReservaFormData {
     recorrencia: ValorOcorrenciaType;
     data_inicial?: Date | null;
     data_final?: Date | null;
-    edit_scope?: 'single' | 'recurring';
+    edit_scope?: EscopoRecorrenciaType;
     edited_week_date?: string;
     slots?: SlotReservaItem[];
     horarios_solicitados:

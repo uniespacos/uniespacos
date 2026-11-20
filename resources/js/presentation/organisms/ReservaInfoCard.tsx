@@ -18,15 +18,17 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
     const capacidadeEspaco = espaco?.capacidade_pessoas;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    {reserva.titulo}
+        <Card className="min-w-0">
+            <CardHeader className="min-w-0">
+                <CardTitle className="flex min-w-0 items-start gap-2">
+                    <FileText className="mt-0.5 h-5 w-5 shrink-0" />
+                    <span className="min-w-0 [overflow-wrap:anywhere] break-words">{reserva.titulo}</span>
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {t('reservas.detalhes.solicitante')}: {reserva.user?.name}
+                <CardDescription className="flex min-w-0 items-center gap-2">
+                    <User className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0 break-words">
+                        {t('reservas.detalhes.solicitante')}: {reserva.user?.name}
+                    </span>
                 </CardDescription>
                 {reserva.user && (reserva.user.email || reserva.user.telefone) && (
                     <div className="mt-3 space-y-2 text-sm">
@@ -45,19 +47,19 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
                     </div>
                 )}
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="min-w-0 space-y-4">
                 <div className="flex items-center gap-2">
-                    <CalendarDays className="text-muted-foreground h-4 w-4" />
+                    <CalendarDays className="text-muted-foreground h-4 w-4 shrink-0" />
                     <div>
                         <p className="text-muted-foreground text-sm">{t('reservas.detalhes.periodo')}</p>
                         <p className="font-medium">
-                            {formatDate(reserva.data_inicial)} até {formatDate(reserva.data_final)}
+                            {formatDate(reserva.data_inicial)} {t('reservas.stepper.period_to')} {formatDate(reserva.data_final)}
                         </p>
                     </div>
                 </div>
                 {publicoEstimado !== undefined && (
                     <div className="flex items-center gap-2">
-                        <Users className="text-muted-foreground h-4 w-4" />
+                        <Users className="text-muted-foreground h-4 w-4 shrink-0" />
                         <div>
                             <p className="text-muted-foreground text-sm">{t('reservas.detalhes.publico_estimado')}</p>
                             <p className="font-medium">
@@ -77,18 +79,18 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
                     </div>
                 )}
                 {reserva.categoria ? (
-                    <div className="flex items-center gap-2">
-                        <Tag className="text-muted-foreground h-4 w-4" />
-                        <div>
+                    <div className="flex min-w-0 items-center gap-2">
+                        <Tag className="text-muted-foreground h-4 w-4 shrink-0" />
+                        <div className="min-w-0">
                             <p className="text-muted-foreground text-sm">{t('reservas.detalhes.categoria')}</p>
-                            <p className="font-medium">{reserva.categoria}</p>
+                            <p className="font-medium [overflow-wrap:anywhere] break-words">{reserva.categoria}</p>
                         </div>
                     </div>
                 ) : null}
                 <Separator />
-                <div>
+                <div className="min-w-0">
                     <h4 className="text-muted-foreground mb-2 text-sm font-medium">{t('reservas.detalhes.descricao')}</h4>
-                    <p className="text-foreground text-sm">{reserva.descricao}</p>
+                    <p className="text-foreground text-sm [overflow-wrap:anywhere] break-words whitespace-pre-wrap">{reserva.descricao}</p>
                 </div>
                 {children && (
                     <>

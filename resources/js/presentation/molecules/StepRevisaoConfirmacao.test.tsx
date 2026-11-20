@@ -1,5 +1,7 @@
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { usePage } from '@inertiajs/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { StepRevisaoConfirmacao, StepRevisaoConfirmacaoProps } from './StepRevisaoConfirmacao';
 
@@ -7,6 +9,8 @@ jest.mock('@/lib/echo-channel-registry', () => ({
     acquirePrivateChannel: jest.fn(),
     releasePrivateChannel: jest.fn(),
 }));
+
+const horarioManha = { horario_inicio: '07:30:00', horario_fim: '08:20:00', agenda_id: 1 };
 
 const espaco: Espaco = {
     id: 1,
@@ -45,7 +49,7 @@ function renderRevisao(props: Partial<StepRevisaoConfirmacaoProps> = {}, formOve
     const setFormData = jest.fn();
     const onRealtimeSlotsConflict = jest.fn();
 
-    render(
+    const utils = render(
         <StepRevisaoConfirmacao
             espaco={espaco}
             formData={criarFormData(formOverrides)}
@@ -59,10 +63,19 @@ function renderRevisao(props: Partial<StepRevisaoConfirmacaoProps> = {}, formOve
         />,
     );
 
-    return { setFormData, onRealtimeSlotsConflict };
+    return { ...utils, setFormData, onRealtimeSlotsConflict };
 }
 
 describe('StepRevisaoConfirmacao', () => {
+    afterEach(() => {
+        jest.mocked(usePage).mockReturnValue({
+            props: { auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+    });
+
     it('apresenta primeiro o resumo com espaço, título, período e recorrência', () => {
         renderRevisao();
 
@@ -138,18 +151,7 @@ describe('StepRevisaoConfirmacao', () => {
     });
 
     it('mostra a dica do termo enquanto não aceito e a oculta depois', () => {
-        const { unmount } = render(
-            <StepRevisaoConfirmacao
-                espaco={espaco}
-                formData={criarFormData({ termo_responsabilidade: false })}
-                setFormData={jest.fn()}
-                slotsSelecao={slotsSelecao}
-                conflictingDates={[]}
-                temConflito={false}
-                quantidadeEmConflito={0}
-                onRealtimeSlotsConflict={jest.fn()}
-            />,
-        );
+        const { unmount } = renderRevisao({}, { termo_responsabilidade: false });
 
         expect(screen.getByText('Aceite o termo de responsabilidade para enviar a solicitação.')).toBeInTheDocument();
         unmount();
@@ -194,5 +196,59 @@ describe('StepRevisaoConfirmacao', () => {
 
         expect(screen.queryByRole('button', { name: /Remover horários em conflito/ })).not.toBeInTheDocument();
         expect(screen.getByText(/Resolva os conflitos para enviar/)).toBeInTheDocument();
+    });
+
+    it('em edicao single exibe na previa do periodo a faixa real dos horarios resultantes (R-04)', () => {
+        renderRevisao(
+            { isEditMode: true },
+            {
+                recorrencia: RecorrenciaReserva.QUINZE_DIAS,
+                edit_scope: EscopoRecorrencia.SINGLE,
+                data_inicial: new Date('2026-11-24T00:00:00'),
+                data_final: new Date('2026-12-08T00:00:00'),
+                horarios_solicitados: [
+                    { data: '2026-11-24', ...horarioManha },
+                    { data: '2026-12-01', ...horarioManha },
+                ],
+            },
+        );
+
+        expect(screen.getByText('de 24/11/2026 a 01/12/2026')).toBeInTheDocument();
+        expect(screen.queryByText(/08\/12\/2026/)).not.toBeInTheDocument();
+    });
+
+    it.each([
+        ['en', /from 11\/03\/2027 to 11\/03\/2027/i],
+        ['es', /de 11\/03\/2027 a 11\/03\/2027/i],
+    ] as const)('traduz conector de periodo na revisao em %s sem manter "até" (B-03)', (locale, esperado) => {
+        jest.mocked(usePage).mockReturnValue({
+            props: { locale, auth: { user: null }, errors: {}, flash: {} },
+            url: '/',
+            component: '',
+            version: null,
+        } as unknown as ReturnType<typeof usePage>);
+
+        renderRevisao(
+            {},
+            {
+                recorrencia: RecorrenciaReserva.UNICA,
+                data_inicial: new Date('2027-03-11T00:00:00'),
+                data_final: new Date('2027-03-11T00:00:00'),
+                horarios_solicitados: [{ data: '2027-03-11', ...horarioManha }],
+            },
+        );
+
+        expect(screen.getByText(esperado)).toBeInTheDocument();
+        expect(screen.queryByText(/até/i)).not.toBeInTheDocument();
+    });
+
+    it('envolve titulo continuo com min-w-0 e classes de quebra para evitar estouro horizontal (A-07)', () => {
+        const tituloContinuo = 'A'.repeat(150);
+
+        renderRevisao({}, { titulo: tituloContinuo });
+
+        const valorTitulo = screen.getByText(tituloContinuo);
+        expect(valorTitulo).toHaveClass('min-w-0', 'break-words', '[overflow-wrap:anywhere]');
+        expect(valorTitulo.parentElement).toHaveClass('min-w-0');
     });
 });

@@ -39,14 +39,16 @@ describe('StepDadosJustificativa', () => {
         expect(setFormData).toHaveBeenCalledWith('descricao', 'Projetor');
     });
 
-    it('converte o público estimado para número', () => {
+    it('propaga o valor bruto digitado no público estimado', () => {
         const setFormData = jest.fn();
 
         render(<StepDadosJustificativa formData={criarFormData()} setFormData={setFormData} />);
 
         fireEvent.change(screen.getByLabelText('Público estimado (opcional)'), { target: { value: '40' } });
+        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', '40');
 
-        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', 40);
+        fireEvent.change(screen.getByLabelText('Público estimado (opcional)'), { target: { value: '1.5' } });
+        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', '1.5');
     });
 
     it('limpar o público estimado envia valor vazio', () => {
@@ -86,12 +88,19 @@ describe('StepDadosJustificativa', () => {
             <StepDadosJustificativa
                 formData={criarFormData()}
                 setFormData={jest.fn()}
-                errors={{ titulo: 'O título da reserva é obrigatório.', publico_estimado: 'Informe um número inteiro entre 1 e 5000.' }}
+                errors={{
+                    titulo: 'O título da reserva é obrigatório.',
+                    descricao: 'A descrição não pode exceder 2000 caracteres.',
+                    publico_estimado: 'Informe um número inteiro entre 1 e 5000.',
+                }}
             />,
         );
 
         expect(screen.getByText('O título da reserva é obrigatório.')).toBeInTheDocument();
+        expect(screen.getByText('A descrição não pode exceder 2000 caracteres.')).toBeInTheDocument();
         expect(screen.getByText('Informe um número inteiro entre 1 e 5000.')).toBeInTheDocument();
         expect(screen.getByLabelText(/Título da reserva ou evento/)).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Detalhes para o gestor (opcional)')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Público estimado (opcional)')).toHaveAttribute('aria-invalid', 'true');
     });
 });

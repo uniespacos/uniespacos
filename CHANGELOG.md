@@ -1,5 +1,106 @@
 # Changelog
 
+## [1.5.0-rc.125](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.124...v1.5.0-rc.125) (2026-11-20)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.7.0 ([02db1a0](https://github.com/uniespacos/uniespacos/commit/02db1a0332c78adee3779bfa58cc7098b3cdf0b5))
+* **main:** release 1.7.0 ([205f37b](https://github.com/uniespacos/uniespacos/commit/205f37b8f5240cc06e592d9869add364b287511b))
+* release 1.7.0 com Onda 2 (LGPD parte 2), performance, acessibilidade e correções de reservas ([a4b0900](https://github.com/uniespacos/uniespacos/commit/a4b09008740205a7d775957029330b4eb63b4e5c))
+* sincronizar main em develop após release 1.7.0 ([90234b3](https://github.com/uniespacos/uniespacos/commit/90234b3f21a4f759cdf71d4ab7e4ef87f0116a8b))
+
+## [1.7.0](https://github.com/uniespacos/uniespacos/compare/v1.6.1...v1.7.0) (2026-11-20)
+
+
+### Features
+
+* **frontend:** modernizar acessibilidade, temas, formulários, tabelas e imagens ([c0a9482](https://github.com/uniespacos/uniespacos/commit/c0a94824fc41f1c831a92a6f43adffaf68c3775f))
+* **lgpd:** alinhar retenção a 90 dias e podar jobs pendentes vencidos (T-19g, T-19e, T-19h, T-19i) ([82d1f8e](https://github.com/uniespacos/uniespacos/commit/82d1f8e1f3e9de0f86af0ceae9d09bf2fec4a83a))
+* Onda 2 parte 2 (1.7.0) — retenção, comandos operacionais LGPD, fontes locais e modernização de frontend ([6a2e1b1](https://github.com/uniespacos/uniespacos/commit/6a2e1b1d547d0faef3dbc15fd5dbed7a86a8f1fd))
+
+
+### Bug Fixes
+
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([771b00d](https://github.com/uniespacos/uniespacos/commit/771b00d33ebdfb6afbfd9a89deda9367d9c8b06a))
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([b2655ef](https://github.com/uniespacos/uniespacos/commit/b2655efb811ad2fe98289e7f65fe9c934be3f3ea))
+* corrige achados do QA da rc.120 pré-merge para main ([457a067](https://github.com/uniespacos/uniespacos/commit/457a0676e1bbb73c84e81cd89de9caed74db101b))
+* corrige achados do QA da rc.120 pré-merge para main ([bcc1e37](https://github.com/uniespacos/uniespacos/commit/bcc1e371a53ebfae2725ff0183cc2d8dc7971201))
+* corrige estouro de titulo e pendencias de i18n do QA regressivo ([b86c37d](https://github.com/uniespacos/uniespacos/commit/b86c37dee64248e4249feb7601c811992d1b84a2))
+* corrige estouro de título e pendências de i18n do QA regressivo pós-[#538](https://github.com/uniespacos/uniespacos/issues/538) ([2734f19](https://github.com/uniespacos/uniespacos/commit/2734f19246d4f0546b5daf0ee6f6cf28b8e41d0b))
+* corrigir recorrência multi-semana, i18n e itens rápidos do backlog ([5142f04](https://github.com/uniespacos/uniespacos/commit/5142f0475941e6f9be5efbada36ab349bbd6eb3f))
+* corrigir reservas em múltiplas semanas/turnos e otimizar performance ([7bea020](https://github.com/uniespacos/uniespacos/commit/7bea020c478d6ed9824d939ceefa14954d05fa43))
+* corrigir reservas em múltiplas semanas/turnos e otimizar performance ([284738e](https://github.com/uniespacos/uniespacos/commit/284738e0c3cbd0a10ac81b06e1631422dcaf78d7))
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([f0b55e1](https://github.com/uniespacos/uniespacos/commit/f0b55e19426ff6d5c7a40a03f2de426c8cb5765b))
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([582afbd](https://github.com/uniespacos/uniespacos/commit/582afbd4a37063c86ae9e606dd3cc81c2f38feff))
+* exibir aviso em reserva cancelada para gestor, otimizar performance e fechar T-31c ([717cd72](https://github.com/uniespacos/uniespacos/commit/717cd72218348d4f6083b0aab66466f59b62e3c5))
+* exibir aviso em reserva cancelada para gestor, otimizar performance e fechar T-31c ([3bdcb2b](https://github.com/uniespacos/uniespacos/commit/3bdcb2b28f9a361b684dcf79a1af7d17c6202c1f))
+* **reservas:** 'todas as ocorrências' propaga a edição e detalhes respeitam a semana da URL ([59a085a](https://github.com/uniespacos/uniespacos/commit/59a085ac75138cc7279fedf9fabe4a7234c8e61f))
+* **reservas:** correções do QA da rc.119 no fluxo de recorrência e edição ([e198147](https://github.com/uniespacos/uniespacos/commit/e1981477f76643a6d2d36e4c245f06bd42011f50))
+* **reservas:** edição de uma semana grava por chave e conflito cita data e horário ([906e715](https://github.com/uniespacos/uniespacos/commit/906e715a19109eb907ac97f95042fcf1676e473f))
+* **reservas:** revisão mostra os horários que serão gravados e data inicial derivada dos horários ([ae2abc1](https://github.com/uniespacos/uniespacos/commit/ae2abc1f5ac06cec0a0e8f6fa4739d2ce5d377b5))
+* resolver tipagem no PHPStan em ExpansaoHorariosService ([ab2e2dc](https://github.com/uniespacos/uniespacos/commit/ab2e2dce7fc364b7606a2a8b62e85d96646210bc))
+* usar i18n na recorrencia e preservar selecoes explicitas por semana ([f9204c9](https://github.com/uniespacos/uniespacos/commit/f9204c91dafa9a18bdc3d4f336832dade3aca6bc))
+* validar recorrencia no envio e concluir itens rapidos do backlog ([e035b46](https://github.com/uniespacos/uniespacos/commit/e035b46f3bf661c280a1d3d30bb7ce6401303eeb))
+
+
+### Miscellaneous Chores
+
+* **develop:** release 1.5.0-rc.115 ([ca156aa](https://github.com/uniespacos/uniespacos/commit/ca156aa063bf8a3b74bfc119c42ea5a72dde5bf4))
+* **develop:** release 1.5.0-rc.115 ([89ad071](https://github.com/uniespacos/uniespacos/commit/89ad071afae41fb24297784ff466d2a85faa7116))
+* **develop:** release 1.5.0-rc.116 ([d35129f](https://github.com/uniespacos/uniespacos/commit/d35129f862729397cfe8a0add621db459596719c))
+* **develop:** release 1.5.0-rc.116 ([c343c12](https://github.com/uniespacos/uniespacos/commit/c343c1245ded95d5f2e143d5fc68298bb68da47f))
+* **develop:** release 1.5.0-rc.117 ([66705ef](https://github.com/uniespacos/uniespacos/commit/66705ef859b0f3dd148c54b732f309d596e6fa92))
+* **develop:** release 1.5.0-rc.117 ([12f2850](https://github.com/uniespacos/uniespacos/commit/12f28507f865f13820fe37f71c90900e57f84529))
+* **develop:** release 1.5.0-rc.118 ([ec6aee2](https://github.com/uniespacos/uniespacos/commit/ec6aee2b0b2e38560e65c9dc45220e1238836220))
+* **develop:** release 1.5.0-rc.118 ([6c2860f](https://github.com/uniespacos/uniespacos/commit/6c2860fd9fd468fc45ac73ae1ec7e9ab53674efb))
+* **develop:** release 1.5.0-rc.119 ([13eb53c](https://github.com/uniespacos/uniespacos/commit/13eb53cf96bb845a23454e729446035a737a1178))
+* **develop:** release 1.5.0-rc.119 ([40f1920](https://github.com/uniespacos/uniespacos/commit/40f1920a536799ea55b56dfe580895b29dae3929))
+* **develop:** release 1.5.0-rc.120 ([8865346](https://github.com/uniespacos/uniespacos/commit/8865346bf2f4a53f7e4b9eb7acd1b0d1bdce7acc))
+* **develop:** release 1.5.0-rc.120 ([77f9677](https://github.com/uniespacos/uniespacos/commit/77f9677ca82da2ada8ec674e8cb9cdde356b8a24))
+* **develop:** release 1.5.0-rc.121 ([6a4bfcf](https://github.com/uniespacos/uniespacos/commit/6a4bfcf671225edd32a475f59ee7a707f2581d16))
+* **develop:** release 1.5.0-rc.121 ([99cce4f](https://github.com/uniespacos/uniespacos/commit/99cce4fdf281c792cb27b922cde4a25692520620))
+* **develop:** release 1.5.0-rc.122 ([6e3e87d](https://github.com/uniespacos/uniespacos/commit/6e3e87df76fcc0bec92ea4f14a3d0e689aa8a32e))
+* **develop:** release 1.5.0-rc.122 ([22d771d](https://github.com/uniespacos/uniespacos/commit/22d771d6468827371c9135df1d7dbcd5212c1032))
+* **develop:** release 1.5.0-rc.123 ([b2d0e66](https://github.com/uniespacos/uniespacos/commit/b2d0e66e4606d3db6d35bcfd1106c23ed4f54c8b))
+* **develop:** release 1.5.0-rc.123 ([a0a2dd4](https://github.com/uniespacos/uniespacos/commit/a0a2dd41a838b89a9f85b90e3079d485008672ae))
+* **develop:** release 1.5.0-rc.124 ([8bcf7f1](https://github.com/uniespacos/uniespacos/commit/8bcf7f115960f85e85ed841da8b702018ba65cc1))
+* **develop:** release 1.5.0-rc.124 ([e02e16a](https://github.com/uniespacos/uniespacos/commit/e02e16a4142c939904fb68c7d4c54f178dc83e8d))
+* release 1.7.0 com Onda 2 (LGPD parte 2), performance, acessibilidade e correções de reservas ([a4b0900](https://github.com/uniespacos/uniespacos/commit/a4b09008740205a7d775957029330b4eb63b4e5c))
+* sincronizar main em develop após release 1.6.1 ([69586f4](https://github.com/uniespacos/uniespacos/commit/69586f4d2fff2ee4c003f45529e07e4bb5b7925c))
+
+## [1.5.0-rc.124](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.123...v1.5.0-rc.124) (2026-11-20)
+
+
+### Bug Fixes
+
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([771b00d](https://github.com/uniespacos/uniespacos/commit/771b00d33ebdfb6afbfd9a89deda9367d9c8b06a))
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([b2655ef](https://github.com/uniespacos/uniespacos/commit/b2655efb811ad2fe98289e7f65fe9c934be3f3ea))
+
+## [1.5.0-rc.123](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.122...v1.5.0-rc.123) (2026-11-19)
+
+
+### Bug Fixes
+
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([f0b55e1](https://github.com/uniespacos/uniespacos/commit/f0b55e19426ff6d5c7a40a03f2de426c8cb5765b))
+* **deploy:** trata SIGQUIT no scheduler, define stop_signal SIGTERM nos serviços CLI e adiciona keepalive SSH ([582afbd](https://github.com/uniespacos/uniespacos/commit/582afbd4a37063c86ae9e606dd3cc81c2f38feff))
+
+## [1.5.0-rc.122](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.121...v1.5.0-rc.122) (2026-11-19)
+
+
+### Bug Fixes
+
+* corrige estouro de titulo e pendencias de i18n do QA regressivo ([b86c37d](https://github.com/uniespacos/uniespacos/commit/b86c37dee64248e4249feb7601c811992d1b84a2))
+* corrige estouro de título e pendências de i18n do QA regressivo pós-[#538](https://github.com/uniespacos/uniespacos/issues/538) ([2734f19](https://github.com/uniespacos/uniespacos/commit/2734f19246d4f0546b5daf0ee6f6cf28b8e41d0b))
+
+## [1.5.0-rc.121](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.120...v1.5.0-rc.121) (2026-11-19)
+
+
+### Bug Fixes
+
+* corrige achados do QA da rc.120 pré-merge para main ([457a067](https://github.com/uniespacos/uniespacos/commit/457a0676e1bbb73c84e81cd89de9caed74db101b))
+* corrige achados do QA da rc.120 pré-merge para main ([bcc1e37](https://github.com/uniespacos/uniespacos/commit/bcc1e371a53ebfae2725ff0183cc2d8dc7971201))
+
 ## [1.5.0-rc.120](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.119...v1.5.0-rc.120) (2026-11-19)
 
 

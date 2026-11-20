@@ -1,9 +1,12 @@
 import { RadioGroup } from '@/components/ui/radio-group';
+import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
 import { useTranslation } from '@/i18n';
+import { parseDataLocal } from '@/lib/utils';
 import { agruparPeriodosPorDia } from '@/lib/utils/agrupar-periodos-por-dia';
 import { OpcaoRadioCard } from '@/presentation/molecules/OpcaoRadioCard';
 import { SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { format } from 'date-fns';
 import { Calendar, Repeat } from 'lucide-react';
 import React, { useId, useMemo } from 'react';
 
@@ -22,7 +25,22 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
     const { t, formatDate } = useTranslation();
     const resumoId = useId();
 
-    const gruposPorDia = useMemo(() => agruparPeriodosPorDia(slotsSelecao), [slotsSelecao]);
+    const slotsExibidos = useMemo(() => {
+        const devePodarNaPrevia =
+            isEditMode &&
+            formData.edit_scope === EscopoRecorrencia.RECURRING &&
+            (formData.recorrencia === RecorrenciaReserva.QUINZE_DIAS || formData.recorrencia === RecorrenciaReserva.UM_MES) &&
+            Boolean(formData.data_final);
+
+        if (!devePodarNaPrevia || !formData.data_final) {
+            return slotsSelecao;
+        }
+
+        const dataFinalIso = format(parseDataLocal(formData.data_final), 'yyyy-MM-dd');
+        return slotsSelecao.filter((slot) => format(parseDataLocal(slot.data), 'yyyy-MM-dd') <= dataFinalIso);
+    }, [isEditMode, formData.edit_scope, formData.recorrencia, formData.data_final, slotsSelecao]);
+
+    const gruposPorDia = useMemo(() => agruparPeriodosPorDia(slotsExibidos), [slotsExibidos]);
 
     return (
         <div className="space-y-5">
@@ -33,9 +51,9 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                         {t('reservas.stepper.selected_slots')}
                     </h3>
                     <p className="text-muted-foreground pl-6 text-xs">
-                        {slotsSelecao.length === 1
+                        {slotsExibidos.length === 1
                             ? t('reservas.stepper.slot_selected')
-                            : t('reservas.stepper.slots_selected', { count: String(slotsSelecao.length) })}
+                            : t('reservas.stepper.slots_selected', { count: String(slotsExibidos.length) })}
                     </p>
                 </div>
 
@@ -71,25 +89,25 @@ export const StepHorariosRecorrencia: React.FC<StepHorariosRecorrenciaProps> = (
                         {t('reservas.stepper.edit_scope_label')}
                     </p>
                     <RadioGroup
-                        value={formData.edit_scope ?? 'recurring'}
+                        value={formData.edit_scope ?? EscopoRecorrencia.RECURRING}
                         onValueChange={(valor) => {
                             setFormData('edit_scope', valor);
                         }}
                         className="grid grid-cols-1 gap-2 sm:grid-cols-2"
                     >
                         <OpcaoRadioCard
-                            value="recurring"
+                            value={EscopoRecorrencia.RECURRING}
                             id="edit-scope-recurring"
                             titulo={t('reservas.stepper.scope_all_title')}
                             descricao={t('reservas.stepper.scope_all_desc')}
-                            selecionado={formData.edit_scope === 'recurring'}
+                            selecionado={formData.edit_scope === EscopoRecorrencia.RECURRING}
                         />
                         <OpcaoRadioCard
-                            value="single"
+                            value={EscopoRecorrencia.SINGLE}
                             id="edit-scope-single"
                             titulo={t('reservas.stepper.scope_week_title')}
                             descricao={t('reservas.stepper.scope_week_desc')}
-                            selecionado={formData.edit_scope === 'single'}
+                            selecionado={formData.edit_scope === EscopoRecorrencia.SINGLE}
                         />
                     </RadioGroup>
                 </div>

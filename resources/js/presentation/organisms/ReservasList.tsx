@@ -178,14 +178,14 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     const columns: ColumnDef<Reserva>[] = [
         {
             header: t('reservas.tabela.espaco'),
-            className: 'min-w-[180px]',
+            className: 'min-w-[180px] max-w-[320px]',
             cell: (reserva) => (
-                <div className="min-w-0 space-y-0.5">
-                    <div className="text-foreground truncate font-semibold" title={reserva.titulo}>
+                <div className="min-w-0 max-w-[320px] space-y-0.5 whitespace-normal">
+                    <div className="text-foreground line-clamp-2 font-semibold break-words [overflow-wrap:anywhere]" title={reserva.titulo}>
                         {reserva.titulo}
                     </div>
                     {reserva.descricao ? (
-                        <p className="text-muted-foreground line-clamp-1 truncate text-xs" title={reserva.descricao}>
+                        <p className="text-muted-foreground line-clamp-2 text-xs break-words [overflow-wrap:anywhere]" title={reserva.descricao}>
                             {reserva.descricao}
                         </p>
                     ) : null}

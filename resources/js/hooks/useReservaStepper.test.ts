@@ -371,4 +371,93 @@ describe('useReservaStepper', () => {
         expect(result.current.stepErrors).toEqual({});
         expect(result.current.conflictingSlotIds).toEqual([]);
     });
+
+    it('rejeita publico_estimado com 0, negativos, decimais e valores acima de 5000 e aceita validos', () => {
+        const valoresInvalidos: (number | string)[] = [0, -1, 1.5, '1.5', '0', '-5', 99999, '99999'];
+
+        for (const invalido of valoresInvalidos) {
+            const { result } = renderHook(() =>
+                useReservaStepper({
+                    espaco: criarEspaco(),
+                    formData: criarFormData({ publico_estimado: invalido }),
+                    slotsSelecao: [slotLivre],
+                }),
+            );
+
+            expect(result.current.bloqueios.detalhes).toBe(true);
+            expect(result.current.canSubmit).toBe(false);
+            expect(result.current.stepErrors.publico_estimado).toBe('Informe um número inteiro entre 1 e 5000.');
+
+            let advanced = true;
+            act(() => {
+                advanced = result.current.nextStep();
+            });
+            expect(advanced).toBe(false);
+            expect(result.current.currentStepId).toBe('detalhes');
+        }
+
+        const valoresValidos: (number | string | null | undefined)[] = [undefined, null, '', '   ', '1', 1, '40', 5000, '5000'];
+
+        for (const valido of valoresValidos) {
+            const { result } = renderHook(() =>
+                useReservaStepper({
+                    espaco: criarEspaco(),
+                    formData: criarFormData({ publico_estimado: valido }),
+                    slotsSelecao: [slotLivre],
+                }),
+            );
+
+            expect(result.current.bloqueios.detalhes).toBe(false);
+            expect(result.current.stepErrors.publico_estimado).toBeUndefined();
+        }
+    });
+
+    it('aceita descricao com 2000 caracteres e bloqueia acima de 2000 ou titulo acima de 255', () => {
+        const { result: okResult } = renderHook(() =>
+            useReservaStepper({
+                espaco: criarEspaco(),
+                formData: criarFormData({ descricao: 'a'.repeat(2000) }),
+                slotsSelecao: [slotLivre],
+            }),
+        );
+        expect(okResult.current.bloqueios.detalhes).toBe(false);
+        expect(okResult.current.stepErrors.descricao).toBeUndefined();
+
+        let avancaCom2000 = false;
+        act(() => {
+            avancaCom2000 = okResult.current.nextStep();
+        });
+        expect(avancaCom2000).toBe(true);
+        expect(okResult.current.currentStepId).toBe('revisao');
+
+        const { result: failDesc } = renderHook(() =>
+            useReservaStepper({
+                espaco: criarEspaco(),
+                formData: criarFormData({ descricao: 'a'.repeat(2001) }),
+                slotsSelecao: [slotLivre],
+            }),
+        );
+        expect(failDesc.current.bloqueios.detalhes).toBe(true);
+        expect(failDesc.current.stepErrors.descricao).toContain('2000');
+        let avancaCom2001 = true;
+        act(() => {
+            avancaCom2001 = failDesc.current.nextStep();
+        });
+        expect(avancaCom2001).toBe(false);
+
+        const { result: failTitulo } = renderHook(() =>
+            useReservaStepper({
+                espaco: criarEspaco(),
+                formData: criarFormData({ titulo: 't'.repeat(256) }),
+                slotsSelecao: [slotLivre],
+            }),
+        );
+        expect(failTitulo.current.bloqueios.detalhes).toBe(true);
+        expect(failTitulo.current.stepErrors.titulo).toContain('255');
+        let avancaCom256 = true;
+        act(() => {
+            avancaCom256 = failTitulo.current.nextStep();
+        });
+        expect(avancaCom256).toBe(false);
+    });
 });

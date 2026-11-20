@@ -98,6 +98,9 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         ? t('reservas.stepper.title_edit', { espaco: espaco.nome })
         : t('reservas.stepper.title_create', { espaco: espaco.nome });
 
+    const footerButtonFocusClasses =
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
     if (sucessoCriacao) {
         return (
             <ResponsiveModal
@@ -118,7 +121,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                             onClick={() => {
                                 router.get(route('reservas.index'));
                             }}
-                            className="h-10 px-4 text-sm"
+                            className={`h-10 px-4 text-sm ${footerButtonFocusClasses}`}
                         >
                             {t('reservas.stepper.success_my_reservations')}
                         </Button>
@@ -127,7 +130,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                             onClick={() => {
                                 onOpenChange(false);
                             }}
-                            className="h-10 px-4 text-sm"
+                            className={`h-10 px-4 text-sm ${footerButtonFocusClasses}`}
                         >
                             {t('reservas.stepper.success_new_request')}
                         </Button>
@@ -199,13 +202,19 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     onClick={() => {
                         onOpenChange(false);
                     }}
-                    className="h-10 gap-1.5 px-4 text-sm"
+                    className={`h-10 gap-1.5 px-4 text-sm ${footerButtonFocusClasses}`}
                 >
                     <X className="h-4 w-4" aria-hidden="true" />
                     {t('common.actions.cancel')}
                 </Button>
             ) : (
-                <Button type="button" variant="outline" onClick={prevStep} disabled={isSubmitting} className="h-10 gap-1.5 px-4 text-sm">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={isSubmitting}
+                    className={`h-10 gap-1.5 px-4 text-sm ${footerButtonFocusClasses}`}
+                >
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                     {t('common.actions.back')}
                 </Button>
@@ -216,7 +225,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     type="button"
                     onClick={handleFormSubmit}
                     disabled={!canSubmit || isSubmitting}
-                    className="h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm"
+                    className={`h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm ${footerButtonFocusClasses}`}
                 >
                     {isSubmitting ? (
                         <>
@@ -231,7 +240,12 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     )}
                 </Button>
             ) : (
-                <Button type="button" onClick={nextStep} disabled={!canAdvance} className="h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm">
+                <Button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!canAdvance}
+                    className={`h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm ${footerButtonFocusClasses}`}
+                >
                     <span>{t('common.actions.next')}</span>
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>

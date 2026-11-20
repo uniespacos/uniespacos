@@ -145,6 +145,18 @@ describe('i18n Engine & Dictionaries', () => {
             expect(translate('reservas.detalhes.avaliado_por', { name: 'Maria Silva', date: '25/08/2026' }, 'pt-BR')).toBe(
                 'Avaliado por Maria Silva em 25/08/2026',
             );
+
+            expect(
+                translate(
+                    'reservas.avaliacao.parecer_conflito_linha',
+                    {
+                        horario: '07:30',
+                        data: '09/03/2027',
+                        detalhe: translate('reservas.conflito_outra_reserva_deferida', undefined, 'en'),
+                    },
+                    'en',
+                ),
+            ).toBe('- 07:30 slot on 09/03/2027: Rejected. Conflict with another approved reservation at this time.');
         });
 
         it('should return the raw key on missing or invalid translation paths', () => {

@@ -123,7 +123,7 @@ class HomeService
      */
     private function espacosRecentesDoUsuario(User $user): array
     {
-        return Espaco::query()
+        $espacos = Espaco::query()
             ->select('espacos.id', 'espacos.nome', 'espacos.andar_id')
             ->join('agendas', 'agendas.espaco_id', '=', 'espacos.id')
             ->join('horarios', 'horarios.agenda_id', '=', 'agendas.id')
@@ -134,18 +134,23 @@ class HomeService
             ->orderByRaw('MAX(reservas.created_at) DESC')
             ->limit(3)
             ->with(['andar:id,modulo_id', 'andar.modulo:id,nome'])
-            ->get()
-            ->map(fn (Espaco $espaco): array => [
+            ->get();
+
+        $resultado = [];
+        foreach ($espacos as $espaco) {
+            $modulo = $espaco->andar?->modulo;
+            $resultado[] = [
                 'id' => $espaco->id,
                 'nome' => $espaco->nome,
                 'andar' => [
                     'modulo' => [
-                        'nome' => $espaco->andar->modulo->nome,
+                        'nome' => $modulo !== null ? $modulo->nome : '',
                     ],
                 ],
-            ])
-            ->values()
-            ->all();
+            ];
+        }
+
+        return $resultado;
     }
 
     /**

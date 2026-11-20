@@ -291,6 +291,7 @@ export const es = {
             indeferir: 'Rechazar Solicitud',
             parecer: 'Dictamen / Justificación',
             parecer_placeholder: 'Describa las razones institucionales de la decisión...',
+            parecer_conflito_linha: '- Horario de las {{horario}} del día {{data}}: Rechazado. {{detalhe}}',
             observacao: 'Observaciones Adicionales',
             observacao_placeholder: 'Notas para el solicitante (opcional)...',
             salvar: 'Guardar Decisión',
@@ -300,13 +301,14 @@ export const es = {
             escopo_semana: 'Solo horarios de esta semana',
             cancelada_titulo: 'Solicitud de reserva cancelada',
             cancelada_descricao:
-                'Esta solicitud de reserva fue cancelada antes de que pudiera ser evaluada o completada. Los horarios solicitados fueron liberados y no se requiere ninguna acción.',
+                'Esta reserva ha sido cancelada. Los horarios reservados fueron liberados y no se requiere ninguna acción adicional.',
             voltar_listagem: 'Volver a Gestionar Reservas',
         },
         gestor: {
             conflicts_detected: 'Advertencia: {{count}} franja(s) horaria(s) de esta reserva se superpone(n) con otra(s) reserva(s).',
             conflict_with_user: 'Solicitante: {{user}}',
-            conflicts_note: 'Puede optar por deferir incluso con conflictos. Considere analizar las reservas conflictivas antes de continuar.',
+            conflicts_note:
+                'Los horarios en conflicto con otra reserva aprobada quedan bloqueados para aprobación y se rechazan automáticamente al guardar la evaluación.',
             conflict_cache_snapshot_title: 'Captura de Conflictos ({{count}} detectados)',
             conflict_cache_snapshot_note:
                 'Esta es una captura histórica del momento en que el sistema procesó la reserva. Puede estar desactualizada. Los conflictos actuales se muestran arriba.',
@@ -347,6 +349,7 @@ export const es = {
             no_slots_selected: 'No hay horarios seleccionados.',
             recurrence_pattern: 'Patrón de Recurrencia',
             period_recurrence: 'Período y Recurrencia',
+            period_to: 'hasta',
             selected_space: 'Espacio',
             reservation_slots: 'Horarios a solicitar',
             period_range: 'de {{inicio}} a {{fim}}',
@@ -403,6 +406,8 @@ export const es = {
                 end_date_required: 'La fecha final es obligatoria.',
                 end_before_start: 'La fecha final debe ser igual o posterior a la fecha inicial.',
                 title_required: 'El título de la reserva es obligatorio.',
+                title_max: 'El título no puede superar los {{max}} caracteres.',
+                description_max: 'La descripción no puede superar los {{max}} caracteres.',
                 public_invalid: 'Ingrese un número entero entre 1 y 5000.',
                 details_incomplete: 'Complete los detalles de la solicitud antes de enviar.',
                 generic_validation: 'Se produjo un error de validación.',

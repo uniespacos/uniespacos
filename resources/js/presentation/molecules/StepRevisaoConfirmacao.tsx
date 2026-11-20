@@ -2,7 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { EscopoRecorrencia } from '@/contracts';
 import { useTranslation } from '@/i18n';
+import { cn, parseDataLocal } from '@/lib/utils';
 import { recorrenciaParaGravar } from '@/lib/utils/conflitos-reserva';
 import { expandirHorariosRecorrencia } from '@/lib/utils/expandir-horarios-recorrencia';
 import { publicoEstimadoVazio } from '@/lib/utils/publico-estimado';
@@ -33,9 +35,9 @@ interface CampoResumoProps {
 
 function CampoResumo({ rotulo, className, children }: CampoResumoProps) {
     return (
-        <div className={className}>
+        <div className={cn('min-w-0', className)}>
             <dt className="text-muted-foreground text-xs">{rotulo}</dt>
-            <dd className="text-foreground text-sm font-medium break-words">{children}</dd>
+            <dd className="text-foreground min-w-0 text-sm font-medium [overflow-wrap:anywhere] break-words">{children}</dd>
         </div>
     );
 }
@@ -61,16 +63,30 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
         return opcao ? t(opcao.labelKey) : formData.recorrencia;
     }, [formData.recorrencia, t]);
 
+    const isSingleScopeEdit = isEditMode && formData.edit_scope === EscopoRecorrencia.SINGLE;
+
     const horariosGravados = useMemo(() => {
-        const recorrencia = recorrenciaParaGravar(formData.recorrencia, isEditMode && formData.edit_scope === 'single');
+        const recorrencia = recorrenciaParaGravar(formData.recorrencia, isSingleScopeEdit);
 
         return expandirHorariosRecorrencia(formData.horarios_solicitados, recorrencia, formData.data_final);
-    }, [isEditMode, formData.edit_scope, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
+    }, [isSingleScopeEdit, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
 
-    const periodo = t('reservas.stepper.period_range', {
-        inicio: formatDate(formData.data_inicial, 'dd/MM/yyyy'),
-        fim: formatDate(formData.data_final, 'dd/MM/yyyy'),
-    });
+    const periodo = useMemo(() => {
+        if (isSingleScopeEdit && horariosGravados.length > 0) {
+            const primeiraData = parseDataLocal(horariosGravados[0].data);
+            const ultimaData = parseDataLocal(horariosGravados[horariosGravados.length - 1].data);
+
+            return t('reservas.stepper.period_range', {
+                inicio: formatDate(primeiraData, 'dd/MM/yyyy'),
+                fim: formatDate(ultimaData, 'dd/MM/yyyy'),
+            });
+        }
+
+        return t('reservas.stepper.period_range', {
+            inicio: formatDate(formData.data_inicial, 'dd/MM/yyyy'),
+            fim: formatDate(formData.data_final, 'dd/MM/yyyy'),
+        });
+    }, [isSingleScopeEdit, horariosGravados, formData.data_inicial, formData.data_final, formatDate, t]);
 
     const publico = publicoEstimadoVazio(formData.publico_estimado) ? null : Number(formData.publico_estimado);
     const categoria = formData.categoria?.trim() ?? '';
@@ -78,7 +94,7 @@ export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
 
     return (
         <div className="space-y-5">
-            <section aria-labelledby={resumoId} className="bg-card border-border/80 space-y-4 rounded-xl border p-4 shadow-xs">
+            <section aria-labelledby={resumoId} className="bg-card border-border/80 min-w-0 space-y-4 rounded-xl border p-4 shadow-xs">
                 <h3 id={resumoId} className="text-foreground text-sm font-semibold">
                     {t('reservas.stepper.review_summary_title')}
                 </h3>

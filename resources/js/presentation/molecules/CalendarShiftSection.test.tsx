@@ -180,4 +180,22 @@ describe('CalendarShiftSection', () => {
         expect(alternarSelecaoSlot).toHaveBeenCalledTimes(1);
         expect(alternarSelecaoIntervalo).not.toHaveBeenCalled();
     });
+
+    it('slots livres da grade sao botoes nativos focaveis com indicador de foco e estado acessivel', () => {
+        render(
+            <TooltipProvider>
+                <CalendarShiftSection agenda={agendaManha} diasSemana={diasSemana} alternarSelecaoSlot={jest.fn()} />
+            </TooltipProvider>,
+        );
+
+        const botoesSlot = screen.getAllByRole('button');
+        expect(botoesSlot).toHaveLength(6);
+        botoesSlot.forEach((botao) => {
+            expect(botao.tagName).toBe('BUTTON');
+            expect(botao).toHaveAttribute('type', 'button');
+            expect(botao).toBeEnabled();
+            expect(botao).toHaveAttribute('aria-pressed', 'false');
+            expect(botao).toHaveClass('focus-visible:ring-2');
+        });
+    });
 });

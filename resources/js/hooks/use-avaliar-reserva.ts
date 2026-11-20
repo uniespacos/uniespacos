@@ -1,3 +1,4 @@
+import { EscopoRecorrencia, type EscopoRecorrenciaType, SituacaoReserva } from '@/contracts';
 import { Reserva } from '@/types';
 import { useForm } from '@inertiajs/react';
 import type React from 'react';
@@ -21,12 +22,12 @@ export function useAvaliarReserva({ reserva, onSuccess }: UseAvaliarReservaProps
         motivo: existingJustification,
         observacao: reserva.observacao ?? '',
         horarios_avaliados: [] as { id: number; status: string }[],
-        evaluation_scope: 'recurring' as 'single' | 'recurring',
+        evaluation_scope: EscopoRecorrencia.RECURRING as EscopoRecorrenciaType,
     });
 
     const submitEvaluation = (e: React.SyntheticEvent) => {
         e.preventDefault();
-        if (form.data.situacao === 'indeferida' && !form.data.motivo.trim()) {
+        if (form.data.situacao === SituacaoReserva.INDEFERIDA && !form.data.motivo.trim()) {
             toast.error('Motivo é obrigatório para reservas indeferidas');
             return;
         }

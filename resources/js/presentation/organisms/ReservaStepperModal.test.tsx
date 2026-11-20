@@ -205,4 +205,22 @@ describe('ReservaStepperModal', () => {
 
         expect(onOpenChange).toHaveBeenCalledWith(false);
     });
+
+    it('mantem classes de foco visivel nos botoes de acao do rodape do modal', () => {
+        renderModal();
+
+        const cancelarBtn = screen.getByRole('button', { name: /cancelar/i });
+        const avancarBtn = screen.getByRole('button', { name: /avançar/i });
+
+        expect(cancelarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+        expect(avancarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+
+        fireEvent.click(avancarBtn);
+
+        const voltarBtn = screen.getByRole('button', { name: /voltar/i });
+        const enviarBtn = screen.getByRole('button', { name: /enviar solicitação/i });
+
+        expect(voltarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+        expect(enviarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+    });
 });

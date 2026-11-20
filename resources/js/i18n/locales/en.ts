@@ -291,6 +291,7 @@ export const en = {
             indeferir: 'Reject Request',
             parecer: 'Feedback / Reason',
             parecer_placeholder: 'Describe the institutional reasons for the decision...',
+            parecer_conflito_linha: '- {{horario}} slot on {{data}}: Rejected. {{detalhe}}',
             observacao: 'Additional Notes',
             observacao_placeholder: 'Notes for the requester (optional)...',
             salvar: 'Save Decision',
@@ -299,14 +300,14 @@ export const en = {
             escopo_todas: 'All recurrence occurrences',
             escopo_semana: 'Only slots of this week',
             cancelada_titulo: 'Reservation request canceled',
-            cancelada_descricao:
-                'This reservation request was canceled before it could be evaluated or completed. The requested time slots have been released and no action is required.',
+            cancelada_descricao: 'This reservation has been canceled. The reserved time slots have been released and no further action is required.',
             voltar_listagem: 'Back to Manage Reservations',
         },
         gestor: {
             conflicts_detected: 'Warning: {{count}} time slot(s) of this reservation overlap(s) with another reservation(s).',
             conflict_with_user: 'Requester: {{user}}',
-            conflicts_note: 'You may choose to defer even with conflicts. Consider analyzing conflicting reservations before proceeding.',
+            conflicts_note:
+                'Time slots conflicting with another approved reservation are blocked from approval and will be automatically rejected when saving the evaluation.',
             conflict_cache_snapshot_title: 'Conflict Snapshot ({{count}} detected)',
             conflict_cache_snapshot_note:
                 'This is a historical snapshot from the moment the reservation was processed by the system. It may be outdated. Current conflicts are shown above.',
@@ -347,6 +348,7 @@ export const en = {
             no_slots_selected: 'No time slots selected.',
             recurrence_pattern: 'Recurrence Pattern',
             period_recurrence: 'Period & Recurrence',
+            period_to: 'to',
             selected_space: 'Space',
             reservation_slots: 'Time slots to request',
             period_range: 'from {{inicio}} to {{fim}}',
@@ -402,6 +404,8 @@ export const en = {
                 end_date_required: 'End date is required.',
                 end_before_start: 'The end date must be the same as or later than the start date.',
                 title_required: 'The booking title is required.',
+                title_max: 'Title cannot exceed {{max}} characters.',
+                description_max: 'Description cannot exceed {{max}} characters.',
                 public_invalid: 'Enter a whole number between 1 and 5000.',
                 details_incomplete: 'Complete the request details before sending.',
                 generic_validation: 'A validation error occurred.',

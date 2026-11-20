@@ -407,7 +407,7 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
                         <FileText className="text-muted-foreground h-4 w-4" />
                         <h4 className="text-foreground text-xs font-semibold tracking-wider uppercase">{t('reservas.detalhes.justificativa')}</h4>
                     </div>
-                    <p className="text-foreground text-xs leading-relaxed whitespace-pre-wrap sm:text-sm">
+                    <p className="text-foreground text-xs leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] sm:text-sm">
                         {selectedReserva.descricao.trim() || t('reservas.detalhes.sem_justificativa')}
                     </p>
                 </div>

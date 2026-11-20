@@ -1,8 +1,9 @@
+import { type DecisaoAvaliacaoType, isDecisaoAvaliacao, SituacaoReserva } from '@/contracts';
 import { assertNever } from '@/lib/utils/exhaustive';
 import { mapearStatusBackendParaSlot } from '@/lib/utils/reserva-status.helpers';
 import { Reserva, SlotCalendario } from '@/types';
 import { parse } from 'date-fns';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export function useReservationSlots(reserva: Reserva) {
     const initialSlots = useMemo(() => {
@@ -10,7 +11,7 @@ export function useReservationSlots(reserva: Reserva) {
             const dataObjeto = parse(horario.data, 'yyyy-MM-dd', new Date());
             const slotId = `${horario.data}|${horario.horario_inicio}`;
             const isLocked = horario.is_conflicted;
-            const status = isLocked ? 'indeferida' : mapearStatusBackendParaSlot(horario.situacao);
+            const status = isLocked ? SituacaoReserva.INDEFERIDA : mapearStatusBackendParaSlot(horario.situacao);
 
             return {
                 id: slotId,
@@ -59,12 +60,12 @@ export function useReservationSlots(reserva: Reserva) {
                 switch (slot.status) {
                     case 'solicitado':
                     case 'selecionado':
-                        proximoStatus = 'deferida';
+                        proximoStatus = SituacaoReserva.DEFERIDA;
                         break;
-                    case 'deferida':
-                        proximoStatus = 'indeferida';
+                    case SituacaoReserva.DEFERIDA:
+                        proximoStatus = SituacaoReserva.INDEFERIDA;
                         break;
-                    case 'indeferida':
+                    case SituacaoReserva.INDEFERIDA:
                     case 'livre':
                     case 'reservado':
                         proximoStatus = 'solicitado';
@@ -77,21 +78,63 @@ export function useReservationSlots(reserva: Reserva) {
         });
     };
 
-    const handleDecisaoGlobalChange = (novaDecisao: 'deferida' | 'indeferida') => {
-        setSlotsSelecao((slotsAtuais) => {
-            return slotsAtuais.map((slot) => {
-                if (slot.isLocked) {
-                    return slot;
-                }
-                return { ...slot, status: novaDecisao };
+    const handleDecisaoGlobalChange = useCallback(
+        (novaDecisao: DecisaoAvaliacaoType, predicate?: (slot: SlotCalendario) => boolean) => {
+            if (!isDecisaoAvaliacao(novaDecisao)) {
+                return;
+            }
+
+            setSlotsSelecao((slotsAtuais) => {
+                return slotsAtuais.map((slot) => {
+                    if (slot.isLocked) {
+                        return slot;
+                    }
+                    if (predicate && !predicate(slot)) {
+                        return slot;
+                    }
+                    return { ...slot, status: novaDecisao };
+                });
             });
-        });
-    };
+        },
+        [],
+    );
+
+    const restaurarSlotsForaDoEscopo = useCallback(
+        (predicate: (slot: SlotCalendario) => boolean) => {
+            const initialById = new Map<number | string, SlotCalendario['status']>(
+                initialSlots.map((slot) => [slot.dadosReserva.horarioDB.id, slot.status]),
+            );
+
+            setSlotsSelecao((slotsAtuais) => {
+                const precisaRestaurar = slotsAtuais.some((slot) => {
+                    if (predicate(slot)) {
+                        return false;
+                    }
+                    const statusInicial = initialById.get(slot.dadosReserva?.horarioDB.id ?? slot.id);
+                    return statusInicial !== undefined && slot.status !== statusInicial;
+                });
+
+                if (!precisaRestaurar) {
+                    return slotsAtuais;
+                }
+
+                return slotsAtuais.map((slot) => {
+                    if (predicate(slot)) {
+                        return slot;
+                    }
+                    const statusInicial = initialById.get(slot.dadosReserva?.horarioDB.id ?? slot.id);
+                    return statusInicial === undefined ? slot : { ...slot, status: statusInicial };
+                });
+            });
+        },
+        [initialSlots],
+    );
 
     return {
         initialSlots,
         slotsSelecao,
         avaliarSlot,
         handleDecisaoGlobalChange,
+        restaurarSlotsForaDoEscopo,
     };
 }

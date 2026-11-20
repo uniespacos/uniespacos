@@ -35,4 +35,24 @@ describe('ConflictAlertBox', () => {
         const { container } = render(<ConflictAlertBox conflicts={{}} />);
         expect(container.firstChild).toBeNull();
     });
+
+    it('nao exibe solicitante quando conflito_user_name esta ausente e mostra nota de bloqueio', () => {
+        const mockConflicts: Record<string, ConflictInfo> = {
+            '1': {
+                horario_checado_id: 100,
+                conflito_reserva_titulo: 'Seminário Institucional',
+            },
+        };
+
+        render(<ConflictAlertBox conflicts={mockConflicts} />);
+
+        expect(screen.getByText('Seminário Institucional')).toBeInTheDocument();
+        expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Solicitante:/i)).not.toBeInTheDocument();
+        expect(
+            screen.getByText(
+                'Horários com conflito contra outra reserva deferida ficam bloqueados para aprovação e são indeferidos automaticamente ao salvar a avaliação.',
+            ),
+        ).toBeInTheDocument();
+    });
 });
