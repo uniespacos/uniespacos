@@ -104,16 +104,17 @@ class EspacoService
         $reference = Carbon::parse($weekReference)->locale('pt_BR');
         $weekStart = $reference->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd = $reference->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+        $conflictHorizonEnd = $reference->copy()->addMonth()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
 
         $espaco->load([
             'andar.modulo.unidade.instituicao',
-            'agendas' => function ($query) use ($weekStart, $weekEnd) {
+            'agendas' => function ($query) use ($weekStart, $conflictHorizonEnd) {
                 $query->with([
                     'user:id,name,email,setor_id',
                     'user.setor:id,nome,sigla',
-                    'horarios' => function ($q) use ($weekStart, $weekEnd) {
+                    'horarios' => function ($q) use ($weekStart, $conflictHorizonEnd) {
                         $q->where('situacao', 'deferida')
-                            ->whereBetween('data', [$weekStart, $weekEnd])
+                            ->whereBetween('data', [$weekStart, $conflictHorizonEnd])
                             ->with([
                                 'reserva:id,titulo,situacao,observacao,user_id',
                                 'reserva.user:id,name,setor_id',

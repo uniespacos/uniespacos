@@ -463,4 +463,85 @@ class ReservaFiltroPeriodoTest extends TestCase
             ->has('reservas.data', 2)
         );
     }
+
+    /**
+     * Test 11 (QA126-08 / EDI-01): Filter by interval overlap (data_inicial <= data_fim AND data_final >= data_inicio)
+     * returns recurring reservations whose period contains or overlaps the queried interval, even when the interval
+     * falls between two weekly occurrences.
+     */
+    #[Test]
+    public function it_filters_recurring_reservations_by_interval_overlap_in_user_and_gestor_listings(): void
+    {
+        $user = User::factory()->create();
+        $gestor = User::factory()->create();
+        $gestor->assignRole('gestor');
+        $agenda = Agenda::factory()->create([
+            'user_id' => $gestor->id,
+            'turno' => 'manha',
+        ]);
+
+        // Reserva recorrente semanal de 2026-12-01 a 2026-12-29 (terças-feiras: 01, 08, 15, 22, 29)
+        $reservaRecorrente = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'data_inicial' => '2026-12-01',
+            'data_final' => '2026-12-29',
+            'recorrencia' => '1mes',
+        ]);
+        foreach (['2026-12-01', '2026-12-08', '2026-12-15', '2026-12-22', '2026-12-29'] as $dataSlot) {
+            Horario::factory()->create([
+                'reserva_id' => $reservaRecorrente->id,
+                'agenda_id' => $agenda->id,
+                'data' => $dataSlot,
+                'horario_inicio' => '07:30:00',
+                'horario_fim' => '09:10:00',
+            ]);
+        }
+
+        // Reserva fora do período (novembro)
+        $reservaFora = Reserva::factory()->create([
+            'user_id' => $user->id,
+            'data_inicial' => '2026-11-20',
+            'data_final' => '2026-11-20',
+            'recorrencia' => 'unica',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reservaFora->id,
+            'agenda_id' => $agenda->id,
+            'data' => '2026-11-20',
+            'horario_inicio' => '07:30:00',
+            'horario_fim' => '09:10:00',
+        ]);
+
+        // Intervalo 2026-12-07..2026-12-10 (contém a ocorrência 2026-12-08)
+        $responseComOcorrencia = $this->actingAs($user)
+            ->get('/reservas?data_inicio=2026-12-07&data_fim=2026-12-10');
+
+        $responseComOcorrencia->assertOk();
+        $responseComOcorrencia->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('reservas.data', 1)
+            ->where('reservas.data.0.id', $reservaRecorrente->id)
+            ->where('filters.data_inicio', '2026-12-07')
+            ->where('filters.data_fim', '2026-12-10')
+        );
+
+        // Intervalo 2026-12-03..2026-12-05 (entre duas terças, mas contido no período 2026-12-01..2026-12-29)
+        $responseEntreOcorrencias = $this->actingAs($user)
+            ->get('/reservas?data_inicio=2026-12-03&data_fim=2026-12-05');
+
+        $responseEntreOcorrencias->assertOk();
+        $responseEntreOcorrencias->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('reservas.data', 1)
+            ->where('reservas.data.0.id', $reservaRecorrente->id)
+        );
+
+        // Listagem do gestor com o mesmo intervalo contido
+        $responseGestor = $this->actingAs($gestor)
+            ->get('/gestor/reservas?data_inicio=2026-12-03&data_fim=2026-12-05');
+
+        $responseGestor->assertOk();
+        $responseGestor->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('reservas.data', 1)
+            ->where('reservas.data.0.id', $reservaRecorrente->id)
+        );
+    }
 }

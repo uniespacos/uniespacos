@@ -51,9 +51,8 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ->when($filters['situacao'] ?? null, fn ($q, $s) => $q->where('situacao', $s))
             ->when(
                 isset($filters['data_inicio'], $filters['data_fim']) && $filters['data_inicio'] && $filters['data_fim'],
-                fn ($q) => $q->whereHas('horarios', function ($qh) use ($filters) {
-                    $qh->whereBetween('data', [$filters['data_inicio'], $filters['data_fim']]);
-                })
+                fn ($q) => $q->whereDate('data_inicial', '<=', (string) $filters['data_fim'])
+                    ->whereDate('data_final', '>=', (string) $filters['data_inicio'])
             )
             ->with([
                 'horarios' => function ($query) {
@@ -89,12 +88,14 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
     public function getPaginatedForGestor(array $agendaIds, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
         return $this->reserva->newQuery()
-            ->whereHas('horarios', function ($q) use ($agendaIds, $filters) {
+            ->whereHas('horarios', function ($q) use ($agendaIds) {
                 $q->whereIn('agenda_id', $agendaIds);
-                if (isset($filters['data_inicio'], $filters['data_fim']) && $filters['data_inicio'] && $filters['data_fim']) {
-                    $q->whereBetween('data', [$filters['data_inicio'], $filters['data_fim']]);
-                }
             })
+            ->when(
+                isset($filters['data_inicio'], $filters['data_fim']) && $filters['data_inicio'] && $filters['data_fim'],
+                fn ($q) => $q->whereDate('data_inicial', '<=', (string) $filters['data_fim'])
+                    ->whereDate('data_final', '>=', (string) $filters['data_inicio'])
+            )
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($q2) => $q2->where('titulo', 'like', "%{$s}%")->orWhere('descricao', 'like', "%{$s}%")))
             ->arquivo($filters['arquivo'] ?? null)
             ->when($filters['situacao'] ?? null, fn ($q, $s) => $q->where('situacao', $s))

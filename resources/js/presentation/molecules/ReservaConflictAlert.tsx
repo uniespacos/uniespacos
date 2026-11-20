@@ -3,7 +3,7 @@ import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface SlotConflitavel {
     id?: string;
@@ -71,9 +71,23 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
         };
     }, [espacoId, hasSelectedSlots]);
 
+    const conflitoTempoRealAtivo = useMemo(() => {
+        if (!conflitoTempoReal) {
+            return null;
+        }
+
+        const aindaSelecionado = selectedSlots.some((slot) => {
+            const slotDataStr = slot.data instanceof Date ? format(slot.data, 'yyyy-MM-dd') : slot.data.slice(0, 10);
+
+            return slotDataStr === conflitoTempoReal.data && slot.horario_inicio.slice(0, 5) === conflitoTempoReal.hora;
+        });
+
+        return aindaSelecionado ? conflitoTempoReal : null;
+    }, [conflitoTempoReal, selectedSlots]);
+
     const hasStaticConflict = conflictingDates.length > 0;
 
-    if (!conflitoTempoReal && !hasStaticConflict) return null;
+    if (!conflitoTempoRealAtivo && !hasStaticConflict) return null;
 
     return (
         <div
@@ -84,15 +98,15 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
                 className,
             )}
         >
-            {conflitoTempoReal && (
+            {conflitoTempoRealAtivo && (
                 <div className="flex items-start gap-2.5">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     <div className="flex-1 space-y-0.5">
                         <p className="font-semibold">{t('reservas.stepper.conflict.realtime_title')}</p>
                         <p>
                             {t('reservas.stepper.conflict.realtime_message', {
-                                hora: conflitoTempoReal.hora,
-                                data: formatDate(conflitoTempoReal.data, 'dd/MM/yyyy'),
+                                hora: conflitoTempoRealAtivo.hora,
+                                data: formatDate(conflitoTempoRealAtivo.data, 'dd/MM/yyyy'),
                             })}
                         </p>
                     </div>
