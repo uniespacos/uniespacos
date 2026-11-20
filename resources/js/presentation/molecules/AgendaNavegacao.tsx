@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import React from 'react';
 
 export interface AgendaNavegacaoProps {
     semanaAtual?: Date;
@@ -92,7 +91,7 @@ export function AgendaNavegacao({
                     onClick={handleAnterior}
                     disabled={desabAnterior}
                     aria-label={t('agenda.semana_anterior_label')}
-                    className="h-8 px-2 text-xs transition-transform active:scale-95 sm:px-3"
+                    className="h-10 px-2 text-xs transition-transform active:scale-95 sm:px-3"
                 >
                     <ChevronLeft className="mr-0 h-4 w-4 sm:mr-1" />
                     <span className="hidden sm:inline">{t('agenda.anterior')}</span>
@@ -104,7 +103,7 @@ export function AgendaNavegacao({
                         size="sm"
                         onClick={handleReset}
                         disabled={isLoading}
-                        className="h-8 px-2.5 text-xs font-medium transition-transform active:scale-95"
+                        className="h-10 px-2.5 text-xs font-medium transition-transform active:scale-95"
                     >
                         {t('agenda.hoje')}
                     </Button>
@@ -116,7 +115,7 @@ export function AgendaNavegacao({
                     onClick={handleProxima}
                     disabled={desabProxima}
                     aria-label={t('agenda.proxima_semana_label')}
-                    className="h-8 px-2 text-xs transition-transform active:scale-95 sm:hidden"
+                    className="h-10 px-2 text-xs transition-transform active:scale-95 sm:hidden"
                 >
                     <span className="hidden sm:inline">{t('agenda.proxima')}</span>
                     <ChevronRight className="ml-0 h-4 w-4 sm:ml-1" />
@@ -136,7 +135,7 @@ export function AgendaNavegacao({
                     onClick={handleProxima}
                     disabled={desabProxima}
                     aria-label={t('agenda.proxima_semana_label')}
-                    className="h-8 px-3 text-xs transition-transform active:scale-95"
+                    className="h-10 px-3 text-xs transition-transform active:scale-95"
                 >
                     <span>{t('agenda.proxima')}</span>
                     <ChevronRight className="ml-1 h-4 w-4" />

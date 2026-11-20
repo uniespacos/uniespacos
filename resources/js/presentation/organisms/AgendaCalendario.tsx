@@ -14,6 +14,8 @@ interface AgendaCalendarioProps {
     agendas: Agenda[];
     isSlotSelecionado: (slot: SlotCalendario) => boolean;
     alternarSelecaoSlot: (slot: SlotCalendario) => void;
+    alternarSelecaoIntervalo?: (slot: SlotCalendario, candidatos: SlotCalendario[]) => void;
+    definirSelecaoDeVarios?: (slots: SlotCalendario[], selecionar: boolean) => void;
     slotsDaReserva?: SlotCalendario[];
     isEditMode?: boolean;
 }
@@ -23,6 +25,8 @@ export default function AgendaCalendario({
     agendas,
     isSlotSelecionado,
     alternarSelecaoSlot,
+    alternarSelecaoIntervalo,
+    definirSelecaoDeVarios,
     slotsDaReserva,
     isEditMode,
 }: AgendaCalendarioProps) {
@@ -50,6 +54,7 @@ export default function AgendaCalendario({
                     agendas={agendas}
                     isSlotSelecionado={isSlotSelecionado}
                     alternarSelecaoSlot={alternarSelecaoSlot}
+                    definirSelecaoDeVarios={definirSelecaoDeVarios}
                     slotsDaReserva={slotsDaReserva}
                 />
             </Card>
@@ -68,6 +73,8 @@ export default function AgendaCalendario({
                                 diasSemana={diasSemana}
                                 isSlotSelecionado={isSlotSelecionado}
                                 alternarSelecaoSlot={alternarSelecaoSlot}
+                                alternarSelecaoIntervalo={alternarSelecaoIntervalo}
+                                definirSelecaoDeVarios={definirSelecaoDeVarios}
                                 agenda={agenda}
                                 slotsSolicitados={slotsDaReserva}
                             />

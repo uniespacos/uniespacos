@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property bool $can_update Set dynamically in ReservaService based on policy check.
  * @property string|null $existing_justification Set dynamically in ReservaService with first non-null justificativa.
+ * @property int|null $publico_estimado
+ * @property string|null $categoria
+ * @property Carbon|null $termo_aceito_em
  */
 class Reserva extends Model
 {
@@ -35,6 +38,16 @@ class Reserva extends Model
         'user_id',
         'validation_status',
         'conflict_cache',
+        'publico_estimado',
+        'categoria',
+        'termo_aceito_em',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected $hidden = [
+        'termo_aceito_em',
     ];
 
     /**
@@ -42,6 +55,8 @@ class Reserva extends Model
      */
     protected $casts = [
         'conflict_cache' => 'array',
+        'publico_estimado' => 'integer',
+        'termo_aceito_em' => 'datetime',
     ];
 
     /**

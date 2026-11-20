@@ -1,30 +1,44 @@
+import { useTranslation } from '@/i18n';
 import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel-registry';
-import { SlotReservaItem } from '@/types/reserva-stepper';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
+export interface SlotConflitavel {
+    id?: string;
+    data: string | Date;
+    horario_inicio: string;
+    horario_fim?: string;
+}
+
 export interface ReservaConflictAlertProps {
     espacoId: number;
-    selectedSlots: (SlotReservaItem | { data: string | Date; horario_inicio: string; horario_fim?: string })[];
+    selectedSlots: readonly SlotConflitavel[];
     conflictingDates?: string[];
-    onConflictDetected?: (hasConflict: boolean) => void;
+    onRealtimeSlotsConflict?: (slotIds: string[]) => void;
     className?: string;
+}
+
+interface ConflitoEmTempoReal {
+    data: string;
+    hora: string;
 }
 
 export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
     espacoId,
     selectedSlots,
     conflictingDates = [],
-    onConflictDetected,
+    onRealtimeSlotsConflict,
     className,
 }) => {
-    const [realtimeConflictMessage, setRealtimeConflictMessage] = useState<string | null>(null);
+    const { t, formatDate } = useTranslation();
+    const [conflitoTempoReal, setConflitoTempoReal] = useState<ConflitoEmTempoReal | null>(null);
     const selectedSlotsRef = useRef(selectedSlots);
-    const onConflictDetectedRef = useRef(onConflictDetected);
+    const onRealtimeSlotsConflictRef = useRef(onRealtimeSlotsConflict);
 
     selectedSlotsRef.current = selectedSlots;
-    onConflictDetectedRef.current = onConflictDetected;
+    onRealtimeSlotsConflictRef.current = onRealtimeSlotsConflict;
 
     const hasSelectedSlots = selectedSlots.length > 0;
 
@@ -36,19 +50,17 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
         if (!channel) return;
 
         const handleHorarioOcupado = (event: { data: string; horario_inicio: string }) => {
-            const hasMatch = selectedSlotsRef.current.some((slot) => {
+            const horaEvento = event.horario_inicio.slice(0, 5);
+            const correspondentes = selectedSlotsRef.current.filter((slot) => {
                 const slotDataStr = slot.data instanceof Date ? format(slot.data, 'yyyy-MM-dd') : slot.data.slice(0, 10);
-                const slotHoraStr = slot.horario_inicio.slice(0, 5);
-                const eventHoraStr = event.horario_inicio.slice(0, 5);
 
-                return slotDataStr === event.data && slotHoraStr === eventHoraStr;
+                return slotDataStr === event.data && slot.horario_inicio.slice(0, 5) === horaEvento;
             });
 
-            if (hasMatch) {
-                const msg = `O horário das ${event.horario_inicio.slice(0, 5)} em ${event.data} acabou de ser reservado por outro usuário.`;
-                setRealtimeConflictMessage(msg);
-                onConflictDetectedRef.current?.(true);
-            }
+            if (correspondentes.length === 0) return;
+
+            setConflitoTempoReal({ data: event.data, hora: horaEvento });
+            onRealtimeSlotsConflictRef.current?.(correspondentes.flatMap((slot) => (slot.id ? [slot.id] : [])));
         };
 
         channel.listen('.HorarioOcupadoEvent', handleHorarioOcupado);
@@ -60,42 +72,39 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
     }, [espacoId, hasSelectedSlots]);
 
     const hasStaticConflict = conflictingDates.length > 0;
-    const hasAnyConflict = Boolean(realtimeConflictMessage) || hasStaticConflict;
 
-    useEffect(() => {
-        if (hasAnyConflict) {
-            onConflictDetected?.(true);
-        }
-    }, [hasAnyConflict, onConflictDetected]);
-
-    if (!hasAnyConflict) return null;
+    if (!conflitoTempoReal && !hasStaticConflict) return null;
 
     return (
         <div
             role="alert"
             aria-live="polite"
-            className={`bg-destructive/10 border-destructive-accent/30 text-destructive-accent animate-in fade-in slide-in-from-top-1 space-y-2 rounded-xl border p-3.5 text-xs duration-200 ${className ?? ''}`}
+            className={cn(
+                'bg-destructive/10 border-destructive-accent/30 text-destructive-accent animate-in fade-in slide-in-from-top-1 space-y-3 rounded-xl border p-3.5 text-sm duration-200',
+                className,
+            )}
         >
-            {realtimeConflictMessage && (
+            {conflitoTempoReal && (
                 <div className="flex items-start gap-2.5">
-                    <AlertCircle className="text-destructive-accent mt-0.5 h-4 w-4 shrink-0" />
-                    <div className="flex-1">
-                        <span className="font-semibold">Conflito em Tempo Real: </span>
-                        <span>{realtimeConflictMessage}</span>
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <div className="flex-1 space-y-0.5">
+                        <p className="font-semibold">{t('reservas.stepper.conflict.realtime_title')}</p>
+                        <p>
+                            {t('reservas.stepper.conflict.realtime_message', {
+                                hora: conflitoTempoReal.hora,
+                                data: formatDate(conflitoTempoReal.data, 'dd/MM/yyyy'),
+                            })}
+                        </p>
                     </div>
                 </div>
             )}
 
             {hasStaticConflict && (
                 <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="text-destructive-accent mt-0.5 h-4 w-4 shrink-0" />
-                    <div className="flex-1">
-                        <span className="font-semibold">Conflito de Horários Existente: </span>
-                        <span>
-                            Já constam reservas deferidas para as datas:{' '}
-                            <strong className="underline underline-offset-2">{conflictingDates.join(', ')}</strong>. Ajuste os horários para prevenir
-                            indeferimentos automáticos.
-                        </span>
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <div className="flex-1 space-y-0.5">
+                        <p className="font-semibold">{t('reservas.stepper.conflict.static_title')}</p>
+                        <p>{t('reservas.stepper.conflict.static_message', { datas: conflictingDates.join(', ') })}</p>
                     </div>
                 </div>
             )}

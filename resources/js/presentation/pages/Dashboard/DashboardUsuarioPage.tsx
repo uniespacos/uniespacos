@@ -8,29 +8,31 @@ import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
 import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, Reserva, User, type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowRight, CalendarPlus, ListChecks, Sparkles, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Painel Inicial',
-        href: '/dashboard',
-    },
-];
+interface EspacoRecente {
+    id: number;
+    nome: string;
+    andar?: { modulo?: { nome: string } };
+}
 
 interface DashboardUsuarioProps {
     user?: User;
     espacosFavoritos?: Espaco[];
     reservas?: Reserva[];
+    espacosRecentes?: EspacoRecente[];
 }
 
 export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(() => [{ title: t('dashboard.title'), href: '/dashboard' }], [t]);
     const pageProps = usePage<{
         user: User;
         espacosFavoritos?: Espaco[];
         reservas?: Reserva[];
+        espacosRecentes?: EspacoRecente[];
     }>().props;
 
     const user = props.user ?? pageProps.user;
@@ -38,6 +40,7 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
     const espacosFavoritos = useMemo(() => rawFavoritos ?? [], [rawFavoritos]);
 
     const reservas = props.reservas ?? pageProps.reservas ?? [];
+    const espacosRecentes = props.espacosRecentes ?? pageProps.espacosRecentes ?? [];
 
     const [searchTermFavoritos, setSearchTermFavoritos] = useState('');
 
@@ -48,12 +51,6 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
     }, [espacosFavoritos, searchTermFavoritos]);
 
     const atalhosSecundarios = [
-        {
-            label: t('dashboard.actions.consultar_espacos'),
-            descricao: t('espacos.consultar_espacos_desc'),
-            Icone: CalendarPlus,
-            href: route('espacos.index'),
-        },
         {
             label: t('dashboard.actions.meus_favoritos'),
             descricao: t('dashboard.actions.meus_favoritos_desc'),
@@ -107,38 +104,55 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {atalhosSecundarios.map(({ label, descricao, Icone, href }) => (
-                        <Card
-                            key={href}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                                router.get(href);
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    router.get(href);
-                                }
-                            }}
-                            className="border-border/70 group hover:border-primary/50 min-w-0 cursor-pointer transition-all duration-200 hover:shadow-sm"
-                        >
-                            <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
-                                <div className="flex min-w-0 flex-1 items-center gap-3">
-                                    <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-3 transition-colors">
-                                        <Icone className="h-5 w-5" />
+                        <Link key={href} href={href} className="group block min-w-0">
+                            <Card className="border-border/70 group-hover:border-primary/50 h-full min-w-0 transition-all duration-200 group-hover:shadow-sm">
+                                <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
+                                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-3 transition-colors">
+                                            <Icone className="h-5 w-5" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
+                                            <p className="text-muted-foreground truncate text-xs">{descricao}</p>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
-                                        <p className="text-muted-foreground truncate text-xs">{descricao}</p>
-                                    </div>
-                                </div>
-                                <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-                            </CardContent>
-                        </Card>
+                                    <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                                </CardContent>
+                            </Card>
+                        </Link>
                     ))}
                 </div>
+
+                {espacosRecentes.length > 0 && (
+                    <section aria-labelledby="dashboard-reservar-de-novo" className="space-y-3">
+                        <div>
+                            <h2 id="dashboard-reservar-de-novo" className="text-foreground text-base font-semibold">
+                                {t('dashboard.actions.reservar_de_novo')}
+                            </h2>
+                            <p className="text-muted-foreground text-sm">{t('dashboard.actions.reservar_de_novo_desc')}</p>
+                        </div>
+                        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            {espacosRecentes.map((espaco) => (
+                                <li key={espaco.id} className="min-w-0">
+                                    <Link
+                                        href={route('espacos.show', espaco.id)}
+                                        className="border-border/70 bg-card hover:border-primary/50 group flex items-center justify-between gap-3 rounded-xl border p-4 transition-all duration-200 hover:shadow-sm"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground truncate text-sm font-semibold">{espaco.nome}</p>
+                                            {espaco.andar?.modulo?.nome && (
+                                                <p className="text-muted-foreground truncate text-xs">{espaco.andar.modulo.nome}</p>
+                                            )}
+                                        </div>
+                                        <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 <Tabs defaultValue="reservas" className="w-full space-y-4">
                     <TabsList className="grid w-full grid-cols-2 sm:w-[440px]">

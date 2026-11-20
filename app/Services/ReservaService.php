@@ -20,6 +20,7 @@ use App\Repositories\AgendaRepositoryInterface;
 use App\Repositories\ReservaRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -152,7 +153,9 @@ class ReservaService
      */
     public function create(array $data, User $user): void
     {
-        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, horarios_solicitados: array<int, array<string, mixed>>} $data */
+        $data = $this->registrarAceiteDoTermo($data);
+
+        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string, horarios_solicitados: array<int, array<string, mixed>>} $data */
         ProcessarCriacaoReserva::dispatch($data, $user);
     }
 
@@ -163,8 +166,28 @@ class ReservaService
      */
     public function update(Reserva $reserva, array $data, User $user): void
     {
-        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface} $data */
+        $data = $this->registrarAceiteDoTermo($data);
+
+        /** @var array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, edit_scope: string, horarios_solicitados: array<int, array<string, mixed>>, edited_week_date?: string|\DateTimeInterface, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string} $data */
         UpdateReservaJob::dispatch($reserva, $data, $user);
+    }
+
+    /**
+     * Converte o aceite do termo de responsabilidade em `termo_aceito_em`, com o
+     * instante do request (o job só roda depois, em fila).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function registrarAceiteDoTermo(array $data): array
+    {
+        $aceito = (bool) Arr::pull($data, 'termo_responsabilidade', false);
+
+        if ($aceito) {
+            $data['termo_aceito_em'] = now()->toIso8601String();
+        }
+
+        return $data;
     }
 
     /**

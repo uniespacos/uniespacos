@@ -1,72 +1,106 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { StepDadosJustificativa } from './StepDadosJustificativa';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { StepDadosJustificativa } from './StepDadosJustificativa';
 
-describe('StepDadosJustificativa', () => {
-    const mockFormData: ReservaFormData = {
+function criarFormData(overrides: Partial<ReservaFormData> = {}): ReservaFormData {
+    return {
         titulo: '',
         descricao: '',
-        publico_estimado: '',
-        categoria: '',
         recorrencia: 'unica',
-        data_inicial: new Date('2026-08-25'),
-        data_final: new Date('2026-08-31'),
         horarios_solicitados: [],
-        termo_responsabilidade: false,
+        ...overrides,
     };
+}
 
-    it('renders input fields for title and description', () => {
-        render(<StepDadosJustificativa formData={mockFormData} setFormData={jest.fn()} />);
+describe('StepDadosJustificativa', () => {
+    it('trata a justificativa como opcional e o título como obrigatório', () => {
+        render(<StepDadosJustificativa formData={criarFormData()} setFormData={jest.fn()} />);
 
-        expect(screen.getByLabelText(/Título da Reserva \/ Evento/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Justificativa e Detalhamento das Atividades/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Público Estimado/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Categoria \/ Tipo/i)).toBeInTheDocument();
+        expect(screen.getByLabelText('Detalhes para o gestor (opcional)')).toBeInTheDocument();
+        expect(screen.getByLabelText(/Título da reserva ou evento/)).toHaveAttribute('aria-required', 'true');
     });
 
-    it('propagates changes through setFormData', () => {
-        const handleSetFormData = jest.fn();
-        render(<StepDadosJustificativa formData={mockFormData} setFormData={handleSetFormData} />);
+    it('limita a justificativa a 2000 caracteres e mostra o contador', () => {
+        render(<StepDadosJustificativa formData={criarFormData({ descricao: 'abc' })} setFormData={jest.fn()} />);
 
-        const titleInput = screen.getByPlaceholderText(/Ex: Aula Inaugural de Computação/i);
-        fireEvent.change(titleInput, { target: { value: 'Palestra de IA' } });
-        expect(handleSetFormData).toHaveBeenCalledWith('titulo', 'Palestra de IA');
-
-        const descTextarea = screen.getByPlaceholderText(/Descreva o objetivo institucional do evento/i);
-        fireEvent.change(descTextarea, { target: { value: 'Apresentação sobre agentes autônomos' } });
-        expect(handleSetFormData).toHaveBeenCalledWith('descricao', 'Apresentação sobre agentes autônomos');
+        expect(screen.getByLabelText('Detalhes para o gestor (opcional)')).toHaveAttribute('maxLength', '2000');
+        expect(screen.getByText('3/2000')).toBeInTheDocument();
     });
 
-    it('displays validation errors when passed', () => {
+    it('propaga a digitação do título e da justificativa', () => {
+        const setFormData = jest.fn();
+
+        render(<StepDadosJustificativa formData={criarFormData()} setFormData={setFormData} />);
+
+        fireEvent.change(screen.getByLabelText(/Título da reserva ou evento/), { target: { value: 'Defesa' } });
+        expect(setFormData).toHaveBeenCalledWith('titulo', 'Defesa');
+
+        fireEvent.change(screen.getByLabelText('Detalhes para o gestor (opcional)'), { target: { value: 'Projetor' } });
+        expect(setFormData).toHaveBeenCalledWith('descricao', 'Projetor');
+    });
+
+    it('propaga o valor bruto digitado no público estimado', () => {
+        const setFormData = jest.fn();
+
+        render(<StepDadosJustificativa formData={criarFormData()} setFormData={setFormData} />);
+
+        fireEvent.change(screen.getByLabelText('Público estimado (opcional)'), { target: { value: '40' } });
+        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', '40');
+
+        fireEvent.change(screen.getByLabelText('Público estimado (opcional)'), { target: { value: '1.5' } });
+        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', '1.5');
+    });
+
+    it('limpar o público estimado envia valor vazio', () => {
+        const setFormData = jest.fn();
+
+        render(<StepDadosJustificativa formData={criarFormData({ publico_estimado: 40 })} setFormData={setFormData} />);
+
+        fireEvent.change(screen.getByLabelText('Público estimado (opcional)'), { target: { value: '' } });
+
+        expect(setFormData).toHaveBeenLastCalledWith('publico_estimado', '');
+    });
+
+    it('mostra aviso não bloqueante quando o público passa da capacidade', () => {
+        render(<StepDadosJustificativa formData={criarFormData({ publico_estimado: 45 })} setFormData={jest.fn()} capacidade={30} />);
+
+        expect(screen.getByRole('status')).toHaveTextContent('Acima da capacidade de 30 pessoas deste espaço.');
+        expect(screen.getByLabelText('Público estimado (opcional)')).toBeEnabled();
+    });
+
+    it('não mostra aviso quando o público cabe na capacidade', () => {
+        render(<StepDadosJustificativa formData={criarFormData({ publico_estimado: 30 })} setFormData={jest.fn()} capacidade={30} />);
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('oferece sugestões de categoria por datalist', () => {
+        const { container } = render(<StepDadosJustificativa formData={criarFormData()} setFormData={jest.fn()} />);
+
+        const sugestoes = Array.from(container.querySelectorAll('datalist option')).map((option) => option.getAttribute('value'));
+
+        expect(sugestoes).toEqual(['Aula', 'Palestra', 'Reunião', 'Defesa', 'Evento', 'Extensão']);
+        expect(screen.getByLabelText('Categoria (opcional)')).toHaveAttribute('list', container.querySelector('datalist')?.id);
+    });
+
+    it('exibe os erros inline recebidos', () => {
         render(
             <StepDadosJustificativa
-                formData={mockFormData}
+                formData={criarFormData()}
                 setFormData={jest.fn()}
                 errors={{
-                    titulo: 'O título é obrigatório.',
-                    descricao: 'A descrição é obrigatória.',
+                    titulo: 'O título da reserva é obrigatório.',
+                    descricao: 'A descrição não pode exceder 2000 caracteres.',
                     publico_estimado: 'Informe um número inteiro entre 1 e 5000.',
                 }}
             />,
         );
 
-        expect(screen.getByText('O título é obrigatório.')).toBeInTheDocument();
-        expect(screen.getByText('A descrição é obrigatória.')).toBeInTheDocument();
+        expect(screen.getByText('O título da reserva é obrigatório.')).toBeInTheDocument();
+        expect(screen.getByText('A descrição não pode exceder 2000 caracteres.')).toBeInTheDocument();
         expect(screen.getByText('Informe um número inteiro entre 1 e 5000.')).toBeInTheDocument();
-        expect(screen.getByLabelText(/Público Estimado/i)).toHaveAttribute('aria-invalid', 'true');
-    });
-
-    it('exibe limite de 2000 caracteres na descricao e propaga valor bruto de publico_estimado', () => {
-        const handleSetFormData = jest.fn();
-        render(<StepDadosJustificativa formData={mockFormData} setFormData={handleSetFormData} />);
-
-        const textarea = screen.getByLabelText(/Justificativa e Detalhamento das Atividades/i);
-        expect(textarea).toHaveAttribute('maxLength', '2000');
-        expect(screen.getByText('0/2000')).toBeInTheDocument();
-
-        const publicoInput = screen.getByLabelText(/Público Estimado/i);
-        fireEvent.change(publicoInput, { target: { value: '1.5' } });
-        expect(handleSetFormData).toHaveBeenCalledWith('publico_estimado', '1.5');
+        expect(screen.getByLabelText(/Título da reserva ou evento/)).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Detalhes para o gestor (opcional)')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Público estimado (opcional)')).toHaveAttribute('aria-invalid', 'true');
     });
 });

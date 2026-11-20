@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useReservaStepper } from '@/hooks/useReservaStepper';
 import { useTranslation } from '@/i18n';
 import { assertNever } from '@/lib/utils/exhaustive';
+import { ReservaRecorrenciaField } from '@/presentation/molecules/ReservaRecorrenciaField';
 import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { StepDadosJustificativa } from '@/presentation/molecules/StepDadosJustificativa';
 import { StepHorariosRecorrencia } from '@/presentation/molecules/StepHorariosRecorrencia';
@@ -9,8 +10,11 @@ import { StepperProgress } from '@/presentation/molecules/StepperProgress';
 import { StepRevisaoConfirmacao } from '@/presentation/molecules/StepRevisaoConfirmacao';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Send, X } from 'lucide-react';
 import React, { SyntheticEvent, useCallback, useEffect } from 'react';
+
+declare function route(name: string, params?: unknown): string;
 
 export interface ReservaStepperModalProps {
     isOpen: boolean;
@@ -24,6 +28,7 @@ export interface ReservaStepperModalProps {
     formData: ReservaFormData;
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
     setSlotsSelecao?: (slots: SlotCalendario[]) => void;
+    sucessoCriacao?: boolean;
 }
 
 export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
@@ -38,6 +43,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
     formData,
     setFormData,
     setSlotsSelecao,
+    sucessoCriacao = false,
 }) => {
     const { t } = useTranslation();
     const {
@@ -46,18 +52,24 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         isFirstStep,
         isLastStep,
         canAdvance,
+        canSubmit,
+        bloqueios,
         stepErrors,
         conflictingDates,
+        conflictingSlotIds,
+        hasAnyConflict,
         goToStep,
         nextStep,
         prevStep,
         resetStepper,
-        onConflictDetected,
+        removerSlotsEmConflito,
+        onRealtimeSlotsConflict,
     } = useReservaStepper({
         espaco,
         formData,
         slotsSelecao,
         isEditMode,
+        setSlotsSelecao,
     });
 
     useEffect(() => {
@@ -69,112 +81,177 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
     const handleFormSubmit = useCallback(
         (e: SyntheticEvent) => {
             e.preventDefault();
-            if (isLastStep) {
-                onSubmit(e);
-            } else {
+
+            if (!isLastStep) {
                 nextStep();
+                return;
+            }
+
+            if (canSubmit) {
+                onSubmit(e);
             }
         },
-        [isLastStep, onSubmit, nextStep],
+        [isLastStep, canSubmit, nextStep, onSubmit],
     );
+
+    const modalTitle = isEditMode
+        ? t('reservas.stepper.title_edit', { espaco: espaco.nome })
+        : t('reservas.stepper.title_create', { espaco: espaco.nome });
+
+    const footerButtonFocusClasses =
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+    if (sucessoCriacao) {
+        return (
+            <ResponsiveModal
+                open={isOpen}
+                onOpenChange={onOpenChange}
+                size="md"
+                title={t('reservas.stepper.success_title')}
+                description={t('reservas.stepper.success_body')}
+            >
+                <div className="flex flex-col items-center gap-5 py-4 text-center">
+                    <span className="bg-success-subtle text-success-accent flex h-14 w-14 items-center justify-center rounded-full">
+                        <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
+                    </span>
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                router.get(route('reservas.index'));
+                            }}
+                            className={`h-10 px-4 text-sm ${footerButtonFocusClasses}`}
+                        >
+                            {t('reservas.stepper.success_my_reservations')}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                onOpenChange(false);
+                            }}
+                            className={`h-10 px-4 text-sm ${footerButtonFocusClasses}`}
+                        >
+                            {t('reservas.stepper.success_new_request')}
+                        </Button>
+                    </div>
+                </div>
+            </ResponsiveModal>
+        );
+    }
 
     const renderStepContent = () => {
         switch (currentStepId) {
-            case 'horarios_recorrencia':
+            case 'detalhes':
                 return (
-                    <StepHorariosRecorrencia
-                        espaco={espaco}
-                        formData={formData}
-                        setFormData={setFormData}
-                        slotsSelecao={slotsSelecao}
-                        hoje={hoje}
-                        isEditMode={isEditMode}
-                        conflictingDates={conflictingDates}
-                        onConflictDetected={onConflictDetected}
-                        setSlotsSelecao={setSlotsSelecao}
-                    />
+                    <div className="space-y-6">
+                        {(stepErrors.slots ?? stepErrors.data_inicial) && (
+                            <p role="alert" className="text-destructive-accent text-sm font-medium">
+                                {stepErrors.slots ?? stepErrors.data_inicial}
+                            </p>
+                        )}
+                        <StepHorariosRecorrencia formData={formData} setFormData={setFormData} slotsSelecao={slotsSelecao} isEditMode={isEditMode} />
+                        <StepDadosJustificativa
+                            formData={formData}
+                            setFormData={setFormData}
+                            errors={stepErrors}
+                            capacidade={espaco.capacidade_pessoas}
+                        />
+                        <ReservaRecorrenciaField
+                            formData={formData}
+                            setFormData={setFormData}
+                            slotsSelecao={slotsSelecao}
+                            hoje={hoje}
+                            erro={stepErrors.data_final}
+                        />
+                    </div>
                 );
-            case 'dados_justificativa':
-                return <StepDadosJustificativa formData={formData} setFormData={setFormData} errors={stepErrors} />;
-            case 'revisao_confirmacao':
-                return <StepRevisaoConfirmacao espaco={espaco} formData={formData} setFormData={setFormData} isEditMode={isEditMode} />;
+            case 'revisao':
+                return (
+                    <div className="space-y-5">
+                        {bloqueios.detalhes && (
+                            <p role="alert" className="text-destructive-accent text-sm font-medium">
+                                {t('reservas.stepper.errors.details_incomplete')}
+                            </p>
+                        )}
+                        <StepRevisaoConfirmacao
+                            espaco={espaco}
+                            formData={formData}
+                            setFormData={setFormData}
+                            isEditMode={isEditMode}
+                            slotsSelecao={slotsSelecao}
+                            conflictingDates={conflictingDates}
+                            temConflito={hasAnyConflict}
+                            quantidadeEmConflito={conflictingSlotIds.length}
+                            onRemoverConflitos={setSlotsSelecao ? removerSlotsEmConflito : undefined}
+                            onRealtimeSlotsConflict={onRealtimeSlotsConflict}
+                        />
+                    </div>
+                );
             default:
                 return assertNever(currentStepId);
         }
     };
 
-    const footerButtonFocusClasses =
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
-
     const footerContent = (
-        <div className="border-border flex w-full items-center justify-between gap-2 border-t pt-2">
+        <div className="border-border flex w-full items-center justify-between gap-2 border-t pt-3">
             {isFirstStep ? (
                 <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() => {
                         onOpenChange(false);
                     }}
-                    className={`h-9 px-3 text-xs ${footerButtonFocusClasses}`}
+                    className={`h-10 gap-1.5 px-4 text-sm ${footerButtonFocusClasses}`}
                 >
-                    <X className="mr-1 h-3.5 w-3.5" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                     {t('common.actions.cancel')}
                 </Button>
             ) : (
                 <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={prevStep}
                     disabled={isSubmitting}
-                    className={`h-9 gap-1.5 px-3 text-xs ${footerButtonFocusClasses}`}
+                    className={`h-10 gap-1.5 px-4 text-sm ${footerButtonFocusClasses}`}
                 >
-                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                     {t('common.actions.back')}
                 </Button>
             )}
 
-            <div className="flex items-center gap-2">
-                {!isLastStep ? (
-                    <Button
-                        type="button"
-                        size="sm"
-                        onClick={nextStep}
-                        disabled={!canAdvance}
-                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
-                    >
-                        <span>{t('common.actions.next')}</span>
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                ) : (
-                    <Button
-                        type="submit"
-                        size="sm"
-                        disabled={!canAdvance || isSubmitting}
-                        onClick={onSubmit}
-                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                <span>{isEditMode ? t('reservas.stepper.saving') : t('reservas.stepper.submitting')}</span>
-                            </>
-                        ) : (
-                            <>
-                                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                                <span>{isEditMode ? t('reservas.stepper.save_changes') : t('reservas.stepper.submit')}</span>
-                            </>
-                        )}
-                    </Button>
-                )}
-            </div>
+            {isLastStep ? (
+                <Button
+                    type="button"
+                    onClick={handleFormSubmit}
+                    disabled={!canSubmit || isSubmitting}
+                    className={`h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm ${footerButtonFocusClasses}`}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                            <span>{isEditMode ? t('common.actions.saving') : t('common.actions.submitting')}</span>
+                        </>
+                    ) : (
+                        <>
+                            <Send className="h-4 w-4" aria-hidden="true" />
+                            <span>{isEditMode ? t('reservas.stepper.save_changes') : t('reservas.stepper.submit')}</span>
+                        </>
+                    )}
+                </Button>
+            ) : (
+                <Button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!canAdvance}
+                    className={`h-10 gap-1.5 px-5 text-sm font-semibold shadow-sm ${footerButtonFocusClasses}`}
+                >
+                    <span>{t('common.actions.next')}</span>
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+            )}
         </div>
     );
-
-    const modalTitle = isEditMode
-        ? t('reservas.stepper.title_edit', { espaco: espaco.nome })
-        : t('reservas.stepper.title_create', { espaco: espaco.nome });
 
     return (
         <ResponsiveModal
@@ -182,14 +259,12 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
             onOpenChange={onOpenChange}
             size="2xl"
             title={modalTitle}
-            description={t('reservas.stepper.step1_subtitle')}
+            description={currentStepId === 'detalhes' ? t('reservas.stepper.subtitle_detalhes') : t('reservas.stepper.subtitle_revisao')}
             footer={footerContent}
             className="sm:max-w-2xl"
         >
             <form onSubmit={handleFormSubmit} className="space-y-5">
-                <div className="border-border border-b pb-3">
-                    <StepperProgress steps={steps} currentStepId={currentStepId} onStepClick={goToStep} />
-                </div>
+                <StepperProgress steps={steps} currentStepId={currentStepId} onStepClick={goToStep} />
 
                 <div className="max-h-[58dvh] min-h-[280px] overflow-y-auto px-0.5 py-1">{renderStepContent()}</div>
             </form>

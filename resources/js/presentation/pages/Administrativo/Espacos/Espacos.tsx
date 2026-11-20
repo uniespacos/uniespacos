@@ -20,7 +20,7 @@ import { useMemo, useState } from 'react';
 
 export default function Espacos() {
     const { t } = useTranslation();
-    const { unidades, modulos, andares, espacos, users, filters, capacidadeEspacos } = usePage<{
+    const { unidades, modulos, andares, espacos, users, filters } = usePage<{
         espacos: {
             data: Espaco[];
             links: { url: string | null; label: string; active: boolean }[];
@@ -37,7 +37,6 @@ export default function Espacos() {
             andar?: string;
             capacidade?: string;
         };
-        capacidadeEspacos: number[];
     }>().props;
 
     const [espacoParaGerenciar, setEspacoParaGerenciar] = useState<Espaco | null>(null);
@@ -191,7 +190,6 @@ export default function Espacos() {
                     modulos={modulos}
                     andares={andares}
                     filters={filters}
-                    capacidadeEspacos={capacidadeEspacos}
                 />
 
                 <DataTable

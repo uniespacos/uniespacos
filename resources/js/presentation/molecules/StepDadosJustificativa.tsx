@@ -1,108 +1,142 @@
-import React from 'react';
-import { Type, FileText, Users, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ReservaFormData } from '@/types/reserva-stepper';
+import { useTranslation } from '@/i18n';
+import { PUBLICO_ESTIMADO_MAX, PUBLICO_ESTIMADO_MIN, publicoEstimadoAcimaDaCapacidade } from '@/lib/utils/publico-estimado';
+import { ErrosEtapa, ReservaFormData } from '@/types/reserva-stepper';
+import React, { useId } from 'react';
 
 export interface StepDadosJustificativaProps {
     formData: ReservaFormData;
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
-    errors?: Record<string, string>;
+    errors?: ErrosEtapa;
+    capacidade?: number;
 }
 
-export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ formData, setFormData, errors = {} }) => {
+const TITULO_MAX = 255;
+const DESCRICAO_MAX = 2000;
+const CATEGORIA_MAX = 100;
+
+export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ formData, setFormData, errors = {}, capacidade }) => {
+    const { t } = useTranslation();
+    const tituloId = useId();
+    const descricaoId = useId();
+    const publicoId = useId();
+    const categoriaId = useId();
+    const sugestoesId = useId();
+
+    const sugestoesCategoria = [
+        t('reservas.stepper.category_suggestions.aula'),
+        t('reservas.stepper.category_suggestions.palestra'),
+        t('reservas.stepper.category_suggestions.reuniao'),
+        t('reservas.stepper.category_suggestions.defesa'),
+        t('reservas.stepper.category_suggestions.evento'),
+        t('reservas.stepper.category_suggestions.extensao'),
+    ];
+
+    const acimaDaCapacidade = publicoEstimadoAcimaDaCapacidade(formData.publico_estimado, capacidade);
+
     return (
-        <div className="space-y-4">
-            {/* Título da Reserva / Evento */}
+        <div className="space-y-5">
             <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                    <Label htmlFor="titulo" className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                        <Type className="text-primary h-3.5 w-3.5" />
-                        Título da Reserva / Evento <span className="text-destructive-accent">*</span>
+                <div className="flex items-baseline justify-between gap-2">
+                    <Label htmlFor={tituloId} className="text-foreground text-sm font-semibold">
+                        {t('reservas.stepper.title_label')}
+                        <span className="text-destructive-accent" aria-hidden="true">
+                            {' *'}
+                        </span>
                     </Label>
-                    <span className="text-muted-foreground text-[11px]">{formData.titulo.length}/255</span>
+                    <span className="text-muted-foreground text-xs">
+                        {t('reservas.stepper.char_counter', { count: formData.titulo.length, max: TITULO_MAX })}
+                    </span>
                 </div>
                 <Input
-                    id="titulo"
+                    id={tituloId}
                     value={formData.titulo}
-                    maxLength={255}
+                    maxLength={TITULO_MAX}
+                    aria-required="true"
                     onChange={(e) => {
                         setFormData('titulo', e.target.value);
                     }}
-                    placeholder="Ex: Aula Inaugural de Computação, Reunião de Colegiado..."
-                    className="bg-card h-9 text-xs sm:text-sm"
+                    placeholder={t('reservas.stepper.title_placeholder')}
+                    className="bg-card h-10 text-sm"
                     aria-invalid={Boolean(errors.titulo)}
                 />
-                {errors.titulo && <p className="text-destructive-accent text-[11px] font-medium">{errors.titulo}</p>}
+                {errors.titulo && <p className="text-destructive-accent text-sm font-medium">{errors.titulo}</p>}
             </div>
 
-            {/* Descrição e Justificativa */}
             <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                    <Label htmlFor="descricao" className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                        <FileText className="text-primary h-3.5 w-3.5" />
-                        Justificativa e Detalhamento das Atividades <span className="text-destructive-accent">*</span>
+                <div className="flex items-baseline justify-between gap-2">
+                    <Label htmlFor={descricaoId} className="text-foreground text-sm font-semibold">
+                        {t('reservas.stepper.description_label')}
                     </Label>
-                    <span className="text-muted-foreground text-[11px]">{formData.descricao.length}/2000</span>
+                    <span className="text-muted-foreground text-xs">
+                        {t('reservas.stepper.char_counter', { count: formData.descricao.length, max: DESCRICAO_MAX })}
+                    </span>
                 </div>
                 <Textarea
-                    id="descricao"
+                    id={descricaoId}
                     value={formData.descricao}
-                    maxLength={2000}
-                    rows={4}
+                    maxLength={DESCRICAO_MAX}
+                    rows={3}
                     onChange={(e) => {
                         setFormData('descricao', e.target.value);
                     }}
-                    placeholder="Descreva o objetivo institucional do evento, equipamentos necessários ou justificativa da solicitação para apreciação dos gestores..."
-                    className="bg-card resize-none text-xs sm:text-sm"
+                    placeholder={t('reservas.stepper.description_placeholder')}
+                    className="bg-card min-h-24 resize-y text-sm"
                     aria-invalid={Boolean(errors.descricao)}
                 />
-                {errors.descricao && <p className="text-destructive-accent text-[11px] font-medium">{errors.descricao}</p>}
+                {errors.descricao && <p className="text-destructive-accent text-sm font-medium">{errors.descricao}</p>}
             </div>
 
-            {/* Campos Complementares em Grid */}
-            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-                {/* Público Estimado */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                    <Label htmlFor="publico_estimado" className="text-foreground flex items-center gap-1.5 text-xs font-medium">
-                        <Users className="text-muted-foreground h-3.5 w-3.5" />
-                        Público Estimado (opcional)
+                    <Label htmlFor={publicoId} className="text-foreground text-sm font-semibold">
+                        {t('reservas.stepper.public_label')}
                     </Label>
                     <Input
-                        id="publico_estimado"
+                        id={publicoId}
                         type="number"
-                        min={1}
-                        max={5000}
+                        inputMode="numeric"
+                        min={PUBLICO_ESTIMADO_MIN}
+                        max={PUBLICO_ESTIMADO_MAX}
                         step={1}
                         value={formData.publico_estimado ?? ''}
                         onChange={(e) => {
                             setFormData('publico_estimado', e.target.value);
                         }}
-                        placeholder="Ex: 40"
-                        className="bg-card h-9 text-xs sm:text-sm"
+                        placeholder={t('reservas.stepper.public_placeholder')}
+                        className="bg-card h-10 text-sm"
                         aria-invalid={Boolean(errors.publico_estimado)}
                     />
-                    {errors.publico_estimado && (
-                        <p className="text-destructive-accent text-[11px] font-medium">{errors.publico_estimado}</p>
+                    {errors.publico_estimado && <p className="text-destructive-accent text-sm font-medium">{errors.publico_estimado}</p>}
+                    {acimaDaCapacidade && capacidade !== undefined && (
+                        <p role="status" className="bg-warning-subtle text-warning-accent rounded-md px-2.5 py-1.5 text-sm">
+                            {t('reservas.stepper.public_over_capacity', { count: capacidade })}
+                        </p>
                     )}
                 </div>
 
-                {/* Categoria / Finalidade */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="categoria" className="text-foreground flex items-center gap-1.5 text-xs font-medium">
-                        <Tag className="text-muted-foreground h-3.5 w-3.5" />
-                        Categoria / Tipo (opcional)
+                    <Label htmlFor={categoriaId} className="text-foreground text-sm font-semibold">
+                        {t('reservas.stepper.category_label')}
                     </Label>
                     <Input
-                        id="categoria"
+                        id={categoriaId}
+                        list={sugestoesId}
+                        maxLength={CATEGORIA_MAX}
                         value={formData.categoria ?? ''}
                         onChange={(e) => {
                             setFormData('categoria', e.target.value);
                         }}
-                        placeholder="Ex: Aula, Palestra, Defesa, Extensão..."
-                        className="bg-card h-9 text-xs sm:text-sm"
+                        placeholder={t('reservas.stepper.category_placeholder')}
+                        className="bg-card h-10 text-sm"
                     />
+                    <datalist id={sugestoesId}>
+                        {sugestoesCategoria.map((sugestao) => (
+                            <option key={sugestao} value={sugestao} />
+                        ))}
+                    </datalist>
                 </div>
             </div>
         </div>

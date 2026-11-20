@@ -1,7 +1,8 @@
-import React from 'react';
-import { Check } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { ReservaStepId, StepperStep } from '@/types/reserva-stepper';
+import { Check } from 'lucide-react';
+import React from 'react';
 
 export interface StepperProgressProps {
     steps: StepperStep[];
@@ -11,10 +12,12 @@ export interface StepperProgressProps {
 }
 
 export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, currentStepId, onStepClick, className }) => {
+    const { t } = useTranslation();
     const currentIndex = steps.findIndex((s) => s.id === currentStepId);
+    const passoAtual = currentIndex >= 0 ? steps[currentIndex] : undefined;
 
     return (
-        <nav aria-label="Etapas da solicitação de reserva" className={cn('w-full py-2', className)}>
+        <nav aria-label={t('reservas.stepper.steps_aria_label')} className={cn('w-full py-1', className)}>
             <ol className="flex w-full items-center justify-between">
                 {steps.map((step, index) => {
                     const isCompleted = step.isCompleted || index < currentIndex;
@@ -23,7 +26,7 @@ export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, current
 
                     return (
                         <li key={step.id} className={cn('flex items-center', index < steps.length - 1 ? 'flex-1' : 'flex-initial')}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5">
                                 <button
                                     type="button"
                                     disabled={!isClickable}
@@ -33,10 +36,10 @@ export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, current
                                         }
                                     }}
                                     aria-current={isCurrent ? 'step' : undefined}
-                                    aria-label={`Passo ${String(index + 1)}: ${step.title}`}
+                                    aria-label={t('reservas.stepper.step_aria_label', { n: String(index + 1), title: step.title })}
                                     className={cn(
-                                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200 outline-none',
-                                        isCurrent && 'bg-primary text-primary-foreground ring-primary/20 scale-105 shadow-md ring-4',
+                                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200 outline-none',
+                                        isCurrent && 'bg-primary text-primary-foreground ring-primary/20 shadow-md ring-4',
                                         isCompleted &&
                                             !isCurrent &&
                                             'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25 cursor-pointer border',
@@ -54,7 +57,7 @@ export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, current
                                 <div className="hidden flex-col text-left sm:flex">
                                     <span
                                         className={cn(
-                                            'text-xs leading-none font-medium transition-colors',
+                                            'text-sm leading-tight font-medium transition-colors',
                                             isCurrent
                                                 ? 'text-foreground font-semibold'
                                                 : isCompleted
@@ -64,7 +67,7 @@ export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, current
                                     >
                                         {step.title}
                                     </span>
-                                    <span className="text-muted-foreground mt-0.5 line-clamp-1 text-[10px]">{step.description}</span>
+                                    <span className="text-muted-foreground mt-0.5 text-xs">{step.description}</span>
                                 </div>
                             </div>
 
@@ -82,13 +85,18 @@ export const StepperProgress: React.FC<StepperProgressProps> = ({ steps, current
                 })}
             </ol>
 
-            {/* Subtítulo do passo ativo exibido exclusivamente em telas pequenas (mobile) */}
-            <div className="mt-2.5 flex items-center justify-between px-1 text-xs sm:hidden">
-                <span className="text-foreground font-medium">
-                    Passo {String(currentIndex + 1)} de {String(steps.length)}: {steps[currentIndex]?.title}
-                </span>
-                <span className="text-muted-foreground text-[11px]">{steps[currentIndex]?.description}</span>
-            </div>
+            {passoAtual && (
+                <div className="mt-2.5 space-y-0.5 sm:hidden">
+                    <p className="text-foreground text-sm font-medium">
+                        {t('reservas.stepper.step_counter', {
+                            current: String(currentIndex + 1),
+                            total: String(steps.length),
+                            title: passoAtual.title,
+                        })}
+                    </p>
+                    <p className="text-muted-foreground text-xs">{passoAtual.description}</p>
+                </div>
+            )}
         </nav>
     );
 };

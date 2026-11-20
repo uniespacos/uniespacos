@@ -2,6 +2,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import CalendarSlotCell from '@/presentation/molecules/CalendarSlotCell';
 import { SlotCalendario } from '@/types';
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 
 describe('CalendarSlotCell', () => {
     const slotLivre: SlotCalendario = {
@@ -59,109 +60,134 @@ describe('CalendarSlotCell', () => {
         },
     };
 
-    it('permite seleção quando o slot está livre', () => {
-        const onSelect = jest.fn();
-        const { container } = render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelect={onSelect} />
-            </TooltipProvider>,
-        );
+    function renderizar(ui: ReactElement) {
+        return render(<TooltipProvider delayDuration={0}>{ui}</TooltipProvider>);
+    }
 
-        const cell = container.firstElementChild as HTMLElement;
-        fireEvent.click(cell);
+    it('renderiza slot livre como botao nativo focavel, sem aria-pressed ativo', () => {
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={jest.fn()} />);
 
-        expect(onSelect).toHaveBeenCalledTimes(1);
+        const botao = screen.getByRole('button', { name: 'Segunda-feira, 07/09, 07:30 às 08:20, Livre' });
+
+        expect(botao.tagName).toBe('BUTTON');
+        expect(botao).toHaveAttribute('type', 'button');
+        expect(botao).toBeEnabled();
+        expect(botao).toHaveAttribute('aria-pressed', 'false');
+        expect(botao).toHaveClass('focus-visible:ring-2');
     });
 
-    it('exibe texto de selecionado quando isSelecionado é true', () => {
-        render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotLivre} isSelecionado={true} onSelect={jest.fn()} />
-            </TooltipProvider>,
-        );
+    it('clique sem Shift seleciona o slot com intervalo false', () => {
+        const onSelectSlot = jest.fn();
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={onSelectSlot} />);
 
+        fireEvent.click(screen.getByRole('button', { name: /07:30 às 08:20/ }));
+
+        expect(onSelectSlot).toHaveBeenCalledWith(slotLivre, { intervalo: false });
+    });
+
+    it('clique com Shift envia intervalo true ao chamador', () => {
+        const onSelectSlot = jest.fn();
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={onSelectSlot} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /07:30 às 08:20/ }), { shiftKey: true });
+
+        expect(onSelectSlot).toHaveBeenCalledWith(slotLivre, { intervalo: true });
+    });
+
+    it('slot selecionado expõe aria-pressed=true e rotulo Selecionado', () => {
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={true} onSelectSlot={jest.fn()} />);
+
+        const botao = screen.getByRole('button', { name: 'Segunda-feira, 07/09, 07:30 às 08:20, Selecionado' });
+
+        expect(botao).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByText('Selecionado')).toBeInTheDocument();
     });
 
-    it('não permite clique quando o slot está reservado', () => {
-        const onSelect = jest.fn();
-        render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelect={onSelect} />
-            </TooltipProvider>,
-        );
+    it('selecionado usa a cor primary, nunca success', () => {
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={true} onSelectSlot={jest.fn()} />);
 
-        fireEvent.click(screen.getByText(/Defesa de TCC/));
+        const botao = screen.getByRole('button', { name: /Selecionado/ });
 
-        expect(onSelect).not.toHaveBeenCalled();
+        expect(botao).toHaveClass('bg-primary/15', 'border-primary');
+        expect(botao).not.toHaveClass('bg-success-subtle');
     });
 
-    it('renderiza o título da reserva no slot reservado', () => {
-        render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelect={jest.fn()} />
-            </TooltipProvider>,
-        );
+    it('hover do slot livre é neutro, sem a cor de selecionado', () => {
+        renderizar(<CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={jest.fn()} />);
 
-        expect(screen.getByText('Defesa de TCC')).toBeInTheDocument();
+        const botao = screen.getByRole('button', { name: /Livre/ });
+
+        expect(botao).toHaveClass('hover:bg-muted/60');
+        expect(botao).not.toHaveClass('hover:bg-success-subtle');
     });
 
-    it('não permite clique em slots passados ou bloqueados', () => {
-        const onSelect = jest.fn();
-        const slotPassado: SlotCalendario = {
-            ...slotLivre,
-            isPast: true,
-        };
-
-        const { container } = render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotPassado} isSelecionado={false} onSelect={onSelect} />
-            </TooltipProvider>,
-        );
-
-        const el = container.firstElementChild as HTMLElement;
-        fireEvent.click(el);
-
-        expect(onSelect).not.toHaveBeenCalled();
-    });
-
-    it('permite operacao por teclado com Enter e Espaco em slots livres', () => {
+    it('slot passado é botão desabilitado com rótulo de encerrado e não notifica', () => {
         const onSelectSlot = jest.fn();
-        render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotLivre} isSelecionado={false} onSelectSlot={onSelectSlot} />
-            </TooltipProvider>,
-        );
+        const slotPassado: SlotCalendario = { ...slotLivre, isPast: true };
 
-        const cell = screen.getByRole('button', { name: '07/09/2026 07:30-08:20 — Livre' });
-        expect(cell).toHaveAttribute('tabindex', '0');
-        expect(cell).toHaveAttribute('aria-pressed', 'false');
-        expect(cell).toHaveClass('focus-visible:ring-2');
+        renderizar(<CalendarSlotCell slot={slotPassado} isSelecionado={false} onSelectSlot={onSelectSlot} />);
 
-        fireEvent.keyDown(cell, { key: 'Enter' });
-        fireEvent.keyDown(cell, { key: ' ' });
+        const botao = screen.getByRole('button', { name: /Horário encerrado/ });
 
-        expect(onSelectSlot).toHaveBeenCalledTimes(2);
+        expect(botao).toBeDisabled();
+        expect(botao).not.toHaveAttribute('aria-pressed');
+
+        fireEvent.click(botao);
+
+        expect(onSelectSlot).not.toHaveBeenCalled();
     });
 
-    it('nao expoe role button nem dispara acao por teclado em slots reservados, passados ou travados', () => {
+    it('slot bloqueado é desabilitado e não notifica', () => {
         const onSelectSlot = jest.fn();
-        const { container } = render(
-            <TooltipProvider>
-                <CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={onSelectSlot} />
-                <CalendarSlotCell slot={{ ...slotLivre, isPast: true }} isSelecionado={false} onSelectSlot={onSelectSlot} />
-                <CalendarSlotCell slot={{ ...slotLivre, isLocked: true }} isSelecionado={false} onSelectSlot={onSelectSlot} />
-            </TooltipProvider>,
-        );
+
+        renderizar(<CalendarSlotCell slot={{ ...slotLivre, isLocked: true }} isSelecionado={false} onSelectSlot={onSelectSlot} />);
+
+        const botao = screen.getByRole('button', { name: /07:30 às 08:20/ });
+
+        expect(botao).toBeDisabled();
+
+        fireEvent.click(botao);
+
+        expect(onSelectSlot).not.toHaveBeenCalled();
+    });
+
+    it('slot reservado nao e um botao de selecao', () => {
+        renderizar(<CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={jest.fn()} />);
 
         expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
 
-        const cells = Array.from(container.children) as HTMLElement[];
-        cells.forEach((cell) => {
-            expect(cell).not.toHaveAttribute('tabindex');
-            fireEvent.keyDown(cell, { key: 'Enter' });
-            fireEvent.keyDown(cell, { key: ' ' });
-        });
+    it('slot reservado e focavel e tem rotulo com o titulo da reserva', () => {
+        renderizar(<CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={jest.fn()} />);
+
+        const foco = screen.getByRole('group', { name: 'Segunda-feira, 07/09, 08:20 às 09:10, Reservado: Defesa de TCC' });
+
+        expect(foco).toHaveAttribute('tabindex', '0');
+        expect(foco).toHaveTextContent('Defesa de TCC');
+    });
+
+    it('foco de teclado no slot reservado abre o detalhe da reserva', () => {
+        renderizar(<CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={jest.fn()} />);
+
+        fireEvent.focus(screen.getByRole('group', { name: /Reservado: Defesa de TCC/ }));
+
+        expect(screen.getAllByText('Maria Santos').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Ver Detalhes').length).toBeGreaterThan(0);
+    });
+
+    it('toque (clique) no slot reservado abre o detalhe da reserva', () => {
+        renderizar(<CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={jest.fn()} />);
+
+        fireEvent.click(screen.getByRole('group', { name: /Reservado: Defesa de TCC/ }));
+
+        expect(screen.getAllByText('Maria Santos').length).toBeGreaterThan(0);
+    });
+
+    it('nao altera a selecao ao interagir com slot reservado', () => {
+        const onSelectSlot = jest.fn();
+        renderizar(<CalendarSlotCell slot={slotReservado} isSelecionado={false} onSelectSlot={onSelectSlot} />);
+
+        fireEvent.click(screen.getByRole('group', { name: /Reservado: Defesa de TCC/ }));
 
         expect(onSelectSlot).not.toHaveBeenCalled();
     });

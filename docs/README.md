@@ -63,6 +63,7 @@ O inventário de dados e o runbook de incidente entram nesta pasta quando forem 
 | --- | --- |
 | [`auditorias-e-planos.md`](./processo/auditorias-e-planos.md) | Como conduzir uma auditoria e um plano em fases, como fechar o ciclo no backlog e a regra de backlog reativo. |
 | [`qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) | Roteiro de QA de reservas em staging: reteste das correções do QA da rc.119 e fluxos não convencionais (navegação, datas, edição, conflitos, papéis). Inclui o prompt pronto para o QA. |
+| [`ux/analise-solicitacao-usuario-comum.md`](./processo/ux/analise-solicitacao-usuario-comum.md) | Análise de UX da solicitação de espaço pelo usuário comum: jornada antes e depois, achados `UX-01` a `UX-17` e validação das migrations da entrega. |
 
 ### Material acadêmico — `UniEspaço Web/`
 

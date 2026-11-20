@@ -1,9 +1,9 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
-import { CalendarCheck, ArrowRight, Trash2 } from 'lucide-react';
-import { SlotReservaItem } from '@/types/reserva-stepper';
 import { SlotCalendario } from '@/types';
+import { SlotReservaItem } from '@/types/reserva-stepper';
+import { ArrowRight, CalendarCheck, Trash2 } from 'lucide-react';
+import React from 'react';
 
 export interface ReservaStickySummaryBarProps {
     slots: (SlotReservaItem | SlotCalendario)[];
@@ -38,8 +38,8 @@ export const ReservaStickySummaryBar: React.FC<ReservaStickySummaryBarProps> = (
                     <CalendarCheck className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="flex min-w-0 flex-col">
-                    <span className="text-foreground truncate text-xs font-semibold">{slotLabel}</span>
-                    <span className="text-muted-foreground truncate text-[11px]">
+                    <span className="text-foreground truncate text-sm font-semibold">{slotLabel}</span>
+                    <span className="text-muted-foreground truncate text-xs">
                         {isEditMode ? t('reservas.stepper.ready_edit') : t('reservas.stepper.ready_create')}
                     </span>
                 </div>
@@ -49,16 +49,15 @@ export const ReservaStickySummaryBar: React.FC<ReservaStickySummaryBarProps> = (
                 <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     onClick={onClear}
-                    className="text-muted-foreground hover:text-destructive-accent hover:bg-destructive/10 h-8 px-2.5 text-xs"
+                    className="text-muted-foreground hover:text-destructive-accent hover:bg-destructive/10 h-10 px-3 text-sm"
                 >
-                    <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                    <Trash2 className="mr-1 h-4 w-4" aria-hidden="true" />
                     {t('common.actions.clear')}
                 </Button>
-                <Button type="button" size="sm" onClick={onConfirm} disabled={disabled} className="h-8 gap-1.5 px-3.5 text-xs font-medium shadow-sm">
+                <Button type="button" onClick={onConfirm} disabled={disabled} className="h-10 gap-1.5 px-4 text-sm font-medium shadow-sm">
                     <span>{isEditMode ? t('reservas.stepper.review_edit') : t('reservas.stepper.continue')}</span>
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
             </div>
         </aside>

@@ -57,11 +57,22 @@ export const ESTILO_SITUACAO: Record<SituacaoReservaType, EstiloSituacao> = {
  * um slot pode estar `livre` ou `reservado` por terceiro, que não são
  * situações de reserva nenhuma.
  */
+export interface EstiloSlot {
+    /** Tom sólido, para a faixa lateral e o marcador da legenda. */
+    solido: string;
+    /** Preenchimento da célula. */
+    fundo: string;
+    /** Cor da borda esquerda da célula. */
+    borda: string;
+    /** Cor do texto de status dentro da célula. */
+    texto: string;
+}
+
 export const ESTILO_SLOT = {
-    livre: { label: 'Livre', solido: 'bg-muted-foreground/25', fundo: '' },
-    reservado: { label: 'Reservado', solido: 'bg-info', fundo: 'bg-info-subtle' },
-    selecionado: { label: 'Selecionado', solido: 'bg-success', fundo: 'bg-success-subtle' },
-    solicitado: { label: 'Em análise', solido: 'bg-warning', fundo: 'bg-warning-subtle' },
-    deferida: { label: 'Deferida', solido: 'bg-success', fundo: 'bg-success-subtle' },
-    indeferida: { label: 'Indeferida', solido: 'bg-destructive', fundo: 'bg-destructive-subtle' },
-} as const;
+    livre: { solido: 'bg-muted-foreground/25', fundo: '', borda: '', texto: '' },
+    reservado: { solido: 'bg-info', fundo: 'bg-info-subtle', borda: 'border-info-accent/30', texto: 'text-info-accent' },
+    selecionado: { solido: 'bg-primary', fundo: 'bg-primary/15', borda: 'border-primary', texto: 'text-primary' },
+    solicitado: { solido: 'bg-warning', fundo: 'bg-warning-subtle', borda: 'border-warning-accent/30', texto: 'text-warning-accent' },
+    deferida: { solido: 'bg-success', fundo: 'bg-success-subtle', borda: 'border-success-accent/30', texto: 'text-success-accent' },
+    indeferida: { solido: 'bg-destructive', fundo: 'bg-destructive-subtle', borda: 'border-destructive-accent/30', texto: 'text-destructive-accent' },
+} as const satisfies Record<string, EstiloSlot>;

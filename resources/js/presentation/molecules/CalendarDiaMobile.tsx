@@ -3,6 +3,7 @@ import { TURNOS_ORDENADOS, TURNO_LABEL, type Turno } from '@/constants/turnos';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { derivarSlotsDoTurno, type SlotDerivado } from '@/lib/utils/derivar-slots-do-turno';
+import { chaveEstadoSlot, slotPodeSerSelecionado } from '@/lib/utils/slot-calendario';
 import { EmptyState } from '@/presentation/molecules/EmptyState';
 import { Agenda, AgendaDiasSemanaType, SlotCalendario } from '@/types';
 import { useMemo, useState } from 'react';
@@ -69,6 +70,7 @@ interface CalendarDiaMobileProps {
     agendas: Agenda[];
     isSlotSelecionado: (slot: SlotCalendario) => boolean;
     alternarSelecaoSlot: (slot: SlotCalendario) => void;
+    definirSelecaoDeVarios?: (slots: SlotCalendario[], selecionar: boolean) => void;
     slotsDaReserva?: SlotCalendario[];
     exigirGestor?: boolean;
     modoSelecaoInicial?: 'hoje' | 'primeiroComReserva';
@@ -97,6 +99,7 @@ export default function CalendarDiaMobile({
     agendas,
     isSlotSelecionado,
     alternarSelecaoSlot,
+    definirSelecaoDeVarios,
     slotsDaReserva,
     exigirGestor = true,
     modoSelecaoInicial = 'hoje',
@@ -192,54 +195,80 @@ export default function CalendarDiaMobile({
 
             {slotsPorTurno.length === 0 && <EmptyState size="compact" title={t('agenda.sem_turnos')} />}
 
-            {slotsPorTurno.map(({ agendaId, turno, slots }) => (
-                <div key={agendaId}>
-                    <div className="text-foreground bg-muted/40 px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase">{TURNO_LABEL[turno]}</div>
+            {slotsPorTurno.map(({ agendaId, turno, slots }) => {
+                const selecionaveisDoTurno = slots.map(({ slot }) => slot).filter(slotPodeSerSelecionado);
+                const todosMarcados = selecionaveisDoTurno.length > 0 && selecionaveisDoTurno.every((slot) => isSlotSelecionado(slot));
+                const rotuloTurno = TURNO_LABEL[turno];
 
-                    {slots.map(({ horaLabel, slot }) => {
-                        const selecionado = isSlotSelecionado(slot);
-                        const clicavel = slot.status !== 'reservado' && !slot.isLocked && !slot.isPast;
-                        const status = selecionado ? 'selecionado' : slot.status;
+                return (
+                    <div key={agendaId}>
+                        <div className="bg-muted/40 flex items-center justify-between gap-2 pr-1 pl-3">
+                            <span className="text-foreground py-1.5 text-[11px] font-bold tracking-wide uppercase">{rotuloTurno}</span>
 
-                        return (
-                            <button
-                                key={slot.id}
-                                type="button"
-                                disabled={!clicavel}
-                                onClick={
-                                    clicavel
-                                        ? () => {
-                                              alternarSelecaoSlot(slot);
-                                          }
-                                        : undefined
-                                }
-                                className={cn(
-                                    'flex min-h-[52px] w-full items-center gap-3 border-b px-3 py-2 text-left transition-colors last:border-b-0',
-                                    'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
-                                    clicavel && (status === 'livre' ? 'hover:bg-success-subtle' : 'hover:bg-muted/50'),
-                                    slot.isPast && !selecionado && 'bg-muted/60 opacity-90 grayscale',
-                                )}
-                            >
-                                <span className={cn('h-8 w-1 shrink-0 rounded-full', ESTILO_SLOT[status].solido)} aria-hidden />
+                            {definirSelecaoDeVarios && (
+                                <button
+                                    type="button"
+                                    disabled={selecionaveisDoTurno.length === 0}
+                                    aria-label={t('agenda.turno.aria_mobile', {
+                                        acao: t(todosMarcados ? 'agenda.turno.desmarcar_turno_inteiro' : 'agenda.turno.marcar_turno_inteiro'),
+                                        turno: rotuloTurno,
+                                    })}
+                                    onClick={() => {
+                                        definirSelecaoDeVarios(selecionaveisDoTurno, !todosMarcados);
+                                    }}
+                                    className={cn(
+                                        'text-primary hover:bg-muted/60 flex min-h-11 items-center rounded-md px-2 text-xs font-semibold transition-colors',
+                                        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
+                                        'disabled:text-muted-foreground disabled:cursor-not-allowed',
+                                    )}
+                                >
+                                    {t(todosMarcados ? 'agenda.turno.desmarcar_turno_inteiro' : 'agenda.turno.marcar_turno_inteiro')}
+                                </button>
+                            )}
+                        </div>
 
-                                <span className="text-sm font-medium tabular-nums">{horaLabel}</span>
+                        {slots.map(({ horaLabel, slot }) => {
+                            const selecionado = isSlotSelecionado(slot);
+                            const clicavel = slotPodeSerSelecionado(slot);
+                            const status = selecionado ? 'selecionado' : slot.status;
 
-                                <span className="text-muted-foreground ml-auto truncate text-right text-xs">
-                                    {(() => {
-                                        if (slot.status === 'reservado' && !selecionado) {
-                                            return slot.dadosReserva?.reserva_titulo;
-                                        }
-                                        if (slot.status === 'livre' && slot.isPast && !selecionado) {
-                                            return 'Horário encerrado';
-                                        }
-                                        return ESTILO_SLOT[status].label;
-                                    })()}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            ))}
+                            return (
+                                <button
+                                    key={slot.id}
+                                    type="button"
+                                    disabled={!clicavel}
+                                    aria-pressed={clicavel ? selecionado : undefined}
+                                    onClick={
+                                        clicavel
+                                            ? () => {
+                                                  alternarSelecaoSlot(slot);
+                                              }
+                                            : undefined
+                                    }
+                                    className={cn(
+                                        'flex min-h-[52px] w-full items-center gap-3 border-b px-3 py-2 text-left transition-colors last:border-b-0',
+                                        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
+                                        'disabled:cursor-not-allowed',
+                                        clicavel && (selecionado ? 'hover:bg-primary/20' : 'hover:bg-muted/60'),
+                                        selecionado && ESTILO_SLOT.selecionado.fundo,
+                                        slot.isPast && !selecionado && 'bg-muted/60 opacity-90 grayscale',
+                                    )}
+                                >
+                                    <span className={cn('h-8 w-1 shrink-0 rounded-full', ESTILO_SLOT[status].solido)} aria-hidden />
+
+                                    <span className="text-sm font-medium tabular-nums">{horaLabel}</span>
+
+                                    <span className="text-muted-foreground ml-auto truncate text-right text-xs">
+                                        {slot.status === 'reservado' && !selecionado
+                                            ? slot.dadosReserva?.reserva_titulo
+                                            : t(chaveEstadoSlot(slot, selecionado))}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                );
+            })}
         </div>
     );
 }

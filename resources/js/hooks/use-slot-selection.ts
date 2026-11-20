@@ -1,3 +1,4 @@
+import { aplicarSelecaoDeSlots, ordenarSelecaoSlots, slotsDoIntervaloShift } from '@/lib/utils/slot-calendario';
 import { SlotCalendario } from '@/types';
 import { addWeeks, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -11,6 +12,7 @@ interface UseSlotSelectionProps {
 
 export function useSlotSelection({ hoje, slotsIniciais = [] }: UseSlotSelectionProps) {
     const [slotsSelecao, setSlotsSelecao] = useState<SlotCalendario[]>(slotsIniciais);
+    const ancoraRef = useRef<SlotCalendario | null>(null);
 
     const lastInitialSlotsRef = useRef(slotsIniciais);
 
@@ -31,6 +33,7 @@ export function useSlotSelection({ hoje, slotsIniciais = [] }: UseSlotSelectionP
     const isSlotSelecionado = (slot: SlotCalendario) => slotsSelecao.some((s) => s.id === slot.id);
 
     const limparSelecao = () => {
+        ancoraRef.current = null;
         setSlotsSelecao([]);
     };
 
@@ -53,21 +56,38 @@ export function useSlotSelection({ hoje, slotsIniciais = [] }: UseSlotSelectionP
 
         const isCurrentlySelected = slotsSelecao.some((s) => s.id === targetSlot.id);
 
-        let novaSelecao;
-        if (isCurrentlySelected) {
-            novaSelecao = slotsSelecao.filter((s) => s.id !== targetSlot.id);
-        } else {
-            novaSelecao = [...slotsSelecao, targetSlot].sort(
-                (a, b) => a.data.getTime() - b.data.getTime() || a.horario_inicio.localeCompare(b.horario_inicio),
-            );
+        const novaSelecao = isCurrentlySelected
+            ? slotsSelecao.filter((s) => s.id !== targetSlot.id)
+            : ordenarSelecaoSlots([...slotsSelecao, targetSlot]);
+
+        ancoraRef.current = targetSlot;
+        setSlotsSelecao(novaSelecao);
+    };
+
+    const alternarSelecaoIntervalo = (slot: SlotCalendario, candidatos: SlotCalendario[]) => {
+        const ancora = ancoraRef.current;
+        const intervalo = ancora ? slotsDoIntervaloShift(candidatos, ancora, slot) : null;
+
+        if (!ancora || !intervalo) {
+            alternarSelecaoSlot(slot);
+            return;
         }
 
-        setSlotsSelecao(novaSelecao);
+        const selecionar = slotsSelecao.some((s) => s.id === ancora.id);
+
+        ancoraRef.current = slot;
+        setSlotsSelecao((atual) => aplicarSelecaoDeSlots(atual, intervalo, selecionar));
+    };
+
+    const definirSelecaoDeVarios = (slots: SlotCalendario[], selecionar: boolean) => {
+        setSlotsSelecao((atual) => aplicarSelecaoDeSlots(atual, slots, selecionar));
     };
 
     return {
         slotsSelecao,
         alternarSelecaoSlot,
+        alternarSelecaoIntervalo,
+        definirSelecaoDeVarios,
         isSlotSelecionado,
         limparSelecao,
         setSlotsSelecao,

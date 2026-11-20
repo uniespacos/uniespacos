@@ -13,7 +13,7 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 | `AgendaRepositoryInterface` | `AgendaRepositoryEloquent` | [Sim](#agendarepositoryinterface) |
 | `AndarRepositoryInterface` | `AndarRepositoryEloquent` | Não |
 | `AnonimizacaoDeBaseRepositoryInterface` | `AnonimizacaoDeBaseRepositoryDb` (query builder, sem model) | [Sim](#anonimizacaodebaserepositoryinterface) |
-| `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | Não |
+| `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | [Sim](#espacorepositoryinterface) |
 | `FotoPerfilRepositoryInterface` | `FotoPerfilRepositoryEloquent` | [Sim](#fotoperfilrepositoryinterface) |
 | `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | Não |
 | `InstituicaoRepositoryInterface` | `InstituicaoRepositoryEloquent` | Não |
@@ -484,6 +484,42 @@ public function store(array $data): Reserva
 
 ---
 
+## EspacoRepositoryInterface
+
+### `getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator`
+
+Listagem pública de espaços (`EspacoController::index` → `EspacoService::getPaginatedForPublic`). Escopo por instituição, filtros de busca, unidade, módulo, andar e capacidade, e o filtro de disponibilidade por data e turno.
+
+**Filtro de disponibilidade (`data` e `turno`):**
+
+- Sem `data`, a consulta não muda e não há `horarios_livres`.
+- Com `data`, a consulta ganha um `EXISTS` antes da paginação: só entram espaços com ao menos um slot livre. Um `turno` informado restringe os slots ao turno.
+- O "agora" é calculado no fuso `config('reservas.fuso_horario')`. Na data de hoje, slots que já começaram não contam.
+- A consulta de slots livres usa `agendas` com gestor (`user_id` não nulo), a grade de `config/reservas.php` e os `horarios` da data. Só `deferida` ocupa; `em_analise` não.
+
+**`horarios_livres`:** depois da paginação, o repositório anexa a cada espaço da página o número de slots livres. Uma consulta agrupada cobre a página inteira (não há uma consulta por espaço). Esse número vira o selo "N horários livres" no card.
+
+```mermaid
+sequenceDiagram
+    participant Ctrl as EspacoController
+    participant Repo as EspacoRepositoryEloquent
+    participant DB as PostgreSQL
+
+    Ctrl->>Repo: getPaginatedForPublic(instituicao, filtros)
+    alt sem data
+        Repo->>DB: SELECT espacos ... paginate
+    else com data
+        Repo->>DB: SELECT espacos WHERE EXISTS (slots livres) ... paginate
+        Repo->>DB: SELECT espaco_id, COUNT(*) FROM slots livres WHERE espaco_id IN (página) GROUP BY espaco_id
+        Repo->>Repo: anexa horarios_livres a cada espaço
+    end
+    Repo-->>Ctrl: LengthAwarePaginator
+```
+
+A listagem administrativa (`getPaginatedForAdmin`) não usa o filtro. Regra de negócio em [fluxo de reservas](../regras-de-negocio/fluxo-de-reservas.md#disponibilidade-na-lista-de-espaços).
+
+---
+
 ## AgendaRepositoryInterface
 
 `AgendaRepositoryInterface` é mais minimalista, com **dois métodos especializados**.
@@ -867,5 +903,6 @@ Ao adicionar novo método a um Repository:
 | `findWithWeekSlots()` | ReservaService::getListingForUser() (modal) | horarios.agenda.espaco.andar.modulo.unidade, horarios.agenda.user, horarios.avaliador | Modal de detalhes |
 | `getPaginatedForGestor()` | ReservaService::getGestorListing() | horarios.agenda.espaco.andar.modulo, user | Grid do gestor |
 | `findForGestorModal()` | ReservaService::getGestorListing() (modal) | horarios.agenda.espaco.andar.modulo, horarios.avaliador | Modal de avaliação (com scopo) |
+| `getPaginatedForPublic()` | EspacoService::getPaginatedForPublic() | andar.modulo.unidade (selects enxutos); `horarios_livres` anexado por consulta agrupada | Listagem pública com filtro "Quando?" |
 | `getWithUserByIds()` (Agenda) | ReservaService::cancel() | user | Notificar gestores |
 

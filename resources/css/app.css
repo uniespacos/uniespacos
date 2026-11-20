@@ -191,7 +191,7 @@
     --secondary-foreground: oklch(0.85 0.05 270);
 
     --muted: oklch(0.42 0.03 265);
-    --muted-foreground: oklch(0.73 0.045 270); /* Frappé Subtext */
+    --muted-foreground: oklch(0.81 0.045 270); /* Frappé Subtext */
 
     --accent: oklch(0.48 0.032 265); /* Frappé Surface 2 */
     --accent-foreground: oklch(0.85 0.05 270);

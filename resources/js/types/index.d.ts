@@ -227,6 +227,7 @@ export interface Espaco {
     andar?: Andar; // Relação aninhada
     agendas?: Agenda[];
     is_favorited_by_user?: boolean; // Indica se o usuário favoritou este espaço
+    horarios_livres?: number; // Presente apenas quando a listagem é filtrada por data
 }
 
 // =============================================================================
@@ -275,6 +276,8 @@ export interface Reserva {
     data_inicial: Date;
     data_final: Date;
     recorrencia: ValorOcorrenciaType; // Tipo de recorrência da reserva
+    publico_estimado?: number | null; // Público estimado informado na solicitação
+    categoria?: string | null; // Categoria/finalidade informada na solicitação
     observacao: string | null;
     created_at: string;
     updated_at: string;

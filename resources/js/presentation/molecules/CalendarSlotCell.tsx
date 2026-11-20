@@ -1,84 +1,79 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ESTILO_SLOT } from '@/constants/situacao-reserva';
-import { cn, parseDataLocal } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
+import { chaveEstadoSlot, descricaoDiaSlot, slotPodeSerSelecionado } from '@/lib/utils/slot-calendario';
 import { CalendarSlotHoverCard } from '@/presentation/molecules/CalendarSlotHoverCard';
 import { SituacaoReserva, SlotCalendario } from '@/types';
-import { format } from 'date-fns';
-import { JSX, type KeyboardEvent, memo } from 'react';
+import { memo, useState, type MouseEvent } from 'react';
 
 interface CalendarSlotCellProps {
     slot: SlotCalendario;
     isSelecionado: boolean;
-    onSelect?: () => void;
-    onSelectSlot?: (slot: SlotCalendario) => void;
+    onSelectSlot?: (slot: SlotCalendario, opcoes: { intervalo: boolean }) => void;
 }
 
-const FUNDO_STATUS: Record<SlotCalendario['status'], string> = {
-    livre: '',
-    reservado: 'border-info-accent/30 bg-info-subtle',
-    selecionado: 'border-primary bg-primary/15',
-    solicitado: 'border-warning-accent/30 bg-warning-subtle',
-    deferida: 'border-success-accent/30 bg-success-subtle',
-    indeferida: 'border-destructive-accent/30 bg-destructive-subtle',
-};
+function CalendarSlotCell({ slot, isSelecionado, onSelectSlot }: CalendarSlotCellProps) {
+    const { t } = useTranslation();
+    const [detalheAberto, setDetalheAberto] = useState(false);
 
-const TEXTO_STATUS: Record<SlotCalendario['status'], string> = {
-    livre: '',
-    reservado: 'text-info-accent',
-    selecionado: 'text-primary',
-    solicitado: 'text-warning-accent',
-    deferida: 'text-success-accent',
-    indeferida: 'text-destructive-accent',
-};
+    const selecionavel = slotPodeSerSelecionado(slot);
+    const estilo = ESTILO_SLOT[isSelecionado ? 'selecionado' : slot.status];
+    const faixa = slot.status === 'livre' && !isSelecionado ? (slot.isPast ? 'bg-muted-foreground/40' : '') : estilo.solido;
 
-function CalendarSlotCell({ slot, isSelecionado, onSelect, onSelectSlot }: CalendarSlotCellProps) {
-    const isClickable = slot.status !== 'reservado' && !slot.isLocked && !slot.isPast;
+    const dia = descricaoDiaSlot(slot.data);
+    const horario = t('agenda.slot.horario', {
+        inicio: slot.horario_inicio.substring(0, 5),
+        fim: slot.horario_fim.substring(0, 5),
+    });
+    const estado = t(chaveEstadoSlot(slot, isSelecionado));
 
-    const handleClick = () => {
-        if (onSelectSlot) {
-            onSelectSlot(slot);
-            return;
-        }
-        onSelect?.();
-    };
+    const classesBase = cn(
+        'relative flex h-12 w-full items-center justify-center border-l p-1 text-center transition-colors duration-200 select-none',
+        'focus-visible:ring-ring focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
+        estilo.fundo,
+        estilo.borda,
+        slot.isPast && !isSelecionado && 'bg-muted/60 opacity-90 grayscale',
+    );
 
-    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            handleClick();
-        }
-    };
+    const renderFaixa = () => <span aria-hidden className={cn('absolute inset-y-0 left-0 w-1', faixa)} />;
 
-    const statusLabel = isSelecionado ? ESTILO_SLOT.selecionado.label : ESTILO_SLOT[slot.status].label;
-    const ariaLabel = `${format(parseDataLocal(slot.data), 'dd/MM/yyyy')} ${slot.horario_inicio.slice(0, 5)}-${slot.horario_fim.slice(0, 5)} — ${statusLabel}`;
+    if (slot.status === 'reservado' && !isSelecionado) {
+        const horarioDB = slot.dadosReserva?.horarioDB;
+        const reserva = horarioDB?.reserva;
+        const reservaId = reserva?.id;
+        const titulo = slot.dadosReserva?.reserva_titulo ?? reserva?.titulo ?? t('agenda.slot.reserva_sem_titulo');
+        const solicitanteNome = slot.dadosReserva?.autor ?? reserva?.user?.name ?? t('agenda.slot.solicitante_padrao');
+        const solicitanteSetor = reserva?.user?.setor?.sigla ?? reserva?.user?.setor?.nome;
+        const situacao: SituacaoReserva = (horarioDB?.situacao as SituacaoReserva | undefined) ?? reserva?.situacao ?? 'deferida';
+        const justificativa = horarioDB?.justificativa ?? reserva?.observacao ?? undefined;
+        const tituloCurto = `${titulo.substring(0, 15)}${titulo.length > 15 ? '...' : ''}`;
 
-    const renderSlotContent = (): JSX.Element | null => {
-        if (slot.isPast && slot.status === 'livre') {
-            return null;
-        }
-
-        if (isSelecionado) {
-            return <p className="text-success-accent text-xs font-bold">{ESTILO_SLOT.selecionado.label}</p>;
-        }
-
-        if (slot.status === 'reservado') {
-            const horarioDB = slot.dadosReserva?.horarioDB;
-            const reserva = horarioDB?.reserva;
-            const reservaId = reserva?.id;
-            const titulo = slot.dadosReserva?.reserva_titulo ?? reserva?.titulo ?? 'Reserva';
-            const solicitanteNome = slot.dadosReserva?.autor ?? reserva?.user?.name ?? 'Solicitante Institucional';
-            const solicitanteSetor = reserva?.user?.setor?.sigla ?? reserva?.user?.setor?.nome;
-            const situacao: SituacaoReserva = (horarioDB?.situacao as SituacaoReserva | undefined) ?? reserva?.situacao ?? 'deferida';
-            const justificativa = horarioDB?.justificativa ?? reserva?.observacao ?? undefined;
-            const horarioInicio = slot.horario_inicio.substring(0, 5);
-            const horarioFim = slot.horario_fim.substring(0, 5);
-
-            return (
-                <Tooltip>
+        return (
+            <div className={classesBase}>
+                {renderFaixa()}
+                <Tooltip open={detalheAberto} onOpenChange={setDetalheAberto}>
                     <TooltipTrigger asChild>
-                        <span className={cn('w-full cursor-default truncate px-1 text-xs font-bold', TEXTO_STATUS.reservado)}>
-                            {titulo.substring(0, 15)}
-                            {titulo.length > 15 ? '...' : ''}
+                        <span
+                            role="group"
+                            tabIndex={0}
+                            aria-label={t('agenda.slot.aria_label_reservado', {
+                                dia,
+                                horario,
+                                estado: t('agenda.slot.estado.reservado'),
+                                titulo,
+                            })}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                setDetalheAberto(true);
+                            }}
+                            className={cn(
+                                'w-full cursor-default truncate rounded-sm px-1 text-xs font-bold',
+                                'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                                ESTILO_SLOT.reservado.texto,
+                            )}
+                        >
+                            {tituloCurto}
                         </span>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center" className="border-none bg-transparent p-0 shadow-none [&>svg]:hidden">
@@ -88,59 +83,52 @@ function CalendarSlotCell({ slot, isSelecionado, onSelect, onSelectSlot }: Calen
                                 titulo,
                                 solicitanteNome,
                                 solicitanteSetor,
-                                horarioInicio,
-                                horarioFim,
+                                horarioInicio: slot.horario_inicio.substring(0, 5),
+                                horarioFim: slot.horario_fim.substring(0, 5),
                                 situacao,
                                 justificativa,
                             }}
                         />
                     </TooltipContent>
                 </Tooltip>
-            );
+            </div>
+        );
+    }
+
+    const renderConteudo = () => {
+        if (isSelecionado) {
+            return <p className={cn('text-xs font-bold', ESTILO_SLOT.selecionado.texto)}>{estado}</p>;
         }
 
-        if (slot.status === 'solicitado' || slot.status === 'deferida' || slot.status === 'indeferida') {
-            return <p className={cn('text-xs font-bold', TEXTO_STATUS[slot.status])}>{ESTILO_SLOT[slot.status].label}</p>;
+        if (slot.status === 'livre') {
+            return null;
         }
 
-        return null;
+        return <p className={cn('text-xs font-bold', estilo.texto)}>{estado}</p>;
     };
 
     return (
-        <div
-            key={slot.id}
-            role={isClickable ? 'button' : undefined}
-            tabIndex={isClickable ? 0 : undefined}
-            aria-pressed={isClickable ? isSelecionado : undefined}
-            aria-label={isClickable ? ariaLabel : undefined}
-            onClick={isClickable ? handleClick : undefined}
-            onKeyDown={isClickable ? handleKeyDown : undefined}
+        <button
+            type="button"
+            disabled={!selecionavel}
+            aria-pressed={selecionavel ? isSelecionado : undefined}
+            aria-label={t('agenda.slot.aria_label', { dia, horario, estado })}
+            onClick={
+                selecionavel
+                    ? (event: MouseEvent<HTMLButtonElement>) => {
+                          onSelectSlot?.(slot, { intervalo: event.shiftKey });
+                      }
+                    : undefined
+            }
             className={cn(
-                'relative flex h-12 items-center justify-center border-l p-1 text-center transition-all duration-200',
-                isClickable && 'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
-                isSelecionado && 'border-success-accent bg-success-subtle hover:bg-success-subtle/70 shadow-md',
-
-                !isSelecionado && [
-                    FUNDO_STATUS[slot.status],
-                    {
-                        'cursor-not-allowed': slot.status === 'reservado' || slot.isLocked === true || slot.isPast === true,
-                        'hover:bg-success-subtle cursor-pointer': slot.status === 'livre' && !slot.isLocked && !slot.isPast,
-                        'bg-muted/60 opacity-90 grayscale': slot.isPast,
-                    },
-                ],
+                classesBase,
+                'disabled:cursor-not-allowed',
+                selecionavel && (isSelecionado ? 'hover:bg-primary/20 shadow-sm' : 'hover:bg-muted/60 cursor-pointer'),
             )}
         >
-            <span
-                aria-hidden
-                className={cn(
-                    'absolute inset-y-0 left-0 w-1',
-                    isSelecionado && ESTILO_SLOT.selecionado.solido,
-                    !isSelecionado && slot.status !== 'livre' && ESTILO_SLOT[slot.status].solido,
-                    !isSelecionado && slot.status === 'livre' && slot.isPast && 'bg-muted-foreground/40',
-                )}
-            />
-            {renderSlotContent()}
-        </div>
+            {renderFaixa()}
+            {renderConteudo()}
+        </button>
     );
 }
 

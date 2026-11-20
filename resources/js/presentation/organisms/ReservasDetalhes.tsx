@@ -28,6 +28,7 @@ import {
     Info,
     MapPin,
     Repeat,
+    Tag,
     User as UserIcon,
     Users,
     XCircle,
@@ -368,10 +369,36 @@ export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva,
                         <div className="min-w-0 flex-1 text-xs">
                             <p className="text-muted-foreground font-medium">{t('reservas.tabela.horarios_solicitados')}</p>
                             <p className="text-foreground truncate font-semibold">
-                                {selectedReserva.horarios.length} {selectedReserva.horarios.length === 1 ? 'horário' : 'horários'}
+                                {selectedReserva.horarios.length === 1
+                                    ? t('reservas.detalhes.horario_um')
+                                    : t('reservas.detalhes.horarios_plural', { count: String(selectedReserva.horarios.length) })}
                             </p>
                         </div>
                     </div>
+
+                    {typeof selectedReserva.publico_estimado === 'number' && (
+                        <div className="bg-muted/30 border-border/60 flex items-center gap-2.5 rounded-lg border p-2.5">
+                            <Users className="text-primary h-4 w-4 shrink-0" />
+                            <div className="min-w-0 flex-1 text-xs">
+                                <p className="text-muted-foreground font-medium">{t('reservas.detalhes.publico_estimado')}</p>
+                                <p className="text-foreground truncate font-semibold">
+                                    {selectedReserva.publico_estimado === 1
+                                        ? t('espacos.pessoa')
+                                        : t('espacos.pessoas', { count: String(selectedReserva.publico_estimado) })}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedReserva.categoria ? (
+                        <div className="bg-muted/30 border-border/60 flex items-center gap-2.5 rounded-lg border p-2.5">
+                            <Tag className="text-primary h-4 w-4 shrink-0" />
+                            <div className="min-w-0 flex-1 text-xs">
+                                <p className="text-muted-foreground font-medium">{t('reservas.detalhes.categoria')}</p>
+                                <p className="text-foreground truncate font-semibold">{selectedReserva.categoria}</p>
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
 
                 {/* Seção 3: Justificativa / Finalidade */}

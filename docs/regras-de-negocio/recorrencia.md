@@ -16,6 +16,22 @@ Recorrência define como um padrão de horários (agenda + dia da semana + faixa
 
 Em **todas** as recorrências, `data_inicial` é a menor data entre os horários selecionados. Ela é derivada e somente leitura no passo 1; não é editável nem no `personalizado`. Só `data_final` pode ser editado, e só no `personalizado`.
 
+### Como a tela escolhe o tipo
+
+Desde 19/11/2026, o passo 1 do modal mostra o switch **"Repetir esta reserva?"** em vez de listar os quatro tipos de uma vez. O switch grava o campo `recorrencia` (`ReservaRecorrenciaField.tsx`):
+
+```mermaid
+flowchart TD
+    A["Switch: Repetir esta reserva?"] -->|"desligado"| B["recorrencia = unica"]
+    A -->|"ligado"| C["recorrencia = 15dias<br/>(padrão ao ligar)"]
+    C --> D{"Opções de repetição"}
+    D -->|"15 dias"| E["15dias"]
+    D -->|"1 mês"| F["1mes"]
+    D -->|"Personalizado"| G["personalizado<br/>data final editável"]
+```
+
+A expansão e as regras desta página não mudaram. O switch só muda o que a tela envia.
+
 ---
 
 ## 1. Tipo `unica`
@@ -207,7 +223,7 @@ A regra `HorarioDisponivel` valida só os slots da semana editada (ver [validaç
 
 **Limitação atual:** a chave não inclui `horario_fim`. Mudar só o fim de um horário, mantendo o início, mantém a linha antiga. Hoje isso não ocorre, porque a grade é fixa (o início define o fim).
 
-### 5.3 Revisão (passo 3)
+### 5.3 Revisão (passo 2)
 
 `StepRevisaoConfirmacao.tsx` lista e conta os horários que serão gravados, com `expandirHorariosRecorrencia` (`resources/js/lib/utils/expandir-horarios-recorrencia.ts`). Essa função espelha o `ExpansaoHorariosService`:
 

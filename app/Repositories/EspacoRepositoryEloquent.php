@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Espaco;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\DB;
 
 class EspacoRepositoryEloquent implements EspacoRepositoryInterface
 {
@@ -51,7 +55,16 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
         $query = $this->espaco->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
-        return $this->applyFilters($query, $filters)
+        $disponibilidade = $this->disponibilidadeSolicitada($filters);
+
+        if ($disponibilidade !== null) {
+            $query->whereRaw(
+                'EXISTS (SELECT 1 FROM ('.$disponibilidade['sql'].') AS livres WHERE livres.espaco_id = espacos.id)',
+                $disponibilidade['bindings'],
+            );
+        }
+
+        $paginator = $this->applyFilters($query, $filters)
             ->with([
                 'andar:id,nome,modulo_id',
                 'andar.modulo:id,nome,unidade_id',
@@ -59,6 +72,119 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             ])
             ->latest()
             ->paginate($perPage);
+
+        if ($disponibilidade !== null) {
+            $this->anexarHorariosLivres($paginator, $disponibilidade);
+        }
+
+        return $paginator;
+    }
+
+    /**
+     * Monta a consulta de slots livres (uma linha por slot da grade livre) para a data
+     * e turno pedidos. Retorna null quando a listagem nao pediu data.
+     *
+     * Slot livre: slot da grade do turno em agenda com gestor, sem horario deferido
+     * na mesma data com o mesmo horario_inicio. Em hoje, slots que ja comecaram nao contam.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{sql: string, bindings: list<mixed>}|null
+     */
+    private function disponibilidadeSolicitada(array $filters): ?array
+    {
+        $data = $filters['data'] ?? null;
+
+        if (! is_string($data) || $data === '') {
+            return null;
+        }
+
+        $fusoConfig = config('reservas.fuso_horario');
+        $fuso = is_string($fusoConfig) && $fusoConfig !== '' ? $fusoConfig : 'America/Bahia';
+        $agora = Carbon::now($fuso);
+
+        $horariosConfig = config('reservas.horarios_por_turno');
+        $horariosPorTurno = is_array($horariosConfig) ? $horariosConfig : [];
+        $turno = $filters['turno'] ?? null;
+        $turnos = is_string($turno) && $turno !== '' ? [$turno] : array_keys($horariosPorTurno);
+
+        $grade = [];
+        foreach ($turnos as $turnoGrade) {
+            if (! is_string($turnoGrade)) {
+                continue;
+            }
+            $faixas = $horariosPorTurno[$turnoGrade] ?? [];
+            if (! is_array($faixas)) {
+                continue;
+            }
+            foreach ($faixas as $faixa) {
+                if (! is_string($faixa)) {
+                    continue;
+                }
+                $grade[] = [$turnoGrade, trim(explode('-', $faixa)[0])];
+            }
+        }
+
+        if ($grade === []) {
+            return ['sql' => 'SELECT NULL::integer AS espaco_id WHERE FALSE', 'bindings' => []];
+        }
+
+        $valores = implode(', ', array_fill(0, count($grade), '(?, CAST(? AS time))'));
+        $bindings = [];
+        foreach ($grade as [$turnoGrade, $inicio]) {
+            $bindings[] = $turnoGrade;
+            $bindings[] = $inicio;
+        }
+
+        $filtroHoje = '';
+        $bindings[] = $data;
+        $bindings[] = SituacaoReservaEnum::DEFERIDA->value;
+
+        if ($data === $agora->toDateString()) {
+            $filtroHoje = ' AND grade.inicio > CAST(? AS time)';
+            $bindings[] = $agora->format('H:i:s');
+        }
+
+        $sql = 'SELECT a.espaco_id, a.id AS agenda_id, grade.inicio '
+            .'FROM agendas a '
+            ."JOIN (VALUES {$valores}) AS grade (turno, inicio) ON grade.turno = a.turno "
+            .'WHERE a.user_id IS NOT NULL '
+            .'AND NOT EXISTS (SELECT 1 FROM horarios h WHERE h.agenda_id = a.id AND h.data = ? AND h.situacao = ? AND h.horario_inicio = grade.inicio)'
+            .$filtroHoje;
+
+        return ['sql' => $sql, 'bindings' => $bindings];
+    }
+
+    /**
+     * Anexa `horarios_livres` a cada espaco da pagina com uma unica consulta agrupada.
+     *
+     * @param  LengthAwarePaginator<int, Model>  $paginator
+     * @param  array{sql: string, bindings: list<mixed>}  $disponibilidade
+     */
+    private function anexarHorariosLivres(LengthAwarePaginator $paginator, array $disponibilidade): void
+    {
+        $itens = array_values(array_filter(
+            $paginator->items(),
+            static fn (mixed $item): bool => $item instanceof Espaco,
+        ));
+
+        $ids = array_map(static fn (Espaco $espaco): int => (int) $espaco->id, $itens);
+
+        $totais = [];
+        if ($ids !== []) {
+            $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+            $linhas = DB::select(
+                "SELECT livres.espaco_id, COUNT(*) AS total FROM ({$disponibilidade['sql']}) AS livres WHERE livres.espaco_id IN ({$placeholders}) GROUP BY livres.espaco_id",
+                [...$disponibilidade['bindings'], ...$ids],
+            );
+
+            foreach ($linhas as $linha) {
+                $totais[(int) $linha->espaco_id] = (int) $linha->total;
+            }
+        }
+
+        foreach ($itens as $espaco) {
+            $espaco->setAttribute('horarios_livres', $totais[(int) $espaco->id] ?? 0);
+        }
     }
 
     /**

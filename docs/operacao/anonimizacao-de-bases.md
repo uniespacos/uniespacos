@@ -67,7 +67,7 @@ Tabelas tratadas: só as colunas listadas mudam. As demais colunas ficam como es
 | Tabela | O que muda | O que fica |
 |--------|------------|------------|
 | `users` | `name` vira `Usuário {id}`; `email` vira `usuario{id}@anonimizado.test`; `telefone` vira `(00) 00000-0000`; `profile_pic` fica vazio; `password` recebe o hash da senha informada ou gerada; `remember_token`, `two_factor_secret`, `two_factor_recovery_codes` e `two_factor_confirmed_at` ficam nulos | `id`, `setor_id`, `email_verified_at` e os papéis (Spatie) |
-| `reservas` | `titulo` vira `Reserva {id}`; `descricao` e `observacao` viram `Texto anonimizado.`; `conflict_cache` fica nulo | Demais colunas (datas, horários, situação e vínculos) |
+| `reservas` | `titulo` vira `Reserva {id}`; `descricao`, `observacao` e `categoria` viram `Texto anonimizado.`; `conflict_cache` fica nulo | Demais colunas (datas, horários, situação, vínculos, `publico_estimado` e `termo_aceito_em`) |
 | `horarios` | `justificativa` vira `Texto anonimizado.` | Demais colunas |
 
 Tabelas apagadas (todas as linhas, quando a tabela existe no ambiente):

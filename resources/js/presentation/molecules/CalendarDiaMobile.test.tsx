@@ -30,6 +30,7 @@ describe('CalendarDiaMobile', () => {
         agendas: [agenda('tarde'), agenda('manha')],
         isSlotSelecionado: () => false,
         alternarSelecaoSlot: jest.fn(),
+        definirSelecaoDeVarios: jest.fn(),
     };
 
     beforeEach(() => {
@@ -132,6 +133,68 @@ describe('CalendarDiaMobile', () => {
 
         expect(screen.getByRole('tab', { name: /segunda-feira/i })).toHaveClass('min-h-[52px]');
         expect(screen.getByRole('button', { name: /07:30 - 08:20/ })).toHaveClass('min-h-[52px]');
+    });
+
+    it('botao de turno inteiro tem alvo de toque de pelo menos 44px', () => {
+        render(<CalendarDiaMobile {...props} agendas={[agenda('manha')]} />);
+
+        expect(screen.getByRole('button', { name: 'Marcar turno inteiro: Manhã' })).toHaveClass('min-h-11');
+    });
+
+    it('Marcar turno inteiro seleciona os horarios selecionaveis do turno visivel', () => {
+        const definirSelecaoDeVarios = jest.fn();
+        render(<CalendarDiaMobile {...props} agendas={[agenda('manha')]} definirSelecaoDeVarios={definirSelecaoDeVarios} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Marcar turno inteiro: Manhã' }));
+
+        expect(definirSelecaoDeVarios).toHaveBeenCalledTimes(1);
+        const [slots, selecionar] = definirSelecaoDeVarios.mock.calls[0] as [{ horario_inicio: string }[], boolean];
+        expect(selecionar).toBe(true);
+        expect(slots).toHaveLength(6);
+    });
+
+    it('com o turno inteiro ja selecionado, o botao desmarca o turno', () => {
+        const definirSelecaoDeVarios = jest.fn();
+        render(
+            <CalendarDiaMobile
+                {...props}
+                agendas={[agenda('manha')]}
+                isSlotSelecionado={() => true}
+                definirSelecaoDeVarios={definirSelecaoDeVarios}
+            />,
+        );
+
+        const botao = screen.getByRole('button', { name: 'Desmarcar turno inteiro: Manhã' });
+        expect(botao).toHaveTextContent('Desmarcar turno inteiro');
+
+        fireEvent.click(botao);
+
+        expect(definirSelecaoDeVarios).toHaveBeenCalledWith(expect.any(Array), false);
+    });
+
+    it('sem definirSelecaoDeVarios, o turno nao exibe botao de marcacao em lote', () => {
+        render(<CalendarDiaMobile {...props} definirSelecaoDeVarios={undefined} agendas={[agenda('manha')]} />);
+
+        expect(screen.queryByRole('button', { name: /turno inteiro/ })).not.toBeInTheDocument();
+    });
+
+    it('slot selecionado usa a cor primary e nao success', () => {
+        render(<CalendarDiaMobile {...props} agendas={[agenda('manha')]} isSlotSelecionado={() => true} />);
+
+        const linha = screen.getByRole('button', { name: /07:30 - 08:20/ });
+
+        expect(linha).toHaveClass('bg-primary/15');
+        expect(linha).not.toHaveClass('bg-success-subtle');
+    });
+
+    it('slot passado livre exibe Horário encerrado', () => {
+        const diaPassado: AgendaDiasSemanaType[] = [
+            { data: new Date('2026-09-01T12:00:00'), nome: 'Terça-feira', abreviado: 'ter.', diaMes: '01/09', valor: '2026-09-01', ehHoje: false },
+        ];
+
+        render(<CalendarDiaMobile {...props} agendas={[agenda('manha')]} diasSemana={diaPassado} />);
+
+        expect(screen.getAllByText('Horário encerrado')).toHaveLength(6);
     });
 
     it('exibe as faixas de horario do turno selecionado', () => {

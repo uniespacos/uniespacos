@@ -22,7 +22,7 @@ class EspacoController extends Controller
     public function index(ListarEspacosRequest $request): Response
     {
         $user = Auth::user();
-        $filters = $request->only(['search', 'unidade', 'modulo', 'andar', 'capacidade']);
+        $filters = $request->only(['search', 'unidade', 'modulo', 'andar', 'capacidade', 'data', 'turno']);
         $instituicaoId = $user->setor->unidade->instituicao_id;
 
         $filterOptions = $this->service->getFilterOptions($instituicaoId);

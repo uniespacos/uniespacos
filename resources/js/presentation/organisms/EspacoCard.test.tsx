@@ -103,14 +103,54 @@ describe('EspacoCard', () => {
         expect(screen.getByText('Consultar horários')).toBeInTheDocument();
     });
 
-    it('dispara callback ao pressionar tecla Espaço no card clicável', () => {
+    it('não expõe o card como botão e mantém o acesso por teclado no link "Consultar horários"', () => {
         const handleSolicitarReserva = jest.fn();
         render(<EspacoCard espaco={mockEspaco} user={null} handleSolicitarReserva={handleSolicitarReserva} />);
 
-        const cardButton = screen.getByRole('button', { name: /Auditório Central/i });
-        fireEvent.keyDown(cardButton, { key: ' ' });
+        expect(screen.queryByRole('button', { name: /Auditório Central/i })).not.toBeInTheDocument();
 
+        const link = screen.getByRole('link', { name: /Consultar horários/i });
+        fireEvent.click(link);
+
+        expect(handleSolicitarReserva).toHaveBeenCalledTimes(1);
         expect(handleSolicitarReserva).toHaveBeenCalledWith('10');
+    });
+
+    it('não dispara o callback duas vezes ao clicar no link dentro do card', () => {
+        const handleSolicitarReserva = jest.fn();
+        render(<EspacoCard espaco={mockEspaco} user={null} handleSolicitarReserva={handleSolicitarReserva} />);
+
+        fireEvent.click(screen.getByRole('link', { name: /Consultar horários/i }));
+
+        expect(handleSolicitarReserva).toHaveBeenCalledTimes(1);
+    });
+
+    it('mostra o selo de horários livres no singular e no plural quando a listagem é filtrada por data', () => {
+        const { rerender } = render(<EspacoCard espaco={{ ...mockEspaco, horarios_livres: 1 }} user={null} />);
+        expect(screen.getByText('1 horário livre')).toBeInTheDocument();
+
+        rerender(<EspacoCard espaco={{ ...mockEspaco, horarios_livres: 3 }} user={null} />);
+        expect(screen.getByText('3 horários livres')).toBeInTheDocument();
+    });
+
+    it('não mostra selo de disponibilidade quando horarios_livres não vem definido', () => {
+        render(<EspacoCard espaco={mockEspaco} user={null} />);
+
+        expect(screen.queryByText(/horário livre|horários livres/)).not.toBeInTheDocument();
+    });
+
+    it('leva o link para a agenda na semana da data filtrada', () => {
+        render(<EspacoCard espaco={{ ...mockEspaco, horarios_livres: 2 }} user={null} semanaDestino="2026-11-20" />);
+
+        expect(screen.getByRole('link', { name: /Consultar horários/i })).toHaveAttribute('href', '/espacos/10?semana=2026-11-20');
+    });
+
+    it('navega para a agenda na semana da data filtrada ao clicar no card sem callback próprio', () => {
+        render(<EspacoCard espaco={mockEspaco} user={null} semanaDestino="2026-11-20" />);
+
+        fireEvent.click(screen.getByText('Auditório Central'));
+
+        expect(mockGet).toHaveBeenCalledWith('/espacos/10?semana=2026-11-20');
     });
 
     it('dispara callback ao clicar no card de usuário comum', () => {

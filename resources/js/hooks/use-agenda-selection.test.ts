@@ -4,8 +4,8 @@ import { type SyntheticEvent } from 'react';
 import { toast } from 'sonner';
 import { useAgendaSelection } from './use-agenda-selection';
 
-const mockPost = jest.fn<unknown, [string, { onError: (erros: Record<string, string>) => void }]>();
-const mockPatch = jest.fn();
+const mockPost = jest.fn<unknown, [string, { onError: (erros: Record<string, string>) => void; onSuccess?: () => void }]>();
+const mockPatch = jest.fn<unknown, [string, { onSuccess?: () => void; onError?: (erros: Record<string, string>) => void }]>();
 const mockReset = jest.fn();
 const mockSetData = jest.fn();
 
@@ -273,5 +273,135 @@ describe('useAgendaSelection', () => {
         expect(result.current.isSlotSelecionado(slotHoje)).toBe(true);
         expect(result.current.slotsSelecao[0]?.id).toBe('2026-05-25|08:20:00');
         expect(toast.info).not.toHaveBeenCalled();
+    });
+
+    it('inicializa publico estimado e categoria a partir da reserva no modo edicao, com termo nao aceito', () => {
+        const reservaComDados: Reserva = { ...mockReserva, publico_estimado: 45, categoria: 'Aula' };
+
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: reservaComDados,
+                isEditMode: true,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        expect(result.current.formData.publico_estimado).toBe(45);
+        expect(result.current.formData.categoria).toBe('Aula');
+        expect(result.current.formData.termo_responsabilidade).toBe(false);
+    });
+
+    it('inicia publico estimado e categoria vazios em nova solicitacao', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        expect(result.current.formData.publico_estimado).toBe('');
+        expect(result.current.formData.categoria).toBe('');
+        expect(result.current.formData.termo_responsabilidade).toBe(false);
+    });
+
+    it('ao concluir a criacao, expõe o estado de sucesso sem fechar o modal', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        act(() => {
+            result.current.setDialogAberto(true);
+        });
+        act(() => {
+            result.current.alternarSelecaoSlot({
+                id: '2026-06-03|08:20:00',
+                status: 'solicitado',
+                data: new Date(2026, 5, 3),
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                agenda_id: 2,
+                isPast: false,
+            });
+        });
+        result.current.formData.horarios_solicitados = [{ data: '2026-06-03', horario_inicio: '08:20:00', horario_fim: '09:10:00', agenda_id: 2 }];
+
+        act(() => {
+            result.current.handleFormSubmit({ preventDefault: jest.fn() } as unknown as SyntheticEvent);
+        });
+
+        const [, options] = mockPost.mock.calls[0];
+        act(() => {
+            options.onSuccess?.();
+        });
+
+        expect(result.current.sucessoCriacao).toBe(true);
+        expect(result.current.dialogAberto).toBe(true);
+        expect(result.current.slotsSelecao).toHaveLength(0);
+        expect(mockReset).toHaveBeenCalled();
+        expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('reabrir ou fechar o modal limpa o estado de sucesso', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        act(() => {
+            result.current.setDialogAberto(true);
+        });
+        result.current.formData.horarios_solicitados = [{ data: '2026-06-03', horario_inicio: '08:20:00', horario_fim: '09:10:00', agenda_id: 2 }];
+        act(() => {
+            result.current.handleFormSubmit({ preventDefault: jest.fn() } as unknown as SyntheticEvent);
+        });
+        const [, options] = mockPost.mock.calls[0];
+        act(() => {
+            options.onSuccess?.();
+        });
+        expect(result.current.sucessoCriacao).toBe(true);
+
+        act(() => {
+            result.current.setDialogAberto(false);
+        });
+
+        expect(result.current.sucessoCriacao).toBe(false);
+        expect(result.current.dialogAberto).toBe(false);
+    });
+
+    it('na edicao, o sucesso fecha o modal e mostra o toast de alteracao', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                reserva: mockReserva,
+                isEditMode: true,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        act(() => {
+            result.current.setDialogAberto(true);
+        });
+        result.current.formData.horarios_solicitados = [{ data: '2026-06-03', horario_inicio: '08:20:00', horario_fim: '09:10:00', agenda_id: 2 }];
+        act(() => {
+            result.current.handleFormSubmit({ preventDefault: jest.fn() } as unknown as SyntheticEvent);
+        });
+
+        const [, options] = mockPatch.mock.calls[0];
+        act(() => {
+            options.onSuccess?.();
+        });
+
+        expect(result.current.dialogAberto).toBe(false);
+        expect(result.current.sucessoCriacao).toBe(false);
+        expect(toast.success).toHaveBeenCalledWith('Sua solicitação de alteração foi enviada!');
     });
 });

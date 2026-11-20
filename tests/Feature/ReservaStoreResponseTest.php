@@ -30,6 +30,7 @@ class ReservaStoreResponseTest extends TestCase
             'data_inicial' => $hoje,
             'data_final' => $hoje,
             'recorrencia' => 'unica',
+            'termo_responsabilidade' => true,
             'horarios_solicitados' => [
                 [
                     'data' => $hoje,

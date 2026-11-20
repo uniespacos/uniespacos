@@ -1,174 +1,196 @@
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
-import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts';
+import { EscopoRecorrencia } from '@/contracts';
 import { useTranslation } from '@/i18n';
-import { parseDataLocal } from '@/lib/utils';
+import { cn, parseDataLocal } from '@/lib/utils';
+import { recorrenciaParaGravar } from '@/lib/utils/conflitos-reserva';
 import { expandirHorariosRecorrencia } from '@/lib/utils/expandir-horarios-recorrencia';
-import { Espaco } from '@/types';
+import { publicoEstimadoVazio } from '@/lib/utils/publico-estimado';
+import { ReservaConflictAlert } from '@/presentation/molecules/ReservaConflictAlert';
+import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { Building2, Calendar, CheckCircle2, FileText, Sparkles, Users } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { CheckCircle2, Trash2 } from 'lucide-react';
+import React, { useId, useMemo } from 'react';
 
 export interface StepRevisaoConfirmacaoProps {
     espaco: Espaco;
     formData: ReservaFormData;
     setFormData: (key: keyof ReservaFormData, value: unknown) => void;
     isEditMode?: boolean;
+    slotsSelecao: SlotCalendario[];
+    conflictingDates: string[];
+    temConflito: boolean;
+    quantidadeEmConflito: number;
+    onRemoverConflitos?: () => void;
+    onRealtimeSlotsConflict: (slotIds: string[]) => void;
 }
 
-export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({ espaco, formData, setFormData, isEditMode = false }) => {
+interface CampoResumoProps {
+    rotulo: string;
+    className?: string;
+    children: React.ReactNode;
+}
+
+function CampoResumo({ rotulo, className, children }: CampoResumoProps) {
+    return (
+        <div className={cn('min-w-0', className)}>
+            <dt className="text-muted-foreground text-xs">{rotulo}</dt>
+            <dd className="text-foreground min-w-0 text-sm font-medium [overflow-wrap:anywhere] break-words">{children}</dd>
+        </div>
+    );
+}
+
+export const StepRevisaoConfirmacao: React.FC<StepRevisaoConfirmacaoProps> = ({
+    espaco,
+    formData,
+    setFormData,
+    isEditMode = false,
+    slotsSelecao,
+    conflictingDates,
+    temConflito,
+    quantidadeEmConflito,
+    onRemoverConflitos,
+    onRealtimeSlotsConflict,
+}) => {
     const { t, formatDate } = useTranslation();
+    const termoId = useId();
+    const resumoId = useId();
 
     const rotuloRecorrencia = useMemo(() => {
-        const op = opcoesRecorrencia.find((o) => o.valor === formData.recorrencia);
-        return op ? t(op.labelKey) : formData.recorrencia;
+        const opcao = opcoesRecorrencia.find((o) => o.valor === formData.recorrencia);
+        return opcao ? t(opcao.labelKey) : formData.recorrencia;
     }, [formData.recorrencia, t]);
 
     const isSingleScopeEdit = isEditMode && formData.edit_scope === EscopoRecorrencia.SINGLE;
 
     const horariosGravados = useMemo(() => {
-        return expandirHorariosRecorrencia(
-            formData.horarios_solicitados,
-            isSingleScopeEdit ? RecorrenciaReserva.UNICA : formData.recorrencia,
-            formData.data_final,
-        );
+        const recorrencia = recorrenciaParaGravar(formData.recorrencia, isSingleScopeEdit);
+
+        return expandirHorariosRecorrencia(formData.horarios_solicitados, recorrencia, formData.data_final);
     }, [isSingleScopeEdit, formData.horarios_solicitados, formData.recorrencia, formData.data_final]);
 
-    const periodoFormatado = useMemo(() => {
+    const periodo = useMemo(() => {
         if (isSingleScopeEdit && horariosGravados.length > 0) {
             const primeiraData = parseDataLocal(horariosGravados[0].data);
             const ultimaData = parseDataLocal(horariosGravados[horariosGravados.length - 1].data);
 
-            return {
-                inicio: formatDate(primeiraData),
-                fim: formatDate(ultimaData),
-            };
+            return t('reservas.stepper.period_range', {
+                inicio: formatDate(primeiraData, 'dd/MM/yyyy'),
+                fim: formatDate(ultimaData, 'dd/MM/yyyy'),
+            });
         }
 
-        const dataIni = formData.data_inicial ? parseDataLocal(formData.data_inicial) : null;
-        const dataFim = formData.data_final ? parseDataLocal(formData.data_final) : null;
+        return t('reservas.stepper.period_range', {
+            inicio: formatDate(formData.data_inicial, 'dd/MM/yyyy'),
+            fim: formatDate(formData.data_final, 'dd/MM/yyyy'),
+        });
+    }, [isSingleScopeEdit, horariosGravados, formData.data_inicial, formData.data_final, formatDate, t]);
 
-        return {
-            inicio: dataIni ? formatDate(dataIni) : 'N/I',
-            fim: dataFim ? formatDate(dataFim) : 'N/I',
-        };
-    }, [isSingleScopeEdit, horariosGravados, formData.data_inicial, formData.data_final, formatDate]);
-
-    const quantidadeHorarios = String(horariosGravados.length);
-    const unidadeHorarios = horariosGravados.length === 1 ? t('reservas.stepper.slot_unit_single') : t('reservas.stepper.slot_unit_plural');
+    const publico = publicoEstimadoVazio(formData.publico_estimado) ? null : Number(formData.publico_estimado);
+    const categoria = formData.categoria?.trim() ?? '';
+    const descricao = formData.descricao.trim();
 
     return (
-        <div className="space-y-4">
-            {/* Cabeçalho de Status / Modo */}
-            <div className="bg-primary/10 border-primary/20 flex items-center gap-2.5 rounded-xl border p-3 text-xs">
-                <Sparkles className="text-primary h-4 w-4 shrink-0" />
-                <span className="text-foreground">
-                    {isEditMode ? t('reservas.stepper.review_edit_mode') : t('reservas.stepper.review_create_mode')}
-                </span>
-            </div>
+        <div className="space-y-5">
+            <section aria-labelledby={resumoId} className="bg-card border-border/80 min-w-0 space-y-4 rounded-xl border p-4 shadow-xs">
+                <h3 id={resumoId} className="text-foreground text-sm font-semibold">
+                    {t('reservas.stepper.review_summary_title')}
+                </h3>
 
-            {/* Resumo do Espaço e Período em Grid */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* Cartão do Espaço */}
-                <div className="bg-card border-border/80 space-y-2 rounded-xl border p-3.5 shadow-xs">
-                    <div className="text-foreground flex items-center gap-2 text-xs font-semibold">
-                        <Building2 className="text-primary h-4 w-4" />
-                        {t('reservas.stepper.selected_space')}
-                    </div>
-                    <div className="space-y-0.5 pl-6">
-                        <p className="text-foreground text-sm font-semibold">{espaco.nome}</p>
-                        <p className="text-muted-foreground text-xs">
-                            {t('espacos.capacidade', { count: espaco.capacidade_pessoas ? String(espaco.capacidade_pessoas) : '0' })}
-                        </p>
-                    </div>
-                </div>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                    <CampoResumo rotulo={t('reservas.stepper.selected_space')}>
+                        {espaco.nome}
+                        <span className="text-muted-foreground block text-xs font-normal">
+                            {t('espacos.capacidade', { count: String(espaco.capacidade_pessoas) })}
+                        </span>
+                    </CampoResumo>
+                    <CampoResumo rotulo={t('reservas.stepper.title_label')}>{formData.titulo}</CampoResumo>
+                    <CampoResumo rotulo={t('reservas.stepper.review_period')}>{periodo}</CampoResumo>
+                    <CampoResumo rotulo={t('reservas.stepper.review_recurrence')}>{rotuloRecorrencia}</CampoResumo>
+                    {publico !== null && (
+                        <CampoResumo rotulo={t('reservas.stepper.review_public')}>
+                            {t('reservas.stepper.review_people', { count: publico })}
+                        </CampoResumo>
+                    )}
+                    {categoria && <CampoResumo rotulo={t('reservas.stepper.review_category')}>{categoria}</CampoResumo>}
+                    <CampoResumo rotulo={t('reservas.stepper.review_details')} className="sm:col-span-2">
+                        {descricao ? (
+                            <span className="whitespace-pre-wrap">{descricao}</span>
+                        ) : (
+                            <span className="text-muted-foreground font-normal">{t('reservas.stepper.review_details_empty')}</span>
+                        )}
+                    </CampoResumo>
+                </dl>
+            </section>
 
-                {/* Cartão de Datas & Recorrência */}
-                <div className="bg-card border-border/80 space-y-2 rounded-xl border p-3.5 shadow-xs">
-                    <div className="text-foreground flex items-center gap-2 text-xs font-semibold">
-                        <Calendar className="text-primary h-4 w-4" />
-                        {t('reservas.stepper.period_recurrence')}
-                    </div>
-                    <div className="space-y-0.5 pl-6">
-                        <p className="text-foreground text-xs font-medium">{rotuloRecorrencia}</p>
-                        <p className="text-muted-foreground text-[11px]">
-                            {periodoFormatado.inicio} {t('reservas.stepper.period_to')} {periodoFormatado.fim} ({quantidadeHorarios} {unidadeHorarios}
-                            )
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Resumo dos Dados do Evento */}
-            <div className="bg-card border-border/80 min-w-0 space-y-2 rounded-xl border p-3.5 shadow-xs">
-                <div className="flex items-center justify-between">
-                    <div className="text-foreground flex items-center gap-2 text-xs font-semibold">
-                        <FileText className="text-primary h-4 w-4" />
-                        {t('reservas.stepper.activity_data')}
-                    </div>
-                    {formData.publico_estimado ? (
-                        <Badge variant="secondary" className="gap-1 text-[10px]">
-                            <Users className="h-3 w-3" />
-                            {formData.publico_estimado} pessoas
-                        </Badge>
-                    ) : null}
-                </div>
-                <div className="min-w-0 space-y-1 pl-6">
-                    <p className="text-foreground text-xs font-semibold [overflow-wrap:anywhere] break-words">
-                        {formData.titulo || 'Sem título informado'}
-                    </p>
-                    <p className="text-muted-foreground line-clamp-3 text-xs leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
-                        {formData.descricao || 'Sem justificativa informada'}
-                    </p>
-                </div>
-            </div>
-
-            {/* Resumo dos Horários que serão gravados */}
-            <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                    <span className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-                        <CheckCircle2 className="text-primary h-3.5 w-3.5" />
+            <section className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
+                        <CheckCircle2 className="text-primary h-4 w-4" aria-hidden="true" />
                         {t('reservas.stepper.reservation_slots')}
-                    </span>
-                    <span className="text-muted-foreground text-[11px]">{t('reservas.stepper.total_a_gravar', { count: quantidadeHorarios })}</span>
+                    </h3>
+                    <span className="text-muted-foreground text-xs">{t('reservas.stepper.total_a_gravar', { count: horariosGravados.length })}</span>
                 </div>
-                <ScrollArea className="border-border/80 bg-card h-24 rounded-xl border p-2.5">
-                    <div className="flex flex-wrap gap-1.5">
-                        {horariosGravados.map((horario) => (
-                            <Badge
-                                key={`${String(horario.agenda_id ?? '')}|${horario.data}|${horario.horario_inicio}`}
+                <ul className="bg-card border-border/80 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto rounded-xl border p-2.5">
+                    {horariosGravados.map((horario) => (
+                        <li
+                            key={`${String(horario.agenda_id ?? '')}|${horario.data}|${horario.horario_inicio}`}
+                            className="bg-muted/40 border-border text-foreground rounded-md border px-2 py-0.5 font-mono text-sm"
+                        >
+                            {`${formatDate(horario.data, 'dd/MM')} · ${horario.horario_inicio.slice(0, 5)}–${horario.horario_fim.slice(0, 5)}`}
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
+            <div className="space-y-3">
+                <ReservaConflictAlert
+                    espacoId={espaco.id}
+                    selectedSlots={slotsSelecao}
+                    conflictingDates={conflictingDates}
+                    onRealtimeSlotsConflict={onRealtimeSlotsConflict}
+                />
+
+                {temConflito && (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-foreground text-sm">{t('reservas.stepper.conflict.blocked_hint')}</p>
+                        {onRemoverConflitos && quantidadeEmConflito > 0 && (
+                            <Button
+                                type="button"
                                 variant="outline"
-                                className="bg-muted/40 border-border text-foreground px-2 py-0.5 font-mono text-[11px]"
+                                onClick={onRemoverConflitos}
+                                className="text-destructive-accent hover:text-destructive-accent h-10 shrink-0 gap-1.5 px-4 text-sm"
                             >
-                                {formatDate(parseDataLocal(horario.data), 'dd/MM')} • {horario.horario_inicio.slice(0, 5)}-
-                                {horario.horario_fim.slice(0, 5)}
-                            </Badge>
-                        ))}
+                                <Trash2 className="text-destructive-accent h-4 w-4" aria-hidden="true" />
+                                {t('reservas.stepper.conflict.remove_button')}
+                            </Button>
+                        )}
                     </div>
-                </ScrollArea>
+                )}
             </div>
 
-            {/* Termo de Responsabilidade Institucional */}
             <div className="bg-muted/30 border-border/80 space-y-2 rounded-xl border p-3.5">
                 <div className="flex items-start gap-3">
                     <Checkbox
-                        id="termo_responsabilidade"
+                        id={termoId}
                         checked={Boolean(formData.termo_responsabilidade)}
                         onCheckedChange={(checked) => {
-                            setFormData('termo_responsabilidade', Boolean(checked));
+                            setFormData('termo_responsabilidade', checked === true);
                         }}
                         className="mt-0.5"
                     />
                     <div className="grid gap-1">
-                        <Label htmlFor="termo_responsabilidade" className="text-foreground cursor-pointer text-xs leading-none font-semibold">
+                        <Label htmlFor={termoId} className="text-foreground cursor-pointer text-sm leading-snug font-semibold">
                             {t('reservas.stepper.terms_title')}
                         </Label>
-                        <p className="text-muted-foreground text-[11px] leading-relaxed">
+                        <p className="text-muted-foreground text-sm leading-relaxed">
                             {t('reservas.stepper.terms_description', { institution_name: 'UESB' })}
                         </p>
+                        {!formData.termo_responsabilidade && (
+                            <p className="text-foreground text-xs font-medium">{t('reservas.stepper.terms_hint')}</p>
+                        )}
                     </div>
                 </div>
             </div>
