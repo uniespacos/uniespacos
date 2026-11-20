@@ -1,7 +1,14 @@
 import { Turno, type TurnoType } from '@/contracts/turnos.contract';
+import type { SupportedLocale } from '@/i18n/types';
 import { assertNever } from '@/lib/utils/exhaustive';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { type Locale, format, parseISO } from 'date-fns';
+import { enUS, es, ptBR } from 'date-fns/locale';
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+    'pt-BR': ptBR,
+    en: enUS,
+    es,
+};
 
 export function parseTurnoFiltro(valor: string | undefined): TurnoType | undefined {
     return Object.values(Turno).find((turno) => turno === valor);
@@ -20,8 +27,11 @@ export function chaveTurnoFiltro(turno: TurnoType) {
     }
 }
 
-export function formatarDataFiltro(dataIso: string): string {
-    return format(parseISO(dataIso), 'EEEEEE, dd/MM', { locale: ptBR });
+export function formatarDataFiltro(dataIso: string, locale: SupportedLocale = 'pt-BR'): string {
+    const dateLocale = DATE_FNS_LOCALES[locale];
+    const padrao = locale === 'pt-BR' ? 'EEEEEE, dd/MM' : 'EEE, dd/MM';
+
+    return format(parseISO(dataIso), padrao, { locale: dateLocale }).replace('.', '');
 }
 
 export function capacidadeValida(valor: string | undefined): string {

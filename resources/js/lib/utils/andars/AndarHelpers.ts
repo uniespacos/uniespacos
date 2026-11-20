@@ -33,12 +33,13 @@ export function nivelParaLabel(nivel: number): string {
  * Converte nome do andar para nível numérico
  */
 export function nomeParaNivel(nome: string): number {
+    if (nome === 'subsolo') return -1;
     if (nome.startsWith('subsolo-')) {
-        return -Number.parseInt(nome.split('-')[1]);
+        return -Number.parseInt(nome.split('-')[1], 10);
     }
     if (nome === 'terreo') return 0;
     if (nome.startsWith('andar-')) {
-        return Number.parseInt(nome.split('-')[1]);
+        return Number.parseInt(nome.split('-')[1], 10);
     }
     return 0;
 }

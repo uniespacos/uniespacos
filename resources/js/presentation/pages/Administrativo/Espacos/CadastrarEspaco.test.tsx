@@ -127,10 +127,11 @@ describe('CadastrarEspacoPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         delete mockPageProps.espaco;
-        (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string) => {
+        (globalThis as unknown as { route: jest.Mock }).route = jest.fn((name: string, param?: unknown) => {
             const routes: Record<string, string> = {
                 'institucional.espacos.index': '/institucional/espacos',
                 'institucional.espacos.create': '/institucional/espacos/create',
+                'institucional.espacos.edit': `/institucional/espacos/${String(param)}/edit`,
             };
             if (routes[name]) {
                 return routes[name];
@@ -183,5 +184,10 @@ describe('CadastrarEspacoPage', () => {
         expect(screen.getByRole('button', { name: 'Atualizar' })).toHaveAttribute('type', 'submit');
         expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
+
+        const breadcrumbs = screen.getAllByTestId('bc');
+        expect(breadcrumbs).toHaveLength(2);
+        expect(breadcrumbs[1]).toHaveAttribute('href', '/institucional/espacos/9/edit');
+        expect(breadcrumbs[1]).toHaveTextContent('Editar Espaço');
     });
 });

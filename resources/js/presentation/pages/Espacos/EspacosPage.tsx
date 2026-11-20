@@ -13,7 +13,7 @@ import { RotateCcw, SearchX } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function EspacosPage() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const breadcrumbs = useMemo(() => [{ title: t('espacos.consultar_espacos'), href: '/espacos' }], [t]);
     const {
         andares,
@@ -56,10 +56,10 @@ export default function EspacosPage() {
     const resumoDisponibilidade = filters.data
         ? turnoFiltrado
             ? t('espacos.filtros.disponibilidade_resumo_turno', {
-                  data: formatarDataFiltro(filters.data),
+                  data: formatarDataFiltro(filters.data, locale),
                   turno: t(chaveTurnoFiltro(turnoFiltrado)).toLowerCase(),
               })
-            : t('espacos.filtros.disponibilidade_resumo', { data: formatarDataFiltro(filters.data) })
+            : t('espacos.filtros.disponibilidade_resumo', { data: formatarDataFiltro(filters.data, locale) })
         : null;
 
     const handleSolicitarReserva = (espacoId: string) => {

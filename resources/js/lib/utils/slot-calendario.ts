@@ -1,8 +1,14 @@
-import type { TranslationKey } from '@/i18n';
+import type { SupportedLocale, TranslationKey } from '@/i18n';
 import { assertNever } from '@/lib/utils/exhaustive';
 import type { SlotCalendario } from '@/types';
-import { format, isSameDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { type Locale, format, isSameDay } from 'date-fns';
+import { enUS, es, ptBR } from 'date-fns/locale';
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+    'pt-BR': ptBR,
+    en: enUS,
+    es,
+};
 
 export function slotPodeSerSelecionado(slot: SlotCalendario): boolean {
     return slot.status !== 'reservado' && !slot.isLocked && !slot.isPast;
@@ -53,8 +59,8 @@ export function slotsDoIntervaloShift(candidatos: readonly SlotCalendario[], anc
     return ordenarSelecaoSlots(doIntervalo);
 }
 
-export function descricaoDiaSlot(data: Date): string {
-    const diaSemana = format(data, 'EEEE', { locale: ptBR });
+export function descricaoDiaSlot(data: Date, locale: SupportedLocale = 'pt-BR'): string {
+    const diaSemana = format(data, 'EEEE', { locale: DATE_FNS_LOCALES[locale] });
 
     return `${diaSemana.charAt(0).toUpperCase()}${diaSemana.slice(1)}, ${format(data, 'dd/MM')}`;
 }

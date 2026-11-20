@@ -1,12 +1,19 @@
 import { ESTILO_SITUACAO } from '@/constants/situacao-reserva';
 import { Turno, TurnoType } from '@/contracts/turnos.contract';
+import type { SupportedLocale } from '@/i18n/types';
 import { assertNever } from '@/lib/utils/exhaustive';
 import { Horario, SituacaoReserva } from '@/types';
 import { type ClassValue, clsx } from 'clsx';
-import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { type Locale, addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
+import { enUS, es, ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+    'pt-BR': ptBR,
+    en: enUS,
+    es,
+};
 
 export function getCookie(name: string): string | undefined {
     if (typeof document === 'undefined') return undefined;
@@ -100,19 +107,16 @@ export function getPrimeirosDoisNomes(nomeCompleto: string | undefined): string 
     return palavras.slice(0, 2).join(' ');
 }
 
-export function diasDaSemana(dataReferencia: Date, hoje: Date) {
-    const inicioDaSemana = startOfWeek(dataReferencia, { weekStartsOn: 1 }); // 1 = Segunda-feira
+export function diasDaSemana(dataReferencia: Date, hoje: Date, locale: SupportedLocale = 'pt-BR') {
+    const inicioDaSemana = startOfWeek(dataReferencia, { weekStartsOn: 1 });
+    const dateLocale = DATE_FNS_LOCALES[locale];
 
     return Array.from({ length: 7 }).map((_, i) => {
         const dia = addDays(inicioDaSemana, i);
         return {
             data: dia,
-            nome: format(dia, 'EEEE', { locale: ptBR }),
-            // 'EEE' no locale pt-BR devolve o nome por extenso ("segunda"), não
-            // a forma curta — os três consumidores faziam `.replace('.', '')`
-            // esperando "seg.", o que nunca casava. 'EEEEEE' é a forma curta de
-            // verdade ("seg"), que é o que cabe num seletor de 7 colunas.
-            abreviado: format(dia, 'EEEEEE', { locale: ptBR }),
+            nome: format(dia, 'EEEE', { locale: dateLocale }),
+            abreviado: locale === 'pt-BR' ? format(dia, 'EEEEEE', { locale: ptBR }) : format(dia, 'EEE', { locale: dateLocale }).replace('.', ''),
             diaMes: format(dia, 'dd/MM'),
             valor: format(dia, 'yyyy-MM-dd'),
             ehHoje: isSameDay(dia, hoje),

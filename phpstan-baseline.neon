@@ -787,12 +787,6 @@ parameters:
 			path: app/Http/Requests/UpdateUserRequest.php
 
 		-
-			message: '#^Parameter \#1 \$path of method Illuminate\\Routing\\Redirector\:\:to\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Responses/CustomLoginResponse.php
-
-		-
 			message: '#^Method App\\Jobs\\AvaliarReservaJob\:\:__construct\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

@@ -6,6 +6,7 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
@@ -22,17 +23,35 @@ class CustomLoginResponse implements LoginResponseContract
      */
     public function toResponse($request)
     {
-        // Check if there's an intended email verification URL in the session
         if (Session::has('url.email-verification.intended')) {
-            $intendedUrl = Session::pull('url.email-verification.intended');
+            $intendedUrl = $this->normalizarEsquemaUrlIntencionada(Session::pull('url.email-verification.intended'));
             Log::info('Login com verificação de e-mail pendente, redirecionando para a verificação', ['user_id' => Auth::id()]);
 
             return redirect()->to($intendedUrl);
         }
 
-        // Otherwise, proceed with the default Fortify redirect
+        if (Session::has('url.intended')) {
+            Session::put(
+                'url.intended',
+                $this->normalizarEsquemaUrlIntencionada(Session::get('url.intended'))
+            );
+        }
+
         return $request->wantsJson()
             ? response()->json(['two_factor' => false])
             : redirect()->intended(Fortify::redirects('login'));
+    }
+
+    private function normalizarEsquemaUrlIntencionada(mixed $valor): string
+    {
+        $url = is_string($valor) ? $valor : '';
+        $deveForcarHttps = app()->environment('production')
+            || str_starts_with(Config::string('app.url', ''), 'https://');
+
+        if ($deveForcarHttps && str_starts_with($url, 'http://')) {
+            return 'https://'.substr($url, strlen('http://'));
+        }
+
+        return $url;
     }
 }

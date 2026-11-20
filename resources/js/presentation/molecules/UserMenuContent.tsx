@@ -1,6 +1,15 @@
-import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
+import {
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { SUPPORTED_LOCALES, type SupportedLocale, useTranslation } from '@/i18n';
+import { disconnectEcho } from '@/lib/echo-channel-registry';
 import { UserInfo } from '@/presentation/molecules/UserInfo';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
@@ -32,7 +41,6 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 {},
                 {
                     preserveScroll: true,
-                    
                 },
             );
         } catch {
@@ -41,7 +49,6 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 {},
                 {
                     preserveScroll: true,
-                    
                 },
             );
         }
@@ -79,13 +86,13 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                                     onClick={() => {
                                         handleLocaleChange(loc);
                                     }}
-                                    className="flex items-center justify-between cursor-pointer text-xs"
+                                    className="flex cursor-pointer items-center justify-between text-xs"
                                 >
                                     <span className="flex items-center gap-2">
                                         <span>{info.flag}</span>
                                         <span>{info.label}</span>
                                     </span>
-                                    {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                                    {isSelected && <Check className="text-primary h-3.5 w-3.5" />}
                                 </DropdownMenuItem>
                             );
                         })}
@@ -94,9 +101,18 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link className="block w-full cursor-pointer" method="post" href={route('logout')} as="button" onClick={cleanup}>
+                <Link
+                    className="block w-full cursor-pointer"
+                    method="post"
+                    href={route('logout')}
+                    as="button"
+                    onClick={() => {
+                        cleanup();
+                        disconnectEcho();
+                    }}
+                >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sair
+                    {t('nav.user_menu.logout')}
                 </Link>
             </DropdownMenuItem>
         </>

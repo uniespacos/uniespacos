@@ -17,13 +17,6 @@ import { lazy, Suspense, useMemo } from 'react';
 
 const GraficoReservasPeriodo = lazy(() => import('@/presentation/organisms/GraficoReservasPeriodo'));
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Painel Inicial',
-        href: '/dashboard',
-    },
-];
-
 interface DashboardGestorProps {
     user?: User;
     espacos?: Espaco[];
@@ -36,6 +29,15 @@ interface DashboardGestorProps {
 
 export default function DashboardGestorPage(props: DashboardGestorProps) {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('dashboard.title'),
+                href: '/dashboard',
+            },
+        ],
+        [t],
+    );
     const pageProps = usePage<{
         auth: { user: User };
         user?: User;

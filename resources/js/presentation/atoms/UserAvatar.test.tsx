@@ -42,6 +42,18 @@ describe('UserAvatar', () => {
         expect(container.querySelector('[data-slot="avatar-image"]')).toBeNull();
     });
 
+    it('rejects storage URLs without a valid image extension produced by backend accessor for invalid data', () => {
+        const { container: c1 } = render(
+            <UserAvatar user={{ ...mockUser, profile_pic: 'https://staging.uniespacos.uesb.br/storage/aushaushuahsas' }} />,
+        );
+        expect(c1.querySelector('img')).toBeNull();
+        expect(c1.querySelector('[data-slot="avatar-image"]')).toBeNull();
+
+        const { container: c2 } = render(<UserAvatar user={{ ...mockUser, profile_pic: '/storage/aushaushuahsas' }} />);
+        expect(c2.querySelector('img')).toBeNull();
+        expect(c2.querySelector('[data-slot="avatar-image"]')).toBeNull();
+    });
+
     it('renders AvatarImage when valid profile_pic is provided', () => {
         render(<UserAvatar user={{ ...mockUser, profile_pic: 'https://example.com/avatar.jpg' }} />);
 

@@ -4,6 +4,7 @@ import { SyntheticEvent, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { disconnectEcho } from '@/lib/echo-channel-registry';
 import TextLink from '@/presentation/atoms/TextLink';
 import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 
@@ -65,7 +66,14 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </Button>
 
                 <div className="border-border text-muted-foreground border-t pt-4 text-center text-sm">
-                    <TextLink href={route('logout')} method="post" className="text-destructive-accent font-medium hover:underline">
+                    <TextLink
+                        href={route('logout')}
+                        method="post"
+                        onClick={() => {
+                            disconnectEcho();
+                        }}
+                        className="text-destructive-accent font-medium hover:underline"
+                    >
                         {t('auth.verifyEmail.logout_link')}
                     </TextLink>
                 </div>

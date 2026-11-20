@@ -77,7 +77,9 @@ export function ReservaCard({ reserva, isGestor, onDetalhes, onAvaliar, onEditar
                         <Calendar className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
                         <span className="min-w-0 truncate">
                             {formatDate(reserva.data_inicial)}
-                            {formatDate(reserva.data_inicial) !== formatDate(reserva.data_final) ? ` até ${formatDate(reserva.data_final)}` : ''}
+                            {formatDate(reserva.data_inicial) !== formatDate(reserva.data_final)
+                                ? ` ${t('reservas.stepper.period_to')} ${formatDate(reserva.data_final)}`
+                                : ''}
                         </span>
                     </div>
                     {resumoHorarios ? (

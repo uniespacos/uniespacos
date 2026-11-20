@@ -31,9 +31,12 @@ export default function CadastrarEspacoPage() {
     const breadcrumbs = useMemo(
         () => [
             { title: t('admin.espacos.titulo'), href: route('institucional.espacos.index') },
-            { title: t('admin.espacos.cadastrar'), href: route('institucional.espacos.create') },
+            {
+                title: isEditMode ? t('admin.espacos.editar') : t('admin.espacos.cadastrar'),
+                href: isEditMode ? route('institucional.espacos.edit', espaco.id) : route('institucional.espacos.create'),
+            },
         ],
-        [t],
+        [isEditMode, espaco, t],
     );
 
     const [imagesWithPreviews, setImagesWithPreviews] = useState<ImageWithPreview[]>(() => {

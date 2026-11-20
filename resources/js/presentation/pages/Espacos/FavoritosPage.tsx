@@ -8,16 +8,19 @@ import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, User } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Star } from 'lucide-react';
-
-const breadcrumbs = [
-    {
-        title: 'Meus Favoritos',
-        href: '/espacos/favoritos',
-    },
-];
+import { useMemo } from 'react';
 
 export default function FavoritosPage() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo(
+        () => [
+            {
+                title: t('espacos.favoritos_titulo'),
+                href: '/espacos/favoritos',
+            },
+        ],
+        [t],
+    );
     const {
         favoritos: { data: espacosFavoritos, links },
         user,

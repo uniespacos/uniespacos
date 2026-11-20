@@ -1,5 +1,5 @@
-import RolesPage from './Roles';
 import { fireEvent, render, screen } from '@testing-library/react';
+import RolesPage from './Roles';
 
 const mockGet = jest.fn();
 
@@ -42,7 +42,11 @@ jest.mock('@inertiajs/react', () => ({
         delete safeProps.preserveScroll;
         delete safeProps.only;
         delete safeProps.as;
-        return <a href={href} {...safeProps}>{children}</a>;
+        return (
+            <a href={href} {...safeProps}>
+                {children}
+            </a>
+        );
     },
     router: {
         get: (...args: unknown[]) => {
@@ -91,11 +95,13 @@ describe('RolesPage', () => {
         expect((searchInput as HTMLInputElement).value).toBe('Gestor');
     });
 
-    it('renderiza Select de tipo para filtro (sistema/customizado)', () => {
+    it('renderiza Select de tipo para filtro (sistema/customizado) com rotulos de Papel e nao de Espaco', () => {
         render(<RolesPage />);
 
-        const tipoLabels = screen.queryAllByText(/Tipo/i);
-        expect(tipoLabels.length).toBeGreaterThan(0);
+        expect(screen.getByText('Tipo de Papel')).toBeInTheDocument();
+        expect(screen.getByText('Descrição do Papel')).toBeInTheDocument();
+        expect(screen.queryByText('Tipo de Espaço')).not.toBeInTheDocument();
+        expect(screen.queryByText('Descrição do Espaço')).not.toBeInTheDocument();
     });
 
     it('filtra papéis por tipo e mantém busca funcionando', () => {

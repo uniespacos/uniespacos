@@ -5,16 +5,19 @@ import AppLayout from '@/presentation/templates/AppLayout';
 import SettingsLayout from '@/presentation/templates/settings/Layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Aparência',
-        href: '/settings/appearance',
-    },
-];
+import { useMemo } from 'react';
 
 export default function Appearance() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('settings.appearance.title'),
+                href: '/settings/appearance',
+            },
+        ],
+        [t],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -22,10 +25,7 @@ export default function Appearance() {
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall
-                        title={t('settings.appearance.title')}
-                        description={t('settings.appearance.desc')}
-                    />
+                    <HeadingSmall title={t('settings.appearance.title')} description={t('settings.appearance.desc')} />
                     <AppearanceTabs />
                 </div>
             </SettingsLayout>

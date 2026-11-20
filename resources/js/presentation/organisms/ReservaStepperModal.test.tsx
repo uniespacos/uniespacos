@@ -1,4 +1,5 @@
-import { Espaco, SlotCalendario } from '@/types';
+import { resolverSituacaoInicialReserva } from '@/hooks/use-agenda-selection';
+import { Agenda, Espaco, SlotCalendario, User } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
@@ -204,6 +205,53 @@ describe('ReservaStepperModal', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Fazer outra solicitação' }));
 
         expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it('na tela de sucesso, exibe mensagem de auto-aprovacao quando a reserva nasce deferida', () => {
+        renderModal({ sucessoCriacao: true, situacaoCriacao: 'deferida' });
+
+        expect(screen.getByText('Solicitação enviada!')).toBeInTheDocument();
+        expect(screen.getByText('Sua reserva foi aprovada automaticamente.')).toBeInTheDocument();
+        expect(
+            screen.queryByText('O gestor do turno vai avaliar seu pedido. Você recebe uma notificação quando houver resposta.'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('na tela de sucesso, exibe mensagem parcial quando apenas parte das agendas e gerida pelo solicitante', () => {
+        renderModal({ sucessoCriacao: true, situacaoCriacao: 'parcialmente_deferida' });
+
+        expect(screen.getByText('Solicitação enviada!')).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                'Os horários sob sua gestão foram aprovados automaticamente. Os demais turnos aguardam avaliação do gestor responsável.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    it('calcula corretamente a situacao inicial prevista pela relacao entre solicitante e gestores das agendas', () => {
+        const agendas: Agenda[] = [
+            { id: 1, turno: 'manha', user: { id: 10, name: 'Gestor A' } as User },
+            { id: 2, turno: 'tarde', user: { id: 20, name: 'Gestor B' } as User },
+        ];
+
+        expect(
+            resolverSituacaoInicialReserva([{ data: '2026-08-25', horario_inicio: '08:00:00', horario_fim: '09:00:00', agenda_id: 1 }], agendas, 10),
+        ).toBe('deferida');
+
+        expect(
+            resolverSituacaoInicialReserva(
+                [
+                    { data: '2026-08-25', horario_inicio: '08:00:00', horario_fim: '09:00:00', agenda_id: 1 },
+                    { data: '2026-08-25', horario_inicio: '14:00:00', horario_fim: '15:00:00', agenda_id: 2 },
+                ],
+                agendas,
+                10,
+            ),
+        ).toBe('parcialmente_deferida');
+
+        expect(
+            resolverSituacaoInicialReserva([{ data: '2026-08-25', horario_inicio: '08:00:00', horario_fim: '09:00:00', agenda_id: 1 }], agendas, 99),
+        ).toBe('em_analise');
     });
 
     it('mantem classes de foco visivel nos botoes de acao do rodape do modal', () => {

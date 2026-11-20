@@ -38,33 +38,39 @@ export default function Home() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-border/60 bg-muted/20 opacity-60">
+                <Card className="border-border/70 group hover:border-primary/50 transition-all duration-200 hover:shadow-md">
                     <CardHeader className="p-6 pb-4">
-                        <div className="bg-muted text-muted-foreground mb-2 w-fit rounded-xl p-3">
+                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground mb-2 w-fit rounded-xl p-3 transition-colors">
                             <Users className="h-6 w-6" />
                         </div>
                         <CardTitle className="text-lg font-semibold">Usuários</CardTitle>
                         <CardDescription className="text-xs">Gerencie usuários e suas vinculações</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-0">
-                        <Button className="w-full" variant="outline" disabled>
-                            Em breve
-                        </Button>
+                        <Link href={route('institucional.usuarios.index')} className="block w-full">
+                            <Button className="w-full justify-between">
+                                <span>Acessar Usuários</span>
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
 
-                <Card className="border-border/60 bg-muted/20 opacity-60">
+                <Card className="border-border/70 group hover:border-primary/50 transition-all duration-200 hover:shadow-md">
                     <CardHeader className="p-6 pb-4">
-                        <div className="bg-muted text-muted-foreground mb-2 w-fit rounded-xl p-3">
+                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground mb-2 w-fit rounded-xl p-3 transition-colors">
                             <Settings className="h-6 w-6" />
                         </div>
                         <CardTitle className="text-lg font-semibold">Configurações</CardTitle>
-                        <CardDescription className="text-xs">Configurações gerais do sistema</CardDescription>
+                        <CardDescription className="text-xs">Configurações de perfil, segurança e aparência</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-0">
-                        <Button className="w-full" variant="outline" disabled>
-                            Em breve
-                        </Button>
+                        <Link href={route('settings.profile.edit')} className="block w-full">
+                            <Button className="w-full justify-between">
+                                <span>Acessar Configurações</span>
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
             </div>

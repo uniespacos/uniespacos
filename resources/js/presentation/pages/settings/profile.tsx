@@ -15,14 +15,9 @@ import { type BreadcrumbItem, type Instituicao, type SharedData } from '@/types'
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Camera, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { useRef, useState, type SyntheticEvent } from 'react';
+import { useMemo, useRef, useState, type SyntheticEvent } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Configurações de perfil',
-        href: '/settings/profile',
-    },
-];
+const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
 
 interface ProfileForm {
     name: string;
@@ -48,6 +43,17 @@ export default function Profile({
     const { auth } = usePage<SharedData>().props;
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [photoError, setPhotoError] = useState<string | null>(null);
+
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('auth.profile.head_title'),
+                href: '/settings/profile',
+            },
+        ],
+        [t],
+    );
 
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
         name: auth.user.name,
@@ -70,11 +76,31 @@ export default function Profile({
             return;
         }
 
+        if (!file.type.startsWith('image/')) {
+            setPhotoError(t('auth.profile.photo_invalid_type'));
+            e.target.value = '';
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+            return;
+        }
+
+        if (file.size > MAX_PHOTO_SIZE_BYTES) {
+            setPhotoError(t('auth.profile.photo_max_size'));
+            e.target.value = '';
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+            return;
+        }
+
+        setPhotoError(null);
         setData((prevData) => ({ ...prevData, photo: file, remove_photo: false }));
         setPhotoPreview(URL.createObjectURL(file));
     };
 
     const handleRemovePhoto = () => {
+        setPhotoError(null);
         setData((prevData) => ({ ...prevData, photo: null, remove_photo: true }));
         setPhotoPreview(null);
         if (fileInputRef.current) {
@@ -166,6 +192,7 @@ export default function Profile({
                         </Button>
                     )}
                 </div>
+                <InputError message={photoError ?? errors.photo} />
 
                 <div className="space-y-6">
                     <HeadingSmall title={t('auth.profile.info_title')} description={t('auth.profile.info_desc')} />

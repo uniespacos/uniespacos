@@ -5,7 +5,7 @@ import AgendaEspaço from '@/presentation/organisms/EspacoAgenda';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { BreadcrumbItem, Espaco, Reserva } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export default function VisualizarEspaço({
     espaco,
@@ -44,16 +44,19 @@ export default function VisualizarEspaço({
         };
     }, []);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: isEditMode ? 'Reservas' : 'Espaços',
-            href: isEditMode ? '/reservas' : '/espacos',
-        },
-        {
-            title: isEditMode ? 'Editar' : espaco.nome,
-            href: isEditMode && reserva ? `/reservas/${String(reserva.id)}/edit` : `/espacos/${String(espaco.id)}`,
-        },
-    ];
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: isEditMode ? t('nav.minhas_reservas') : t('espacos.titulo'),
+                href: isEditMode ? '/reservas' : '/espacos',
+            },
+            {
+                title: isEditMode ? t('reservas.acoes.editar') : espaco.nome,
+                href: isEditMode && reserva ? `/reservas/${String(reserva.id)}/edit` : `/espacos/${String(espaco.id)}`,
+            },
+        ],
+        [isEditMode, reserva, espaco.id, espaco.nome, t],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

@@ -20,7 +20,7 @@ export function DataTable<T>({
     columns,
     keyExtractor,
     actions,
-    actionsHeader = 'Ações',
+    actionsHeader,
     actionsAlign = 'right',
     actionsWidth,
     viewMode = 'table',
@@ -308,7 +308,7 @@ export function DataTable<T>({
                                 style={actionsWidth ? { width: actionsWidth } : undefined}
                                 className={cn(getAlignmentClass(actionsAlign), 'w-[120px] whitespace-nowrap')}
                             >
-                                {actionsHeader}
+                                {actionsHeader ?? t('reservas.tabela.acoes')}
                             </TableHead>
                         )}
                     </TableRow>

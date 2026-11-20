@@ -91,6 +91,20 @@ describe('ReservaConflictAlert', () => {
         expect(onRealtimeSlotsConflict).toHaveBeenCalledWith(['dt']);
     });
 
+    it('remove o alerta de conflito em tempo real quando o slot em conflito sai da seleção', () => {
+        const { rerender } = render(<ReservaConflictAlert espacoId={1} selectedSlots={[slotSelecionado]} />);
+
+        act(() => {
+            listeners['.HorarioOcupadoEvent']({ data: '2026-06-03', horario_inicio: '08:20:00' });
+        });
+
+        expect(screen.getByRole('alert')).toHaveTextContent('Conflito em tempo real');
+
+        rerender(<ReservaConflictAlert espacoId={1} selectedSlots={[]} />);
+
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
     it('libera o canal ao desmontar', () => {
         const { unmount } = render(<ReservaConflictAlert espacoId={7} selectedSlots={[slotSelecionado]} />);
 

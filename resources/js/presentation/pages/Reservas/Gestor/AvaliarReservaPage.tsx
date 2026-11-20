@@ -27,17 +27,6 @@ import { ArrowLeft, Clock, Info, Loader2 } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Gerenciar Reservas',
-        href: '/gestor/reservas',
-    },
-    {
-        title: 'Avaliar Reserva',
-        href: '#',
-    },
-];
-
 interface AvaliarReservaPageProps {
     reserva: Reserva;
     semana: {
@@ -50,12 +39,26 @@ interface AvaliarReservaPageProps {
 }
 
 export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos = {}, conflictCacheSnapshot = null }: AvaliarReservaPageProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     useReservationLiveUpdates();
     useReservaRefreshOnEvent({ only: ['reserva'] });
 
     const isCancelada = reserva.situacao === SituacaoReserva.INATIVA;
     const isReavaliacao = reserva.situacao !== SituacaoReserva.EM_ANALISE;
+
+    const breadcrumbs = useMemo<BreadcrumbItem[]>(
+        () => [
+            {
+                title: t('reservas.gestor_titulo'),
+                href: '/gestor/reservas',
+            },
+            {
+                title: isReavaliacao ? t('reservas.avaliacao.reavaliacao_titulo') : t('reservas.avaliacao.titulo'),
+                href: '#',
+            },
+        ],
+        [isReavaliacao, t],
+    );
 
     const agendas = useMemo(() => {
         return reserva.horarios
@@ -246,7 +249,7 @@ export default function AvaliarReservaPage({ reserva, semana, todosOsConflitos =
                         <div className="relative mt-2">
                             <CalendarReservationDetails
                                 agendas={agendas}
-                                diasSemana={diasDaSemana(semanaVisivel, hoje)}
+                                diasSemana={diasDaSemana(semanaVisivel, hoje, locale)}
                                 slotsSolicitados={slotsSelecao}
                                 alternarSelecaoSlot={isCancelada ? () => undefined : avaliarSlot}
                             />

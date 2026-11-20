@@ -110,7 +110,7 @@ export default function EspacoFiltroBusca({
     andares,
     disponibilidade = false,
 }: FiltroBuscaEspacosProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [localFilters, setLocalFilters] = useState<FiltrosLocais>(() => filtrosDoServidor(filters));
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -299,7 +299,7 @@ export default function EspacoFiltroBusca({
         if (localFilters.data) {
             chips.push({
                 key: 'data',
-                label: t('espacos.filtros.data_chip', { data: formatarDataFiltro(localFilters.data) }),
+                label: t('espacos.filtros.data_chip', { data: formatarDataFiltro(localFilters.data, locale) }),
                 nome: t('espacos.filtros.data'),
             });
         }
@@ -312,7 +312,7 @@ export default function EspacoFiltroBusca({
         }
 
         return chips;
-    }, [localFilters, unidades, modulos, andares, capacidadeAtiva, t]);
+    }, [localFilters, unidades, modulos, andares, capacidadeAtiva, t, locale]);
 
     const handleRemoverChip = (key: ChaveChip) => {
         switch (key) {

@@ -1,10 +1,17 @@
 import { opcoesRecorrencia } from '@/constants/recorrencia';
-import { EscopoRecorrencia, type EscopoRecorrenciaType, RecorrenciaReserva, type RecorrenciaReservaType } from '@/contracts';
+import {
+    EscopoRecorrencia,
+    type EscopoRecorrenciaType,
+    RecorrenciaReserva,
+    type RecorrenciaReservaType,
+    SituacaoReserva,
+    type SituacaoReservaType,
+} from '@/contracts';
 import { useSlotSelection } from '@/hooks/use-slot-selection';
 import { useTranslation } from '@/i18n';
 import { parseDataLocal } from '@/lib/utils';
 import { propagarEdicaoRecorrente } from '@/lib/utils/propagar-edicao-recorrente';
-import { type Espaco, type Reserva, type SlotCalendario } from '@/types';
+import { type Agenda, type Espaco, type Reserva, type SlotCalendario } from '@/types';
 import { type ReservaFormData } from '@/types/reserva-stepper';
 import { useForm } from '@inertiajs/react';
 import { addMonths, format, isBefore, parse, startOfDay } from 'date-fns';
@@ -105,9 +112,39 @@ interface UseAgendaSelectionProps {
     reserva?: Reserva;
     isEditMode: boolean;
     semanaVisivel: Date;
+    userId?: number;
 }
 
-export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAgendaSelectionProps) {
+export function resolverSituacaoInicialReserva(
+    horariosSolicitados: AgendaHorarioPayload[],
+    agendas: Agenda[] | undefined,
+    userId: number | undefined,
+): SituacaoReservaType {
+    if (!userId || !agendas || agendas.length === 0 || horariosSolicitados.length === 0) {
+        return SituacaoReserva.EM_ANALISE;
+    }
+
+    const agendaIdsUsadas = new Set(horariosSolicitados.map((h) => h.agenda_id).filter((id): id is number => typeof id === 'number'));
+    const agendasUsadas = agendas.filter((agenda) => agendaIdsUsadas.has(agenda.id));
+
+    if (agendasUsadas.length === 0) {
+        return SituacaoReserva.EM_ANALISE;
+    }
+
+    const gestoresUnicos = new Set(agendasUsadas.map((a) => a.user?.id).filter((id): id is number => typeof id === 'number'));
+
+    if (gestoresUnicos.size === 1 && gestoresUnicos.has(userId)) {
+        return SituacaoReserva.DEFERIDA;
+    }
+
+    if (gestoresUnicos.has(userId)) {
+        return SituacaoReserva.PARCIALMENTE_DEFERIDA;
+    }
+
+    return SituacaoReserva.EM_ANALISE;
+}
+
+export function useAgendaSelection({ espaco, reserva, isEditMode, semanaVisivel, userId }: UseAgendaSelectionProps) {
     const { t } = useTranslation();
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
     const semanaVisivelIso = format(semanaVisivel, 'yyyy-MM-dd');
@@ -138,9 +175,11 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
 
     const [dialogAbertoEstado, setDialogAbertoEstado] = useState(false);
     const [sucessoCriacao, setSucessoCriacao] = useState(false);
+    const [situacaoCriacao, setSituacaoCriacao] = useState<SituacaoReservaType>(SituacaoReserva.EM_ANALISE);
 
     const setDialogAberto = useCallback((aberto: boolean) => {
         setSucessoCriacao(false);
+        setSituacaoCriacao(SituacaoReserva.EM_ANALISE);
         setDialogAbertoEstado(aberto);
     }, []);
 
@@ -260,10 +299,12 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
                 onError,
             });
         } else {
+            const situacaoPrevista = resolverSituacaoInicialReserva(data.horarios_solicitados, espaco.agendas, userId);
             post(route('reservas.store'), {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
+                    setSituacaoCriacao(situacaoPrevista);
                     limparSelecao();
                     reset();
                     setSucessoCriacao(true);
@@ -296,6 +337,7 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
         dialogAberto: dialogAbertoEstado,
         setDialogAberto,
         sucessoCriacao,
+        situacaoCriacao,
         formData,
         setFormData,
         processing,

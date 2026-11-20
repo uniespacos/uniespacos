@@ -27,6 +27,52 @@ function getEchoInstance(): EchoInstance | undefined {
     return window.Echo;
 }
 
+function canLeaveEchoChannel(echo: EchoInstance): boolean {
+    const connector = (
+        echo as unknown as {
+            connector?: {
+                pusher?: {
+                    connection?: {
+                        state?: string;
+                        socket?: {
+                            readyState?: number;
+                        };
+                    };
+                };
+            };
+        }
+    ).connector;
+
+    const state = connector?.pusher?.connection?.state;
+    if (typeof state === 'string' && state !== 'connected') {
+        return false;
+    }
+
+    const readyState = connector?.pusher?.connection?.socket?.readyState;
+    if (typeof readyState === 'number' && readyState !== 1) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Desconecta o Echo/Reverb de forma limpa (ex.: antes do POST /logout),
+ * limpando o registro de canais para evitar envios de unsubscribe em WebSocket já em CLOSING/CLOSED.
+ */
+export function disconnectEcho(): void {
+    const echo = getEchoInstance();
+
+    publicChannels.clear();
+    privateChannels.clear();
+
+    if (echo && typeof echo.disconnect === 'function') {
+        echo.disconnect();
+    }
+
+    delete (window as Partial<Window>).Echo;
+}
+
 /**
  * Adquire uma referência a um canal público Echo.
  * Se já existe, incrementa o refCount e devolve a instância cacheada.
@@ -64,7 +110,7 @@ export function releasePublicChannel(name: string): void {
     existing.refCount -= 1;
     if (existing.refCount <= 0) {
         const echo = getEchoInstance();
-        if (echo) {
+        if (echo && canLeaveEchoChannel(echo)) {
             echo.leave(name);
         }
         publicChannels.delete(name);
@@ -108,7 +154,7 @@ export function releasePrivateChannel(name: string): void {
     existing.refCount -= 1;
     if (existing.refCount <= 0) {
         const echo = getEchoInstance();
-        if (echo) {
+        if (echo && canLeaveEchoChannel(echo)) {
             echo.leave(name);
         }
         privateChannels.delete(name);

@@ -120,7 +120,7 @@ describe('useReservaStepper', () => {
         expect(result.current.hasAnyConflict).toBe(false);
     });
 
-    it('marca o slot de origem quando uma ocorrência futura da recorrência colide', () => {
+    it('marca o slot de origem e expõe a data futura em conflictingDates quando uma ocorrência da recorrência colide', () => {
         const slotSemanal = criarSlot('2026-08-18|08:00:00', new Date(2026, 7, 18), '08:00:00', '09:00:00');
 
         const { result } = renderHook(() =>
@@ -130,13 +130,15 @@ describe('useReservaStepper', () => {
                     recorrencia: '15dias',
                     data_inicial: new Date(2026, 7, 18),
                     data_final: new Date(2026, 7, 31),
-                    horarios_solicitados: [],
+                    horarios_solicitados: [{ data: '2026-08-18', horario_inicio: '08:00:00', horario_fim: '09:00:00', agenda_id: 10 }],
                 }),
                 slotsSelecao: [slotSemanal, slotLivre],
             }),
         );
 
         expect(result.current.conflictingSlotIds).toEqual([slotSemanal.id]);
+        expect(result.current.conflictingDates).toEqual(['25/08/2026']);
+        expect(result.current.hasAnyConflict).toBe(true);
     });
 
     it('no escopo de semana única da edição não expande a recorrência para detectar conflito', () => {
@@ -151,13 +153,14 @@ describe('useReservaStepper', () => {
                     edit_scope: 'single',
                     data_inicial: new Date(2026, 7, 18),
                     data_final: new Date(2026, 7, 31),
-                    horarios_solicitados: [],
+                    horarios_solicitados: [{ data: '2026-08-18', horario_inicio: '08:00:00', horario_fim: '09:00:00', agenda_id: 10 }],
                 }),
                 slotsSelecao: [slotSemanal],
             }),
         );
 
         expect(result.current.conflictingSlotIds).toEqual([]);
+        expect(result.current.conflictingDates).toEqual([]);
     });
 
     it('bloqueia avançar sem título e exibe erro inline', () => {

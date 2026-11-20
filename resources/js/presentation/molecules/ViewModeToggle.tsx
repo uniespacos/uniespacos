@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { LayoutGrid, List } from 'lucide-react';
 
@@ -11,8 +12,10 @@ interface ViewModeToggleProps {
 }
 
 export function ViewModeToggle({ viewMode, onViewModeChange, className }: ViewModeToggleProps) {
+    const { t } = useTranslation();
+
     return (
-        <div className={cn('bg-muted inline-flex items-center rounded-lg p-1', className)} role="group" aria-label="Modo de visualização">
+        <div className={cn('bg-muted inline-flex items-center rounded-lg p-1', className)} role="group" aria-label={t('common.viewMode.groupAria')}>
             <Button
                 type="button"
                 variant={viewMode === 'table' ? 'default' : 'ghost'}
@@ -22,10 +25,10 @@ export function ViewModeToggle({ viewMode, onViewModeChange, className }: ViewMo
                     onViewModeChange('table');
                 }}
                 aria-pressed={viewMode === 'table'}
-                aria-label="Visualização em lista"
+                aria-label={t('common.viewMode.listAria')}
             >
                 <List className="mr-1.5 h-4 w-4" />
-                Lista
+                {t('common.viewMode.list')}
             </Button>
             <Button
                 type="button"
@@ -36,10 +39,10 @@ export function ViewModeToggle({ viewMode, onViewModeChange, className }: ViewMo
                     onViewModeChange('grid');
                 }}
                 aria-pressed={viewMode === 'grid'}
-                aria-label="Visualização em cards"
+                aria-label={t('common.viewMode.cardsAria')}
             >
                 <LayoutGrid className="mr-1.5 h-4 w-4" />
-                Cards
+                {t('common.viewMode.cards')}
             </Button>
         </div>
     );

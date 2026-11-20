@@ -22,14 +22,7 @@ function isPlausibleAvatarPath(value: string): boolean {
     if (!trimmed) {
         return false;
     }
-    if (
-        trimmed.startsWith('http://') ||
-        trimmed.startsWith('https://') ||
-        trimmed.startsWith('data:') ||
-        trimmed.startsWith('blob:') ||
-        trimmed.startsWith('/') ||
-        trimmed.includes('/')
-    ) {
+    if (trimmed.startsWith('data:image/') || trimmed.startsWith('blob:')) {
         return true;
     }
     return VALID_IMAGE_EXTENSION_PATTERN.test(trimmed);

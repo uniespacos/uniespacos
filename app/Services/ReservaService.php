@@ -118,15 +118,17 @@ class ReservaService
         $espaco = $reserva->horarios->first()?->agenda?->espaco  // @phpstan-ignore nullsafe.neverNull
             ?? Espaco::whereHas('agendas.horarios.reserva', fn ($q) => $q->where('id', $reserva->id))->firstOrFail();
 
+        $conflictHorizonEnd = Carbon::parse($reference)->addMonth()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+
         $espaco->load([
             'andar.modulo.unidade.instituicao',
-            'agendas' => function ($query) use ($weekStart, $weekEnd) {
+            'agendas' => function ($query) use ($weekStart, $conflictHorizonEnd) {
                 $query->with([
                     'user:id,name,email,setor_id',
                     'user.setor:id,nome,sigla',
-                    'horarios' => function ($q) use ($weekStart, $weekEnd) {
+                    'horarios' => function ($q) use ($weekStart, $conflictHorizonEnd) {
                         $q->where('situacao', 'deferida')
-                            ->whereBetween('data', [$weekStart, $weekEnd])
+                            ->whereBetween('data', [$weekStart, $conflictHorizonEnd])
                             ->with([
                                 'reserva:id,titulo,situacao,observacao,user_id',
                                 'reserva.user:id,name,setor_id',
@@ -226,25 +228,38 @@ class ReservaService
         $filters['arquivo'] = ModoArquivoEnum::fromFiltro($filters['arquivo'] ?? null)->value;
         $filters['ordenar'] = OrdenacaoReservaEnum::fromFiltro($filters['ordenar'] ?? null)->value;
 
-        // Normalizar filtros de data (Opção A: dia único, ambos campos iguais)
-        $dataInicio = $filters['data_inicio'] ?? null;
+        // Normalizar filtros de data (suporta dia único ou intervalo data_inicio..data_fim)
+        $dataInicioRaw = $filters['data_inicio'] ?? null;
+        $dataFimRaw = $filters['data_fim'] ?? null;
+
+        $dataInicio = $this->parseDataFiltro($dataInicioRaw);
+        $dataFimInformado = $dataFimRaw !== null && $dataFimRaw !== '';
+        $dataFim = $dataFimInformado ? $this->parseDataFiltro($dataFimRaw) : $dataInicio;
 
         $filters['data_inicio'] = null;
         $filters['data_fim'] = null;
 
-        if ($dataInicio && \is_string($dataInicio)) {
-            try {
-                $parsed = Carbon::createFromFormat('Y-m-d', $dataInicio);
-                if ($parsed && $parsed->toDateString() === $dataInicio) {
-                    $filters['data_inicio'] = $dataInicio;
-                    $filters['data_fim'] = $dataInicio;  // Ambos iguais (dia único)
-                }
-            } catch (\Exception) {
-                // valor inválido é ignorado silenciosamente
-            }
+        if ($dataInicio !== null && $dataFim !== null && $dataFim >= $dataInicio) {
+            $filters['data_inicio'] = $dataInicio;
+            $filters['data_fim'] = $dataFim;
         }
 
         return $filters;
+    }
+
+    private function parseDataFiltro(mixed $valor): ?string
+    {
+        if (! \is_string($valor) || $valor === '') {
+            return null;
+        }
+
+        try {
+            $parsed = Carbon::createFromFormat('Y-m-d', $valor);
+
+            return $parsed && $parsed->toDateString() === $valor ? $valor : null;
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     /**

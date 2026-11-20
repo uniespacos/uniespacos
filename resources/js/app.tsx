@@ -5,7 +5,7 @@ import Pusher from 'pusher-js';
 import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
-import { acquirePrivateChannel, releasePrivateChannel } from './lib/echo-channel-registry';
+import { acquirePrivateChannel, disconnectEcho, releasePrivateChannel } from './lib/echo-channel-registry';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'UniEspaços';
 let echoInstance: Echo<'reverb'> | undefined;
@@ -24,15 +24,9 @@ function syncEchoWithAuthState(pageProps: Record<string, unknown> | undefined): 
     const userId = extractAuthUserId(pageProps);
 
     if (userId === null) {
-        if (activeUserChannelName !== null) {
-            releasePrivateChannel(activeUserChannelName);
-            activeUserChannelName = null;
-        }
-        if (echoInstance) {
-            echoInstance.disconnect();
-            echoInstance = undefined;
-            delete (window as Partial<Window>).Echo;
-        }
+        activeUserChannelName = null;
+        echoInstance = undefined;
+        disconnectEcho();
         return;
     }
 
@@ -41,6 +35,7 @@ function syncEchoWithAuthState(pageProps: Record<string, unknown> | undefined): 
     }
 
     if (!echoInstance) {
+        activeUserChannelName = null;
         window.Pusher = Pusher as unknown as typeof window.Pusher;
         echoInstance = new Echo({
             broadcaster: 'reverb',
@@ -65,6 +60,15 @@ function syncEchoWithAuthState(pageProps: Record<string, unknown> | undefined): 
         activeUserChannelName = nextChannelName;
     }
 }
+
+router.on('before', (event) => {
+    const visit = event.detail.visit;
+    if (visit.method === 'post' && visit.url.pathname.endsWith('/logout')) {
+        activeUserChannelName = null;
+        echoInstance = undefined;
+        disconnectEcho();
+    }
+});
 
 router.on('navigate', (event) => {
     syncEchoWithAuthState(event.detail.page.props);

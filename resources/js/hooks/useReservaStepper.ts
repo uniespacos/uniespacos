@@ -1,10 +1,11 @@
 import { EscopoRecorrencia } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { datasEmConflito, recorrenciaParaGravar, slotsEmConflito } from '@/lib/utils/conflitos-reserva';
+import { expandirHorariosRecorrencia } from '@/lib/utils/expandir-horarios-recorrencia';
 import { publicoEstimadoValido } from '@/lib/utils/publico-estimado';
 import { Espaco, SlotCalendario } from '@/types';
 import { ErrosEtapa, ReservaFormData, ReservaStepId, StepperStep } from '@/types/reserva-stepper';
-import { startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 
 const TITULO_MAX_LENGTH = 255;
@@ -85,10 +86,25 @@ export function useReservaStepper({
 
     const recorrenciaGravada = recorrenciaParaGravar(formData.recorrencia, isEditMode && formData.edit_scope === EscopoRecorrencia.SINGLE);
 
-    const conflictingDates = useMemo(
-        () => datasEmConflito(formData.horarios_solicitados, espaco.agendas),
-        [formData.horarios_solicitados, espaco.agendas],
+    const linhasSolicitadas = useMemo(() => {
+        if (formData.horarios_solicitados.length > 0) {
+            return formData.horarios_solicitados;
+        }
+
+        return slotsSelecao.map((slot) => ({
+            data: format(slot.data, 'yyyy-MM-dd'),
+            horario_inicio: slot.horario_inicio,
+            horario_fim: slot.horario_fim,
+            agenda_id: slot.agenda_id,
+        }));
+    }, [formData.horarios_solicitados, slotsSelecao]);
+
+    const horariosExpandidos = useMemo(
+        () => expandirHorariosRecorrencia(linhasSolicitadas, recorrenciaGravada, formData.data_final),
+        [linhasSolicitadas, recorrenciaGravada, formData.data_final],
     );
+
+    const conflictingDates = useMemo(() => datasEmConflito(horariosExpandidos, espaco.agendas), [horariosExpandidos, espaco.agendas]);
 
     const slotIdsEstaticos = useMemo(
         () =>

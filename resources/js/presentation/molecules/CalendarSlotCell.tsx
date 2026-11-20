@@ -14,14 +14,14 @@ interface CalendarSlotCellProps {
 }
 
 function CalendarSlotCell({ slot, isSelecionado, onSelectSlot }: CalendarSlotCellProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [detalheAberto, setDetalheAberto] = useState(false);
 
     const selecionavel = slotPodeSerSelecionado(slot);
     const estilo = ESTILO_SLOT[isSelecionado ? 'selecionado' : slot.status];
     const faixa = slot.status === 'livre' && !isSelecionado ? (slot.isPast ? 'bg-muted-foreground/40' : '') : estilo.solido;
 
-    const dia = descricaoDiaSlot(slot.data);
+    const dia = descricaoDiaSlot(slot.data, locale);
     const horario = t('agenda.slot.horario', {
         inicio: slot.horario_inicio.substring(0, 5),
         fim: slot.horario_fim.substring(0, 5),
