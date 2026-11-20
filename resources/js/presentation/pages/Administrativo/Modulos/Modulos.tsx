@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
 import { useTranslation } from '@/i18n';
+import { nivelParaLabel, nomeParaNivel } from '@/lib/utils/andars/AndarHelpers';
 import { ColumnDef, DataTable } from '@/presentation/molecules/DataTable';
 import DeleteItem from '@/presentation/molecules/DeleteItem';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
@@ -16,46 +17,23 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Building, ChevronDown, ChevronRight, Edit, Layers, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-const breadcrumbs = [
-    {
-        title: 'Gerenciar Módulos',
-        href: '/institucional/modulos',
-    },
-];
-
 const tiposAcessoColors: Record<string, string | undefined> = {
     Livre: 'bg-success-subtle text-success-accent border-success-accent/30',
     Restrito: 'bg-warning-subtle text-warning-accent border-warning-accent/30',
     Controlado: 'bg-destructive-subtle text-destructive-accent border-destructive-accent/30',
 };
 
-const nivelLabels: Record<number, string | undefined> = {
-    0: 'Térreo',
-    1: '1º Andar',
-    2: '2º Andar',
-    3: '3º Andar',
-    4: '4º Andar',
-    5: '5º Andar',
-    '-1': 'Subsolo',
-    '-2': '2º Subsolo',
-};
-
-function nomeParaNivel(nome: string): number {
-    if (nome === 'terreo') return 0;
-    if (nome === 'subsolo') return -1;
-    const match = /(\d+)/.exec(nome);
-    if (match?.[1]) {
-        return parseInt(match[1], 10);
-    }
-    return 0;
-}
-
-function nivelParaLabel(nivel: number): string {
-    return nivelLabels[nivel] ?? `${String(nivel)}º Andar`;
-}
-
 export default function Modulos() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo(
+        () => [
+            {
+                title: t('nav.gerenciar_modulos'),
+                href: '/institucional/modulos',
+            },
+        ],
+        [t],
+    );
     const { modulos, unidades, filters } = usePage<{
         modulos: {
             data: Modulo[];

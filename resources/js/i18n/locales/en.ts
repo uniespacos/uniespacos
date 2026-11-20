@@ -887,6 +887,8 @@ export const en = {
             desc: 'Control access profiles and granular permissions',
             novo: 'New Role',
             nenhum: 'No roles found',
+            tipo: 'Role Type',
+            descricao: 'Role Description',
         },
         espacos: {
             titulo: 'Manage Spaces',

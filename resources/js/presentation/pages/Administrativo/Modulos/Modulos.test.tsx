@@ -24,6 +24,11 @@ jest.mock('@inertiajs/react', () => ({
                             },
                         },
                         andares: [],
+                        andars: [
+                            { id: 10, nome: 'terreo', modulo_id: 1, tipo_acesso: ['terreo'] },
+                            { id: 11, nome: 'andar-1', modulo_id: 1, tipo_acesso: ['escada'] },
+                            { id: 12, nome: 'subsolo-1', modulo_id: 1, tipo_acesso: ['escada'] },
+                        ],
                     },
                 ],
                 links: [
@@ -116,5 +121,13 @@ describe('Modulos', () => {
 
         const actionButtons = screen.getAllByRole('button');
         expect(actionButtons.length).toBeGreaterThan(0);
+    });
+
+    it('exibe badge Subsolo para subsolo-1 sem confundir com 1º Andar', () => {
+        render(<Modulos />);
+
+        expect(screen.getByText('Térreo')).toBeInTheDocument();
+        expect(screen.getByText('Subsolo')).toBeInTheDocument();
+        expect(screen.getAllByText('1º Andar')).toHaveLength(1);
     });
 });

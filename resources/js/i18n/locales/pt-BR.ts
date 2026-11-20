@@ -886,6 +886,8 @@ export const ptBR = {
             desc: 'Controle perfis de acesso e permissões granulares',
             novo: 'Novo Papel',
             nenhum: 'Nenhum papel encontrado',
+            tipo: 'Tipo de Papel',
+            descricao: 'Descrição do Papel',
         },
         espacos: {
             titulo: 'Gerenciar Espaços',

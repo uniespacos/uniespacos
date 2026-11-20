@@ -16,15 +16,17 @@ import { Head, usePage } from '@inertiajs/react';
 import { Edit, MoreHorizontal, Plus, Shield, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-const breadcrumbs = [
-    {
-        title: 'Gerenciar Papéis',
-        href: '/institucional/roles',
-    },
-];
-
 export default function RolesPage() {
     const { t } = useTranslation();
+    const breadcrumbs = useMemo(
+        () => [
+            {
+                title: t('nav.gerenciar_roles'),
+                href: '/institucional/roles',
+            },
+        ],
+        [t],
+    );
     const { roles, permissions } = usePage<{
         roles: Role[];
         permissions: Record<string, Permission[]>;
@@ -130,7 +132,7 @@ export default function RolesPage() {
             },
             {
                 id: 'descricao',
-                header: t('espacos.detalhes.descricao'),
+                header: t('admin.roles.descricao'),
                 cell: (role) => <span className="text-muted-foreground text-sm">{role.description ?? t('common.empty.noData')}</span>,
             },
             {
@@ -209,7 +211,7 @@ export default function RolesPage() {
                         </div>
 
                         <div className="space-y-2 sm:w-[180px]">
-                            <Label>{t('espacos.filtros.tipo')}</Label>
+                            <Label>{t('admin.roles.tipo')}</Label>
                             <Select
                                 value={typeFilter}
                                 onValueChange={(v) => {

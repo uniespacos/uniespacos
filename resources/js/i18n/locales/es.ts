@@ -890,6 +890,8 @@ export const es = {
             desc: 'Controle perfiles de acceso y permisos granulares',
             novo: 'Nuevo Rol',
             nenhum: 'Ningún rol encontrado',
+            tipo: 'Tipo de Rol',
+            descricao: 'Descripción del Rol',
         },
         espacos: {
             titulo: 'Gestionar Espacios',
