@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0-rc.125](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.124...v1.5.0-rc.125) (2026-11-20)
+
+
+### Miscellaneous Chores
+
+* **main:** release 1.7.0 ([02db1a0](https://github.com/uniespacos/uniespacos/commit/02db1a0332c78adee3779bfa58cc7098b3cdf0b5))
+* **main:** release 1.7.0 ([205f37b](https://github.com/uniespacos/uniespacos/commit/205f37b8f5240cc06e592d9869add364b287511b))
+* release 1.7.0 com Onda 2 (LGPD parte 2), performance, acessibilidade e correções de reservas ([a4b0900](https://github.com/uniespacos/uniespacos/commit/a4b09008740205a7d775957029330b4eb63b4e5c))
+* sincronizar main em develop após release 1.7.0 ([90234b3](https://github.com/uniespacos/uniespacos/commit/90234b3f21a4f759cdf71d4ab7e4ef87f0116a8b))
+
 ## [1.7.0](https://github.com/uniespacos/uniespacos/compare/v1.6.1...v1.7.0) (2026-11-20)
 
 
