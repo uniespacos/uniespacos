@@ -1,6 +1,6 @@
+import type { Reserva, User } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ReservaInfoCard } from './ReservaInfoCard';
-import type { Reserva, User } from '@/types';
 
 jest.mock('@/i18n', () => ({
     useTranslation: () => ({
@@ -13,6 +13,7 @@ jest.mock('@/i18n', () => ({
         t: (key: string) => {
             const translations: Record<string, string> = {
                 'reservas.detalhes.solicitante': 'Solicitante',
+                'reservas.stepper.period_to': 'até',
             };
             return translations[key] || key;
         },
@@ -133,13 +134,61 @@ describe('ReservaInfoCard', () => {
         expect(screen.getByText('Uma reserva de teste')).toBeInTheDocument();
     });
 
+    it('preserva quebras de linha na descricao (W-08)', () => {
+        const reservaMultilinha: Reserva = {
+            ...mockReservaWithContact,
+            descricao: 'Primeira linha\nSegunda linha',
+        };
+
+        render(<ReservaInfoCard reserva={reservaMultilinha} />);
+
+        const descricaoEl = screen.getByText(/Primeira linha/);
+        expect(descricaoEl).toHaveClass('whitespace-pre-wrap');
+        expect(descricaoEl.textContent).toBe('Primeira linha\nSegunda linha');
+    });
+
     it('renders children when provided', () => {
         render(
             <ReservaInfoCard reserva={mockReservaWithContact}>
                 <div>Child content</div>
-            </ReservaInfoCard>
+            </ReservaInfoCard>,
         );
 
         expect(screen.getByText('Child content')).toBeInTheDocument();
+    });
+
+    it('envolve titulo continuo com min-w-0 e classes de quebra para evitar estouro horizontal em flex (A-07)', () => {
+        const tituloContinuo = 'A'.repeat(150);
+        const { container } = render(
+            <ReservaInfoCard
+                reserva={{
+                    ...mockReservaWithContact,
+                    titulo: tituloContinuo,
+                }}
+            />,
+        );
+
+        const titleSpan = screen.getByText(tituloContinuo);
+        const cardTitle = titleSpan.closest('[data-slot="card-title"]');
+        const card = container.querySelector('[data-slot="card"]');
+
+        expect(titleSpan.tagName).toBe('SPAN');
+        expect(titleSpan).toHaveClass('min-w-0', 'break-words', '[overflow-wrap:anywhere]');
+        expect(cardTitle).toHaveClass('min-w-0');
+        expect(card).toHaveClass('min-w-0');
+    });
+
+    it('formata conector do periodo usando chave de traducao reservas.stepper.period_to', () => {
+        render(
+            <ReservaInfoCard
+                reserva={{
+                    ...mockReservaWithContact,
+                    data_inicial: new Date(2027, 2, 11),
+                    data_final: new Date(2027, 2, 18),
+                }}
+            />,
+        );
+
+        expect(screen.getByText(/11\/03\/2027 até 18\/03\/2027/)).toBeInTheDocument();
     });
 });

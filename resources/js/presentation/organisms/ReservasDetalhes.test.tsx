@@ -190,4 +190,93 @@ describe('ReservaDetalhes', () => {
 
         expect(screen.getByText(/07\/09 - 13\/09\/2026/)).toBeInTheDocument();
     });
+
+    it('exibe aviso informativo e oculta botão Avaliar quando a reserva está cancelada (inativa)', () => {
+        (usePage as jest.Mock).mockImplementation(() => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 2,
+                        name: 'Gestor Manhã',
+                        email: 'gestor@example.com',
+                        roles: ['gestor'],
+                        permissions: ['reservas.avaliar'],
+                    },
+                },
+            },
+            url: '/gestor/reservas',
+            component: '',
+            version: null,
+        }));
+
+        const canceladaReserva: Reserva = {
+            ...mockReserva,
+            situacao: 'inativa',
+        };
+
+        render(
+            <ReservaDetalhes
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                selectedReserva={canceladaReserva}
+                isGestor={true}
+                setRemoverReserva={jest.fn()}
+                routeName="gestor.reservas.index"
+            />,
+        );
+
+        expect(screen.getByTestId('modal-reserva-cancelada-alert')).toBeInTheDocument();
+        expect(screen.getByText('Solicitação de reserva cancelada')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Avaliar|Reavaliação/i })).not.toBeInTheDocument();
+    });
+
+    describe('semana inicial do modal', () => {
+        const renderDetalhes = (reserva: Reserva) =>
+            render(
+                <ReservaDetalhes
+                    isOpen={true}
+                    onOpenChange={jest.fn()}
+                    selectedReserva={reserva}
+                    isGestor={false}
+                    setRemoverReserva={jest.fn()}
+                    routeName="reservas.index"
+                />,
+            );
+
+        afterEach(() => {
+            window.history.replaceState({}, '', '/');
+        });
+
+        it('abre na semana indicada por ?semana= quando ela pertence a esta reserva', () => {
+            window.history.replaceState({}, '', `/?reserva=${String(mockReserva.id)}&semana=2026-10-14`);
+
+            renderDetalhes(mockReserva);
+
+            expect(screen.getByText(/12\/10 - 18\/10\/2026/)).toBeInTheDocument();
+        });
+
+        it('ignora ?semana= que aponta para outra reserva e usa a semana do primeiro horário', () => {
+            window.history.replaceState({}, '', '/?reserva=999&semana=2026-10-14');
+
+            renderDetalhes(mockReserva);
+
+            expect(screen.getByText(/05\/10 - 11\/10\/2026/)).toBeInTheDocument();
+        });
+
+        it('ignora ?semana= com valor que não é data e usa a semana do primeiro horário', () => {
+            window.history.replaceState({}, '', `/?reserva=${String(mockReserva.id)}&semana=nao-e-data`);
+
+            renderDetalhes(mockReserva);
+
+            expect(screen.getByText(/05\/10 - 11\/10\/2026/)).toBeInTheDocument();
+        });
+
+        it('sem parâmetro, usa a semana do primeiro horário da reserva', () => {
+            window.history.replaceState({}, '', '/');
+
+            renderDetalhes(mockReserva);
+
+            expect(screen.getByText(/05\/10 - 11\/10\/2026/)).toBeInTheDocument();
+        });
+    });
 });

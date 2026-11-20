@@ -19,7 +19,11 @@ export function FormField({ label, htmlFor, error, required, className, children
                 {required && <span className="text-destructive-accent"> *</span>}
             </Label>
             {children}
-            {error && <p className="text-destructive-accent text-sm">{error}</p>}
+            {error && (
+                <p id={`${htmlFor}-error`} className="text-destructive-accent text-sm">
+                    {error}
+                </p>
+            )}
         </div>
     );
 }

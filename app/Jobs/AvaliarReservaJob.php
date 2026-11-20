@@ -58,7 +58,8 @@ class AvaliarReservaJob implements ShouldQueue
         $this->validateHorariosAutorization();
 
         try {
-            DB::transaction(function () use ($conflictService) {
+            /** @var list<int> $horariosDeferidosIds */
+            $horariosDeferidosIds = DB::transaction(function () use ($conflictService): array {
                 $scope = $this->validatedData['evaluation_scope'];
                 $agendasDoGestorIds = $this->gestor->agendas()->pluck('id');
                 $motivoDoGestor = $this->validatedData['motivo'] ?? null;
@@ -74,69 +75,136 @@ class AvaliarReservaJob implements ShouldQueue
                     ->filter(fn ($conflito, $horarioId) => $horariosDoGestorIds->contains($horarioId))
                     ->keys();
 
+                /** @var list<int> $horariosDeferidosIds */
+                $horariosDeferidosIds = [];
+
                 if ($scope === 'single') {
                     foreach ($horariosDaAvaliacao as $avaliacao) {
-                        $horarioId = $avaliacao['id'];
-                        $statusFinal = $avaliacao['status'] === 'solicitado' ? SituacaoReservaEnum::EM_ANALISE->value : $avaliacao['status'];
-                        $justificativaFinal = $motivoDoGestor;
+                        $horarioId = (int) $avaliacao['id'];
+                        $statusFinal = $avaliacao['status'] === 'solicitado'
+                            ? SituacaoReservaEnum::EM_ANALISE->value
+                            : (string) $avaliacao['status'];
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
                             $statusFinal = SituacaoReservaEnum::INDEFERIDA->value;
                             $justificativaFinal = $this->justificativaDeConflito();
+                            $avaliadorId = $this->gestor->id;
+                        } else {
+                            $justificativaFinal = $statusFinal === SituacaoReservaEnum::INDEFERIDA->value ? $motivoDoGestor : null;
+                            $avaliadorId = $statusFinal === SituacaoReservaEnum::EM_ANALISE->value ? null : $this->gestor->id;
                         }
 
                         Horario::where('id', $horarioId)
+                            ->where('reserva_id', $this->reserva->id)
                             ->whereIn('agenda_id', $agendasDoGestorIds)
                             ->update([
                                 'situacao' => $statusFinal,
-                                'user_id' => $this->gestor->id,
+                                'user_id' => $avaliadorId,
                                 'justificativa' => $justificativaFinal,
                             ]);
+
+                        if ($statusFinal === SituacaoReservaEnum::DEFERIDA->value) {
+                            $horariosDeferidosIds[] = $horarioId;
+                        }
                     }
                 } else {
                     if ($horariosConflitantesIds->isNotEmpty()) {
-                        foreach ($horariosConflitantesIds as $id) {
-                            Horario::where('id', $id)->whereIn('agenda_id', $agendasDoGestorIds)->update([
+                        Horario::whereIn('id', $horariosConflitantesIds->all())
+                            ->where('reserva_id', $this->reserva->id)
+                            ->whereIn('agenda_id', $agendasDoGestorIds)
+                            ->update([
                                 'situacao' => SituacaoReservaEnum::INDEFERIDA->value,
                                 'justificativa' => $this->justificativaDeConflito(),
                                 'user_id' => $this->gestor->id,
                             ]);
+                    }
+
+                    $horariosDaReservaById = $this->reserva->horarios()
+                        ->whereIn('agenda_id', $agendasDoGestorIds)
+                        ->get()
+                        ->keyBy('id');
+
+                    /** @var list<int> $explicitIds */
+                    $explicitIds = $horariosDaAvaliacao
+                        ->map(fn (array $avaliacao): int => is_numeric($avaliacao['id'] ?? null) ? (int) $avaliacao['id'] : 0)
+                        ->filter(fn (int $id): bool => $id > 0)
+                        ->values()
+                        ->all();
+
+                    foreach ($horariosDaAvaliacao as $avaliacao) {
+                        $horarioId = (int) $avaliacao['id'];
+
+                        if ($horariosConflitantesIds->contains($horarioId) || ! $horariosDaReservaById->has($horarioId)) {
+                            continue;
+                        }
+
+                        $statusFinal = $avaliacao['status'] === 'solicitado'
+                            ? SituacaoReservaEnum::EM_ANALISE->value
+                            : (string) $avaliacao['status'];
+                        $justificativaFinal = $statusFinal === SituacaoReservaEnum::INDEFERIDA->value ? $motivoDoGestor : null;
+                        $avaliadorId = $statusFinal === SituacaoReservaEnum::EM_ANALISE->value ? null : $this->gestor->id;
+
+                        Horario::where('id', $horarioId)
+                            ->where('reserva_id', $this->reserva->id)
+                            ->whereIn('agenda_id', $agendasDoGestorIds)
+                            ->update([
+                                'situacao' => $statusFinal,
+                                'user_id' => $avaliadorId,
+                                'justificativa' => $justificativaFinal,
+                            ]);
+
+                        if ($statusFinal === SituacaoReservaEnum::DEFERIDA->value) {
+                            $horariosDeferidosIds[] = $horarioId;
                         }
                     }
 
                     $processedPatterns = [];
                     foreach ($horariosDaAvaliacao as $avaliacao) {
-                        $horarioId = $avaliacao['id'];
+                        $horarioId = (int) $avaliacao['id'];
 
                         if ($horariosConflitantesIds->contains($horarioId)) {
                             continue;
                         }
 
-                        $horarioFonte = $this->reserva->horarios()->find($horarioId);
-                        if (! $horarioFonte) {
+                        $horarioFonte = $horariosDaReservaById->get($horarioId);
+                        if (! $horarioFonte instanceof Horario) {
                             continue;
                         }
 
                         $dayOfWeek = Carbon::parse($horarioFonte->data)->dayOfWeek;
                         $pattern = "{$horarioFonte->agenda_id}-{$horarioFonte->horario_inicio}-{$dayOfWeek}";
 
-                        if (in_array($pattern, $processedPatterns)) {
+                        if (in_array($pattern, $processedPatterns, true)) {
                             continue;
                         }
 
-                        $statusParaReplicar = $avaliacao['status'] === 'solicitado' ? SituacaoReservaEnum::EM_ANALISE->value : $avaliacao['status'];
+                        $statusParaReplicar = $avaliacao['status'] === 'solicitado'
+                            ? SituacaoReservaEnum::EM_ANALISE->value
+                            : (string) $avaliacao['status'];
                         $justificativaParaReplicar = $statusParaReplicar === SituacaoReservaEnum::INDEFERIDA->value ? $motivoDoGestor : null;
+                        $avaliadorParaReplicar = $statusParaReplicar === SituacaoReservaEnum::EM_ANALISE->value ? null : $this->gestor->id;
 
-                        $this->reserva->horarios()
-                            ->whereNotIn('id', $horariosConflitantesIds)
-                            ->whereIn('agenda_id', $agendasDoGestorIds)
+                        /** @var list<int> $idsParaReplicar */
+                        $idsParaReplicar = $this->reserva->horarios()
+                            ->where('agenda_id', $horarioFonte->agenda_id)
                             ->where('horario_inicio', $horarioFonte->horario_inicio)
                             ->whereRaw('EXTRACT(DOW FROM data) = ?', [$dayOfWeek])
-                            ->update([
+                            ->whereNotIn('id', $horariosConflitantesIds->all())
+                            ->whereNotIn('id', $explicitIds)
+                            ->pluck('id')
+                            ->all();
+
+                        if ($idsParaReplicar !== []) {
+                            Horario::whereIn('id', $idsParaReplicar)->update([
                                 'situacao' => $statusParaReplicar,
-                                'user_id' => $this->gestor->id,
+                                'user_id' => $avaliadorParaReplicar,
                                 'justificativa' => $justificativaParaReplicar,
                             ]);
+
+                            if ($statusParaReplicar === SituacaoReservaEnum::DEFERIDA->value) {
+                                array_push($horariosDeferidosIds, ...$idsParaReplicar);
+                            }
+                        }
 
                         $processedPatterns[] = $pattern;
                     }
@@ -144,6 +212,8 @@ class AvaliarReservaJob implements ShouldQueue
 
                 $this->reserva->observacao = $this->validatedData['observacao'] ?? $this->reserva->observacao;
                 $this->updateReservaOverallStatus($this->reserva);
+
+                return array_values(array_unique($horariosDeferidosIds));
             });
 
             $this->reserva->refresh();
@@ -153,14 +223,12 @@ class AvaliarReservaJob implements ShouldQueue
                 'situacao' => $this->reserva->situacao,
             ]);
 
-            $recentlyApprovedIds = collect($this->validatedData['horarios_avaliados'])
-                ->where('status', 'deferida')
-                ->pluck('id');
-
-            $horariosRecemAprovados = $this->reserva->horarios()
-                ->where('situacao', 'deferida')
-                ->whereIn('id', $recentlyApprovedIds)
-                ->get();
+            $horariosRecemAprovados = $horariosDeferidosIds !== []
+                ? $this->reserva->horarios()
+                    ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
+                    ->whereIn('id', $horariosDeferidosIds)
+                    ->get()
+                : $this->reserva->horarios()->whereRaw('1 = 0')->get();
 
             if ($horariosRecemAprovados->isNotEmpty()) {
                 $this->triggerConflictRevalidation($horariosRecemAprovados);

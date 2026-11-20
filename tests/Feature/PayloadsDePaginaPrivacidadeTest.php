@@ -133,6 +133,12 @@ class PayloadsDePaginaPrivacidadeTest extends TestCase
         $this->assertSame($gestor->id, $gestorPayload['id']);
         $this->assertArrayNotHasKey('telefone', $gestorPayload);
         $this->assertArrayNotHasKey('profile_pic', $gestorPayload);
+
+        $horariosLista = $response->viewData('page')['props']['reservas']['data'][0]['horarios'];
+        $this->assertChavesExatas(['id', 'name'], $horariosLista[0]['agenda']['user'],
+            'agenda.user na listagem do usuário deveria ter só id e name');
+        $this->assertArrayNotHasKey('email', $horariosLista[0]['agenda']['user']);
+        $this->assertArrayNotHasKey('telefone', $horariosLista[0]['agenda']['user']);
     }
 
     #[Test]

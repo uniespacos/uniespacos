@@ -1,16 +1,16 @@
-import React, { SyntheticEvent, useCallback, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
-import { StepperProgress } from '@/presentation/molecules/StepperProgress';
-import { StepHorariosRecorrencia } from '@/presentation/molecules/StepHorariosRecorrencia';
-import { StepDadosJustificativa } from '@/presentation/molecules/StepDadosJustificativa';
-import { StepRevisaoConfirmacao } from '@/presentation/molecules/StepRevisaoConfirmacao';
-import { assertNever } from '@/lib/utils/exhaustive';
 import { useReservaStepper } from '@/hooks/useReservaStepper';
+import { useTranslation } from '@/i18n';
+import { assertNever } from '@/lib/utils/exhaustive';
+import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
+import { StepDadosJustificativa } from '@/presentation/molecules/StepDadosJustificativa';
+import { StepHorariosRecorrencia } from '@/presentation/molecules/StepHorariosRecorrencia';
+import { StepperProgress } from '@/presentation/molecules/StepperProgress';
+import { StepRevisaoConfirmacao } from '@/presentation/molecules/StepRevisaoConfirmacao';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
-import { useTranslation } from '@/i18n';
+import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
+import React, { SyntheticEvent, useCallback, useEffect } from 'react';
 
 export interface ReservaStepperModalProps {
     isOpen: boolean;
@@ -97,19 +97,14 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
             case 'dados_justificativa':
                 return <StepDadosJustificativa formData={formData} setFormData={setFormData} errors={stepErrors} />;
             case 'revisao_confirmacao':
-                return (
-                    <StepRevisaoConfirmacao
-                        espaco={espaco}
-                        formData={formData}
-                        setFormData={setFormData}
-                        slotsSelecao={slotsSelecao}
-                        isEditMode={isEditMode}
-                    />
-                );
+                return <StepRevisaoConfirmacao espaco={espaco} formData={formData} setFormData={setFormData} isEditMode={isEditMode} />;
             default:
                 return assertNever(currentStepId);
         }
     };
+
+    const footerButtonFocusClasses =
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
     const footerContent = (
         <div className="border-border flex w-full items-center justify-between gap-2 border-t pt-2">
@@ -121,13 +116,20 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     onClick={() => {
                         onOpenChange(false);
                     }}
-                    className="h-9 px-3 text-xs"
+                    className={`h-9 px-3 text-xs ${footerButtonFocusClasses}`}
                 >
                     <X className="mr-1 h-3.5 w-3.5" />
                     {t('common.actions.cancel')}
                 </Button>
             ) : (
-                <Button type="button" variant="outline" size="sm" onClick={prevStep} disabled={isSubmitting} className="h-9 gap-1.5 px-3 text-xs">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={prevStep}
+                    disabled={isSubmitting}
+                    className={`h-9 gap-1.5 px-3 text-xs ${footerButtonFocusClasses}`}
+                >
                     <ArrowLeft className="h-3.5 w-3.5" />
                     {t('common.actions.back')}
                 </Button>
@@ -140,9 +142,9 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                         size="sm"
                         onClick={nextStep}
                         disabled={!canAdvance}
-                        className="h-9 gap-1.5 px-4 text-xs font-medium shadow-sm"
+                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
                     >
-                        <span>Avançar</span>
+                        <span>{t('common.actions.next')}</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                 ) : (
@@ -151,7 +153,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                         size="sm"
                         disabled={!canAdvance || isSubmitting}
                         onClick={onSubmit}
-                        className="h-9 gap-1.5 px-4 text-xs font-medium shadow-sm"
+                        className={`h-9 gap-1.5 px-4 text-xs font-medium shadow-sm ${footerButtonFocusClasses}`}
                     >
                         {isSubmitting ? (
                             <>
@@ -170,7 +172,9 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
         </div>
     );
 
-    const modalTitle = isEditMode ? `Editar Solicitação — ${espaco.nome}` : `Solicitar Reserva — ${espaco.nome}`;
+    const modalTitle = isEditMode
+        ? t('reservas.stepper.title_edit', { espaco: espaco.nome })
+        : t('reservas.stepper.title_create', { espaco: espaco.nome });
 
     return (
         <ResponsiveModal
@@ -187,7 +191,7 @@ export const ReservaStepperModal: React.FC<ReservaStepperModalProps> = ({
                     <StepperProgress steps={steps} currentStepId={currentStepId} onStepClick={goToStep} />
                 </div>
 
-                <div className="max-h-[58vh] min-h-[280px] overflow-y-auto px-0.5 py-1">{renderStepContent()}</div>
+                <div className="max-h-[58dvh] min-h-[280px] overflow-y-auto px-0.5 py-1">{renderStepContent()}</div>
             </form>
         </ResponsiveModal>
     );

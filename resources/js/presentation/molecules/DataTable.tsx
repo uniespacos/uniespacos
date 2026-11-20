@@ -254,7 +254,7 @@ export function DataTable<T>({
                 <TableHeader>
                     <TableRow>
                         {selectable && (
-                            <TableHead className="w-[44px] px-3 text-center">
+                            <TableHead scope="col" className="w-[44px] px-3 text-center">
                                 <Checkbox
                                     checked={isAllPageSelected ? true : isSomePageSelected ? 'indeterminate' : false}
                                     onCheckedChange={handleToggleSelectAll}
@@ -264,16 +264,19 @@ export function DataTable<T>({
                         )}
                         {activeColumns.map((col, idx) => {
                             const colKey = col.sortKey ?? col.id ?? (col.accessorKey ? String(col.accessorKey) : undefined);
-                            const isSorted = colKey && sortColumn === colKey;
+                            const isSorted = Boolean(colKey && sortColumn === colKey);
 
                             return (
                                 <TableHead
                                     key={idx}
+                                    scope="col"
+                                    aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
                                     style={col.width ? { width: col.width } : undefined}
                                     className={cn(getAlignmentClass(col.align), 'whitespace-nowrap', col.className)}
                                 >
                                     {col.enableSorting && colKey && onSort ? (
                                         <Button
+                                            type="button"
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => {
@@ -285,12 +288,12 @@ export function DataTable<T>({
                                             <span>{col.header}</span>
                                             {isSorted ? (
                                                 sortDirection === 'asc' ? (
-                                                    <ArrowUp className="text-primary h-3.5 w-3.5" />
+                                                    <ArrowUp className="text-primary h-3.5 w-3.5" aria-hidden="true" />
                                                 ) : (
-                                                    <ArrowDown className="text-primary h-3.5 w-3.5" />
+                                                    <ArrowDown className="text-primary h-3.5 w-3.5" aria-hidden="true" />
                                                 )
                                             ) : (
-                                                <ArrowUpDown className="text-muted-foreground h-3 w-3" />
+                                                <ArrowUpDown className="text-muted-foreground h-3 w-3" aria-hidden="true" />
                                             )}
                                         </Button>
                                     ) : (
@@ -301,6 +304,7 @@ export function DataTable<T>({
                         })}
                         {actions && (
                             <TableHead
+                                scope="col"
                                 style={actionsWidth ? { width: actionsWidth } : undefined}
                                 className={cn(getAlignmentClass(actionsAlign), 'w-[120px] whitespace-nowrap')}
                             >

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Reserva;
+use App\Rules\DataDoHorarioNoPeriodo;
 use App\Rules\HorarioDisponivel;
 use App\Rules\HorariosMesmoEspaco;
 use Illuminate\Foundation\Http\FormRequest;
@@ -37,17 +38,19 @@ class UpdateReservaRequest extends FormRequest
     {
         $route = $this->route('reserva');
         $reservaId = $route instanceof Reserva ? $route->id : null;
+        $regraPeriodoDosHorarios = $this->input('edit_scope') === 'recurring' ? [new DataDoHorarioNoPeriodo] : [];
 
         return [
             'titulo' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string', 'max:2000'],
+            'publico_estimado' => ['nullable', 'integer', 'min:1', 'max:5000'],
             'data_inicial' => ['required', 'date'],
             'data_final' => ['required', 'date', 'after_or_equal:data_inicial'],
             'recorrencia' => ['required', 'in:unica,15dias,1mes,personalizado'],
             'edit_scope' => ['required', 'string', Rule::in(['single', 'recurring'])],
             'edited_week_date' => ['required_if:edit_scope,single', 'nullable', 'date'],
             'horarios_solicitados' => ['present', 'array', new HorariosMesmoEspaco],
-            'horarios_solicitados.*.data' => ['required', 'date'],
+            'horarios_solicitados.*.data' => ['required', 'date', ...$regraPeriodoDosHorarios],
             'horarios_solicitados.*.horario_inicio' => ['required', 'date_format:H:i:s'],
             'horarios_solicitados.*.horario_fim' => ['required', 'date_format:H:i:s', 'after:horarios_solicitados.*.horario_inicio'],
             'horarios_solicitados.*.agenda_id' => [
@@ -71,6 +74,9 @@ class UpdateReservaRequest extends FormRequest
             'edit_scope.in' => 'O escopo de edição deve ser "single" ou "recurring".',
             'edited_week_date.required_if' => 'A data da semana editada é obrigatória para edição de ocorrência única.',
             'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
+            'publico_estimado.integer' => __('The estimated audience must be an integer.'),
+            'publico_estimado.min' => __('The estimated audience must be at least :min.', ['min' => 1]),
+            'publico_estimado.max' => __('The estimated audience may not be greater than :max.', ['max' => 5000]),
             'data_inicial.required' => 'A data inicial é obrigatória.',
             'data_inicial.date' => 'A data inicial deve ser uma data válida.',
             'data_final.required' => 'A data final é obrigatória.',

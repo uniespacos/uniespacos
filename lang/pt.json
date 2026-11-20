@@ -88,5 +88,12 @@
     "Your change request was sent for processing.": "Sua solicitação de alteração foi enviada para processamento.",
     "An error occurred while sending the update for processing.": "Ocorreu um erro ao enviar a atualização para processamento.",
     "Reservation cancelled successfully!": "Reserva cancelada com sucesso!",
-    "Error cancelling the reservation. Please try again.": "Erro ao cancelar a reserva. Por favor, tente novamente."
+    "Error cancelling the reservation. Please try again.": "Erro ao cancelar a reserva. Por favor, tente novamente.",
+    "An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.": "Já existe uma conta com este e-mail. Se não lembra a senha, use “Esqueceu sua senha” para redefini-la.",
+    "The time slot :start–:end on :date is already reserved.": "O horário :start–:end de :date já está reservado.",
+    "Each time slot date must be on or after the start date.": "A data de cada horário deve ser igual ou posterior à data inicial.",
+    "Each time slot date must be on or before the end date.": "A data de cada horário deve ser igual ou anterior à data final.",
+    "The estimated audience must be an integer.": "O público estimado deve ser um número inteiro.",
+    "The estimated audience must be at least :min.": "O público estimado deve ser de pelo menos :min.",
+    "The estimated audience may not be greater than :max.": "O público estimado não pode ser maior que :max."
 }

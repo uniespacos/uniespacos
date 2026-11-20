@@ -20,6 +20,18 @@ interface RetencaoRepositoryInterface
 
     public function apagarSessoesInativasAntesDe(int $corteUnix): int;
 
+    public function contarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
+
+    public function apagarTokensRedefinicaoAntesDe(CarbonInterface $corte): int;
+
+    public function contarTokensRedefinicaoSemData(): int;
+
+    public function contarJobsPendentesAntesDe(int $corteUnix): int;
+
+    public function contarJobsPendentesApagaveisAntesDe(int $corteUnix): int;
+
+    public function apagarJobsPendentesAntesDe(int $corteUnix): int;
+
     /**
      * @return list<array{id: int, justificativa: string}>
      */

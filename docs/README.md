@@ -12,6 +12,8 @@ Sistema de reserva de espaços da UESB. Esta pasta é a fonte de verdade sobre o
 | Regras invioláveis, comandos, fluxo de PR e armadilhas do ambiente | [`CLAUDE.md`](../CLAUDE.md), na raiz do repositório |
 | Convenções de código (backend, frontend, testes, git) | skills em [`.claude/skills/`](../.claude/skills/) |
 | Auditoria de privacidade e dados pessoais contra a LGPD | skill [`lgpd-audit`](../.claude/skills/lgpd-audit/SKILL.md) |
+| Anonimizar uma base de teste ou de staging | [`operacao/anonimizacao-de-bases.md`](./operacao/anonimizacao-de-bases.md) |
+| Testar o fluxo de reservas em staging (reteste da rc.119 e fluxos não convencionais) | [`processo/qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) |
 
 ## Mapa
 
@@ -44,7 +46,8 @@ Sistema de reserva de espaços da UESB. Esta pasta é a fonte de verdade sobre o
 
 | Documento | Assunto |
 | --- | --- |
-| [`deploy-e-segredos.md`](./operacao/deploy-e-segredos.md) | Segredos do GitHub Actions usados no deploy (staging e produção) e o workflow de aquecimento de cache das dependências. |
+| [`deploy-e-segredos.md`](./operacao/deploy-e-segredos.md) | Segredos do GitHub Actions usados no deploy (staging e produção), workflow de aquecimento de cache, agendador de produção com parada limpa e risco de rollback, e o `app:check-env`. |
+| [`anonimizacao-de-bases.md`](./operacao/anonimizacao-de-bases.md) | Comando `base:anonimizar` para bases não produtivas: guardas de ambiente, tratamento por tabela, arquivos e uso. |
 
 ### Privacidade — `privacidade/`
 
@@ -59,6 +62,7 @@ O inventário de dados e o runbook de incidente entram nesta pasta quando forem 
 | Documento | Assunto |
 | --- | --- |
 | [`auditorias-e-planos.md`](./processo/auditorias-e-planos.md) | Como conduzir uma auditoria e um plano em fases, como fechar o ciclo no backlog e a regra de backlog reativo. |
+| [`qa/roteiro-reservas-lacunas.md`](./processo/qa/roteiro-reservas-lacunas.md) | Roteiro de QA de reservas em staging: reteste das correções do QA da rc.119 e fluxos não convencionais (navegação, datas, edição, conflitos, papéis). Inclui o prompt pronto para o QA. |
 
 ### Material acadêmico — `UniEspaço Web/`
 

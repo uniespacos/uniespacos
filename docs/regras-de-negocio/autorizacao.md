@@ -51,7 +51,7 @@ O sistema de autorização reconhece **quatro atores** no contexto de reservas:
 
 **Exemplo:** Um gestor da agenda de "Sala de Aula A" pode ver e avaliar reservas que incluem "Sala de Aula A", mas não pode ver reservas de "Sala de Aula B", mesmo que de outro gestor.
 
-**Acúmulo:** o papel `'gestor'` pode coexistir com `'comum'` no mesmo usuário. É o estado que o sistema produz ao vincular um gestor a um espaço (`EspacoService::updateGestores()` adiciona `'gestor'` sem remover o papel anterior). As regras de acúmulo e a decisão pendente estão em [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões).
+**Acúmulo:** o papel `'gestor'` pode coexistir com `'comum'` no mesmo usuário. É o estado que o sistema produz ao vincular um gestor a um espaço (`EspacoService::updateGestores()` adiciona `'gestor'` sem remover o papel anterior). As regras de acúmulo estão em [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões).
 
 ---
 
@@ -96,7 +96,7 @@ As permissões Spatie relacionadas a reservas são:
 | `'reservas.visualizar'` | Visualizar qualquer reserva (bypass de propriedade) | `ReservaPolicy::view()` |
 | `'reservas.atualizar'` | ~~Editar qualquer reserva (bypass de propriedade e situação)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional`). A edição segue a regra do proprietário. | `ReservaPolicy::update()` |
 | `'reservas.deletar'` | ~~Deletar qualquer reserva (bypass de propriedade)~~ Permissão **não concedida a nenhum role desde 2026-08-23** (migration `2026_08_23_155138_revoke_reservas_deletar_from_institucional`) — cancelamento é exclusivamente por proprietário. | `ReservaPolicy::delete()` |
-| `'reservas.avaliar'` | Avaliar (aprovar/indeferir) horários de reservas em suas agendas | `ReservaPolicy::viewForGestor()`, `GestorReservaController::show()`, `GestorReservaController::update()` |
+| `'reservas.avaliar'` | Avaliar (aprovar/indeferir) horários de reservas em suas agendas | `ReservaPolicy::viewForGestor()`, `ReservaPolicy::evaluateForGestor()`, `GestorReservaController::show()`, `GestorReservaController::update()` |
 
 **Permissões de controle de seção:**
 - `'secao.dashboard-gestor'` — acesso a dashboard do gestor
@@ -260,43 +260,48 @@ return $user->hasPermissionTo('reservas.deletar')  // Bypass de propriedade, se 
 
 ---
 
-### 6. `viewForGestor(User $user, Reserva $reserva): bool`
+### 6. `viewForGestor(User $user, Reserva $reserva): bool` e `evaluateForGestor(User $user, Reserva $reserva): bool`
 
-**Propósito:** Autorizar um gestor a visualizar e avaliar uma reserva.
+**Propósito:** Separar a visualização da página de detalhes/avaliação (`viewForGestor`, que inclui reservas canceladas/`inativa` para evitar erro 403 em links de e-mail e exibir o aviso informativo) da ação de avaliar horários (`evaluateForGestor`, que segue bloqueando reservas `inativa`).
 
 **Lógica:**
-```
-// Requer permissão de avaliador
-if (! $user->hasPermissionTo('reservas.avaliar')) {
-    return false;
+```php
+public function viewForGestor(User $user, Reserva $reserva): bool
+{
+    if (! $user->hasPermissionTo('reservas.avaliar')) {
+        return false;
+    }
+
+    $agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
+    $agendasDoGestorIds = $user->agendas()->pluck('id');
+
+    return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 }
 
-// Não pode avaliar reservas inativas
-if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
-    return false;
+public function evaluateForGestor(User $user, Reserva $reserva): bool
+{
+    if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+        return false;
+    }
+
+    return $this->viewForGestor($user, $reserva);
 }
-
-// Requer que ao menos uma agenda da reserva seja gerenciada pelo gestor
-$agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
-$agendasDoGestorIds = $user->agendas()->pluck('id');
-
-return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 ```
 
 **Quem pode executar:**
-1. Deve ter permissão `'reservas.avaliar'` (papel `'gestor'`)
-2. Reserva deve **estar ativa** (situação ≠ `'inativa'`)
-3. Deve gerenciar **ao menos uma agenda** que a reserva usa
+1. **`viewForGestor`:** usuário com permissão `'reservas.avaliar'` que gerencie **ao menos uma agenda** da reserva (mesmo quando `situacao === 'inativa'`, permitindo abrir o link de notificação e visualizar o aviso de reserva cancelada).
+2. **`evaluateForGestor`:** mesmos requisitos de `viewForGestor` **e** reserva com `situacao !== 'inativa'`.
 
 **Quem NÃO pode:**
 - Usuário sem `'reservas.avaliar'` (papel `'comum'`)
 - Gestor de agenda **disjunta** (ex: gestor de Sala A não pode ver reserva de Sala B)
 - Proprietário (mesmo que autor da reserva)
 - Institucional sem ser também gestor (sem `'reservas.avaliar'`)
+- Qualquer gestor tentando enviar avaliação (`evaluateForGestor`) em reserva `'inativa'`
 
 **Invariante crítico — Intersecção de Agendas:**
 
-A policy verifica que `$agendasDoGestorIds.intersect($agendasDaReservaIds).isNotEmpty()`. Isto significa:
+A policy verifica que `$agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty()`. Isto significa:
 
 - Gestor de Agenda A vê reservas que usam Agenda A (e outras)
 - Gestor de Agenda A **não** vê reservas de Agenda B (mesmo que outro gestor)
@@ -315,13 +320,13 @@ Gestor1 pode ver: Reserva_1 (intersecção: SalaA), Reserva_2 (SalaA) — NÃO R
 Gestor2 pode ver: Reserva_1 (intersecção: SalaB), Reserva_3 (SalaB) — NÃO Reserva_2
 ```
 
-**Rota associada:**
-- `GET /gestor/reservas/{reserva}` (GestorReservaController::show) — exibe página de avaliação
-- `PUT/PATCH /gestor/reservas/{reserva}` (GestorReservaController::update) — despatch job de avaliação
+**Rotas associadas:**
+- `GET /gestor/reservas/{reserva}` (GestorReservaController::show) — usa `viewForGestor`; exibe página de avaliação ou aviso de reserva cancelada
+- `PUT/PATCH /gestor/reservas/{reserva}` (GestorReservaController::update) — usa `evaluateForGestor`; despatch job de avaliação apenas para reservas ativas
 
 **Segurança (IDOR Prevention):**
-- Sem a intersecção de agendas, um gestor poderia avaliar qualquer reserva (acesso além de seu escopo).
-- Sem `! $reserva->inativa`, um gestor poderia "reavaliar" reservas já processadas.
+- Sem a intersecção de agendas, um gestor poderia acessar ou avaliar reservas fora de seu escopo.
+- Sem a checagem de `situacao !== 'inativa'` em `evaluateForGestor()`, um gestor poderia submeter avaliação para reserva cancelada.
 
 ---
 
@@ -413,7 +418,7 @@ return $user->hasPermissionTo('reservas.deletar')
 
 ---
 
-#### `viewForGestor()` — Proteção contra acesso a agendas alheias
+#### `viewForGestor()` e `evaluateForGestor()` — Proteção contra acesso e avaliação em agendas alheias
 
 **Vulnerabilidade a evitar:**
 ```php
@@ -425,24 +430,32 @@ public function viewForGestor(User $user, Reserva $reserva): bool {
 
 **Implementação segura:**
 ```php
-if (! $user->hasPermissionTo('reservas.avaliar')) {
-    return false;
+public function viewForGestor(User $user, Reserva $reserva): bool
+{
+    if (! $user->hasPermissionTo('reservas.avaliar')) {
+        return false;
+    }
+
+    $agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
+    $agendasDoGestorIds = $user->agendas()->pluck('id');
+
+    return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 }
 
-if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
-    return false;
+public function evaluateForGestor(User $user, Reserva $reserva): bool
+{
+    if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+        return false;
+    }
+
+    return $this->viewForGestor($user, $reserva);
 }
-
-$agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
-$agendasDoGestorIds = $user->agendas()->pluck('id');
-
-return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 ```
 
 **Defesa:**
 - Permissão gatilho (`'reservas.avaliar'`)
-- Intersecção de agendas: gestor só vê reservas que usam suas agendas
-- Exclusão de reservas inativas (não reavaliar)
+- Intersecção de agendas: gestor só vê e avalia reservas que usam suas agendas
+- Bloqueio de avaliação para reservas inativas em `evaluateForGestor()` (visualização somente leitura com aviso permitida via `viewForGestor()`)
 
 **Invasor consegue avaliar se:** Conseguir permissão `'reservas.avaliar'` OU conseguir ser assignado a uma agenda que a reserva usa.
 
@@ -458,7 +471,7 @@ return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
 
 ### 1. Separação entre Roles
 
-Cada papel tem escopo bem definido, e as permissões de um usuário são a soma dos papéis que ele tem. Um usuário pode acumular papéis: `'comum'` + `'gestor'` é o estado produzido pelo sistema ao vincular um gestor a um espaço. O acúmulo não é uma exceção a ser evitada; a forma de tratá-lo (se é estado válido ou deve ser normalizado) é a decisão B44 pendente (ver [Gerenciamento de papéis e agendas](#gerenciamento-de-papéis-e-agendas-modal-de-permissões)).
+Cada papel tem escopo bem definido, e as permissões de um usuário são a soma dos papéis que ele tem. Um usuário pode acumular papéis: `'comum'` + `'gestor'` é o estado produzido pelo sistema ao vincular um gestor a um espaço. O acúmulo é estado válido e não se normaliza (decisão de 08/11/2026, ver [Decisão sobre papéis acumulados](#decisão-sobre-papéis-acumulados)). O papel `'gestor'`, nesse caso, depende de ter agenda vinculada.
 
 As linhas "Solicitante" valem para qualquer usuário, inclusive para quem também tem o papel `'gestor'` ou `'institucional'`. Um "—" indica apenas que o papel, sozinho, não concede a ação.
 
@@ -604,8 +617,10 @@ A mensagem é a chave `__('If an account exists with this email, we will send a 
 
 ### Limitações conhecidas
 
-1. **Cadastro revela e-mail existente.** A validação `unique` do `CreateNewUser` responde diferente quando o e-mail já existe. O limitador `register` reduz a enumeração, mas não a elimina.
-2. **Tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir.
+1. **Cadastro revela e-mail existente (decisão de 06/11/2026).** Quando o e-mail já tem conta, o cadastro avisa isso no campo e-mail, por decisão do responsável e por usabilidade. A mensagem orienta a redefinição de senha ("Já existe uma conta com este e-mail. Se não lembra a senha, use “Esqueceu sua senha” para redefini-la."), e abaixo dela aparece o link "Esqueceu sua senha?" para a rota de redefinição. Uma resposta neutra foi descartada porque mudaria o login automático que o Fortify faz depois do cadastro. Os limitadores de taxa do cadastro continuam valendo e reduzem a enumeração, mas não a eliminam (T-29b no backlog).
+2. **Recuperação de senha: tempo de resposta não é neutro.** Quando a conta existe, o envio do link leva mais tempo que o caminho sem conta. A resposta HTTP é igual, mas o tempo pode diferir. Vale para o "esqueci a senha" e para a redefinição (pendente, T-29c).
+3. **Login: tempo igualado (T-29, parte a).** Com conta inexistente, o login executa uma verificação de hash descartável, para que o custo de tempo fique parecido com o de uma conta existente. Status, mensagem e redirecionamento já eram iguais.
+4. **Redefinição de senha: mensagem única.** Para e-mail sem conta, a redefinição responde a mesma mensagem do token inválido (`passwords.user` igual a `passwords.token`, em `lang/pt/passwords.php`). Os idiomas `en` e `es` ainda não têm esse arquivo e caem no `pt` (I18N-F1b no backlog).
 
 **429 em requisições Inertia.** Fora de `local` e `testing`, o handler de `bootstrap/app.php` converte o 429 em `Errors/ErrorPage` (título e descrição de `TOO_MANY_REQUESTS`, nos três idiomas), como já fazia com 403, 404, 419, 500 e 503. Sem isso, um `useForm` receberia o HTML do Symfony e mostraria o modal de erro cru do Inertia. Coberto por `LimitesDeTaxaAuthTest::test_esqueci_a_senha_em_producao_mostra_a_pagina_de_erro_429_numa_visita_inertia`, que troca o ambiente para `production` dentro do teste.
 
@@ -630,7 +645,7 @@ Sem transição real (ex.: `'comum'` salvo como `'comum'`, ou gestor salvo com a
 
 Este é o caso de quem acumula `'comum'` + `'gestor'`. O modal mostra os papéis atuais como etiquetas só de leitura, com o aviso de que os papéis não podem ser alterados ali. Não há seletor de papel.
 
-- **Papéis não mudam.** O `role_name` da request é validado (precisa existir), mas ignorado. Nenhum papel é adicionado ou removido.
+- **Papéis não mudam.** O `role_name` da request é validado (precisa existir), mas ignorado. Nenhum papel é adicionado ou removido. Esta é a regra do código atual; a regra decidida para o papel `'gestor'` ainda não está aplicada no modal (item S14d do backlog, ver [Decisão sobre papéis acumulados](#decisão-sobre-papéis-acumulados)).
 - **Agendas só são tratadas se `'gestor'` estiver entre os papéis.** Se estiver, as agendas que estavam vinculadas e deixaram de constar na lista são desvinculadas, e as novas são vinculadas. Não há desvinculação em massa do conjunto inteiro, só das removidas da lista.
 - **Sem `'gestor'` entre os papéis** (ex.: `'comum'` + `'institucional'`), as agendas não são tocadas.
 - **Notificações.** Só `UserAssignedAsManagerNotification`, e só se o usuário ganhou agenda nova sendo gestor. Não há `UserRemovedAsManagerNotification` neste caso, porque o papel `'gestor'` continua.
@@ -647,9 +662,25 @@ Papéis, agendas e permissões diretas são gravados numa única `DB::transactio
 | Um papel | Sim (Institucional, Gestor, Comum) | Não exibidos | Aparece se o papel selecionado for `'gestor'` |
 | Mais de um papel | Não | Etiquetas só de leitura + aviso | Aparece se `'gestor'` estiver entre os papéis |
 
-### Decisão pendente B44
+### Decisão sobre papéis acumulados
 
-Ainda não está decidido se o acúmulo `'comum'` + `'gestor'` é estado válido ou se deve ser normalizado, e se o modal passará a aceitar seleção múltipla de papéis. Até essa decisão, o código preserva o estado atual, e o comportamento descrito nesta seção é provisório. O acompanhamento está no [backlog](../backlog.md) (item B44, relacionado à S14).
+Decidido pelo responsável em 08/11/2026 (item B44 do [backlog](../backlog.md), tratado no item S14d):
+
+- **O acúmulo é estado válido.** Papéis acumulados (`'comum'` + `'gestor'`, ou `'comum'` + `'institucional'`) não são normalizados.
+- **Regra do papel `'gestor'`:** o usuário só é gestor se tiver ao menos uma agenda vinculada.
+  - Quem acumula papéis sem ser gestor vira gestor ao receber agenda.
+  - Quem é comum e gestor e perde todas as agendas perde o papel de gestor e continua comum.
+- **Seleção múltipla de papéis no modal:** não decidida. Fica em aberto como pendência menor do item S14d.
+
+**Estado do código (08/11/2026):** o vínculo pelo espaço (`EspacoService`) já segue a regra. O modal (`UserService::updatePermissions`) ainda não segue (item S14d):
+
+| Caso | Comportamento atual do modal | Regra decidida |
+| --- | --- | --- |
+| Papel único `'gestor'` com lista de agendas vazia | Continua gestor | Perde o papel de gestor |
+| Papéis acumulados que incluem `'gestor'`, ao perder todas as agendas | Continua gestor | Perde o papel de gestor |
+| Papéis acumulados sem `'gestor'`, ao receber agenda | Não vira gestor | Vira gestor |
+
+Até a S14d, o modal segue o comportamento descrito nesta seção; a regra acima é o alvo.
 
 ---
 
@@ -675,8 +706,8 @@ Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAno
 | `/reservas/{id}` | PUT/PATCH | ReservaController::update | update | — | Despatch job de atualização |
 | `/reservas/{id}` | DELETE | ReservaController::destroy | delete | — | Despatch job de cancelamento |
 | `/gestor/reservas` | GET | GestorReservaController::index | — | `reservas.avaliar` + middleware | Listagem do gestor |
-| `/gestor/reservas/{id}` | GET | GestorReservaController::show | viewForGestor | `reservas.avaliar` | Página de avaliação |
-| `/gestor/reservas/{id}` | PUT/PATCH | GestorReservaController::update | viewForGestor | `reservas.avaliar` | Despatch job de avaliação |
+| `/gestor/reservas/{id}` | GET | GestorReservaController::show | viewForGestor | `reservas.avaliar` | Página de avaliação (inclui inativa com aviso) |
+| `/gestor/reservas/{id}` | PUT/PATCH | GestorReservaController::update | evaluateForGestor | `reservas.avaliar` | Despatch job de avaliação (bloqueia inativa) |
 
 ---
 

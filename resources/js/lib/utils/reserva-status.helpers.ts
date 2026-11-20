@@ -1,34 +1,42 @@
+import { SituacaoHorario, SituacaoReserva, type SituacaoHorarioType, type SituacaoReservaType } from '@/contracts';
 import { assertNever } from '@/lib/utils/exhaustive';
-import { Horario, SituacaoReserva, SlotCalendario } from '@/types';
+import { type SlotCalendario } from '@/types';
 
-export function mapearStatusBackendParaSlot(status: Horario['situacao']): SlotCalendario['status'] {
+export function mapearStatusBackendParaSlot(status: SituacaoHorarioType): SlotCalendario['status'] {
     switch (status) {
-        case 'em_analise':
+        case SituacaoHorario.EM_ANALISE:
             return 'solicitado';
-        case 'deferida':
-            return 'deferida';
-        case 'indeferida':
-            return 'indeferida';
-        case 'inativa':
+        case SituacaoHorario.DEFERIDA:
+            return SituacaoReserva.DEFERIDA;
+        case SituacaoHorario.INDEFERIDA:
+            return SituacaoReserva.INDEFERIDA;
+        case SituacaoHorario.INATIVA:
             return 'reservado';
         default:
             return assertNever(status);
     }
 }
 
-export function verificarStatusReserva(slots: SlotCalendario[]): SituacaoReserva {
-    if (slots.length === 0) return 'em_analise';
-    const slotsAvaliáveis = slots.filter((slot) => !slot.isLocked);
-    if (slotsAvaliáveis.length === 0) return 'em_analise';
+export function verificarStatusReserva(slots: SlotCalendario[]): SituacaoReservaType {
+    if (slots.length === 0) {
+        return SituacaoReserva.EM_ANALISE;
+    }
 
-    const todosIndeferidos = slotsAvaliáveis.every((slot) => slot.status === 'indeferida');
-    if (todosIndeferidos) return 'indeferida';
+    if (slots.every((slot) => slot.status === 'reservado')) {
+        return SituacaoReserva.INATIVA;
+    }
 
-    const todosDeferidos = slotsAvaliáveis.every((slot) => slot.status === 'deferida');
-    if (todosDeferidos) return 'deferida';
+    if (slots.some((slot) => slot.status === 'solicitado' || slot.status === 'selecionado' || slot.status === 'livre')) {
+        return SituacaoReserva.EM_ANALISE;
+    }
 
-    const temDeferidos = slotsAvaliáveis.some((slot) => slot.status === 'deferida');
-    if (temDeferidos) return 'parcialmente_deferida';
+    if (slots.every((slot) => slot.status === SituacaoReserva.DEFERIDA)) {
+        return SituacaoReserva.DEFERIDA;
+    }
 
-    return 'em_analise';
+    if (slots.every((slot) => slot.status === SituacaoReserva.INDEFERIDA)) {
+        return SituacaoReserva.INDEFERIDA;
+    }
+
+    return SituacaoReserva.PARCIALMENTE_DEFERIDA;
 }

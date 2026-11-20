@@ -4,7 +4,7 @@ import { type SyntheticEvent } from 'react';
 import { toast } from 'sonner';
 import { useAgendaSelection } from './use-agenda-selection';
 
-const mockPost = jest.fn();
+const mockPost = jest.fn<unknown, [string, { onError: (erros: Record<string, string>) => void }]>();
 const mockPatch = jest.fn();
 const mockReset = jest.fn();
 const mockSetData = jest.fn();
@@ -165,6 +165,43 @@ describe('useAgendaSelection', () => {
         });
 
         expect(mockPost).toHaveBeenCalledWith('reservas.store', expect.any(Object));
+    });
+
+    it('exibe o erro do servidor por 8 segundos', () => {
+        const { result } = renderHook(() =>
+            useAgendaSelection({
+                espaco: mockEspaco,
+                isEditMode: false,
+                semanaVisivel: new Date('2026-06-01'),
+            }),
+        );
+
+        act(() => {
+            result.current.alternarSelecaoSlot({
+                id: '2026-06-03|08:20:00',
+                status: 'solicitado',
+                data: new Date(2026, 5, 3),
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                agenda_id: 2,
+                isPast: false,
+            });
+        });
+
+        result.current.formData.horarios_solicitados = [{ data: '2026-06-03', horario_inicio: '08:20:00', horario_fim: '09:10:00', agenda_id: 2 }];
+
+        const preventDefault = jest.fn();
+        act(() => {
+            result.current.handleFormSubmit({ preventDefault } as unknown as SyntheticEvent);
+        });
+
+        expect(mockPost).toHaveBeenCalledTimes(1);
+        const [, options] = mockPost.mock.calls[0];
+        act(() => {
+            options.onError({ horarios_solicitados: 'O horário selecionado já está reservado.' });
+        });
+
+        expect(toast.error).toHaveBeenCalledWith('O horário selecionado já está reservado.', { duration: 8000 });
     });
 
     it('deriva "hoje" do relogio congelado ao iniciar uma nova reserva', () => {

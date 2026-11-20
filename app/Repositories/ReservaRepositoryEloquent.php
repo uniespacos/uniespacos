@@ -58,7 +58,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ->with([
                 'horarios' => function ($query) {
                     $query->orderBy('data')->orderBy('horario_inicio')
-                        ->with(['agenda.espaco.andar.modulo']);
+                        ->with(['agenda.espaco.andar.modulo', 'agenda.user:id,name', 'avaliador:id,name']);
                 },
                 'user:id,name',
             ])
@@ -67,15 +67,14 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
     }
 
     /**
-     * Returns a Reserva with its week-filtered horarios for the detail modal
+     * Returns a Reserva with its horarios for the detail modal
      */
     public function findWithWeekSlots(int $reservaId, string $weekStart, string $weekEnd): ?Reserva
     {
         return $this->reserva->with([
             'user',
-            'horarios' => function ($query) use ($weekStart, $weekEnd) {
-                $query->whereBetween('data', [$weekStart, $weekEnd])
-                    ->orderBy('data')->orderBy('horario_inicio')
+            'horarios' => function ($query) {
+                $query->orderBy('data')->orderBy('horario_inicio')
                     ->with(['agenda.espaco.andar.modulo.unidade', 'agenda.user:id,name,email,setor_id', 'avaliador:id,name']);
             },
         ])->find($reservaId);
@@ -117,7 +116,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
     }
 
     /**
-     * Returns a Reserva for a gestor with its week-filtered horarios for the detail modal
+     * Returns a Reserva for a gestor with its horarios for the detail modal
      */
     public function findForGestorModal(int $reservaId, array $agendaIds, string $weekStart, string $weekEnd): ?Reserva
     {
@@ -125,14 +124,13 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ->whereHas('horarios', fn ($q) => $q->whereIn('agenda_id', $agendaIds))
             ->with([
                 'user',
-                'horarios' => function ($query) use ($agendaIds, $weekStart, $weekEnd) {
+                'horarios' => function ($query) use ($agendaIds) {
                     $query->whereIn('agenda_id', $agendaIds)
-                        ->whereBetween('data', [$weekStart, $weekEnd])
                         ->orderBy('data')->orderBy('horario_inicio')
                         ->with([
                             'agenda' => function ($q) {
                                 $q->select('id', 'espaco_id', 'turno', 'user_id')
-                                    ->with('espaco.andar.modulo');
+                                    ->with(['espaco.andar.modulo', 'user:id,name']);
                             },
                             'avaliador:id,name',
                         ]);

@@ -86,8 +86,8 @@ class ReservaPolicy
     }
 
     /**
-     * Determine whether a gestor can view the reservation for evaluation.
-     * Requires the user to have reservas.avaliar permission or manage at least one agenda associated with the reservation.
+     * Determine whether a gestor can view the reservation details/review page.
+     * Requires the user to have reservas.avaliar permission and manage at least one agenda associated with the reservation.
      */
     public function viewForGestor(User $user, Reserva $reserva): bool
     {
@@ -95,13 +95,22 @@ class ReservaPolicy
             return false;
         }
 
-        if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
-            return false;
-        }
-
         $agendasDaReservaIds = $reserva->horarios()->pluck('agenda_id')->unique();
         $agendasDoGestorIds = $user->agendas()->pluck('id');
 
         return $agendasDoGestorIds->intersect($agendasDaReservaIds)->isNotEmpty();
+    }
+
+    /**
+     * Determine whether a gestor can submit an evaluation for the reservation.
+     * Terminal archived ('inativa') reservations cannot be evaluated.
+     */
+    public function evaluateForGestor(User $user, Reserva $reserva): bool
+    {
+        if ($reserva->situacao === SituacaoReservaEnum::INATIVA->value) {
+            return false;
+        }
+
+        return $this->viewForGestor($user, $reserva);
     }
 }

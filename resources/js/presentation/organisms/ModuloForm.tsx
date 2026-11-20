@@ -47,6 +47,11 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
         return unidades.filter((unidade) => unidade.instituicao?.id === instituicao.id);
     }, [instituicao.id, unidades]);
 
+    const getScrollBehavior = (): ScrollBehavior =>
+        typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'auto'
+            : 'smooth';
+
     const handleAddAndar = (novoAndar: AndarFormData) => {
         setData((prev: CadastrarModuloForm) => {
             const novosAndares = [...prev.andares, novoAndar];
@@ -57,7 +62,7 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
         });
 
         setTimeout(() => {
-            andaresRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            andaresRef.current?.scrollIntoView({ behavior: getScrollBehavior(), block: 'center' });
         }, 100);
     };
 
@@ -87,7 +92,7 @@ export default function ModuloForm({ data, setData, submit, errors, processing, 
     };
 
     const scrollToTop = () => {
-        topRef.current?.scrollIntoView({ behavior: 'smooth' });
+        topRef.current?.scrollIntoView({ behavior: getScrollBehavior() });
     };
 
     const editMode = isEditMode(modulo);

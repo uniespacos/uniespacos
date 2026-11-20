@@ -1,4 +1,5 @@
 import { useTranslation } from '@/i18n';
+import TextLink from '@/presentation/atoms/TextLink';
 import { FormRegistroUsuario } from '@/presentation/organisms/FormRegistroUsuario';
 import AuthSplitLayout from '@/presentation/templates/auth/AuthSplitLayout';
 import { Instituicao } from '@/types';
@@ -34,6 +35,12 @@ export default function Register() {
         });
     };
 
+    const emailErrorAction = errors.email ? (
+        <TextLink href={route('password.request')} className="text-primary text-sm font-medium">
+            {t('auth.login.forgotPassword')}
+        </TextLink>
+    ) : undefined;
+
     return (
         <AuthSplitLayout title={t('auth.register.header_title')} description={t('auth.register.header_desc')} maxWidth="2xl">
             <Head title={t('auth.register.head_title')} />
@@ -45,6 +52,7 @@ export default function Register() {
                 processing={processing}
                 instituicaos={instituicaos}
                 onSubmit={handleSubmit}
+                emailErrorAction={emailErrorAction}
             />
 
             <div className="border-border text-muted-foreground border-t pt-4 text-center text-sm">

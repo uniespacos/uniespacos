@@ -7,29 +7,33 @@ import { NavMain } from '@/presentation/molecules/NavMain';
 import { NavUser } from '@/presentation/molecules/NavUser';
 import type { User } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 
 export function AppSidebar() {
     const { t } = useTranslation();
     const { props } = usePage<{ auth: { user: User } }>();
     const user = props.auth.user;
 
-    const visibleEntries = user ? NAV_REGISTRY.filter((entry) => canAccessNavEntry(user, entry)) : [];
+    const { commonNav, extraItems } = useMemo(() => {
+        const visibleEntries = user ? NAV_REGISTRY.filter((entry) => canAccessNavEntry(user, entry)) : [];
 
-    const commonNav = visibleEntries
-        .filter((entry) => entry.group === 'painel')
-        .map((entry) => ({
-            title: entry.titleKey ? t(entry.titleKey) : entry.title,
-            href: entry.href,
-            icon: entry.icon,
-        }));
-
-    const extraItems = visibleEntries
-        .filter((entry) => entry.group === 'gerir')
-        .map((entry) => ({
-            title: entry.titleKey ? t(entry.titleKey) : entry.title,
-            href: entry.resolveHref ? entry.resolveHref(user) : entry.href,
-            icon: entry.icon,
-        }));
+        return {
+            commonNav: visibleEntries
+                .filter((entry) => entry.group === 'painel')
+                .map((entry) => ({
+                    title: entry.titleKey ? t(entry.titleKey) : entry.title,
+                    href: entry.href,
+                    icon: entry.icon,
+                })),
+            extraItems: visibleEntries
+                .filter((entry) => entry.group === 'gerir')
+                .map((entry) => ({
+                    title: entry.titleKey ? t(entry.titleKey) : entry.title,
+                    href: entry.resolveHref ? entry.resolveHref(user) : entry.href,
+                    icon: entry.icon,
+                })),
+        };
+    }, [t, user]);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

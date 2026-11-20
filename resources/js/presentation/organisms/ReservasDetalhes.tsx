@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { PERMISSION_RESERVAS_AVALIAR } from '@/constants/permissions';
 import { opcoesRecorrencia } from '@/constants/recorrencia';
+import { TURNOS_ORDENADOS } from '@/constants/turnos';
 import { SituacaoReserva } from '@/contracts';
 import { useTranslation } from '@/i18n';
 import { Can } from '@/lib/auth-can';
-import { diasDaSemana } from '@/lib/utils';
+import { diasDaSemana, parseDataLocal } from '@/lib/utils';
 import { getAndarLabelByValue } from '@/lib/utils/andars/AndarOptions';
 import { mapearStatusBackendParaSlot } from '@/lib/utils/reserva-status.helpers';
 import { SituacaoBadge } from '@/presentation/atoms/SituacaoBadge';
@@ -15,7 +16,7 @@ import CalendarReservationDetails from '@/presentation/molecules/CalendarReserva
 import { ResponsiveModal } from '@/presentation/molecules/ResponsiveModal';
 import { Agenda, Reserva, SlotCalendario } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { addDays, endOfWeek, format, isAfter, isBefore, parseISO, startOfWeek, subDays } from 'date-fns';
+import { addDays, endOfWeek, format, isAfter, isBefore, isValid, parseISO, startOfWeek, subDays } from 'date-fns';
 import {
     AlertCircle,
     Building2,
@@ -25,7 +26,6 @@ import {
     ExternalLink,
     FileText,
     Info,
-    Loader2,
     MapPin,
     Repeat,
     User as UserIcon,
@@ -36,6 +36,28 @@ import { useMemo, useState } from 'react';
 
 declare function route(name: string, params?: unknown): string;
 
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+function lerSemanaDaUrl(reservaId: number): Date | undefined {
+    if (typeof window === 'undefined') {
+        return undefined;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const reservaNaUrl = params.get('reserva');
+    if (reservaNaUrl !== null && reservaNaUrl !== String(reservaId)) {
+        return undefined;
+    }
+
+    const semana = params.get('semana');
+    if (!semana || !DATA_ISO.test(semana)) {
+        return undefined;
+    }
+
+    const data = parseISO(semana);
+    return isValid(data) ? data : undefined;
+}
+
 export interface ReservaDetalhesProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -45,19 +67,17 @@ export interface ReservaDetalhesProps {
     routeName: string;
 }
 
-export default function ReservaDetalhes({
-    isOpen,
-    onOpenChange,
-    selectedReserva,
-    isGestor = false,
-    setRemoverReserva,
-    routeName,
-}: ReservaDetalhesProps) {
+export default function ReservaDetalhes({ isOpen, onOpenChange, selectedReserva, isGestor = false, setRemoverReserva }: ReservaDetalhesProps) {
     const { t, formatDate } = useTranslation();
     const { semana } = usePage<{ semana?: { referencia: string } }>().props;
+    const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
 
-    const [isLoading, setIsLoading] = useState(false);
     const [semanaVisivel, setSemanaVisivel] = useState(() => {
+        const semanaDaUrl = lerSemanaDaUrl(selectedReserva.id);
+        if (semanaDaUrl) {
+            return semanaDaUrl;
+        }
+
         const primeiroHorarioData = selectedReserva.horarios[0]?.data;
         if (primeiroHorarioData) {
             return parseISO(primeiroHorarioData);
@@ -83,7 +103,8 @@ export default function ReservaDetalhes({
             selectedReserva.horarios
                 .map((horario) => horario.agenda)
                 .filter((agenda): agenda is Agenda => agenda !== undefined)
-                .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), []),
+                .reduce((acc: Agenda[], agenda) => (acc.find((item) => item.id === agenda.id) ? acc : [...acc, agenda]), [])
+                .sort((a, b) => TURNOS_ORDENADOS.indexOf(a.turno) - TURNOS_ORDENADOS.indexOf(b.turno)),
         [selectedReserva.horarios],
     );
 
@@ -94,27 +115,15 @@ export default function ReservaDetalhes({
 
     const labelRecorrencia = useMemo(() => {
         const op = opcoesRecorrencia.find((o) => o.valor === selectedReserva.recorrencia);
-        return op?.label ?? selectedReserva.recorrencia;
-    }, [selectedReserva.recorrencia]);
+        return op ? t(op.labelKey) : selectedReserva.recorrencia;
+    }, [selectedReserva.recorrencia, t]);
 
     const navegarParaSemana = (novaData: Date) => {
         setSemanaVisivel(novaData);
-        const params: { reserva: number; semana: string } = {
-            reserva: selectedReserva.id,
-            semana: format(novaData, 'yyyy-MM-dd'),
-        };
-        router.get(route(routeName), params, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            onStart: () => {
-                setIsLoading(true);
-            },
-            onFinish: () => {
-                setIsLoading(false);
-            },
-            only: ['reservaToShow', 'semana'],
-        });
+        const url = new URL(window.location.href);
+        url.searchParams.set('reserva', String(selectedReserva.id));
+        url.searchParams.set('semana', format(novaData, 'yyyy-MM-dd'));
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     };
 
     const handleSemanaAnterior = () => {
@@ -124,8 +133,8 @@ export default function ReservaDetalhes({
         navegarParaSemana(addDays(semanaVisivel, 7));
     };
 
-    const dataInicialReserva = useMemo(() => new Date(selectedReserva.data_inicial), [selectedReserva.data_inicial]);
-    const dataFinalReserva = useMemo(() => new Date(selectedReserva.data_final), [selectedReserva.data_final]);
+    const dataInicialReserva = useMemo(() => parseDataLocal(selectedReserva.data_inicial), [selectedReserva.data_inicial]);
+    const dataFinalReserva = useMemo(() => parseDataLocal(selectedReserva.data_final), [selectedReserva.data_final]);
     const podeVoltar = useMemo(
         () => isAfter(startOfWeek(semanaVisivel, { weekStartsOn: 1 }), dataInicialReserva),
         [dataInicialReserva, semanaVisivel],
@@ -170,22 +179,24 @@ export default function ReservaDetalhes({
                     </Button>
 
                     {isGestor ? (
-                        <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
-                            <Button
-                                type="button"
-                                variant="default"
-                                size="default"
-                                className="min-h-[44px] gap-1.5 text-xs font-semibold"
-                                onClick={() => {
-                                    router.get(route('gestor.reservas.show', selectedReserva.id));
-                                }}
-                            >
-                                <Edit className="h-4 w-4" />
-                                {selectedReserva.situacao === SituacaoReserva.EM_ANALISE
-                                    ? t('reservas.acoes.avaliar')
-                                    : t('reservas.avaliacao.reavaliacao_titulo')}
-                            </Button>
-                        </Can>
+                        selectedReserva.situacao !== SituacaoReserva.INATIVA ? (
+                            <Can permission={PERMISSION_RESERVAS_AVALIAR} fallback={null}>
+                                <Button
+                                    type="button"
+                                    variant="default"
+                                    size="default"
+                                    className="min-h-[44px] gap-1.5 text-xs font-semibold"
+                                    onClick={() => {
+                                        router.get(route('gestor.reservas.show', selectedReserva.id));
+                                    }}
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    {selectedReserva.situacao === SituacaoReserva.EM_ANALISE
+                                        ? t('reservas.acoes.avaliar')
+                                        : t('reservas.avaliacao.reavaliacao_titulo')}
+                                </Button>
+                            </Can>
+                        ) : null
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {selectedReserva.can_update && (
@@ -222,6 +233,19 @@ export default function ReservaDetalhes({
             }
         >
             <div className="space-y-4 py-1 text-sm">
+                {selectedReserva.situacao === SituacaoReserva.INATIVA && (
+                    <div
+                        data-testid="modal-reserva-cancelada-alert"
+                        className="border-warning-accent/30 bg-warning-subtle/80 text-foreground space-y-1 rounded-xl border p-3.5"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Info className="text-warning-accent h-4 w-4 shrink-0" />
+                            <h4 className="text-xs font-semibold tracking-wider uppercase">{t('reservas.avaliacao.cancelada_titulo')}</h4>
+                        </div>
+                        <p className="text-muted-foreground text-xs leading-relaxed sm:text-sm">{t('reservas.avaliacao.cancelada_descricao')}</p>
+                    </div>
+                )}
+
                 {/* Seção 1: Context Cards Responsivos (Diferenciação Gestor vs Solicitante) */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {/* Card de Identificação da Pessoa */}
@@ -356,7 +380,7 @@ export default function ReservaDetalhes({
                         <FileText className="text-muted-foreground h-4 w-4" />
                         <h4 className="text-foreground text-xs font-semibold tracking-wider uppercase">{t('reservas.detalhes.justificativa')}</h4>
                     </div>
-                    <p className="text-foreground text-xs leading-relaxed whitespace-pre-wrap sm:text-sm">
+                    <p className="text-foreground text-xs leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] sm:text-sm">
                         {selectedReserva.descricao.trim() || t('reservas.detalhes.sem_justificativa')}
                     </p>
                 </div>
@@ -373,22 +397,17 @@ export default function ReservaDetalhes({
                             semanaAtual={semanaVisivel}
                             onAnterior={handleSemanaAnterior}
                             onProxima={handleProximaSemana}
-                            desabilitarAnterior={!podeVoltar || isLoading}
-                            desabilitarProxima={!podeAvancar || isLoading}
+                            desabilitarAnterior={!podeVoltar}
+                            desabilitarProxima={!podeAvancar}
                         />
                     </div>
 
                     <div className="border-border/80 relative overflow-hidden rounded-xl border">
                         <CalendarReservationDetails
                             agendas={agendas}
-                            diasSemana={diasDaSemana(semanaVisivel, new Date())}
+                            diasSemana={diasDaSemana(semanaVisivel, hoje)}
                             slotsSolicitados={slotsSelecao}
                         />
-                        {isLoading && (
-                            <div className="bg-background/70 absolute inset-0 z-20 flex items-center justify-center rounded-xl backdrop-blur-xs">
-                                <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                            </div>
-                        )}
                     </div>
                 </div>
 

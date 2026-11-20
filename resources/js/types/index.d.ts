@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
-import type { SupportedLocale } from '@/i18n';
+import type { SupportedLocale, TranslationKey } from '@/i18n';
 import type {
     SituacaoReservaType,
     SituacaoHorarioType,
@@ -158,7 +158,7 @@ export interface BreadcrumbItem {
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
-    conflito_user_name: string;
+    conflito_user_name?: string;
 }
 
 // =============================================================================
@@ -334,8 +334,8 @@ export interface SlotCalendario {
 
 export interface OpcoesRecorrencia {
     valor: ValorOcorrenciaType;
-    label: string;
-    descricao: string;
+    labelKey: TranslationKey;
+    descricaoKey: TranslationKey;
     calcularDataFinal: (dataInicial: Date) => Date;
 }
 

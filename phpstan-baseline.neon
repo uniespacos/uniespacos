@@ -793,24 +793,6 @@ parameters:
 			path: app/Http/Responses/CustomLoginResponse.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$agenda_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Horario\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Horario\>\:\:\$horario_inicio\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
 			message: '#^Method App\\Jobs\\AvaliarReservaJob\:\:__construct\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -819,13 +801,13 @@ parameters:
 		-
 			message: '#^Unable to resolve the template type TKey in call to function collect$#'
 			identifier: argument.templateType
-			count: 3
+			count: 2
 			path: app/Jobs/AvaliarReservaJob.php
 
 		-
 			message: '#^Unable to resolve the template type TValue in call to function collect$#'
 			identifier: argument.templateType
-			count: 3
+			count: 2
 			path: app/Jobs/AvaliarReservaJob.php
 
 		-
@@ -1715,42 +1697,6 @@ parameters:
 			identifier: offsetAccess.invalidOffset
 			count: 1
 			path: app/Services/EspacoService.php
-
-		-
-			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot call method lte\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot call method toDateString\(\) on Carbon\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Parameter \#1 \$time of static method Carbon\\Carbon\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/ExpansaoHorariosService.php
-
-		-
-			message: '#^Parameter \#2 \$array of function implode expects array\<string\>, array\<int, mixed\> given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/ExpansaoHorariosService.php
 
 		-
 			message: '#^Method App\\Services\\HomeService\:\:buildRecentReservasQuery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'

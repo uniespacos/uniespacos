@@ -2,7 +2,7 @@ import { acquirePrivateChannel, releasePrivateChannel } from '@/lib/echo-channel
 import { SlotReservaItem } from '@/types/reserva-stepper';
 import { format } from 'date-fns';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface ReservaConflictAlertProps {
     espacoId: number;
@@ -20,16 +20,23 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
     className,
 }) => {
     const [realtimeConflictMessage, setRealtimeConflictMessage] = useState<string | null>(null);
+    const selectedSlotsRef = useRef(selectedSlots);
+    const onConflictDetectedRef = useRef(onConflictDetected);
+
+    selectedSlotsRef.current = selectedSlots;
+    onConflictDetectedRef.current = onConflictDetected;
+
+    const hasSelectedSlots = selectedSlots.length > 0;
 
     useEffect(() => {
-        if (!espacoId || selectedSlots.length === 0) return;
+        if (!espacoId || !hasSelectedSlots) return;
 
         const channelName = `App.Models.Espaco.${String(espacoId)}`;
         const channel = acquirePrivateChannel(channelName);
         if (!channel) return;
 
         const handleHorarioOcupado = (event: { data: string; horario_inicio: string }) => {
-            const hasMatch = selectedSlots.some((slot) => {
+            const hasMatch = selectedSlotsRef.current.some((slot) => {
                 const slotDataStr = slot.data instanceof Date ? format(slot.data, 'yyyy-MM-dd') : slot.data.slice(0, 10);
                 const slotHoraStr = slot.horario_inicio.slice(0, 5);
                 const eventHoraStr = event.horario_inicio.slice(0, 5);
@@ -40,7 +47,7 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
             if (hasMatch) {
                 const msg = `O horário das ${event.horario_inicio.slice(0, 5)} em ${event.data} acabou de ser reservado por outro usuário.`;
                 setRealtimeConflictMessage(msg);
-                onConflictDetected?.(true);
+                onConflictDetectedRef.current?.(true);
             }
         };
 
@@ -50,7 +57,7 @@ export const ReservaConflictAlert: React.FC<ReservaConflictAlertProps> = ({
             channel.stopListening('.HorarioOcupadoEvent');
             releasePrivateChannel(channelName);
         };
-    }, [espacoId, selectedSlots, onConflictDetected]);
+    }, [espacoId, hasSelectedSlots]);
 
     const hasStaticConflict = conflictingDates.length > 0;
     const hasAnyConflict = Boolean(realtimeConflictMessage) || hasStaticConflict;

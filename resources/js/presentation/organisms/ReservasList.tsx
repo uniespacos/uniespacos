@@ -52,7 +52,26 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     }, [reservaToShow]);
 
     if (reservas.length === 0) {
-        return fallback;
+        return (
+            <>
+                {fallback}
+                {selectedReserva && (
+                    <ReservaDetalhes
+                        key={selectedReserva.id}
+                        isOpen={Boolean(selectedReserva)}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                handleFecharDetalhes();
+                            }
+                        }}
+                        isGestor={isModoGestor}
+                        selectedReserva={selectedReserva}
+                        setRemoverReserva={setRemoverReserva}
+                        routeName={routeName}
+                    />
+                )}
+            </>
+        );
     }
 
     const handleAvaliarButton = (id: number) => {
@@ -62,9 +81,10 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     const handleAbrirDetalhes = (reserva: Reserva) => {
         setSelectedReserva(reserva);
         const semanaAncora = reserva.horarios[0]?.data ?? String(reserva.data_inicial);
+        const currentParams = Object.fromEntries(new URLSearchParams(window.location.search).entries());
         router.get(
             route(routeName),
-            { reserva: reserva.id, semana: semanaAncora },
+            { ...currentParams, reserva: reserva.id, semana: semanaAncora },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -75,15 +95,10 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
 
     const handleFecharDetalhes = () => {
         setSelectedReserva(undefined);
-        router.get(
-            route(routeName),
-            {},
-            {
-                preserveState: true,
-                preserveScroll: true,
-                only: ['reservaToShow', 'semana'],
-            },
-        );
+        const url = new URL(window.location.href);
+        url.searchParams.delete('reserva');
+        url.searchParams.delete('semana');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     };
 
     const renderActions = (reserva: Reserva) => {
@@ -163,14 +178,14 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
     const columns: ColumnDef<Reserva>[] = [
         {
             header: t('reservas.tabela.espaco'),
-            className: 'min-w-[180px]',
+            className: 'min-w-[180px] max-w-[320px]',
             cell: (reserva) => (
-                <div className="min-w-0 space-y-0.5">
-                    <div className="text-foreground truncate font-semibold" title={reserva.titulo}>
+                <div className="min-w-0 max-w-[320px] space-y-0.5 whitespace-normal">
+                    <div className="text-foreground line-clamp-2 font-semibold break-words [overflow-wrap:anywhere]" title={reserva.titulo}>
                         {reserva.titulo}
                     </div>
                     {reserva.descricao ? (
-                        <p className="text-muted-foreground line-clamp-1 truncate text-xs" title={reserva.descricao}>
+                        <p className="text-muted-foreground line-clamp-2 text-xs break-words [overflow-wrap:anywhere]" title={reserva.descricao}>
                             {reserva.descricao}
                         </p>
                     ) : null}
@@ -236,6 +251,7 @@ export function ReservasList({ paginator, fallback, isGestor, reservaToShow, rou
 
             {selectedReserva && (
                 <ReservaDetalhes
+                    key={selectedReserva.id}
                     isOpen={Boolean(selectedReserva)}
                     onOpenChange={(open) => {
                         if (!open) {

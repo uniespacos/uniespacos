@@ -1,5 +1,5 @@
 # Fluxo de reservas
-> Última atualização: 2026-10-31 | Fluxo central de reservas: estados, criação, avaliação, cascata de revalidação, cancelamento e notificações
+> Última atualização: 2026-11-19 | Fluxo central de reservas: estados, criação, avaliação, cascata de revalidação, cancelamento e notificações
 
 ## Índice
 
@@ -223,7 +223,8 @@ Para cobrir essa brecha, o job implementa uma defesa em duas etapas:
 
 A mesma estratégia de lock e revalidação foi aplicada em `UpdateReservaJob.php` em ambos os escopos (`edit_scope === 'recurring'` e `edit_scope === 'single'`):
 - **Escopo `recurring`:** Lock adquirido sobre os horários das agendas afetadas dentro do intervalo `data_inicial`–`data_final`, posicionado antes da leitura de avaliações já feitas (`$avaliacoes`). A revalidação ocorre após a expansão montar as linhas, antes da inserção final. A verificação exclui horários da própria reserva sendo editada (`where('reserva_id', '!=', $this->reserva->id)`) para evitar falso conflito com horários antigos que já foram deletados.
-- **Escopo `single`:** Lock adquirido sobre os horários das agendas afetadas na semana sendo editada (entre `startOfWeek()` e `endOfWeek()`). A revalidação ocorre para cada novo horário a inserir, imediatamente antes do `create()`. Da mesma forma, exclui horários da própria reserva da verificação de conflito.
+- **Escopo `single`:** o job considera só os slots cuja data cai na semana (seg–dom) de `edited_week_date`, e compara com os horários dessa semana pela chave `agenda_id|data|horario_inicio` (não usa `id`). Apaga os horários que saíram do payload, cria os que entraram e mantém os coincidentes, preservando situação, justificativa e avaliador. Lock sobre os horários das agendas afetadas na semana (entre `startOfWeek()` e `endOfWeek()`). A revalidação ocorre para cada horário novo, imediatamente antes do `create()`, e exclui horários da própria reserva da verificação de conflito. Ao final, `data_inicial` e `data_final` são recalculadas pelo menor e pelo maior horário restante.
+- **Escopos e propagação:** a diferença entre os dois escopos, a propagação do escopo `recurring` às demais semanas e o trade-off de editar só uma semana estão em [`recorrencia.md`, seção 5](./recorrencia.md#5-edição-de-reserva-escopos).
 
 ### 4.3 Pipeline de Validação de Conflitos
 
@@ -512,6 +513,9 @@ Um horário solicitado é **indisponível** se já existe um `Horario` com:
 - **Sobreposição de intervalo**: o horário existente começa antes do fim do solicitado (`horario_inicio < horario_fim`) e termina depois do início do solicitado (`horario_fim > horario_inicio`)
 - `situacao = 'deferida'` (apenas aprovados bloqueiam)
 - Na edição, horários da própria reserva são ignorados (`$ignorarReservaId`, passado por `UpdateReservaRequest`)
+- Na edição `single`, só são verificados os slots da semana editada (`edited_week_date`)
+
+Quando bloqueia, a mensagem cita a data do primeiro conflito e a faixa solicitada (em pt-BR, `O horário :start–:end de :date já está reservado.`). Detalhes e a regra de período em [`validacao.md`](./validacao.md).
 
 Intervalos adjacentes (um termina exatamente quando o outro começa) não conflitam.
 
@@ -540,7 +544,7 @@ Propositalmente, horários em análise (`em_analise`) **não bloqueiam** novos p
 ```mermaid
 graph TD
     A["Solicitante seleciona slots<br/>no formulário"] -->|StoreReservaRequest / UpdateReservaRequest| B["HorarioDisponivel::validate()"]
-    B -->|Sobrepõe horário deferida| C["Erro de validação: Slot indisponível"]
+    B -->|Sobrepõe horário deferida| C["Erro de validação: data e faixa do conflito"]
     B -->|Sem sobreposição deferida<br/>(em_analise não bloqueia)| D["Continua"]
     D -->|Cria reserva| E["ProcessarCriacaoReserva"]
     E -->|Job assíncrono| F["ValidateReservationConflictsJob"]

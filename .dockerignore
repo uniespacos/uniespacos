@@ -23,5 +23,4 @@ storage/app/public/*
 !storage/app/public/.gitignore
 public/storage
 docker/development/mailpit
-docs/auditoria*
-docs/plano-*
+docs

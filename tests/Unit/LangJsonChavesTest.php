@@ -14,6 +14,9 @@ class LangJsonChavesTest extends TestCase
         'The reason must be a valid text.',
         'The reason may not have more than :max characters.',
         'The description may not have more than :max characters.',
+        'The estimated audience must be an integer.',
+        'The estimated audience must be at least :min.',
+        'The estimated audience may not be greater than :max.',
         'The uploaded image could not be processed. Please send another file.',
     ];
 
@@ -40,6 +43,10 @@ class LangJsonChavesTest extends TestCase
         'If an account exists with this email, we will send a link to reset your password.',
     ];
 
+    private const CHAVES_DO_CADASTRO_COM_EMAIL_EXISTENTE = [
+        'An account with this email already exists. If you do not remember your password, use “Forgot your password” to reset it.',
+    ];
+
     private const CHAVES_DE_PREFIXOS_DE_ERRO_INSTITUCIONAL = [
         'Error creating module: :message',
         'Error updating module: :message',
@@ -63,6 +70,15 @@ class LangJsonChavesTest extends TestCase
     private const CHAVES_DO_RODAPE_DE_PRIVACIDADE_DO_EMAIL = [
         'Privacy Policy',
         'Questions about your personal data? Contact the UESB Legal Department (provisional channel):',
+    ];
+
+    private const CHAVES_DE_CONFLITO_DE_HORARIO = [
+        'The time slot :start–:end on :date is already reserved.',
+    ];
+
+    private const CHAVES_DE_PERIODO_DOS_HORARIOS = [
+        'Each time slot date must be on or after the start date.',
+        'Each time slot date must be on or before the end date.',
     ];
 
     private const CHAVES_DE_MENSAGENS_FLASH_DOS_CONTROLLERS = [
@@ -154,6 +170,12 @@ class LangJsonChavesTest extends TestCase
     }
 
     #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagem_de_email_existente_no_cadastro_existe_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DO_CADASTRO_COM_EMAIL_EXISTENTE);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
     public function test_prefixos_de_erro_institucional_existem_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_PREFIXOS_DE_ERRO_INSTITUCIONAL);
@@ -169,6 +191,18 @@ class LangJsonChavesTest extends TestCase
     public function test_rodape_de_privacidade_do_email_existe_em_cada_arquivo_de_idioma(string $arquivo): void
     {
         $this->assertChavesTraduzidas($arquivo, self::CHAVES_DO_RODAPE_DE_PRIVACIDADE_DO_EMAIL);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagem_de_conflito_de_horario_existe_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_CONFLITO_DE_HORARIO);
+    }
+
+    #[DataProvider('arquivosDeIdiomaProvider')]
+    public function test_mensagens_de_periodo_dos_horarios_existem_em_cada_arquivo_de_idioma(string $arquivo): void
+    {
+        $this->assertChavesTraduzidas($arquivo, self::CHAVES_DE_PERIODO_DOS_HORARIOS);
     }
 
     #[DataProvider('arquivosDeIdiomaProvider')]

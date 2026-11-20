@@ -1,8 +1,8 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ReservaStepperModal } from './ReservaStepperModal';
 import { Espaco, SlotCalendario } from '@/types';
 import { ReservaFormData } from '@/types/reserva-stepper';
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import { ReservaStepperModal } from './ReservaStepperModal';
 
 jest.mock('@/lib/echo-channel-registry', () => ({
     acquirePrivateChannel: jest.fn(() => ({
@@ -77,6 +77,25 @@ describe('ReservaStepperModal', () => {
         expect(screen.getByRole('button', { name: /avançar/i })).toBeInTheDocument();
     });
 
+    it('renders the edit title when isEditMode is true', () => {
+        render(
+            <ReservaStepperModal
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                onSubmit={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+                isSubmitting={false}
+                espaco={mockEspaco}
+                formData={mockFormData}
+                setFormData={jest.fn()}
+                isEditMode={true}
+            />,
+        );
+
+        expect(screen.getByText('Editar Solicitação — Auditório Central')).toBeInTheDocument();
+    });
+
     it('advances through steps on button click', () => {
         render(
             <ReservaStepperModal
@@ -134,5 +153,27 @@ describe('ReservaStepperModal', () => {
         fireEvent.click(submitBtn);
 
         expect(handleSubmit).toHaveBeenCalled();
+    });
+
+    it('mantem classes de foco visivel nos botoes de acao do rodape do modal', () => {
+        render(
+            <ReservaStepperModal
+                isOpen={true}
+                onOpenChange={jest.fn()}
+                onSubmit={jest.fn()}
+                slotsSelecao={mockSlots}
+                hoje={new Date('2026-08-25T00:00:00')}
+                isSubmitting={false}
+                espaco={mockEspaco}
+                formData={mockFormData}
+                setFormData={jest.fn()}
+            />,
+        );
+
+        const cancelarBtn = screen.getByRole('button', { name: /cancelar/i });
+        const avancarBtn = screen.getByRole('button', { name: /avançar/i });
+
+        expect(cancelarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
+        expect(avancarBtn).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-offset-2');
     });
 });

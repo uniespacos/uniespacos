@@ -1,6 +1,6 @@
 import { User } from '@/types';
-import { render, screen } from '@testing-library/react';
-import { UserAvatar } from './UserAvatar';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { clearFailedAvatarUrls, UserAvatar } from './UserAvatar';
 
 const mockUser: User = {
     id: 1,
@@ -17,6 +17,10 @@ const mockUser: User = {
 };
 
 describe('UserAvatar', () => {
+    beforeEach(() => {
+        clearFailedAvatarUrls();
+    });
+
     it('renders initials fallback when profile_pic is not set', () => {
         render(<UserAvatar user={mockUser} />);
 
@@ -31,9 +35,32 @@ describe('UserAvatar', () => {
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
+    it('rejects non-path strings without image extension such as seed placeholders', () => {
+        const { container } = render(<UserAvatar user={{ ...mockUser, profile_pic: 'aushaushuahsas' }} />);
+
+        expect(screen.getByText('PL')).toBeInTheDocument();
+        expect(container.querySelector('[data-slot="avatar-image"]')).toBeNull();
+    });
+
     it('renders AvatarImage when valid profile_pic is provided', () => {
         render(<UserAvatar user={{ ...mockUser, profile_pic: 'https://example.com/avatar.jpg' }} />);
 
+        expect(screen.getByText('PL')).toBeInTheDocument();
+    });
+
+    it('caches failed avatar URLs across remounts so broken URLs are not retried on navigation', () => {
+        const brokenUser = { ...mockUser, profile_pic: 'avatars/missing.png' };
+        const { container, unmount } = render(<UserAvatar user={brokenUser} />);
+
+        const firstImg = container.querySelector('img');
+        if (firstImg) {
+            fireEvent.error(firstImg);
+        }
+
+        unmount();
+
+        const { container: secondContainer } = render(<UserAvatar user={brokenUser} />);
+        expect(secondContainer.querySelector('img')).toBeNull();
         expect(screen.getByText('PL')).toBeInTheDocument();
     });
 });

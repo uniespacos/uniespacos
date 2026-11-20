@@ -1,14 +1,15 @@
-import { Horario, Reserva, SituacaoReserva } from '@/types';
+import { SituacaoHorario, SituacaoReserva, type SituacaoReservaType } from '@/contracts';
+import { Horario, Reserva } from '@/types';
 import { calculateGestorStatus, comSituacaoEfetivaDoGestor } from './reserva-helpers';
 
 describe('reserva-helpers', () => {
-    const mockReserva = (id: number, situacao: SituacaoReserva, horarios: Partial<Horario>[] = []): Reserva => ({
+    const mockReserva = (id: number, situacao: SituacaoReservaType, horarios: Partial<Horario>[] = []): Reserva => ({
         id,
         titulo: 'Reserva ' + String(id),
         descricao: 'Teste',
         situacao,
-        data_inicial: new Date(),
-        data_final: new Date(),
+        data_inicial: new Date(2026, 10, 19),
+        data_final: new Date(2026, 10, 19),
         recorrencia: 'unica',
         observacao: null,
         created_at: '',
@@ -43,21 +44,45 @@ describe('reserva-helpers', () => {
         });
 
         it('should return parcialmente_deferida if there is a mix of deferida and indeferida', () => {
-            const res = mockReserva(1, 'deferida', [{ situacao: 'deferida' }, { situacao: 'indeferida' }]);
-            expect(calculateGestorStatus(res)).toBe('parcialmente_deferida');
+            const res = mockReserva(1, SituacaoReserva.DEFERIDA, [
+                { situacao: SituacaoHorario.DEFERIDA },
+                { situacao: SituacaoHorario.INDEFERIDA },
+            ]);
+            expect(calculateGestorStatus(res)).toBe(SituacaoReserva.PARCIALMENTE_DEFERIDA);
+        });
+
+        it('deve retornar inativa quando a reserva esta cancelada mesmo com horarios inativos', () => {
+            const res = mockReserva(1, SituacaoReserva.INATIVA, [
+                { situacao: SituacaoHorario.INATIVA },
+                { situacao: SituacaoHorario.INATIVA },
+            ]);
+            expect(calculateGestorStatus(res)).toBe(SituacaoReserva.INATIVA);
+        });
+
+        it('deve retornar inativa quando todos os horarios estao inativos', () => {
+            const res = mockReserva(1, SituacaoReserva.DEFERIDA, [
+                { situacao: SituacaoHorario.INATIVA },
+                { situacao: SituacaoHorario.INATIVA },
+            ]);
+            expect(calculateGestorStatus(res)).toBe(SituacaoReserva.INATIVA);
         });
     });
 
     describe('comSituacaoEfetivaDoGestor', () => {
-        it('recalcula a situacao de cada reserva sem alterar a ordem da lista', () => {
-            const r1 = mockReserva(1, 'deferida', [{ situacao: 'deferida' }]);
-            const r2 = mockReserva(2, 'parcialmente_deferida', [{ situacao: 'em_analise' }, { situacao: 'deferida' }]);
-            const r3 = mockReserva(3, 'indeferida', [{ situacao: 'indeferida' }]);
+        it('recalcula a situacao de cada reserva sem alterar a ordem da lista e preserva inativa', () => {
+            const r1 = mockReserva(1, SituacaoReserva.DEFERIDA, [{ situacao: SituacaoHorario.DEFERIDA }]);
+            const r2 = mockReserva(2, SituacaoReserva.PARCIALMENTE_DEFERIDA, [
+                { situacao: SituacaoHorario.EM_ANALISE },
+                { situacao: SituacaoHorario.DEFERIDA },
+            ]);
+            const r3 = mockReserva(3, SituacaoReserva.INDEFERIDA, [{ situacao: SituacaoHorario.INDEFERIDA }]);
+            const r4 = mockReserva(4, SituacaoReserva.INATIVA, [{ situacao: SituacaoHorario.INATIVA }]);
 
-            const resultado = comSituacaoEfetivaDoGestor([r1, r2, r3]);
+            const resultado = comSituacaoEfetivaDoGestor([r1, r2, r3, r4]);
 
-            expect(resultado.map((r) => r.id)).toEqual([1, 2, 3]);
-            expect(resultado[1].situacao).toBe('em_analise');
+            expect(resultado.map((r) => r.id)).toEqual([1, 2, 3, 4]);
+            expect(resultado[1].situacao).toBe(SituacaoReserva.EM_ANALISE);
+            expect(resultado[3].situacao).toBe(SituacaoReserva.INATIVA);
         });
     });
 });

@@ -62,11 +62,8 @@
     }
   },
   "resources/js/presentation/molecules/CalendarShiftSection.tsx": {
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 2
+      "count": 1
     }
   },
   "resources/js/presentation/molecules/LocationSelector.tsx": {
@@ -170,11 +167,6 @@
   },
   "resources/js/presentation/pages/Dashboard/DashboardInstitucionalPage.tsx": {
     "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    }
-  },
-  "resources/js/presentation/pages/Reservas/Gestor/AvaliarReservaPage.tsx": {
-    "@typescript-eslint/no-non-null-assertion": {
       "count": 1
     }
   },

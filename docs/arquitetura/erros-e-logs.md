@@ -712,8 +712,8 @@ Tratados como sensíveis (nunca logar):
 
 Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retencao.php`, `routes/console.php` e `app/Services/RetencaoService.php`:
 
-- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e não define `LOG_DAILY_DAYS` (o padrão do código é 14).
-- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 14). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
+- **Canal padrão:** `LOG_CHANNEL=stack`, e `stack` lê `LOG_STACK`. O `.env.example` define `LOG_STACK=single`: um único arquivo `storage/logs/laravel.log`, **sem rotação**. O `.env.example` define `LOG_LEVEL=debug` e `LOG_DAILY_DAYS=90`, igual ao padrão do código.
+- **Canal `daily`:** existe em `config/logging.php` e retém `LOG_DAILY_DAYS` dias (padrão 90). Só entra se for escolhido em `LOG_STACK` (ex.: `LOG_STACK=daily`).
 - **Limpeza agendada:** existe, pelo comando `retencao:aplicar` (ver abaixo), que remove os logs diários além do prazo.
 
 ```php
@@ -725,26 +725,50 @@ Estado atual, conferido em `.env.example`, `config/logging.php`, `config/retenca
 'daily' => [
     'driver' => 'daily',
     'path' => storage_path('logs/laravel.log'),
-    'days' => env('LOG_DAILY_DAYS', 14),
+    'days' => env('LOG_DAILY_DAYS', 90),
 ],
 ```
 
 #### Rotina `retencao:aplicar`
 
-`routes/console.php` agenda `retencao:aplicar` todos os dias às 03:30 UTC (00:30 no horário da Bahia), com `withoutOverlapping`. O agendamento roda no serviço `scheduler` (`php artisan schedule:work`), presente em `compose.prod.yml` e `compose.dev.yml`. Para conferir: `php artisan schedule:list`. Com `--dry-run`, o comando só conta o que removeria.
+`routes/console.php` agenda `retencao:aplicar` todos os dias às 03:30 UTC (00:30 no horário da Bahia), com `withoutOverlapping(60)`: a trava expira em 60 minutos. Em produção, o serviço `scheduler` de `compose.prod.yml` roda `php artisan agendador:executar`, que chama o `schedule:run` a cada minuto (ver [Agendador com parada limpa](#agendador-com-parada-limpa)). No desenvolvimento, `compose.dev.yml` segue com `php artisan schedule:work`. Para conferir: `php artisan schedule:list`. Com `--dry-run`, o comando só conta o que removeria.
 
 | Rotina | Critério de remoção | Variável | Padrão |
 | --- | --- | --- | --- |
-| Jobs falhos (`queue:prune-failed`) | `failed_at` anterior a hoje − N dias | `RETENCAO_JOBS_FALHOS_DIAS` | 30 dias |
-| Lotes de jobs (`queue:prune-batches`) | Lotes concluídos, não terminados ou cancelados, com mais de N dias | `RETENCAO_JOBS_FALHOS_DIAS` (mesmo prazo) | 30 dias |
+| Jobs falhos (`queue:prune-failed`) | `failed_at` anterior a hoje − N dias | `RETENCAO_JOBS_FALHOS_DIAS` | 90 dias |
+| Lotes de jobs (`queue:prune-batches`) | Lotes concluídos, não terminados ou cancelados, com mais de N dias | `RETENCAO_JOBS_FALHOS_DIAS` (mesmo prazo) | 90 dias |
 | Notificações lidas | `read_at` anterior a hoje − N dias. Notificações não lidas nunca saem | `RETENCAO_NOTIFICACOES_LIDAS_DIAS` | 90 dias |
-| Cache expirado (`cache` e `cache_locks`) | Entradas já expiradas há mais de N dias. Entradas válidas nunca saem | `RETENCAO_CACHE_DIAS` | 7 dias |
-| Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 7 dias |
-| Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 14 dias |
+| Cache expirado (`cache` e `cache_locks`) | Entradas já expiradas há mais de N dias. Entradas válidas nunca saem | `RETENCAO_CACHE_DIAS` | 90 dias |
+| Sessões inativas (`sessions`) | `last_activity` anterior a hoje − N dias. É rede de segurança: a sessão expira em 120 minutos (`SESSION_LIFETIME`) | `RETENCAO_SESSOES_DIAS` | 90 dias |
+| Tokens de redefinição de senha (`password_reset_tokens`) | `created_at` anterior a hoje − N dias. Linhas sem data ficam de fora: são só contadas, com o registro `retencao.tokens_redefinicao_sem_data` | `RETENCAO_TOKENS_REDEFINICAO_DIAS` | 1 dia |
+| Jobs pendentes, alerta (`jobs`) | **Não remove.** Só conta os jobs com `created_at` anterior a hoje − N dias e `reserved_at` nulo, e registra o aviso `retencao.jobs_pendentes_antigos` | `RETENCAO_JOBS_PENDENTES_ALERTA_DIAS` | 7 dias (só alerta) |
+| Jobs pendentes, remoção (`jobs`) | Apaga jobs com `created_at` anterior a hoje − N dias e `reserved_at` nulo. Job reservado (em execução ou aguardando nova tentativa) nunca sai | `RETENCAO_JOBS_PENDENTES_DIAS` | 90 dias |
+| Logs diários (`laravel-AAAA-MM-DD.log`) | Data no nome anterior a hoje − N dias. Nunca pelo mtime; `laravel.log` nunca é removido | `LOG_DAILY_DAYS` (`logging.channels.daily.days`) | 90 dias |
 
-Os prazos de jobs, notificações, cache e sessões são **provisórios** (proposta DT-11) até a decisão da T-12, e ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs (14 dias) já está decidido ([T-20](../backlog.md)) e vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+**Decisões de retenção:** em 08/11/2026 (F-03), o prazo de guarda passou a ser de **90 dias para todas as categorias** (jobs falhos, lotes, notificações lidas, cache, sessões e logs diários). Em 14/11/2026, os tokens de redefinição seguem em **1 dia**, por ser validade técnica e não prazo de guarda; os jobs pendentes são apagados depois de **90 dias**, com o alerta aos 7 dias mantido. Os prazos ficam em `config/retencao.php`, com troca por variável de ambiente, sem alterar código. O prazo dos logs vem só de `LOG_DAILY_DAYS`, sem chave própria. Valor igual ou menor que zero, ou inválido, pula a rotina e registra `retencao.rotina_pulada` em nível de aviso.
+
+**Aviso operacional:** a primeira rodada depois do deploy não apaga mais do que antes, porque os prazos aumentam. A única exclusão nova é a de jobs pendentes com mais de 90 dias. Logs e sessões guardados por mais tempo aumentam o volume de dado pessoal guardado, e o inventário de dados e a política de privacidade precisam refletir isso (T-14, T-17 e T-18). O `.env` de produção pode sobrescrever os padrões, então os valores precisam ser conferidos depois do deploy.
 
 Cada rotina registra só contagens (`retencao.rotina_aplicada`, com o nome da rotina, a quantidade e se foi simulação). Se alguma rotina falhar, o comando termina com código de saída diferente de zero e registra `retencao.rotina_falhou` (ou `retencao.comando_falhou`, nas rotinas de fila), com o nome da exceção e sem mensagem nem dados. O comando `retencao:neutralizar-justificativas` é de execução única e manual, não é agendado (ver T-19b no [backlog](../backlog.md)).
+
+Registros novos: `retencao.tokens_redefinicao_sem_data` (quantidade de tokens sem data de criação, sem e-mail nem token) e `retencao.jobs_pendentes_antigos` (nível aviso, com a quantidade de jobs pendentes além do prazo de alerta). A rotina `jobs_pendentes_antigos` só conta e não remove. A remoção é a rotina `jobs_pendentes`, que roda logo depois do alerta e registra `retencao.jobs_pendentes_apagados` (com a quantidade) só quando apaga algo. Na saída do comando aparece `[jobs_pendentes] N removidos.`, ou `N seriam removidos.` na simulação. O comando não conta a rotina de alerta como falha.
+
+#### Agendador com parada limpa
+
+Em produção, o serviço `scheduler` executa `php artisan agendador:executar`. Ele dispara `schedule:run` como processo filho a cada minuto e trata os sinais de parada:
+
+| Sinal | Comportamento |
+| --- | --- |
+| SIGTERM, SIGINT ou SIGQUIT | Não dispara rodada nova. Espera as rodadas em curso terminarem, até `--teto-parada` segundos (padrão 100). Para o que ainda estiver rodando e sai com código 0 |
+
+O serviço tem `stop_grace_period: 2m` e `stop_signal: SIGTERM` em `compose.prod.yml`, acima do teto, para que o Docker não encerre o processo antes (e sem esperar 2 min quando `php:*-fpm` herda `STOPSIGNAL SIGQUIT`, embora `agendador:executar` também trate `SIGQUIT`). Antes desse tratamento, o `schedule:work` não instalava handler para o sinal, e o Docker encerrava o processo com SIGKILL (saída 137). Uma parada no meio da rodada das 03:30 UTC cortava a retenção e podia deixar a trava de sobreposição ativa.
+
+| Log | Quando | Campos |
+| --- | --- | --- |
+| `agendador.parada_solicitada` | Ao receber o sinal | `execucoes_em_curso` |
+| `agendador.parada_concluida` | Ao sair | `execucoes_no_prazo`, `execucoes_forcadas` |
+
+O risco de rollback do agendador (a imagem e o compose andam juntos) está em [`operacao/deploy-e-segredos.md`](../operacao/deploy-e-segredos.md).
 
 #### Por que a poda dos logs diários é própria
 
@@ -754,12 +778,23 @@ O canal `daily` limita o número de arquivos pelo prazo, mas a poda do Monolog s
 
 Em `compose.prod.yml`, todos os serviços usam o driver `json-file` com `max-size: 10m` e `max-file: 5` (âncora `x-logging`). Esse limite vale para o log que o Docker guarda de cada container, e não para `storage/logs`. O `compose.dev.yml` não define limite.
 
+### Verificação de ambiente (`app:check-env`)
+
+Comando manual que audita a configuração efetiva pelo `config()`. São 21 checagens: `APP_DEBUG`, `APP_KEY`, `APP_ENV`, `APP_URL`, Telescope, nível e canal de log, sessão (`secure`, `same_site`, `encrypt`, `http_only`), senha do banco, credenciais do Reverb, broadcasting, mailer e host SMTP, fila, cache, rounds do bcrypt, pacote do Telescope instalado e os prazos de retenção.
+
+- Cada checagem sai como `OK`, `AVISO` ou `FALHA`, com o motivo. Nenhum valor é impresso.
+- Sem `--estrito`, o comando sempre sai com 0. Com `--estrito`, sai com 1 se houver `FALHA`.
+- Se a verificação lançar exceção, o comando registra `ambiente.verificacao_falhou` (nível erro, só com o nome da exceção).
+- Não é chamado no deploy, no entrypoint nem no workflow. Como usar: [`operacao/deploy-e-segredos.md`](../operacao/deploy-e-segredos.md).
+
+No desenvolvimento, a checagem de senha do banco acusa `FALHA` com a senha de exemplo do `.env`. É o esperado.
+
 ### Requisitos de Conformidade
 
 1. **Rastreabilidade:** Toda ação crítica (criar reserva, avaliar, cancelar) tem seu timestamp em log
 2. **Identificação:** `user_id` sempre presente permite auditar quem fez o quê
 3. **Imutabilidade:** Logs salvos em arquivo (não editáveis pós-escrita)
-4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo final dos demais dados depende da T-12
+4. **Retenção:** aplicada pelo `retencao:aplicar` (ver "Limpeza de Logs Antigos"). O canal `single` não rotaciona nem expira, e fica fora dessa poda. O prazo de guarda dos demais dados é de 90 dias (decidido em 08/11/2026, F-03, e já aplicado no código)
 
 **Campos recomendados para auditoria:**
 

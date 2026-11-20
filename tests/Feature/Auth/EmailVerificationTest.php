@@ -81,4 +81,20 @@ class EmailVerificationTest extends TestCase
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
         $response->assertRedirect('/dashboard?verified=1');
     }
+
+    public function test_reenvio_de_verificacao_exige_sessao_e_responde_igual_para_qualquer_conta_nao_verificada(): void
+    {
+        $this->post(route('verification.send'))->assertRedirect(route('login'));
+
+        $primeiraConta = User::factory()->unverified()->create();
+        $segundaConta = User::factory()->unverified()->create();
+
+        $primeira = $this->actingAs($primeiraConta)->from('/verify-email')->post(route('verification.send'));
+        $segunda = $this->actingAs($segundaConta)->from('/verify-email')->post(route('verification.send'));
+
+        $this->assertSame($primeira->status(), $segunda->status());
+        $this->assertSame($primeira->headers->get('Location'), $segunda->headers->get('Location'));
+        $primeira->assertSessionHas('status', 'verification-link-sent');
+        $segunda->assertSessionHas('status', 'verification-link-sent');
+    }
 }

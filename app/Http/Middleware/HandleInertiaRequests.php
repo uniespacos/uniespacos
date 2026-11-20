@@ -89,7 +89,7 @@ class HandleInertiaRequests extends Middleware
 
     private function formatAuthUser($user): array
     {
-        $user->load('setor');
+        $user->loadMissing(['setor', 'roles.permissions', 'permissions']);
 
         return array_merge($user->toArray(), [
             'unread_notifications_count' => $user->unreadNotifications()->count(),

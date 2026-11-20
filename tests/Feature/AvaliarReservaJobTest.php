@@ -651,6 +651,167 @@ class AvaliarReservaJobTest extends TestCase
         $this->assertSame('en', app()->getLocale());
     }
 
+    public function test_escopo_single_avalia_apenas_os_horarios_enviados_preservando_outras_semanas(): void
+    {
+        Carbon::setTestNow('2026-11-19 12:00:00');
+        Bus::fake();
+
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create([
+            'situacao' => 'em_analise',
+            'recorrencia' => '15dias',
+            'data_inicial' => '2026-11-24',
+            'data_final' => '2026-12-08',
+        ]);
+
+        $semana1 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => '2026-11-24',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+        $semana2 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => '2026-12-01',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+        $semana3 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => '2026-12-08',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+
+        $job = new AvaliarReservaJob($reserva, [
+            'evaluation_scope' => 'single',
+            'motivo' => null,
+            'horarios_avaliados' => [
+                ['id' => $semana1->id, 'status' => 'deferida'],
+            ],
+            'observacao' => null,
+        ], $gestor);
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
+        $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'em_analise', 'user_id' => null]);
+        $this->assertDatabaseHas('horarios', ['id' => $semana3->id, 'situacao' => 'em_analise', 'user_id' => null]);
+        $this->assertSame('em_analise', $reserva->fresh()->situacao);
+    }
+
+    public function test_reavaliacao_recurring_com_decisoes_explicitas_por_semana_nao_descarta_semanas_posteriores(): void
+    {
+        Carbon::setTestNow('2026-11-19 12:00:00');
+        Bus::fake();
+
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create([
+            'situacao' => 'deferida',
+            'recorrencia' => '15dias',
+            'data_inicial' => '2026-11-24',
+            'data_final' => '2026-12-08',
+        ]);
+
+        $semana1 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'deferida',
+            'user_id' => $gestor->id,
+            'data' => '2026-11-24',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+        $semana2 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'deferida',
+            'user_id' => $gestor->id,
+            'data' => '2026-12-01',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+        $semana3 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'deferida',
+            'user_id' => $gestor->id,
+            'data' => '2026-12-08',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+
+        $job = new AvaliarReservaJob($reserva, [
+            'evaluation_scope' => 'recurring',
+            'motivo' => null,
+            'horarios_avaliados' => [
+                ['id' => $semana1->id, 'status' => 'deferida'],
+                ['id' => $semana2->id, 'status' => 'solicitado'],
+                ['id' => $semana3->id, 'status' => 'solicitado'],
+            ],
+            'observacao' => null,
+        ], $gestor);
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
+        $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'em_analise', 'user_id' => null]);
+        $this->assertDatabaseHas('horarios', ['id' => $semana3->id, 'situacao' => 'em_analise', 'user_id' => null]);
+        $this->assertSame('em_analise', $reserva->fresh()->situacao);
+    }
+
+    public function test_escopo_recurring_replica_para_semanas_posteriores_quando_apenas_uma_semana_e_enviada(): void
+    {
+        Carbon::setTestNow('2026-11-19 12:00:00');
+        Bus::fake();
+
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $reserva = Reserva::factory()->create([
+            'situacao' => 'em_analise',
+            'recorrencia' => '15dias',
+            'data_inicial' => '2026-11-24',
+            'data_final' => '2026-12-08',
+        ]);
+
+        $semana1 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => '2026-11-24',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+        $semana2 = Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => '2026-12-01',
+            'horario_inicio' => '08:20:00',
+            'horario_fim' => '09:10:00',
+        ]);
+
+        $job = new AvaliarReservaJob($reserva, [
+            'evaluation_scope' => 'recurring',
+            'motivo' => null,
+            'horarios_avaliados' => [
+                ['id' => $semana1->id, 'status' => 'deferida'],
+            ],
+            'observacao' => null,
+        ], $gestor);
+        $job->handle(new ConflictDetectionService);
+
+        $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
+        $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
+        $this->assertSame('deferida', $reserva->fresh()->situacao);
+    }
+
     /**
      * @return array{0: User, 1: Reserva, 2: Horario}
      */

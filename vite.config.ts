@@ -21,34 +21,57 @@ export default defineConfig(({ isSsrBuild }) => ({
         alias: {
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
-        dedupe: ['@inertiajs/react']
+        dedupe: ['@inertiajs/react'],
     },
     // Ambiente de desenvolvimento
     server: {
         host: '0.0.0.0', // Escuta em todas as interfaces de rede
-        port: 5173,      // A porta padrão do Vite
+        port: 5173, // A porta padrão do Vite
         hmr: {
             host: 'localhost', // O navegador se conectará ao HMR via localhost
-        }
+        },
     },
     build: {
         rollupOptions: isSsrBuild
             ? {}
             : {
-                output: {
-                    manualChunks: {
-                        'vendor-react': ['react', 'react-dom', '@inertiajs/react'],
-                        'vendor-radix': [
-                            '@radix-ui/react-dialog',
-                            '@radix-ui/react-popover',
-                            '@radix-ui/react-dropdown-menu',
-                            '@radix-ui/react-select',
-                        ],
-                        'vendor-charts': ['recharts'],
-                        'vendor-dates': ['date-fns', 'react-day-picker'],
-                    },
-                },
-            },
+                  output: {
+                      manualChunks(id) {
+                          const normalizedId = id.replace(/\\/g, '/');
+                          if (!normalizedId.includes('/node_modules/')) {
+                              return undefined;
+                          }
+                          if (
+                              normalizedId.includes('/node_modules/react/') ||
+                              normalizedId.includes('/node_modules/react-dom/') ||
+                              normalizedId.includes('/node_modules/scheduler/') ||
+                              normalizedId.includes('/node_modules/@inertiajs/')
+                          ) {
+                              return 'vendor-react';
+                          }
+                          if (normalizedId.includes('/node_modules/lucide-react/')) {
+                              return 'vendor-icons';
+                          }
+                          if (normalizedId.includes('/node_modules/@radix-ui/')) {
+                              return 'vendor-radix';
+                          }
+                          if (normalizedId.includes('/node_modules/recharts/') || normalizedId.includes('/node_modules/d3-')) {
+                              return 'vendor-charts';
+                          }
+                          if (normalizedId.includes('/node_modules/date-fns/') || normalizedId.includes('/node_modules/react-day-picker/')) {
+                              return 'vendor-dates';
+                          }
+                          if (
+                              normalizedId.includes('/node_modules/react-hook-form/') ||
+                              normalizedId.includes('/node_modules/@hookform/resolvers/') ||
+                              normalizedId.includes('/node_modules/zod/')
+                          ) {
+                              return 'vendor-forms';
+                          }
+                          return undefined;
+                      },
+                  },
+              },
         chunkSizeWarningLimit: 600,
     },
 }));

@@ -1,3 +1,4 @@
+import { type DecisaoAvaliacaoType, SituacaoHorario, SituacaoReserva } from '@/contracts';
 import { Horario, Reserva, User } from '@/types';
 import { act, renderHook } from '@testing-library/react';
 import { useReservationSlots } from './use-reservation-slots';
@@ -133,5 +134,108 @@ describe('useReservationSlots', () => {
 
         expect(result.current.slotsSelecao[0]?.status).toBe('deferida');
         expect(result.current.slotsSelecao[1]?.status).toBe('indeferida');
+    });
+
+    it('aplica decisao global apenas aos slots que satisfazem o predicado de semana', () => {
+        const horarios: Horario[] = [
+            {
+                id: 10,
+                data: '2026-11-24',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: 'em_analise',
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+            {
+                id: 11,
+                data: '2026-12-01',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: 'em_analise',
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+            {
+                id: 12,
+                data: '2026-12-08',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: 'em_analise',
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+        ];
+
+        const { result } = renderHook(() => useReservationSlots(mockReserva(horarios)));
+
+        act(() => {
+            result.current.handleDecisaoGlobalChange(SituacaoReserva.DEFERIDA, (slot) => slot.dadosReserva?.horarioDB.data === '2026-11-24');
+        });
+
+        expect(result.current.slotsSelecao[0]?.status).toBe(SituacaoReserva.DEFERIDA);
+        expect(result.current.slotsSelecao[1]?.status).toBe('solicitado');
+        expect(result.current.slotsSelecao[2]?.status).toBe('solicitado');
+    });
+
+    it('ignora decisao global invalida em runtime', () => {
+        const horarios: Horario[] = [
+            {
+                id: 10,
+                data: '2026-11-24',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: SituacaoHorario.EM_ANALISE,
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+        ];
+
+        const { result } = renderHook(() => useReservationSlots(mockReserva(horarios)));
+
+        act(() => {
+            result.current.handleDecisaoGlobalChange('invalida' as unknown as DecisaoAvaliacaoType);
+        });
+
+        expect(result.current.slotsSelecao[0]?.status).toBe('solicitado');
+    });
+
+    it('restaura slots fora do escopo para o estado inicial quando muda para escopo semanal', () => {
+        const horarios: Horario[] = [
+            {
+                id: 10,
+                data: '2026-11-24',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: SituacaoHorario.EM_ANALISE,
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+            {
+                id: 11,
+                data: '2026-12-01',
+                horario_inicio: '08:20:00',
+                horario_fim: '09:10:00',
+                situacao: SituacaoHorario.EM_ANALISE,
+                is_conflicted: false,
+                agenda: { id: 2, turno: 'manha' },
+            },
+        ];
+
+        const { result } = renderHook(() => useReservationSlots(mockReserva(horarios)));
+
+        act(() => {
+            result.current.handleDecisaoGlobalChange(SituacaoReserva.DEFERIDA);
+        });
+
+        expect(result.current.slotsSelecao[0]?.status).toBe(SituacaoReserva.DEFERIDA);
+        expect(result.current.slotsSelecao[1]?.status).toBe(SituacaoReserva.DEFERIDA);
+
+        act(() => {
+            result.current.restaurarSlotsForaDoEscopo((slot) => slot.dadosReserva?.horarioDB.data === '2026-11-24');
+        });
+
+        expect(result.current.slotsSelecao[0]?.status).toBe(SituacaoReserva.DEFERIDA);
+        expect(result.current.slotsSelecao[1]?.status).toBe('solicitado');
     });
 });

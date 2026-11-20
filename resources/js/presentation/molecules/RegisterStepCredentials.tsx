@@ -1,7 +1,7 @@
+import { useTranslation } from '@/i18n';
+import { PasswordInput } from '@/presentation/atoms/PasswordInput';
 import { FormField } from '@/presentation/molecules/FormField';
 import { PasswordStrengthMeter } from '@/presentation/molecules/PasswordStrengthMeter';
-import { PasswordInput } from '@/presentation/atoms/PasswordInput';
-import { useTranslation } from '@/i18n';
 
 interface RegisterStepCredentialsProps {
     data: {
@@ -37,7 +37,7 @@ export function RegisterStepCredentials({ data, onInputChange, errors, processin
                         required
                         hasError={!!errors.password}
                         aria-invalid={!!errors.password}
-                        aria-describedby={errors.password ? 'register-password-error' : undefined}
+                        aria-describedby={errors.password ? 'password-error' : undefined}
                         disabled={processing}
                         className="h-11"
                     />
@@ -61,7 +61,7 @@ export function RegisterStepCredentials({ data, onInputChange, errors, processin
                         required
                         hasError={!!errors.password_confirmation}
                         aria-invalid={!!errors.password_confirmation}
-                        aria-describedby={errors.password_confirmation ? 'register-confirm-error' : undefined}
+                        aria-describedby={errors.password_confirmation ? 'password_confirmation-error' : undefined}
                         disabled={processing}
                         className="h-11"
                     />

@@ -751,4 +751,223 @@ class ReservaValidationTest extends TestCase
             'Intervalo válido não deveria ser rejeitado'
         );
     }
+
+    #[Test]
+    public function test_recurring_reservation_with_conflict_in_third_week_is_rejected_on_submit(): void
+    {
+        $usuario = User::factory()->create();
+        $agenda = Agenda::factory()->create();
+
+        // Semana fixa da setUp: 2026-06-15 (segunda-feira).
+        // Recorrencia 1mes -> data_final 2026-07-15; 3a semana cai em 2026-06-29.
+        $dataInicial = '2026-06-15';
+        $dataFinal = '2026-07-15';
+        $terceiraSemana = '2026-06-29';
+
+        Horario::create([
+            'reserva_id' => Reserva::factory()->create()->id,
+            'agenda_id' => $agenda->id,
+            'data' => $terceiraSemana,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '12:00:00',
+            'situacao' => SituacaoReservaEnum::DEFERIDA->value,
+        ]);
+
+        $response = $this->actingAs($usuario)->post(route('reservas.store'), [
+            'titulo' => 'Reserva Recorrente com Conflito na 3a Semana',
+            'descricao' => 'Conflito futuro deve bloquear no envio',
+            'data_inicial' => $dataInicial,
+            'data_final' => $dataFinal,
+            'recorrencia' => '1mes',
+            'horarios_solicitados' => [
+                [
+                    'data' => $dataInicial,
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '12:00:00',
+                    'agenda_id' => $agenda->id,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('horarios_solicitados.0.agenda_id');
+    }
+
+    #[Test]
+    public function test_recurring_reservation_respects_explicit_future_week_selection_during_validation(): void
+    {
+        $usuario = User::factory()->create();
+        $agenda = Agenda::factory()->create();
+
+        $dataInicial = '2026-06-15';
+        $dataFinal = '2026-07-15';
+        $terceiraSemana = '2026-06-29';
+
+        // Existe horario deferido em 10:00-12:00 na 3a semana, mas a solicitacao escolheu 14:00-16:00 nessa data.
+        Horario::create([
+            'reserva_id' => Reserva::factory()->create()->id,
+            'agenda_id' => $agenda->id,
+            'data' => $terceiraSemana,
+            'horario_inicio' => '10:00:00',
+            'horario_fim' => '12:00:00',
+            'situacao' => SituacaoReservaEnum::DEFERIDA->value,
+        ]);
+
+        $response = $this->actingAs($usuario)->post(route('reservas.store'), [
+            'titulo' => 'Reserva Recorrente Sem Conflito por Selecao Explicita',
+            'descricao' => '3a semana escolheu outro horario explicitamente',
+            'data_inicial' => $dataInicial,
+            'data_final' => $dataFinal,
+            'recorrencia' => '1mes',
+            'horarios_solicitados' => [
+                [
+                    'data' => $dataInicial,
+                    'horario_inicio' => '10:00:00',
+                    'horario_fim' => '12:00:00',
+                    'agenda_id' => $agenda->id,
+                ],
+                [
+                    'data' => $terceiraSemana,
+                    'horario_inicio' => '14:00:00',
+                    'horario_fim' => '16:00:00',
+                    'agenda_id' => $agenda->id,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasNoErrors();
+    }
+
+    #[Test]
+    public function it_rejects_invalid_publico_estimado_in_store_and_update(): void
+    {
+        $usuario = User::factory()->create();
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $amanha = today()->addDay()->toDateString();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $usuario->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
+            'data_inicial' => $amanha,
+            'data_final' => $amanha,
+            'recorrencia' => 'unica',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
+            'data' => $amanha,
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '09:00:00',
+        ]);
+
+        foreach ([0, -1, 1.5, '1.5', 99999] as $invalido) {
+            $storeResponse = $this->actingAs($usuario)->postJson(route('reservas.store'), [
+                'titulo' => 'Teste Público Inválido',
+                'descricao' => 'Justificativa',
+                'publico_estimado' => $invalido,
+                'data_inicial' => $amanha,
+                'data_final' => $amanha,
+                'recorrencia' => 'unica',
+                'horarios_solicitados' => [
+                    [
+                        'data' => $amanha,
+                        'horario_inicio' => '10:00:00',
+                        'horario_fim' => '11:00:00',
+                        'agenda_id' => $agenda->id,
+                    ],
+                ],
+            ]);
+            $storeResponse->assertUnprocessable()->assertJsonValidationErrors('publico_estimado');
+
+            $updateResponse = $this->actingAs($usuario)->putJson(route('reservas.update', $reserva->id), [
+                'titulo' => 'Teste Update Público Inválido',
+                'descricao' => 'Justificativa',
+                'publico_estimado' => $invalido,
+                'data_inicial' => $amanha,
+                'data_final' => $amanha,
+                'recorrencia' => 'unica',
+                'edit_scope' => 'recurring',
+                'edited_week_date' => null,
+                'horarios_solicitados' => [
+                    [
+                        'data' => $amanha,
+                        'horario_inicio' => '08:00:00',
+                        'horario_fim' => '09:00:00',
+                        'agenda_id' => $agenda->id,
+                    ],
+                ],
+            ]);
+            $updateResponse->assertUnprocessable()->assertJsonValidationErrors('publico_estimado');
+        }
+    }
+
+    #[Test]
+    public function it_accepts_valid_or_null_publico_estimado_in_store_and_update(): void
+    {
+        $usuario = User::factory()->create();
+        $gestor = User::factory()->create();
+        $agenda = Agenda::factory()->create(['user_id' => $gestor->id]);
+        $amanha = today()->addDay()->toDateString();
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $usuario->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
+            'data_inicial' => $amanha,
+            'data_final' => $amanha,
+            'recorrencia' => 'unica',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
+            'data' => $amanha,
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '09:00:00',
+        ]);
+
+        foreach ([null, '', 1, 5000] as $indice => $valido) {
+            $dataStore = today()->addDays($indice + 1)->toDateString();
+
+            $storeResponse = $this->actingAs($usuario)->post(route('reservas.store'), [
+                'titulo' => 'Teste Público Válido',
+                'descricao' => 'Justificativa',
+                'publico_estimado' => $valido,
+                'data_inicial' => $dataStore,
+                'data_final' => $dataStore,
+                'recorrencia' => 'unica',
+                'horarios_solicitados' => [
+                    [
+                        'data' => $dataStore,
+                        'horario_inicio' => '10:00:00',
+                        'horario_fim' => '11:00:00',
+                        'agenda_id' => $agenda->id,
+                    ],
+                ],
+            ]);
+            $storeResponse->assertSessionHasNoErrors();
+            $storeResponse->assertRedirect();
+
+            $updateResponse = $this->actingAs($usuario)->put(route('reservas.update', $reserva->id), [
+                'titulo' => 'Teste Update Público Válido',
+                'descricao' => 'Justificativa',
+                'publico_estimado' => $valido,
+                'data_inicial' => $amanha,
+                'data_final' => $amanha,
+                'recorrencia' => 'unica',
+                'edit_scope' => 'recurring',
+                'edited_week_date' => null,
+                'horarios_solicitados' => [
+                    [
+                        'data' => $amanha,
+                        'horario_inicio' => '08:00:00',
+                        'horario_fim' => '09:00:00',
+                        'agenda_id' => $agenda->id,
+                    ],
+                ],
+            ]);
+            $updateResponse->assertSessionHasNoErrors();
+            $updateResponse->assertRedirect();
+        }
+    }
 }
