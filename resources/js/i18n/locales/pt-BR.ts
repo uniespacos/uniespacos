@@ -604,6 +604,8 @@ export const ptBR = {
             photo: 'Foto de Perfil',
             change_photo: 'Alterar foto de perfil',
             remove_photo: 'Remover foto',
+            photo_invalid_type: 'Selecione um arquivo de imagem válido (JPG, PNG, GIF ou WebP).',
+            photo_max_size: 'A imagem deve ter no máximo 2 MB.',
             saved: 'Alterações salvas com sucesso.',
             saved_text: 'Salvo',
             save_button: 'Salvar',

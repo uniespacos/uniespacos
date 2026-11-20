@@ -608,6 +608,8 @@ export const es = {
             photo: 'Foto de Perfil',
             change_photo: 'Cambiar foto de perfil',
             remove_photo: 'Eliminar foto',
+            photo_invalid_type: 'Seleccione un archivo de imagen válido (JPG, PNG, GIF o WebP).',
+            photo_max_size: 'La imagen debe tener como máximo 2 MB.',
             saved: 'Cambios guardados con éxito.',
             saved_text: 'Guardado',
             save_button: 'Guardar',

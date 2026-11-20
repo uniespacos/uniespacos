@@ -340,8 +340,8 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 - [ ] **UX-23** · Tela de detalhes do calendário (`CalendarReservationDetails`) sem Shift+clique nem marcar o turno — `P4` · pequeno · decisão
   Decidir se a tela ganha os atalhos de seleção ou se fica fora do escopo.
   **Pronto quando:** a decisão está registrada aqui, e, se for fazer, há item de execução.
-- [ ] **QA126-04** · Foto de perfil inválida sem mensagem de erro — `P2` · pequeno · frontend
-  Em `settings/profile.tsx`, selecionar arquivo que não é imagem ou excede o tamanho limite deve manter a foto anterior, exibir erro traduzido em `pt-BR`/`en`/`es` e limpar o input.
+- [ ] **QA126-04** · 🔧 em andamento (branch `fix/qa126-melhorias-pos-qa-rc126` — código e testes prontos, aguardando PR e revalidação de `CFG-02` em staging) · Foto de perfil inválida sem mensagem de erro — `P2` · pequeno · frontend
+  Em `settings/profile.tsx`, selecionar arquivo que não é imagem (`!file.type.startsWith('image/')`) ou excede 2 MB mantém a foto anterior, exibe erro traduzido em `pt-BR`/`en`/`es` e limpa o input. Backend validado via `ProfileUpdateRequest` (`image|max:2048`) e `ProcessadorDeFotoDePerfil`.
   **Pronto quando:** validação client-side e testes em `profile.test.tsx` passam, mantendo validação do backend (`FotoPerfilTest`), e `CFG-02` é revalidado em staging.
 - [ ] **QA126-05** · Mensagem de sucesso enganosa na auto-aprovação do gestor — `P2` · pequeno · frontend + i18n
   Variar a mensagem da tela de sucesso do `ReservaStepperModal` conforme a situação da reserva criada (`deferida`, `parcialmente_deferida` ou `em_analise`) em `pt-BR`/`en`/`es`.
