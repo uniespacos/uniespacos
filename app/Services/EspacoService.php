@@ -104,7 +104,7 @@ class EspacoService
         $reference = Carbon::parse($weekReference)->locale('pt_BR');
         $weekStart = $reference->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd = $reference->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
-        $conflictHorizonEnd = $reference->copy()->addMonth()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+        $conflictHorizonEnd = Carbon::parse($weekEnd)->addMonth()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
 
         $espaco->load([
             'andar.modulo.unidade.instituicao',

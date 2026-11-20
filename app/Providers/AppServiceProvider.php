@@ -57,6 +57,7 @@ use App\Support\LogDeConsulta;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -145,7 +146,7 @@ class AppServiceProvider extends ServiceProvider
     private function deveForcarHttps(): bool
     {
         return $this->app->environment('production')
-            || str_starts_with((string) config('app.url'), 'https://');
+            || str_starts_with(Config::string('app.url', ''), 'https://');
     }
 
     /**
