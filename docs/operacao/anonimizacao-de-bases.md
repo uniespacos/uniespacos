@@ -1,6 +1,6 @@
 # Anonimização de bases não produtivas
 
-> **Status:** código pronto na integração da Onda 2 (`feat/onda-2-lgpd-lote-2`, release 1.7.0). O processo de uso ainda não foi aprovado: ver T-41 no [backlog](../backlog.md).
+> **Status:** em produção desde a `1.7.0` (20/11/2026; recusa em `production` confirmada). O processo de uso em bases não produtivas ainda não foi aprovado: ver T-41 no [backlog](../backlog.md).
 > **Comando:** `base:anonimizar`. **Código:** `app/Console/Commands/BaseAnonimizarCommand.php`, `app/Services/AnonimizacaoDeBaseService.php`, `app/Repositories/AnonimizacaoDeBaseRepositoryDb.php` e `config/anonimizacao.php`.
 
 > **Atenção: a operação é irreversível.** O comando troca dados pessoais do banco por valores neutros, e não há desfazer depois do commit. Ele só roda em ambientes não produtivos, mas não sabe se a base é de teste: antes de rodar, confirme o `APP_ENV` com `app:check-env` (ver [deploy e segredos](./deploy-e-segredos.md)) e confirme que a base é de teste.
