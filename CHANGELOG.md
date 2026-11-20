@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0-rc.126](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.125...v1.5.0-rc.126) (2026-11-20)
+
+
+### Features
+
+* solicitação de espaço com menos esforço para o usuário comum ([7ee99b8](https://github.com/uniespacos/uniespacos/commit/7ee99b8135945d5e4eb3032b8fbe7e87ce746f31))
+
+
+### Bug Fixes
+
+* reconciliar PR [#536](https://github.com/uniespacos/uniespacos/issues/536) com develop pós-1.7.0 e corrigir PHPStan ([58dd657](https://github.com/uniespacos/uniespacos/commit/58dd6571898a4272e0c887bdd6fd5770c5539108))
+
 ## [1.5.0-rc.125](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.124...v1.5.0-rc.125) (2026-11-20)
 
 
