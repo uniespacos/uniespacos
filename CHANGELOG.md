@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.124](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.123...v1.5.0-rc.124) (2026-11-20)
+
+
+### Bug Fixes
+
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([771b00d](https://github.com/uniespacos/uniespacos/commit/771b00d33ebdfb6afbfd9a89deda9367d9c8b06a))
+* **ci:** usa tag da imagem recém-construída no deploy de staging via workflow_dispatch ([b2655ef](https://github.com/uniespacos/uniespacos/commit/b2655efb811ad2fe98289e7f65fe9c934be3f3ea))
+
 ## [1.5.0-rc.123](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.122...v1.5.0-rc.123) (2026-11-19)
 
 
