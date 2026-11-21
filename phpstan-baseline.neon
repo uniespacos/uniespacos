@@ -921,7 +921,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property object\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: app/Notifications/BaseNotification.php
 
 		-
