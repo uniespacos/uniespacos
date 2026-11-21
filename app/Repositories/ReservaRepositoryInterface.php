@@ -63,6 +63,13 @@ interface ReservaRepositoryInterface
     public function update(array $data, int|string $id): Reserva;
 
     /**
+     * Insere em lote horarios ja montados; cada linha traz o reserva_id.
+     *
+     * @param  array<int, array<string, mixed>>  $linhas
+     */
+    public function inserirHorarios(array $linhas): void;
+
+    /**
      * Returns the reservas of the given requester still awaiting evaluation, locked for update
      *
      * @return Collection<int, Reserva>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Models\Horario;
 use App\Models\Reserva;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -155,6 +156,11 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
         $reserva->update($data);
 
         return $reserva;
+    }
+
+    public function inserirHorarios(array $linhas): void
+    {
+        Horario::insert($linhas);
     }
 
     /**
