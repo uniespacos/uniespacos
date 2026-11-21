@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Horario;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection as SupportCollection;
 
 /**
@@ -50,4 +51,16 @@ interface HorarioRepositoryInterface extends CrudRepositoryInterface
      * @param  list<int>  $agendaIds
      */
     public function bloquearPeriodo(array $agendaIds, string $dataInicial, string $dataFinal): void;
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @param  array<mixed>|null  $turnos
+     * @return SupportCollection<array-key, int>
+     */
+    public function contarSlotsOcupadosPorEspaco(CarbonInterface $inicio, CarbonInterface $fim, ?array $agendaIds, ?int $instituicaoId, ?array $turnos): SupportCollection;
+
+    /**
+     * @return array<int, array{nome: string|null, count: int}>
+     */
+    public function rankingEspacosMaisOcupados(?int $instituicaoId, int $limite): array;
 }

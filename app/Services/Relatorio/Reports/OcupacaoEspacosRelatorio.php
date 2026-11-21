@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Relatorio\Reports;
 
 use App\Enums\Relatorio\TipoRelatorioEnum;
-use App\Models\Espaco;
-use App\Models\Horario;
 use App\Models\User;
+use App\Repositories\EspacoRepositoryInterface;
+use App\Repositories\HorarioRepositoryInterface;
 use App\Services\Relatorio\Data\ColunaRelatorio;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
@@ -16,38 +16,20 @@ use Carbon\CarbonPeriod;
 
 final class OcupacaoEspacosRelatorio implements RelatorioInterface
 {
+    public function __construct(
+        private EspacoRepositoryInterface $espacos,
+        private HorarioRepositoryInterface $horarios,
+    ) {}
+
     public function gerar(User $usuario, FiltrosRelatorio $filtros): DadosRelatorio
     {
         $inicio = $filtros->dataInicio ?? CarbonImmutable::now()->startOfMonth();
         $fim = $filtros->dataFim ?? CarbonImmutable::now()->endOfMonth();
 
-        $query = Horario::query()
-            ->where('situacao', 'deferida')
-            ->whereBetween('data', [$inicio, $fim]);
+        $contagens = $this->horarios->contarSlotsOcupadosPorEspaco($inicio, $fim, $filtros->agendaIds, $filtros->instituicaoId, $filtros->turnos);
 
-        if ($filtros->agendaIds !== null) {
-            $query->whereIn('agenda_id', $filtros->agendaIds);
-        }
-
-        if ($filtros->instituicaoId !== null && $filtros->agendaIds === null) {
-            $query->whereHas('agenda.espaco.andar.modulo.unidade', function ($u) use ($filtros) {
-                $u->where('instituicao_id', $filtros->instituicaoId);
-            });
-        }
-
-        if ($filtros->turnos !== null) {
-            $query->whereHas('agenda', fn ($q) => $q->whereIn('turno', $filtros->turnos));
-        }
-        $contagens = $query
-            ->join('agendas', 'horarios.agenda_id', '=', 'agendas.id')
-            ->groupBy('agendas.espaco_id')
-            ->selectRaw('agendas.espaco_id as espaco_id, count(distinct (horarios.data, horarios.horario_inicio)) as total')
-            ->pluck('total', 'espaco_id');
-
-        $espacos = Espaco::query()
-            ->with('andar.modulo.unidade')
-            ->whereIn('id', $contagens->keys())
-            ->get()
+        $espacos = $this->espacos
+            ->getComLocalizacaoPorIds($contagens->keys()->all())
             ->keyBy('id');
 
         $linhas = $contagens
@@ -68,7 +50,7 @@ final class OcupacaoEspacosRelatorio implements RelatorioInterface
                     }
                 }
                 $capacidade = $diasLetivos * $slots;
-                $totalOcupados = (int) $total;
+                $totalOcupados = $total;
                 $taxaOcupacao = $capacidade > 0 ? ($totalOcupados / $capacidade) * 100 : 0;
 
                 return [

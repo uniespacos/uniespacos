@@ -29,6 +29,8 @@ use App\Repositories\AndarRepositoryEloquent;
 use App\Repositories\AndarRepositoryInterface;
 use App\Repositories\AnonimizacaoDeBaseRepositoryDb;
 use App\Repositories\AnonimizacaoDeBaseRepositoryInterface;
+use App\Repositories\DashboardRepositoryEloquent;
+use App\Repositories\DashboardRepositoryInterface;
 use App\Repositories\EspacoRepositoryEloquent;
 use App\Repositories\EspacoRepositoryInterface;
 use App\Repositories\FotoPerfilRepositoryEloquent;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PermissionRepositoryInterface::class, PermissionRepositoryEloquent::class);
         $this->app->bind(AgendaRepositoryInterface::class, AgendaRepositoryEloquent::class);
         $this->app->bind(AndarRepositoryInterface::class, AndarRepositoryEloquent::class);
+        $this->app->bind(DashboardRepositoryInterface::class, DashboardRepositoryEloquent::class);
         $this->app->bind(EspacoRepositoryInterface::class, EspacoRepositoryEloquent::class);
         $this->app->bind(HorarioRepositoryInterface::class, HorarioRepositoryEloquent::class);
         $this->app->bind(InstituicaoRepositoryInterface::class, InstituicaoRepositoryEloquent::class);

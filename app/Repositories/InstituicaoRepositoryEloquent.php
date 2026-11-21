@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\Instituicao;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @extends BaseRepositoryEloquent<Instituicao>
@@ -29,5 +30,22 @@ class InstituicaoRepositoryEloquent extends BaseRepositoryEloquent implements In
             ))
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * @return Collection<int, Instituicao>
+     */
+    public function getArvoreParaPermissoes(): Collection
+    {
+        return $this->model->newQuery()
+            ->select(['id', 'nome', 'sigla'])
+            ->with([
+                'unidades:id,nome,instituicao_id',
+                'unidades.modulos:id,nome,unidade_id',
+                'unidades.modulos.andars:id,nome,modulo_id',
+                'unidades.modulos.andars.espacos:id,nome,capacidade_pessoas,andar_id',
+                'unidades.modulos.andars.espacos.agendas:id,turno,espaco_id',
+            ])
+            ->get();
     }
 }

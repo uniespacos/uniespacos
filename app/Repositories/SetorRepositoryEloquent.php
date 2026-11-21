@@ -51,4 +51,12 @@ class SetorRepositoryEloquent extends BaseRepositoryEloquent implements SetorRep
             ->latest()
             ->paginate($perPage);
     }
+
+    /**
+     * @return Collection<int, Setor>
+     */
+    public function getListaParaFiltro(): Collection
+    {
+        return $this->model->newQuery()->select(['id', 'sigla'])->orderBy('sigla')->get();
+    }
 }

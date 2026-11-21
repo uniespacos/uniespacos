@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\EmailJaVerificadoException;
-use App\Models\Agenda;
-use App\Models\Instituicao;
-use App\Models\Setor;
 use App\Models\User;
 use App\Notifications\UserAssignedAsManagerNotification;
 use App\Notifications\UserRemovedAsManagerNotification;
+use App\Repositories\AgendaRepositoryInterface;
+use App\Repositories\InstituicaoRepositoryInterface;
 use App\Repositories\PermissionRepositoryInterface;
+use App\Repositories\SetorRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,12 +25,13 @@ class UserService
     public function __construct(
         protected UserRepositoryInterface $repoUser,
         protected PermissionRepositoryInterface $repoPermission,
+        protected AgendaRepositoryInterface $repoAgenda,
+        protected InstituicaoRepositoryInterface $repoInstituicao,
+        protected SetorRepositoryInterface $repoSetor,
         protected ExclusaoDeContaService $exclusaoDeConta,
     ) {}
 
     /**
-     * Returns all users belonging to the given institution with their sector relation.
-     *
      * @return Collection<int, User>
      */
     public function getAllByInstituicao(int $instituicaoId): Collection
@@ -39,13 +40,11 @@ class UserService
     }
 
     /**
-     * Returns all data needed to render the admin users index page.
-     *
      * @return array<string, mixed>
      */
     public function getIndexData(User $authUser, ?string $search = null, ?int $setorId = null, bool $apenasAnonimizados = false): array
     {
-        $instituicaoId = $authUser->setor->unidade->instituicao_id;
+        $instituicaoId = $authUser->instituicaoId();
 
         /** @var LengthAwarePaginator<int, User> $users */
         $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId, $apenasAnonimizados);
@@ -55,18 +54,15 @@ class UserService
             'anonimizado' => $user->estaAnonimizado(),
         ]));
         $users->withQueryString();
-        $setores = Setor::select(['id', 'sigla'])->orderBy('sigla')->get();
 
         return [
             'users' => $users,
-            'setores' => $setores,
+            'setores' => $this->repoSetor->getListaParaFiltro(),
             'filters' => ['search' => $search, 'setor_id' => $setorId, 'anonimizados' => $apenasAnonimizados],
         ];
     }
 
     /**
-     * Returns everything the permission modal needs for a single user.
-     *
      * Fica fora do index de propósito: a árvore de instituições e as agendas do
      * usuário só fazem sentido quando o modal de permissões abre, e carregá-las
      * na listagem custava segundos por request.
@@ -83,22 +79,11 @@ class UserService
                 'permissions' => $user->getAllPermissions()->pluck('name'),
                 'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
             ]),
-            'instituicoes' => Instituicao::select(['id', 'nome', 'sigla'])
-                ->with([
-                    'unidades:id,nome,instituicao_id',
-                    'unidades.modulos:id,nome,unidade_id',
-                    'unidades.modulos.andars:id,nome,modulo_id',
-                    'unidades.modulos.andars.espacos:id,nome,capacidade_pessoas,andar_id',
-                    'unidades.modulos.andars.espacos.agendas:id,turno,espaco_id',
-                ])
-                ->get(),
+            'instituicoes' => $this->repoInstituicao->getArvoreParaPermissoes(),
             'permissionCatalog' => $this->repoPermission->getAllGroupedByPrefix(),
         ];
     }
 
-    /**
-     * Sends the email verification notification to the given user, for an admin to trigger on their behalf.
-     */
     public function resendVerificationEmail(User $user): void
     {
         if ($user->hasVerifiedEmail()) {
@@ -109,7 +94,7 @@ class UserService
     }
 
     /**
-     * Sends a password reset link to the given user's email, for an admin to trigger on their behalf.
+     * Falha de envio vira false, sem derrubar a request.
      */
     public function sendPasswordResetLink(User $user): bool
     {
@@ -123,8 +108,6 @@ class UserService
     }
 
     /**
-     * Updates the permission type and agenda assignments for a user.
-     *
      * Usuário com mais de um papel (ex.: comum + gestor) não perde papéis: o acúmulo
      * depende da decisão B44 pendente, então só as agendas são tratadas quando ele é gestor.
      * Notificações de gestor saem só em transição real, depois do commit.
@@ -137,7 +120,7 @@ class UserService
 
         $transicao = DB::transaction(function () use ($user, $data, $agendaIds): array {
             $papeisAtuais = $user->roles()->pluck('name')->all();
-            $agendasAtuais = Agenda::where('user_id', $user->id)->pluck('id')->all();
+            $agendasAtuais = $this->repoAgenda->idsDoUsuario($user->id);
 
             $resultado = count($papeisAtuais) > 1
                 ? $this->atualizarAgendasDeUsuarioComPapeisAcumulados($user, $papeisAtuais, $agendasAtuais, $agendaIds)
@@ -174,7 +157,7 @@ class UserService
         $user->syncRoles([$novoPapel]);
 
         if ($novoPapel !== 'gestor') {
-            Agenda::where('user_id', $user->id)->update(['user_id' => null]);
+            $this->repoAgenda->desvincularDoUsuario($user->id);
 
             return ['atribuido' => false, 'removido' => $eraGestor];
         }
@@ -214,11 +197,11 @@ class UserService
     {
         $desvincular = array_filter($agendasAtuais, fn (mixed $id): bool => ! in_array($id, $agendaIds));
         if ($desvincular !== []) {
-            Agenda::whereIn('id', $desvincular)->update(['user_id' => null]);
+            $this->repoAgenda->desvincularIds($desvincular);
         }
 
         if ($agendaIds !== []) {
-            Agenda::whereIn('id', $agendaIds)->update(['user_id' => $user->id]);
+            $this->repoAgenda->vincularAoUsuario($agendaIds, $user->id);
         }
     }
 
@@ -256,8 +239,6 @@ class UserService
     }
 
     /**
-     * Creates and persists a new user.
-     *
      * @param  array<string, mixed>  $data
      */
     public function create(array $data): User
@@ -266,8 +247,6 @@ class UserService
     }
 
     /**
-     * Updates an existing user with the given data.
-     *
      * @param  array<string, mixed>  $data
      */
     public function update(User $user, array $data): User

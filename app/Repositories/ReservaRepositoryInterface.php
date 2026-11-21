@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Reserva;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -55,4 +56,24 @@ interface ReservaRepositoryInterface extends CrudRepositoryInterface
      * @return Collection<int, Reserva>
      */
     public function getPendentesDoSolicitante(int $userId): Collection;
+
+    public function contarDaInstituicao(?int $instituicaoId, ?CarbonInterface $inicio, ?CarbonInterface $fim): int;
+
+    /**
+     * @return array<string, int>
+     */
+    public function contarPorSituacaoDaInstituicao(?int $instituicaoId, ?CarbonInterface $inicio, ?CarbonInterface $fim): array;
+
+    /**
+     * @return array<int, array{nome: string|null, count: int}>
+     */
+    public function rankingSetoresDaInstituicao(?int $instituicaoId, int $limite): array;
+
+    /**
+     * @param  array<mixed>|null  $situacoes
+     * @param  array<mixed>|null  $agendaIds
+     * @param  array<mixed>|null  $turnos
+     * @return Collection<int, Reserva>
+     */
+    public function listarParaRelatorioDePeriodo(?CarbonInterface $inicio, ?CarbonInterface $fim, ?array $situacoes, ?array $agendaIds, ?array $turnos, ?int $instituicaoId): Collection;
 }

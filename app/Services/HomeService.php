@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Agenda;
+use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Espaco;
-use App\Models\Reserva;
-use App\Models\Unidade;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
+use App\Repositories\AgendaRepositoryInterface;
+use App\Repositories\DashboardRepositoryInterface;
 
 class HomeService
 {
+    private const LIMITE_RECENTES = 5;
+
+    private const LIMITE_ESPACOS_RECENTES = 3;
+
+    public function __construct(
+        private DashboardRepositoryInterface $dashboard,
+        private AgendaRepositoryInterface $agendas,
+    ) {}
+
     /**
-     * Returns the dashboard data array for the given user based on their permission type.
-     *
      * @return array<string, mixed>
      */
     public function getDashboardData(User $user): array
@@ -30,85 +36,57 @@ class HomeService
     }
 
     /**
-     * Returns dashboard data for an institucional (admin) user.
-     *
      * @return array<string, mixed>
      */
     private function getInstitucionalData(User $user): array
     {
-        $reservas = $this->buildRecentReservasQuery($user)->get();
+        $reservas = $this->dashboard->reservasRecentesDoUsuario($user->id, self::LIMITE_RECENTES);
         $espacosFavoritos = $user->favoritos()->with('andar.modulo')->get();
-        $users = User::select(['id', 'name'])->latest()->take(5)->get();
-        $espacos = Espaco::latest()->take(5)->with(['andar.modulo.unidade', 'agendas:id,espaco_id,turno,user_id', 'agendas.user:id,name'])->get();
-        $gestores = User::permission('secao.gestao-reservas')
-            ->select(['id', 'name', 'email', 'setor_id'])
-            ->with('setor:id,nome')
-            ->latest()
-            ->take(5)
-            ->get();
-        $unidades = Unidade::latest()->take(5)->with('modulos.andars.espacos')->get();
+        $users = $this->dashboard->ultimosUsuarios(self::LIMITE_RECENTES);
+        $espacos = $this->dashboard->ultimosEspacosComAgendas(self::LIMITE_RECENTES);
+        $gestores = $this->dashboard->ultimosGestores(self::LIMITE_RECENTES);
+        $unidades = $this->dashboard->ultimasUnidadesComEspacos(self::LIMITE_RECENTES);
 
         $estatisticasPainel = [
-            'total_espacos' => Espaco::count(),
-            'total_gestores' => User::permission('secao.gestao-reservas')->count(),
-            'reservas_mes' => Reserva::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
+            'total_espacos' => $this->dashboard->contarEspacos(),
+            'total_gestores' => $this->dashboard->contarGestores(),
+            'reservas_mes' => $this->dashboard->contarReservasCriadasEntre(now()->startOfMonth(), now()->endOfMonth()),
         ];
 
         return compact('reservas', 'espacosFavoritos', 'user', 'users', 'gestores', 'espacos', 'unidades', 'estatisticasPainel');
     }
 
     /**
-     * Returns dashboard data for a gestor user.
-     *
      * @return array<string, mixed>
      */
     private function getGestorData(User $user): array
     {
         $espacosFavoritos = $user->favoritos()->with('andar.modulo')->get();
-        $agendas = Agenda::whereUserId($user->id)->with(['espaco.andar.modulo.unidade'])->get();
-
-        $reservasPendentes = Reserva::select(['id', 'titulo', 'descricao', 'situacao', 'user_id'])
-            ->whereHas('horarios.agenda', fn ($q) => $q->where('user_id', $user->id))
-            ->where(function ($query) {
-                $query->where('situacao', 'em_analise')
-                    ->orWhereHas('horarios', fn ($q) => $q->where('situacao', 'em_analise'));
-            })
-            ->with('user:id,name,setor_id', 'user.setor:id,nome')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $baseStats = Reserva::whereHas('horarios.agenda', fn ($q) => $q->where('user_id', $user->id));
+        $agendas = $this->agendas->getComEspacoDoUsuario($user->id);
+        $reservasPendentes = $this->dashboard->reservasPendentesDoGestor($user->id, self::LIMITE_RECENTES);
 
         $statusDasReservas = [
-            'pendentes' => (clone $baseStats)->where('situacao', 'em_analise')->count(),
-            'avaliadas_hoje' => (clone $baseStats)
-                ->whereIn('situacao', ['deferida', 'parcialmente_deferida', 'indeferida'])
-                ->whereDate('updated_at', today())
-                ->count(),
-            'total_espacos' => Espaco::whereHas('agendas', fn ($q) => $q->where('user_id', $user->id))->count(),
+            'pendentes' => $this->dashboard->contarReservasDoGestorPorSituacao($user->id, SituacaoReservaEnum::EM_ANALISE->value),
+            'avaliadas_hoje' => $this->dashboard->contarReservasAvaliadasHojeDoGestor($user->id, today()),
+            'total_espacos' => $this->dashboard->contarEspacosDoGestor($user->id),
         ];
 
         return compact('user', 'espacosFavoritos', 'agendas', 'reservasPendentes', 'statusDasReservas');
     }
 
     /**
-     * Returns dashboard data for a common user.
-     *
      * @return array<string, mixed>
      */
     private function getUserData(User $user): array
     {
-        $reservas = $this->buildRecentReservasQuery($user)->get();
+        $reservas = $this->dashboard->reservasRecentesDoUsuario($user->id, self::LIMITE_RECENTES);
         $espacosFavoritos = $user->favoritos()->with('andar.modulo')->get();
 
-        $base = Reserva::where('user_id', $user->id);
-
         $statusDasReservas = [
-            'em_analise' => (clone $base)->where('situacao', 'em_analise')->count(),
-            'parcialmente_deferida' => (clone $base)->where('situacao', 'parcialmente_deferida')->count(),
-            'deferida' => (clone $base)->where('situacao', 'deferida')->count(),
-            'indeferida' => (clone $base)->where('situacao', 'indeferida')->count(),
+            'em_analise' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::EM_ANALISE->value),
+            'parcialmente_deferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value),
+            'deferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::DEFERIDA->value),
+            'indeferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::INDEFERIDA->value),
         ];
 
         $espacosRecentes = $this->espacosRecentesDoUsuario($user);
@@ -117,65 +95,34 @@ class HomeService
     }
 
     /**
-     * Espacos distintos das reservas ativas do usuario, da reserva mais recente para a mais antiga.
-     *
      * @return list<array{id: int, nome: string, andar: array{modulo: array{nome: string}}}>
      */
     private function espacosRecentesDoUsuario(User $user): array
     {
-        $espacos = Espaco::query()
-            ->select('espacos.id', 'espacos.nome', 'espacos.andar_id')
-            ->join('agendas', 'agendas.espaco_id', '=', 'espacos.id')
-            ->join('horarios', 'horarios.agenda_id', '=', 'agendas.id')
-            ->join('reservas', 'reservas.id', '=', 'horarios.reserva_id')
-            ->where('reservas.user_id', $user->id)
-            ->where('reservas.situacao', '!=', 'inativa')
-            ->groupBy('espacos.id', 'espacos.nome', 'espacos.andar_id')
-            ->orderByRaw('MAX(reservas.created_at) DESC')
-            ->limit(3)
-            ->with(['andar:id,modulo_id', 'andar.modulo:id,nome'])
-            ->get();
-
         $resultado = [];
-        foreach ($espacos as $espaco) {
-            $modulo = $espaco->andar?->modulo;
-            $resultado[] = [
-                'id' => $espaco->id,
-                'nome' => $espaco->nome,
-                'andar' => [
-                    'modulo' => [
-                        'nome' => $modulo !== null ? $modulo->nome : '',
-                    ],
-                ],
-            ];
+
+        foreach ($this->dashboard->espacosRecentesDoUsuario($user->id, self::LIMITE_ESPACOS_RECENTES) as $espaco) {
+            $resultado[] = $this->formatarEspacoRecente($espaco);
         }
 
         return $resultado;
     }
 
     /**
-     * Builds the shared recent reservations query (last 5, excluding inactive).
-     *
-     * @return Builder
+     * @return array{id: int, nome: string, andar: array{modulo: array{nome: string}}}
      */
-    private function buildRecentReservasQuery(User $user)
+    private function formatarEspacoRecente(Espaco $espaco): array
     {
-        return Reserva::select(['id', 'titulo', 'data_inicial', 'data_final', 'situacao', 'user_id'])
-            ->where('user_id', $user->id)
-            ->where('situacao', '!=', 'inativa')
-            ->with([
-                'horarios' => function ($query) {
-                    $query->limit(1)
-                        ->select('id', 'reserva_id', 'agenda_id')
-                        ->with([
-                            'agenda:id,espaco_id',
-                            'agenda.espaco:id,nome,andar_id',
-                            'agenda.espaco.andar:id,nome,modulo_id',
-                            'agenda.espaco.andar.modulo:id,nome',
-                        ]);
-                },
-            ])
-            ->latest()
-            ->take(5);
+        $modulo = $espaco->andar?->modulo;
+
+        return [
+            'id' => $espaco->id,
+            'nome' => $espaco->nome,
+            'andar' => [
+                'modulo' => [
+                    'nome' => $modulo !== null ? $modulo->nome : '',
+                ],
+            ],
+        ];
     }
 }

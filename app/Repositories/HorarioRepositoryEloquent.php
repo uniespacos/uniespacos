@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Horario;
 use App\Support\SlotDeHorario;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection as SupportCollection;
 
 /**
@@ -106,5 +107,64 @@ class HorarioRepositoryEloquent extends BaseRepositoryEloquent implements Horari
             ->whereBetween('data', [$dataInicial, $dataFinal])
             ->lockForUpdate()
             ->get(['id']);
+    }
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @param  array<mixed>|null  $turnos
+     * @return SupportCollection<array-key, int>
+     */
+    public function contarSlotsOcupadosPorEspaco(CarbonInterface $inicio, CarbonInterface $fim, ?array $agendaIds, ?int $instituicaoId, ?array $turnos): SupportCollection
+    {
+        $query = $this->model->newQuery()
+            ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
+            ->whereBetween('data', [$inicio, $fim]);
+
+        if ($agendaIds !== null) {
+            $query->whereIn('agenda_id', $agendaIds);
+        }
+
+        if ($instituicaoId !== null && $agendaIds === null) {
+            $query->whereHas('agenda.espaco.andar.modulo.unidade', fn ($u) => $u->where('instituicao_id', $instituicaoId));
+        }
+
+        if ($turnos !== null) {
+            $query->whereHas('agenda', fn ($q) => $q->whereIn('turno', $turnos));
+        }
+
+        return $query
+            ->join('agendas', 'horarios.agenda_id', '=', 'agendas.id')
+            ->groupBy('agendas.espaco_id')
+            ->selectRaw('agendas.espaco_id as espaco_id, count(distinct (horarios.data, horarios.horario_inicio)) as total')
+            ->pluck('total', 'espaco_id')
+            ->map(fn (mixed $total): int => is_numeric($total) ? (int) $total : 0);
+    }
+
+    /**
+     * @return array<int, array{nome: string|null, count: int}>
+     */
+    public function rankingEspacosMaisOcupados(?int $instituicaoId, int $limite): array
+    {
+        return $this->model->newQuery()
+            ->where('horarios.situacao', SituacaoReservaEnum::DEFERIDA->value)
+            ->whereHas('agenda.espaco.andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->join('agendas', 'horarios.agenda_id', '=', 'agendas.id')
+            ->join('espacos', 'agendas.espaco_id', '=', 'espacos.id')
+            ->groupBy('espacos.id', 'espacos.nome')
+            ->selectRaw('espacos.nome as nome, count(*) as count')
+            ->orderByDesc('count')
+            ->limit($limite)
+            ->get()
+            ->map(function (Horario $linha): array {
+                $nome = $linha->getAttribute('nome');
+                $total = $linha->getAttribute('count');
+
+                return [
+                    'nome' => is_string($nome) ? $nome : null,
+                    'count' => is_numeric($total) ? (int) $total : 0,
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

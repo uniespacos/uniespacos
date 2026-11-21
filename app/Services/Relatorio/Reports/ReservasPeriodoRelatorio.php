@@ -8,6 +8,7 @@ use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Repositories\ReservaRepositoryInterface;
 use App\Services\Relatorio\Data\ColunaRelatorio;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
@@ -15,43 +16,20 @@ use Carbon\CarbonImmutable;
 
 final class ReservasPeriodoRelatorio implements RelatorioInterface
 {
+    public function __construct(
+        private ReservaRepositoryInterface $reservas,
+    ) {}
+
     public function gerar(User $usuario, FiltrosRelatorio $filtros): DadosRelatorio
     {
-        $query = Reserva::query()->with('user')->withCount('horarios');
-
-        if ($filtros->dataInicio !== null || $filtros->dataFim !== null) {
-            $query->whereHas('horarios', function ($h) use ($filtros) {
-                if ($filtros->dataInicio !== null && $filtros->dataFim !== null) {
-                    $h->whereBetween('data', [$filtros->dataInicio, $filtros->dataFim]);
-                } elseif ($filtros->dataInicio !== null) {
-                    $h->where('data', '>=', $filtros->dataInicio);
-                } elseif ($filtros->dataFim !== null) {
-                    $h->where('data', '<=', $filtros->dataFim);
-                }
-            });
-        }
-
-        if ($filtros->situacoes !== null) {
-            $query->whereIn('situacao', $filtros->situacoes);
-        }
-
-        if ($filtros->agendaIds !== null) {
-            $query->whereHas('horarios', function ($h) use ($filtros) {
-                $h->whereIn('agenda_id', $filtros->agendaIds);
-            });
-        }
-
-        if ($filtros->turnos !== null) {
-            $query->whereHas('horarios.agenda', fn ($q) => $q->whereIn('turno', $filtros->turnos));
-        }
-
-        if ($filtros->instituicaoId !== null && $filtros->agendaIds === null) {
-            $query->whereHas('horarios.agenda.espaco.andar.modulo.unidade', function ($u) use ($filtros) {
-                $u->where('instituicao_id', $filtros->instituicaoId);
-            });
-        }
-
-        $reservas = $query->latest('data_inicial')->get();
+        $reservas = $this->reservas->listarParaRelatorioDePeriodo(
+            $filtros->dataInicio,
+            $filtros->dataFim,
+            $filtros->situacoes,
+            $filtros->agendaIds,
+            $filtros->turnos,
+            $filtros->instituicaoId,
+        );
 
         $linhas = $reservas->map(fn (Reserva $r) => [
             'id' => $r->id,
@@ -77,9 +55,9 @@ final class ReservasPeriodoRelatorio implements RelatorioInterface
 
         $sumario = [
             'Total de Reservas' => count($linhas),
-            'Deferidas' => $reservas->where('situacao', 'deferida')->count(),
-            'Indeferidas' => $reservas->where('situacao', 'indeferida')->count(),
-            'Em Análise' => $reservas->where('situacao', 'em_analise')->count(),
+            'Deferidas' => $reservas->where('situacao', SituacaoReservaEnum::DEFERIDA->value)->count(),
+            'Indeferidas' => $reservas->where('situacao', SituacaoReservaEnum::INDEFERIDA->value)->count(),
+            'Em Análise' => $reservas->where('situacao', SituacaoReservaEnum::EM_ANALISE->value)->count(),
         ];
 
         $subtitulo = '';

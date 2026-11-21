@@ -1033,36 +1033,6 @@ parameters:
 			path: app/Repositories/UserRepositoryInterface.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$setor\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
-
-		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
-
-		-
-			message: '#^Cannot access property \$modulo on App\\Models\\Andar\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Modulo\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Rules/UsuarioDaMesmaInstituicaoDaAgenda.php
-
-		-
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
 			count: 1
@@ -1103,12 +1073,6 @@ parameters:
 			identifier: offsetAccess.invalidOffset
 			count: 1
 			path: app/Services/EspacoService.php
-
-		-
-			message: '#^Method App\\Services\\HomeService\:\:buildRecentReservasQuery\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/HomeService.php
 
 		-
 			message: '#^Method App\\Services\\InstituicaoService\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
@@ -1273,12 +1237,6 @@ parameters:
 			path: app/Services/Relatorio/RelatorioFactory.php
 
 		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 3
-			path: app/Services/Relatorio/Reports/IndicadoresConsolidadosRelatorio.php
-
-		-
 			message: '#^Binary operation "/" between mixed and int\<1, max\> results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 1
@@ -1311,12 +1269,6 @@ parameters:
 		-
 			message: '#^Cannot call method isSunday\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 1
-			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
 			count: 1
 			path: app/Services/Relatorio/Reports/OcupacaoEspacosRelatorio.php
 
@@ -1403,18 +1355,6 @@ parameters:
 			identifier: missingType.generics
 			count: 1
 			path: app/Services/UnidadeService.php
-
-		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/UserService.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/UserService.php
 
 		-
 			message: '#^Cannot call method getAllPermissions\(\) on App\\Models\\User\|null\.$#'

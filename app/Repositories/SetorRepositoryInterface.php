@@ -28,4 +28,9 @@ interface SetorRepositoryInterface extends CrudRepositoryInterface
      * @return LengthAwarePaginator<int, Setor>
      */
     public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null, ?int $unidadeId = null): LengthAwarePaginator;
+
+    /**
+     * @return Collection<int, Setor>
+     */
+    public function getListaParaFiltro(): Collection;
 }

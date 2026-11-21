@@ -10,6 +10,7 @@ use App\Support\SemanaDeReferencia;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
@@ -216,6 +217,58 @@ class EspacoRepositoryEloquent extends BaseRepositoryEloquent implements EspacoR
             ->distinct()
             ->orderBy('capacidade_pessoas')
             ->pluck('capacidade_pessoas');
+    }
+
+    public function contarDaInstituicao(?int $instituicaoId): int
+    {
+        return $this->model->newQuery()
+            ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->count();
+    }
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @return Collection<int, Espaco>
+     */
+    public function listarParaInventario(?array $agendaIds, ?int $instituicaoId, ?int $unidadeId, ?int $moduloId, ?int $andarId, ?int $espacoId): Collection
+    {
+        $query = $this->model->newQuery()->with(['andar.modulo.unidade', 'agendas.user']);
+
+        if ($agendaIds !== null) {
+            $query->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+        } elseif ($instituicaoId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
+        }
+
+        if ($unidadeId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('id', $unidadeId));
+        }
+
+        if ($moduloId !== null) {
+            $query->whereHas('andar.modulo', fn ($q) => $q->where('id', $moduloId));
+        }
+
+        if ($andarId !== null) {
+            $query->whereHas('andar', fn ($q) => $q->where('id', $andarId));
+        }
+
+        if ($espacoId !== null) {
+            $query->where('id', $espacoId);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * @param  array<int|string>  $ids
+     * @return Collection<int, Espaco>
+     */
+    public function getComLocalizacaoPorIds(array $ids): Collection
+    {
+        return $this->model->newQuery()
+            ->with('andar.modulo.unidade')
+            ->whereIn('id', $ids)
+            ->get();
     }
 
     public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco

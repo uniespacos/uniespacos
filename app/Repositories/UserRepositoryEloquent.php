@@ -77,7 +77,7 @@ class UserRepositoryEloquent implements UserRepositoryInterface
      * Por padrão, contas anonimizadas ficam fora da listagem. Com $apenasAnonimizados,
      * a listagem mostra somente elas.
      */
-    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedForAdminByInstituicao(?int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
     {
         $padraoAnonimizado = $this->padraoLikeEmailAnonimizado();
 
@@ -176,5 +176,13 @@ class UserRepositoryEloquent implements UserRepositoryInterface
     public function removerTokenDeRedefinicaoDeSenha(string $email): void
     {
         DB::table('password_reset_tokens')->where('email', $email)->delete();
+    }
+
+    public function contarGestoresDaInstituicao(?int $instituicaoId): int
+    {
+        return $this->user->newQuery()
+            ->whereHas('agendas.espaco.andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->distinct('id')
+            ->count();
     }
 }

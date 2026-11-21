@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Repositories\EspacoRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
 use App\Rules\UsuarioDaMesmaInstituicaoDaAgenda;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +30,11 @@ class AlterarGestoresEspacoRequest extends FormRequest
         return [
             'gestores' => ['required'],
             'gestores.turno.*' => ['required', 'string', 'in:manha,tarde,noite'],
-            'gestores.user_id.*' => ['nullable', 'exists:users,id', new UsuarioDaMesmaInstituicaoDaAgenda($espacoId)],
+            'gestores.user_id.*' => [
+                'nullable',
+                'exists:users,id',
+                new UsuarioDaMesmaInstituicaoDaAgenda($espacoId, app(EspacoRepositoryInterface::class), app(UserRepositoryInterface::class)),
+            ],
         ];
     }
 
