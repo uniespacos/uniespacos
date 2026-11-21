@@ -16,6 +16,8 @@ class SemanaDeReferenciaTest extends TestCase
 
     public function test_null_resolve_para_a_semana_de_hoje(): void
     {
+        $this->congelarRelogio('2026-11-18 10:00:00');
+
         $semana = SemanaDeReferencia::de(null);
 
         $this->assertSame('2026-11-16', $semana->inicio);
@@ -48,6 +50,8 @@ class SemanaDeReferenciaTest extends TestCase
 
     public function test_para_props_expoe_o_formato_que_o_frontend_consome(): void
     {
+        $this->congelarRelogio('2026-11-18 10:00:00');
+
         $this->assertSame(
             ['inicio' => '2026-11-16', 'fim' => '2026-11-22', 'referencia' => '2026-11-18'],
             SemanaDeReferencia::de(null)->paraProps(),
