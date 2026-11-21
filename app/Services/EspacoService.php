@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Agenda\AgendaEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Models\Agenda;
 use App\Models\Espaco;
@@ -20,9 +21,12 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Throwable;
 
 class EspacoService
 {
@@ -36,8 +40,6 @@ class EspacoService
     ) {}
 
     /**
-     * Returns a paginated list of spaces for the public listing with optional filters.
-     *
      * @param  array<string, mixed>  $filters
      */
     public function getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator
@@ -46,8 +48,6 @@ class EspacoService
     }
 
     /**
-     * Returns all data needed to populate the public listing filters.
-     *
      * @return array<string, mixed>
      */
     public function getFilterOptions(int $instituicaoId): array
@@ -61,8 +61,6 @@ class EspacoService
     }
 
     /**
-     * Returns a paginated list of spaces for the admin/institucional listing with optional filters.
-     *
      * @param  array<string, mixed>  $filters
      */
     public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator
@@ -71,8 +69,6 @@ class EspacoService
     }
 
     /**
-     * Returns all data needed to populate create/edit forms (units, modules, floors).
-     *
      * @return array<string, mixed>
      */
     public function getFormData(int $instituicaoId): array
@@ -85,8 +81,6 @@ class EspacoService
     }
 
     /**
-     * Returns users for the admin listing, including their agendas.
-     *
      * @return Collection<int, User>
      */
     public function getUsersWithAgendas(int $instituicaoId): Collection
@@ -137,47 +131,48 @@ class EspacoService
     }
 
     /**
-     * Creates a new space with uploaded images and initializes its three shift agendas.
-     *
      * @param  array<string, mixed>  $data
      * @param  UploadedFile[]  $files
      */
     public function store(array $data, array $files = []): Espaco
     {
-        $espaco = DB::transaction(function () use ($data, $files) {
-            $storedPaths = [];
-            $mainImagePath = null;
+        $storedPaths = $this->gravarArquivos($files);
 
-            foreach ($files as $index => $file) {
-                $path = $file->store('espacos_images', 'public');
-                $storedPaths[] = $path;
-
-                if (isset($data['main_image_index']) && (int) $data['main_image_index'] === $index) {
-                    $mainImagePath = $path;
-                }
+        $mainImagePath = null;
+        foreach ($storedPaths as $index => $path) {
+            if (isset($data['main_image_index']) && (int) $data['main_image_index'] === $index) {
+                $mainImagePath = $path;
             }
+        }
 
-            if ($mainImagePath === null && ! empty($storedPaths)) {
-                $mainImagePath = $storedPaths[0];
-            }
+        if ($mainImagePath === null && ! empty($storedPaths)) {
+            $mainImagePath = $storedPaths[0];
+        }
 
-            $espaco = $this->repoEspaco->store([
-                'nome' => $data['nome'],
-                'capacidade_pessoas' => $data['capacidade_pessoas'],
-                'descricao' => $data['descricao'],
-                'andar_id' => $data['andar_id'],
-                'imagens' => $storedPaths,
-                'main_image_index' => $mainImagePath,
-            ]);
+        try {
+            $espaco = DB::transaction(function () use ($data, $storedPaths, $mainImagePath) {
+                $espaco = $this->repoEspaco->store([
+                    'nome' => $data['nome'],
+                    'capacidade_pessoas' => $data['capacidade_pessoas'],
+                    'descricao' => $data['descricao'],
+                    'andar_id' => $data['andar_id'],
+                    'imagens' => $storedPaths,
+                    'main_image_index' => $mainImagePath,
+                ]);
 
-            $espaco->agendas()->createMany([
-                ['turno' => 'manha', 'user_id' => null],
-                ['turno' => 'tarde', 'user_id' => null],
-                ['turno' => 'noite', 'user_id' => null],
-            ]);
+                $espaco->agendas()->createMany([
+                    ['turno' => AgendaEnum::MANHA->value, 'user_id' => null],
+                    ['turno' => AgendaEnum::TARDE->value, 'user_id' => null],
+                    ['turno' => AgendaEnum::NOITE->value, 'user_id' => null],
+                ]);
 
-            return $espaco;
-        });
+                return $espaco;
+            });
+        } catch (Throwable $e) {
+            $this->removerArquivos($storedPaths);
+
+            throw $e;
+        }
 
         $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
 
@@ -185,8 +180,7 @@ class EspacoService
     }
 
     /**
-     * Updates a space, managing image additions and deletions.
-     * Notifies existing agenda managers after the update.
+     * Arquivos antigos são apagados só depois do commit; os novos são removidos se a transação falhar.
      *
      * @param  array<string, mixed>  $data
      * @param  UploadedFile[]  $newFiles
@@ -194,58 +188,36 @@ class EspacoService
      */
     public function update(Espaco $espaco, array $data, array $newFiles = [], array $pathsToDelete = []): Espaco
     {
-        $updatedEspaco = DB::transaction(function () use ($espaco, $data, $newFiles, $pathsToDelete) {
-            $currentPaths = $espaco->imagens ?? [];
+        $newPaths = $this->gravarArquivos($newFiles);
 
-            if (! empty($pathsToDelete)) {
-                Storage::disk('public')->delete($pathsToDelete);
-                $currentPaths = array_values(array_diff($currentPaths, $pathsToDelete));
-            }
+        try {
+            $updatedEspaco = DB::transaction(function () use ($espaco, $data, $newPaths, $pathsToDelete) {
+                $currentPaths = array_values(array_diff((array) ($espaco->imagens ?? []), $pathsToDelete));
+                $allPaths = array_values(array_merge($currentPaths, $newPaths));
 
-            $newPaths = [];
-            foreach ($newFiles as $file) {
-                $newPaths[] = $file->store('espacos_images', 'public');
-            }
-
-            $allPaths = array_values(array_merge($currentPaths, $newPaths));
-
-            $mainImagePath = null;
-            if (isset($data['main_image_index']) && isset($allPaths[$data['main_image_index']])) {
-                $mainImagePath = $allPaths[$data['main_image_index']];
-            } elseif (! empty($allPaths)) {
-                $mainImagePath = $allPaths[0];
-            }
-
-            $espaco = $this->repoEspaco->update([
-                'nome' => $data['nome'],
-                'capacidade_pessoas' => $data['capacidade_pessoas'],
-                'descricao' => $data['descricao'],
-                'andar_id' => $data['andar_id'],
-                'imagens' => $allPaths,
-                'main_image_index' => $mainImagePath,
-            ], $espaco->id);
-
-            foreach ($espaco->agendas as $agenda) {
-                if ($agenda->user) {
-                    try {
-                        $agenda->user->notify(new UserAssignedAsManagerNotification(
-                            $agenda->user,
-                            $espaco->nome,
-                            $agenda->turno
-                        ));
-                    } catch (\Exception $e) {
-                        Log::warning('Falha ao notificar gestor sobre atualizacao do espaco', [
-                            'user_id' => $agenda->user->id,
-                            'espaco_id' => $espaco->id,
-                            'turno' => $agenda->turno,
-                            'exception' => $e,
-                        ]);
-                    }
+                $mainImagePath = null;
+                if (isset($data['main_image_index']) && isset($allPaths[$data['main_image_index']])) {
+                    $mainImagePath = $allPaths[$data['main_image_index']];
+                } elseif (! empty($allPaths)) {
+                    $mainImagePath = $allPaths[0];
                 }
-            }
 
-            return $espaco;
-        });
+                return $this->repoEspaco->update([
+                    'nome' => $data['nome'],
+                    'capacidade_pessoas' => $data['capacidade_pessoas'],
+                    'descricao' => $data['descricao'],
+                    'andar_id' => $data['andar_id'],
+                    'imagens' => $allPaths,
+                    'main_image_index' => $mainImagePath,
+                ], $espaco->id);
+            });
+        } catch (Throwable $e) {
+            $this->removerArquivos($newPaths);
+
+            throw $e;
+        }
+
+        $this->removerArquivos($pathsToDelete);
 
         $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
 
@@ -253,8 +225,7 @@ class EspacoService
     }
 
     /**
-     * Updates the managers of each shift agenda for the given space.
-     * Assigns/unassigns users per shift and adjusts their permission type accordingly.
+     * Só notifica quem passou a ocupar um turno; quem já ocupava não recebe de novo.
      *
      * @param  array<string, mixed>  $data
      */
@@ -262,9 +233,17 @@ class EspacoService
     {
         $gestoresPorTurno = $data['gestores'];
 
-        DB::transaction(function () use ($espaco, $gestoresPorTurno) {
+        $aposCommit = DB::transaction(function () use ($espaco, $gestoresPorTurno) {
+            $envios = [];
+
             foreach ($gestoresPorTurno as $turno => $userId) {
-                $agenda = $espaco->agendas()->where('turno', $turno)->first();
+                $turnoEnum = is_string($turno) ? AgendaEnum::tryFrom($turno) : null;
+
+                if ($turnoEnum === null) {
+                    continue;
+                }
+
+                $agenda = $espaco->agendas()->where('turno', $turnoEnum->value)->first();
 
                 if (! $agenda) {
                     continue;
@@ -280,18 +259,14 @@ class EspacoService
 
                 if ($userId) {
                     $newUser = $this->repoUser->get($userId);
-                    if ($newUser && ! $newUser->hasPermissionTo('reservas.avaliar')) {
+                    if ($newUser) {
                         $newUser->assignRole('gestor');
-                        try {
-                            $newUser->notify(new UserAssignedAsManagerNotification($newUser, $espaco->nome, $turno));
-                        } catch (\Exception $e) {
-                            Log::warning('Falha ao notificar novo gestor do espaco', [
-                                'user_id' => $newUser->id,
-                                'espaco_id' => $espaco->id,
-                                'turno' => $turno,
-                                'exception' => $e,
-                            ]);
-                        }
+                        $envios[] = fn () => $this->notificarComIsolamento(
+                            $newUser,
+                            new UserAssignedAsManagerNotification($newUser, $espaco, $turnoEnum),
+                            'Falha ao notificar novo gestor do espaco',
+                            ['user_id' => $newUser->id, 'espaco_id' => $espaco->id, 'turno' => $turnoEnum->value],
+                        );
                     }
                 }
 
@@ -299,27 +274,26 @@ class EspacoService
                     $oldUser = $this->repoUser->get($oldUserId);
                     if ($oldUser && ! Agenda::where('user_id', $oldUserId)->exists()) {
                         $oldUser->removeRole('gestor');
-                        try {
-                            $oldUser->notify(new UserRemovedAsManagerNotification($oldUser, $espaco->nome, $turno));
-                        } catch (\Exception $e) {
-                            Log::warning('Falha ao notificar remocao de gestor do espaco', [
-                                'user_id' => $oldUser->id,
-                                'espaco_id' => $espaco->id,
-                                'turno' => $turno,
-                                'exception' => $e,
-                            ]);
-                        }
+                        $envios[] = fn () => $this->notificarComIsolamento(
+                            $oldUser,
+                            new UserRemovedAsManagerNotification($oldUser, $espaco->nome, $turnoEnum->value),
+                            'Falha ao notificar remocao de gestor do espaco',
+                            ['user_id' => $oldUser->id, 'espaco_id' => $espaco->id, 'turno' => $turnoEnum->value],
+                        );
                     }
                 }
             }
+
+            return $envios;
         });
+
+        foreach ($aposCommit as $envio) {
+            $envio();
+        }
 
         $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
     }
 
-    /**
-     * Deletes the given space from the database.
-     */
     public function delete(Espaco $espaco): bool
     {
         $destroyed = $this->repoEspaco->destroy($espaco->id);
@@ -331,9 +305,6 @@ class EspacoService
         return $destroyed;
     }
 
-    /**
-     * Returns the user's favorited spaces paginated.
-     */
     public function getFavoritedByUser(User $user, int $perPage = 10): LengthAwarePaginator
     {
         return $user->favoritos()->with([
@@ -343,29 +314,69 @@ class EspacoService
         ])->paginate($perPage);
     }
 
-    /**
-     * Adds a space to the user's favorites.
-     */
     public function addFavorite(User $user, Espaco $espaco): void
     {
         $user->favoritos()->attach($espaco->id);
         Espaco::forgetFavoritosCache($user->id);
     }
 
-    /**
-     * Removes a space from the user's favorites.
-     */
     public function removeFavorite(User $user, Espaco $espaco): void
     {
         $user->favoritos()->detach($espaco->id);
         Espaco::forgetFavoritosCache($user->id);
     }
 
-    /**
-     * Checks if the space has at least one manager assigned.
-     */
     public function hasManager(Espaco $espaco): bool
     {
         return $espaco->agendas()->whereNotNull('user_id')->exists();
+    }
+
+    /**
+     * @param  UploadedFile[]  $files
+     * @return string[]
+     */
+    private function gravarArquivos(array $files): array
+    {
+        $caminhos = [];
+
+        try {
+            foreach ($files as $file) {
+                $caminho = $file->store('espacos_images', 'public');
+
+                if ($caminho === false) {
+                    throw new RuntimeException('Failed to store uploaded space image.');
+                }
+
+                $caminhos[] = $caminho;
+            }
+        } catch (Throwable $e) {
+            $this->removerArquivos($caminhos);
+
+            throw $e;
+        }
+
+        return $caminhos;
+    }
+
+    /**
+     * @param  string[]  $caminhos
+     */
+    private function removerArquivos(array $caminhos): void
+    {
+        if ($caminhos !== []) {
+            Storage::disk('public')->delete($caminhos);
+        }
+    }
+
+    /**
+     * @param  array<string, int|string|null>  $contexto
+     */
+    private function notificarComIsolamento(User $destinatario, Notification $notificacao, string $falha, array $contexto): void
+    {
+        try {
+            $destinatario->notify($notificacao);
+        } catch (\Exception $e) {
+            Log::warning($falha, $contexto + ['exception' => $e]);
+        }
     }
 }

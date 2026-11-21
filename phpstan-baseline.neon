@@ -1675,18 +1675,6 @@ parameters:
 			path: app/Services/EspacoService.php
 
 		-
-			message: '#^Parameter \#3 \$turno of class App\\Notifications\\UserAssignedAsManagerNotification constructor expects string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/EspacoService.php
-
-		-
-			message: '#^Parameter \#3 \$turno of class App\\Notifications\\UserRemovedAsManagerNotification constructor expects string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/EspacoService.php
-
-		-
 			message: '#^Possibly invalid array key type mixed\.$#'
 			identifier: offsetAccess.invalidOffset
 			count: 1

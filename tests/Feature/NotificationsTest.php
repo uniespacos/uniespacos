@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Agenda\AgendaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Agenda;
 use App\Models\Espaco;
@@ -271,7 +272,7 @@ class NotificationsTest extends TestCase
         $this->assertArrayHasKey('url', $broadcastDataGeneral);
 
         // Test for space-specific manager assignment
-        $spaceManagerNotification = new UserAssignedAsManagerNotification($this->manager, $this->espaco->nome, 'manha');
+        $spaceManagerNotification = new UserAssignedAsManagerNotification($this->manager, $this->espaco, AgendaEnum::MANHA);
         $mailMessageSpace = $spaceManagerNotification->toMail($this->manager);
 
         $mailDataSpace = (string) $mailMessageSpace->render();
