@@ -7,3 +7,4 @@ export * from './relatorios.contract';
 export * from './turnos.contract';
 export * from './recorrencia.contract';
 export * from './roles.contract';
+export * from './status-avaliacao-horario.contract';

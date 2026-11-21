@@ -27,6 +27,15 @@ interface HorarioRepositoryInterface
     public function conflitosDeferidos(array $linhas, ?int $ignorarReservaId = null): SupportCollection;
 
     /**
+     * Atualiza numa unica query os horarios da reserva que estao nas agendas informadas.
+     *
+     * @param  list<int>  $horarioIds
+     * @param  list<int>  $agendaIds
+     * @param  array<string, mixed>  $atributos
+     */
+    public function atualizarDaReservaEmLote(array $horarioIds, int $reservaId, array $agendaIds, array $atributos): int;
+
+    /**
      * Trava (SELECT ... FOR UPDATE) os horarios das agendas no periodo. Exige transacao aberta.
      *
      * @param  list<int>  $agendaIds

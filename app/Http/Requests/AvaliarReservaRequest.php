@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Reserva\StatusAvaliacaoHorarioEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Horario;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,7 +27,7 @@ class AvaliarReservaRequest extends FormRequest
     public function rules(): array
     {
         $validStatusValues = array_merge(
-            ['solicitado'],
+            [StatusAvaliacaoHorarioEnum::SOLICITADO->value],
             SituacaoReservaEnum::valoresDeAvaliacao()
         );
 

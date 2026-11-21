@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\NewReservationNotification;
 use App\Notifications\ReservationCanceledNotification;
 use App\Notifications\ReservationEvaluatedNotification;
+use App\Services\AvaliacaoDeReservaService;
 use App\Services\ConflictDetectionService;
 use App\Services\ExclusaoDeContaService;
 use App\Services\ReservaService;
@@ -227,6 +228,6 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
             'observacao' => 'Aprovado em teste',
         ], $this->gestor);
 
-        $job->handle(new ConflictDetectionService);
+        $job->handle(app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => new ConflictDetectionService]));
     }
 }

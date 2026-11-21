@@ -787,24 +787,6 @@ parameters:
 			path: app/Http/Requests/UpdateUserRequest.php
 
 		-
-			message: '#^Method App\\Jobs\\AvaliarReservaJob\:\:__construct\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: app/Jobs/AvaliarReservaJob.php
-
-		-
 			message: '#^Class App\\Models\\Agenda uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
 			identifier: missingType.generics
 			count: 1

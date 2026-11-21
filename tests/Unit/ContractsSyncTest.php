@@ -9,6 +9,7 @@ use App\Enums\ErrorCode;
 use App\Enums\Relatorio\FormatoRelatorioEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Enums\Reserva\RecorrenciaReservaEnum;
+use App\Enums\Reserva\StatusAvaliacaoHorarioEnum;
 use App\Enums\Reserva\ValidationStatusEnum;
 use App\Enums\SituacaoReserva\ModoArquivoEnum;
 use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
@@ -57,6 +58,20 @@ class ContractsSyncTest extends TestCase
         );
 
         $this->assertSame($phpValues, $tsValues, 'Mismatch entre ModoArquivoEnum (PHP) e ModoArquivo (TS)');
+    }
+
+    public function test_status_avaliacao_horario_enum_esta_estritamente_sincronizado(): void
+    {
+        $filePath = "{$this->contractsBasePath}/status-avaliacao-horario.contract.ts";
+        $tsValues = $this->parseTypeScriptConstObject($filePath, 'StatusAvaliacaoHorario');
+
+        $phpEnumCases = StatusAvaliacaoHorarioEnum::cases();
+        $phpValues = array_combine(
+            array_map(fn ($case) => $case->name, $phpEnumCases),
+            array_map(fn ($case) => $case->value, $phpEnumCases)
+        );
+
+        $this->assertSame($phpValues, $tsValues, 'Mismatch entre StatusAvaliacaoHorarioEnum (PHP) e StatusAvaliacaoHorario (TS)');
     }
 
     public function test_ordenacao_reserva_enum_esta_estritamente_sincronizado(): void

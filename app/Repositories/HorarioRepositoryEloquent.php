@@ -74,6 +74,15 @@ class HorarioRepositoryEloquent implements HorarioRepositoryInterface
         return $conflitos;
     }
 
+    public function atualizarDaReservaEmLote(array $horarioIds, int $reservaId, array $agendaIds, array $atributos): int
+    {
+        return $this->horario->newQuery()
+            ->whereIn('id', $horarioIds)
+            ->where('reserva_id', $reservaId)
+            ->whereIn('agenda_id', $agendaIds)
+            ->update($atributos);
+    }
+
     public function bloquearPeriodo(array $agendaIds, string $dataInicial, string $dataFinal): void
     {
         $this->horario->newQuery()

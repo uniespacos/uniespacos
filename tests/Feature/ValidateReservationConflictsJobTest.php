@@ -11,6 +11,7 @@ use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Services\AvaliacaoDeReservaService;
 use App\Services\ConflictDetectionService;
 use Illuminate\Bus\UniqueLock;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -125,7 +126,7 @@ class ValidateReservationConflictsJobTest extends TestCase
         ];
 
         $jobA = new AvaliarReservaJob($reservaA, $validatedDataA1, $gestor);
-        $jobA->handle(new ConflictDetectionService);
+        $jobA->handle(app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => new ConflictDetectionService]));
 
         // Assert: ValidateReservationConflictsJob foi despachado para B
         Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {
