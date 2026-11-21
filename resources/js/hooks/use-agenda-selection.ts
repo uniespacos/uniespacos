@@ -105,9 +105,10 @@ interface UseAgendaSelectionProps {
     reserva?: Reserva;
     isEditMode: boolean;
     semanaVisivel: Date;
+    initialPublicoEstimado?: string;
 }
 
-export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAgendaSelectionProps) {
+export function useAgendaSelection({ reserva, isEditMode, semanaVisivel, initialPublicoEstimado }: UseAgendaSelectionProps) {
     const { t } = useTranslation();
     const hoje = useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
     const semanaVisivelIso = format(semanaVisivel, 'yyyy-MM-dd');
@@ -147,7 +148,7 @@ export function useAgendaSelection({ reserva, isEditMode, semanaVisivel }: UseAg
     const { data, setData, post, patch, processing, reset } = useForm<AgendaSelectionFormData>({
         titulo: reserva?.titulo ?? '',
         descricao: reserva?.descricao ?? '',
-        publico_estimado: reserva?.publico_estimado ?? '',
+        publico_estimado: reserva?.publico_estimado ?? initialPublicoEstimado ?? '',
         categoria: reserva?.categoria ?? '',
         data_inicial: reserva?.data_inicial ? parseDataLocal(reserva.data_inicial) : hoje,
         data_final: reserva?.data_final ? parseDataLocal(reserva.data_final) : addMonths(hoje, 1),

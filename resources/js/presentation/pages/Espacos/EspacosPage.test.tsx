@@ -124,13 +124,17 @@ describe('EspacosPage', () => {
         expect(screen.queryByText(/Mostrando espaços com horário livre/)).not.toBeInTheDocument();
     });
 
-    it('leva a agenda do espaço para a semana da data filtrada ao solicitar reserva', () => {
-        definirPaginaComFiltros({ filters: { data: '2026-11-20', turno: 'manha' } });
+    it('leva a agenda do espaço para a semana, turno e capacidade filtrados ao solicitar reserva', () => {
+        definirPaginaComFiltros({ filters: { data: '2026-11-20', turno: 'manha', capacidade: '30' } });
 
         render(<EspacosPage />);
         fireEvent.click(screen.getByRole('button', { name: 'Auditório Central' }));
 
-        expect(mockGet).toHaveBeenCalledWith('https://localhost/espacos.show/10', { semana: '2026-11-20' });
+        expect(mockGet).toHaveBeenCalledWith('https://localhost/espacos.show/10', {
+            semana: '2026-11-20',
+            turno: 'manha',
+            capacidade: '30',
+        });
         expect(screen.getByRole('button', { name: 'Auditório Central' })).toHaveAttribute('data-semana', '2026-11-20');
     });
 

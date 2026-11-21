@@ -26,6 +26,9 @@ interface CardEspacoProps {
     handleExcluirEspaco?: (espacoId: string) => void;
     showFavoritar?: boolean;
     semanaDestino?: string;
+    turnoDestino?: string;
+    capacidadeDestino?: string;
+    compactOnMobile?: boolean;
 }
 
 export default function EspacoCard({
@@ -37,6 +40,9 @@ export default function EspacoCard({
     handleExcluirEspaco,
     showFavoritar = true,
     semanaDestino,
+    turnoDestino,
+    capacidadeDestino,
+    compactOnMobile = false,
 }: CardEspacoProps) {
     const { t } = useTranslation();
     const [isFavorited, setIsFavorited] = useState<boolean>(espaco.is_favorited_by_user ?? false);
@@ -98,9 +104,12 @@ export default function EspacoCard({
     const isModoGerenciamento = Boolean(isGerenciarEspacos) && hasPermission(user, PERMISSION_ESPACOS_ATUALIZAR);
     const isClicavel = !isModoGerenciamento;
 
-    const urlAgenda = semanaDestino
-        ? `/espacos/${String(espaco.id)}?${new URLSearchParams({ semana: semanaDestino }).toString()}`
-        : `/espacos/${String(espaco.id)}`;
+    const queryParams = new URLSearchParams();
+    if (semanaDestino) queryParams.set('semana', semanaDestino);
+    if (turnoDestino) queryParams.set('turno', turnoDestino);
+    if (capacidadeDestino) queryParams.set('capacidade', capacidadeDestino);
+    const queryString = queryParams.toString();
+    const urlAgenda = queryString ? `/espacos/${String(espaco.id)}?${queryString}` : `/espacos/${String(espaco.id)}`;
 
     const handleCardClick = () => {
         if (isClicavel) {
@@ -113,10 +122,12 @@ export default function EspacoCard({
     };
 
     const horariosLivres = espaco.horarios_livres;
+    const isCompactMobileActive = compactOnMobile && !isModoGerenciamento;
 
     return (
         <Card
             onClick={handleCardClick}
+            data-compact-mobile={isCompactMobileActive ? 'true' : undefined}
             className={cn(
                 'group border-border/80 bg-card flex flex-col overflow-hidden rounded-2xl border transition-all duration-300',
                 isClicavel && 'hover:border-primary/40 cursor-pointer hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]',
@@ -124,7 +135,7 @@ export default function EspacoCard({
         >
             {/* Carousel & Media Container */}
             <div
-                className="bg-muted relative overflow-hidden"
+                className={cn('bg-muted relative overflow-hidden', isCompactMobileActive && 'hidden sm:block')}
                 onClick={(e) => {
                     e.stopPropagation();
                 }}
@@ -157,7 +168,6 @@ export default function EspacoCard({
                     </Carousel>
                 </AspectRatio>
 
-                {/* Badge Flutuante de Unidade com Glassmorphism */}
                 <div className="absolute top-3 left-3 z-10">
                     <Badge variant="secondary" className="bg-background/85 text-xs font-medium shadow-sm backdrop-blur-md">
                         <Building2 className="mr-1 h-3 w-3" />
@@ -165,7 +175,6 @@ export default function EspacoCard({
                     </Badge>
                 </div>
 
-                {/* Botão de Favoritar com Glassmorphism e Touch Target de 44px */}
                 {showFavoritar && (
                     <button
                         type="button"
@@ -186,19 +195,50 @@ export default function EspacoCard({
             </div>
 
             {/* Informações Principais */}
-            <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-foreground truncate text-base font-semibold tracking-tight" title={espaco.nome}>
-                    {espaco.nome}
-                </CardTitle>
-                <div className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
-                    <MapPin className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{modulo ? `${modulo} • ${andarLabel ?? t('espacos.card.terreo')}` : t('common.status.unknown')}</span>
+            <CardHeader
+                className={cn(
+                    'p-4 pb-2',
+                    isCompactMobileActive && 'flex-row items-center gap-3 space-y-0 p-3 pb-2 sm:flex-col sm:items-stretch sm:gap-1.5 sm:p-4 sm:pb-2',
+                )}
+            >
+                {isCompactMobileActive && (
+                    <div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-xl sm:hidden">
+                        <img
+                            src={imageSources[0]}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                                e.currentTarget.src = espacoImage;
+                            }}
+                        />
+                    </div>
+                )}
+
+                <div className="min-w-0 flex-1 space-y-1">
+                    <CardTitle className="text-foreground truncate text-base font-semibold tracking-tight" title={espaco.nome}>
+                        {espaco.nome}
+                    </CardTitle>
+                    <div className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
+                        <MapPin className="text-muted-foreground/80 h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                            {modulo ? `${modulo} • ${andarLabel ?? t('espacos.card.terreo')}` : t('common.status.unknown')}
+                        </span>
+                    </div>
                 </div>
             </CardHeader>
 
-            <CardContent className="flex-grow space-y-2.5 px-4 py-2">
+            <CardContent className={cn('flex-grow space-y-2.5 px-4 py-2', isCompactMobileActive && 'px-3 py-1.5 sm:px-4 sm:py-2')}>
                 {espaco.descricao ? (
-                    <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed" title={espaco.descricao}>
+                    <p
+                        className={cn(
+                            'text-muted-foreground line-clamp-2 text-xs leading-relaxed',
+                            isCompactMobileActive && 'hidden sm:line-clamp-2',
+                        )}
+                        title={espaco.descricao}
+                    >
                         {espaco.descricao}
                     </p>
                 ) : null}
@@ -245,7 +285,12 @@ export default function EspacoCard({
                     </Button>
                 </CardFooter>
             ) : (
-                <CardFooter className="border-border/40 text-primary flex items-center justify-between border-t p-4 pt-2 text-xs font-medium">
+                <CardFooter
+                    className={cn(
+                        'border-border/40 text-primary flex items-center justify-between border-t p-4 pt-2 text-xs font-medium',
+                        isCompactMobileActive && 'p-3 pt-2 sm:p-4 sm:pt-2',
+                    )}
+                >
                     <Link
                         href={urlAgenda}
                         prefetch="hover"

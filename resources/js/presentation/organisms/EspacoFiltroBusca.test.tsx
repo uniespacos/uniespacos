@@ -52,7 +52,9 @@ describe('EspacoFiltroBusca', () => {
 
         expect(screen.getByText('Quando?')).toBeInTheDocument();
         expect(screen.getByText('Selecione uma data')).toBeInTheDocument();
-        expect(document.getElementById('desktop-espacos-turno')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Manhã' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Tarde' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Noite' })).toBeDisabled();
     });
 
     it('habilita o turno quando há data filtrada e mostra os chips de data e turno', () => {
@@ -67,9 +69,27 @@ describe('EspacoFiltroBusca', () => {
             />,
         );
 
-        expect(document.getElementById('desktop-espacos-turno')).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Tarde' })).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Tarde' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByText('Data: sex, 20/11')).toBeInTheDocument();
         expect(screen.getByText('Turno: Tarde')).toBeInTheDocument();
+    });
+
+    it('permite selecionar atalhos rápidos de data (Hoje/Amanhã), turno e capacidade e minimizar o Step 1', () => {
+        render(<EspacoFiltroBusca route={ROUTE} filters={{}} unidades={mockUnidades} modulos={mockModulos} andares={mockAndares} disponibilidade />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Hoje' }));
+        expect(mockGet).toHaveBeenLastCalledWith(ROUTE, { data: '2026-11-19' }, expect.any(Object));
+
+        fireEvent.click(screen.getByRole('button', { name: '25+' }));
+        expect(mockGet).toHaveBeenLastCalledWith(ROUTE, { data: '2026-11-19', capacidade: '25' }, expect.any(Object));
+
+        fireEvent.click(screen.getByRole('button', { name: /Minimizar busca/i }));
+        expect(screen.queryByRole('button', { name: 'Hoje' })).not.toBeInTheDocument();
+        expect(screen.getByText(/qui, 19\/11 • 25 pessoas/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Expandir busca/i }));
+        expect(screen.getByRole('button', { name: 'Hoje' })).toBeInTheDocument();
     });
 
     it('remover a data também remove o turno, pois o turno só vale com data', () => {

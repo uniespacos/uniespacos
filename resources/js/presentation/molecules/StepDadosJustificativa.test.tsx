@@ -74,13 +74,33 @@ describe('StepDadosJustificativa', () => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    it('oferece sugestões de categoria por datalist', () => {
-        const { container } = render(<StepDadosJustificativa formData={criarFormData()} setFormData={jest.fn()} />);
+    it('oferece sugestões de categoria por chips clicáveis de 1 toque e permite desmarcar', () => {
+        const setFormData = jest.fn();
+        const { rerender } = render(<StepDadosJustificativa formData={criarFormData()} setFormData={setFormData} />);
 
-        const sugestoes = Array.from(container.querySelectorAll('datalist option')).map((option) => option.getAttribute('value'));
+        const esperadas = ['Aula', 'Palestra', 'Reunião', 'Defesa', 'Evento', 'Extensão'];
+        for (const sugestao of esperadas) {
+            expect(screen.getByRole('button', { name: sugestao })).toBeInTheDocument();
+        }
 
-        expect(sugestoes).toEqual(['Aula', 'Palestra', 'Reunião', 'Defesa', 'Evento', 'Extensão']);
-        expect(screen.getByLabelText('Categoria (opcional)')).toHaveAttribute('list', container.querySelector('datalist')?.id);
+        fireEvent.click(screen.getByRole('button', { name: 'Palestra' }));
+        expect(setFormData).toHaveBeenCalledWith('categoria', 'Palestra');
+
+        rerender(<StepDadosJustificativa formData={criarFormData({ categoria: 'Palestra' })} setFormData={setFormData} />);
+        expect(screen.getByRole('button', { name: 'Palestra' })).toHaveAttribute('aria-pressed', 'true');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Palestra' }));
+        expect(setFormData).toHaveBeenLastCalledWith('categoria', '');
+    });
+
+    it('permite expandir e recolher o campo opcional de observação no mobile', () => {
+        render(<StepDadosJustificativa formData={criarFormData()} setFormData={jest.fn()} />);
+
+        const botaoExpandir = screen.getByRole('button', { name: /Adicionar observação para o gestor/i });
+        expect(botaoExpandir).toHaveAttribute('aria-expanded', 'false');
+
+        fireEvent.click(botaoExpandir);
+        expect(screen.getByRole('button', { name: /Ocultar observação/i })).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('exibe os erros inline recebidos', () => {

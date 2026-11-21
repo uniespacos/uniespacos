@@ -1,5 +1,5 @@
 import type { User } from '@/types';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import DashboardUsuarioPage from './DashboardUsuarioPage';
 
 jest.mock('@inertiajs/react', () => ({
@@ -82,12 +82,18 @@ describe('DashboardUsuarioPage', () => {
         expect(screen.queryByRole('region', { name: 'Reservar de novo' })).not.toBeInTheDocument();
     });
 
-    it('mantém os atalhos restantes como links reais e sem o atalho duplicado de consultar espaços', () => {
+    it('exibe o assistente rápido de reserva (Step 1) com atalhos e link secundário para o catálogo completo', () => {
+        const { router } = jest.requireMock<{ router: { get: jest.Mock } }>('@inertiajs/react');
         render(<DashboardUsuarioPage user={mockUser} espacosFavoritos={[]} reservas={[]} espacosRecentes={[]} />);
 
-        expect(screen.getByRole('link', { name: /Espaços Favoritos/ })).toHaveAttribute('href', 'https://localhost/espacos.favoritos');
-        expect(screen.getByRole('link', { name: /Minhas Reservas/i })).toHaveAttribute('href', 'https://localhost/reservas.index');
-        expect(screen.queryByRole('link', { name: /Consultar Espaços/ })).not.toBeInTheDocument();
-        expect(screen.getAllByRole('button', { name: /Consultar Espaços/ }).length).toBeGreaterThan(0);
+        expect(screen.getByRole('link', { name: /Explorar catálogo completo de espaços/i })).toHaveAttribute(
+            'href',
+            'https://localhost/espacos.index',
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: '25+' }));
+        fireEvent.click(screen.getByRole('button', { name: /Buscar espaços disponíveis/i }));
+
+        expect(router.get).toHaveBeenCalledWith('https://localhost/espacos.index', { capacidade: '25' });
     });
 });

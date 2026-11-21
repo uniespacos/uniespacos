@@ -154,6 +154,10 @@ export const es = {
         actions: {
             solicitar_reserva: 'Solicitar Reserva',
             consultar_espacos: 'Consultar Espacios',
+            explorar_catalogo: 'Explorar catálogo completo de espacios',
+            buscar_espacos_disponiveis: 'Buscar espacios disponibles',
+            assistente_titulo: 'Nueva solicitud de reserva',
+            assistente_subtitulo: 'Indique cuándo y para cuántas personas necesita un espacio',
             gerir_reservas: 'Gestionar Reservas',
             meus_favoritos: 'Espacios Favoritos',
             meus_favoritos_desc: 'Acceda rápidamente a sus espacios guardados',
@@ -357,6 +361,8 @@ export const es = {
             title_placeholder: 'Ej.: Clase inaugural de Computación',
             description_label: 'Detalles para el gestor (opcional)',
             description_placeholder: 'Ej.: objetivo de la actividad, equipos necesarios...',
+            add_description_toggle: 'Añadir observación para el gestor (opcional)',
+            hide_description_toggle: 'Ocultar observación',
             char_counter: '{{count}}/{{max}}',
             public_label: 'Público estimado (opcional)',
             public_placeholder: 'Ej.: 40',
@@ -364,6 +370,7 @@ export const es = {
                 'Por encima de la capacidad de {{count}} personas de este espacio. Puede enviarla igualmente; el gestor la evaluará.',
             category_label: 'Categoría (opcional)',
             category_placeholder: 'Ej.: Clase, Conferencia, Defensa',
+            category_other: 'Otra...',
             category_suggestions: {
                 aula: 'Clase',
                 palestra: 'Conferencia',
@@ -473,6 +480,7 @@ export const es = {
         detalhes_espaco: {
             titulo: 'Detalles del espacio y gestores',
         },
+        voltar_busca: 'Volver a la búsqueda',
     },
     auth: {
         layout: {
@@ -692,6 +700,15 @@ export const es = {
             busca_label: 'Búsqueda',
             limpar_busca: 'Limpiar búsqueda',
             remover_filtro: 'Quitar filtro de {{filtro}}',
+            hoje: 'Hoy',
+            amanha: 'Mañana',
+            minimizar_busca: 'Minimizar búsqueda',
+            expandir_busca: 'Expandir búsqueda',
+            mais_filtros: 'Más filtros',
+            ocultar_mais_filtros: 'Ocultar filtros adicionales',
+            passo1_titulo: '¿Qué necesita para su reserva?',
+            passo1_resumo_vazio: 'Cualquier fecha, turno o capacidad',
+            capacidade_atalho: '{{count}}+',
         },
         empty: {
             title: 'Ningún espacio encontrado',

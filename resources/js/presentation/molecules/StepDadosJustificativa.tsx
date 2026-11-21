@@ -1,10 +1,13 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
 import { PUBLICO_ESTIMADO_MAX, PUBLICO_ESTIMADO_MIN, publicoEstimadoAcimaDaCapacidade } from '@/lib/utils/publico-estimado';
 import { ErrosEtapa, ReservaFormData } from '@/types/reserva-stepper';
-import React, { useId } from 'react';
+import { ChevronUp, Plus } from 'lucide-react';
+import React, { useId, useState } from 'react';
 
 export interface StepDadosJustificativaProps {
     formData: ReservaFormData;
@@ -23,7 +26,8 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
     const descricaoId = useId();
     const publicoId = useId();
     const categoriaId = useId();
-    const sugestoesId = useId();
+
+    const [descricaoExpandidaMobile, setDescricaoExpandidaMobile] = useState(() => Boolean(formData.descricao) || Boolean(errors.descricao));
 
     const sugestoesCategoria = [
         t('reservas.stepper.category_suggestions.aula'),
@@ -35,6 +39,15 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
     ];
 
     const acimaDaCapacidade = publicoEstimadoAcimaDaCapacidade(formData.publico_estimado, capacidade);
+    const mostrarDescricaoMobile = descricaoExpandidaMobile || Boolean(formData.descricao) || Boolean(errors.descricao);
+
+    const handleChipCategoriaClick = (sugestao: string) => {
+        if (formData.categoria === sugestao) {
+            setFormData('categoria', '');
+            return;
+        }
+        setFormData('categoria', sugestao);
+    };
 
     return (
         <div className="space-y-5">
@@ -65,30 +78,6 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                 {errors.titulo && <p className="text-destructive-accent text-sm font-medium">{errors.titulo}</p>}
             </div>
 
-            <div className="space-y-1.5">
-                <div className="flex items-baseline justify-between gap-2">
-                    <Label htmlFor={descricaoId} className="text-foreground text-sm font-semibold">
-                        {t('reservas.stepper.description_label')}
-                    </Label>
-                    <span className="text-muted-foreground text-xs">
-                        {t('reservas.stepper.char_counter', { count: formData.descricao.length, max: DESCRICAO_MAX })}
-                    </span>
-                </div>
-                <Textarea
-                    id={descricaoId}
-                    value={formData.descricao}
-                    maxLength={DESCRICAO_MAX}
-                    rows={3}
-                    onChange={(e) => {
-                        setFormData('descricao', e.target.value);
-                    }}
-                    placeholder={t('reservas.stepper.description_placeholder')}
-                    className="bg-card min-h-24 resize-y text-sm"
-                    aria-invalid={Boolean(errors.descricao)}
-                />
-                {errors.descricao && <p className="text-destructive-accent text-sm font-medium">{errors.descricao}</p>}
-            </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                     <Label htmlFor={publicoId} className="text-foreground text-sm font-semibold">
@@ -117,13 +106,32 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                     )}
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                     <Label htmlFor={categoriaId} className="text-foreground text-sm font-semibold">
                         {t('reservas.stepper.category_label')}
                     </Label>
+                    <div className="flex flex-wrap gap-1.5">
+                        {sugestoesCategoria.map((sugestao) => {
+                            const ativa = formData.categoria === sugestao;
+                            return (
+                                <Button
+                                    key={sugestao}
+                                    type="button"
+                                    variant={ativa ? 'default' : 'outline'}
+                                    size="sm"
+                                    aria-pressed={ativa}
+                                    onClick={() => {
+                                        handleChipCategoriaClick(sugestao);
+                                    }}
+                                    className="h-9 rounded-full px-3 text-xs font-medium"
+                                >
+                                    {sugestao}
+                                </Button>
+                            );
+                        })}
+                    </div>
                     <Input
                         id={categoriaId}
-                        list={sugestoesId}
                         maxLength={CATEGORIA_MAX}
                         value={formData.categoria ?? ''}
                         onChange={(e) => {
@@ -132,11 +140,55 @@ export const StepDadosJustificativa: React.FC<StepDadosJustificativaProps> = ({ 
                         placeholder={t('reservas.stepper.category_placeholder')}
                         className="bg-card h-10 text-sm"
                     />
-                    <datalist id={sugestoesId}>
-                        {sugestoesCategoria.map((sugestao) => (
-                            <option key={sugestao} value={sugestao} />
-                        ))}
-                    </datalist>
+                </div>
+            </div>
+
+            <div className="space-y-1.5">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-expanded={mostrarDescricaoMobile}
+                    onClick={() => {
+                        setDescricaoExpandidaMobile((prev) => !prev);
+                    }}
+                    className="text-muted-foreground hover:text-foreground flex h-9 items-center gap-1.5 px-1 text-xs font-medium sm:hidden"
+                >
+                    {mostrarDescricaoMobile ? (
+                        <>
+                            <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                            <span>{t('reservas.stepper.hide_description_toggle')}</span>
+                        </>
+                    ) : (
+                        <>
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            <span>{t('reservas.stepper.add_description_toggle')}</span>
+                        </>
+                    )}
+                </Button>
+
+                <div className={cn('space-y-1.5', !mostrarDescricaoMobile && 'hidden sm:block')}>
+                    <div className="flex items-baseline justify-between gap-2">
+                        <Label htmlFor={descricaoId} className="text-foreground text-sm font-semibold">
+                            {t('reservas.stepper.description_label')}
+                        </Label>
+                        <span className="text-muted-foreground text-xs">
+                            {t('reservas.stepper.char_counter', { count: formData.descricao.length, max: DESCRICAO_MAX })}
+                        </span>
+                    </div>
+                    <Textarea
+                        id={descricaoId}
+                        value={formData.descricao}
+                        maxLength={DESCRICAO_MAX}
+                        rows={3}
+                        onChange={(e) => {
+                            setFormData('descricao', e.target.value);
+                        }}
+                        placeholder={t('reservas.stepper.description_placeholder')}
+                        className="bg-card min-h-24 resize-y text-sm"
+                        aria-invalid={Boolean(errors.descricao)}
+                    />
+                    {errors.descricao && <p className="text-destructive-accent text-sm font-medium">{errors.descricao}</p>}
                 </div>
             </div>
         </div>

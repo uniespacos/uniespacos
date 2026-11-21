@@ -347,4 +347,25 @@ describe('CalendarDiaMobile', () => {
         expect(screen.getByRole('tab', { name: /segunda-feira, dia 14\/09/i })).toHaveAttribute('aria-selected', 'true');
         expect(screen.queryByRole('tab', { name: /segunda-feira, dia 07\/09/i })).not.toBeInTheDocument();
     });
+
+    it('abre direto na aba correspondente a dataReferencia e destaca o turno filtrado', () => {
+        const diasIso: AgendaDiasSemanaType[] = [
+            { data: new Date('2026-09-07T12:00:00'), nome: 'Segunda-feira', abreviado: 'seg.', diaMes: '07/09', valor: '2026-09-07', ehHoje: true },
+            { data: new Date('2026-09-08T12:00:00'), nome: 'Terça-feira', abreviado: 'ter.', diaMes: '08/09', valor: '2026-09-08', ehHoje: false },
+        ];
+
+        const { container } = render(
+            <CalendarDiaMobile
+                {...props}
+                diasSemana={diasIso}
+                agendas={[agenda('manha'), agenda('tarde')]}
+                dataReferencia="2026-09-08"
+                turnoDestaque="tarde"
+            />,
+        );
+
+        expect(screen.getByRole('tab', { name: /terça-feira/i })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tab', { name: /segunda-feira/i })).toHaveAttribute('aria-selected', 'false');
+        expect(container.querySelector('[data-turno-destaque="true"]')).toBeInTheDocument();
+    });
 });

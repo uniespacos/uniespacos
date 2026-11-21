@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { TURNOS_ORDENADOS } from '@/constants/turnos';
+import { TURNOS_ORDENADOS, type Turno } from '@/constants/turnos';
 import { useIsMobile } from '@/hooks/use-mobile';
 import AgendaLegenda from '@/presentation/molecules/AgendaLegenda';
 import CalendarDiaMobile from '@/presentation/molecules/CalendarDiaMobile';
@@ -18,6 +18,8 @@ interface AgendaCalendarioProps {
     definirSelecaoDeVarios?: (slots: SlotCalendario[], selecionar: boolean) => void;
     slotsDaReserva?: SlotCalendario[];
     isEditMode?: boolean;
+    dataReferencia?: string;
+    turnoDestaque?: Turno;
 }
 
 export default function AgendaCalendario({
@@ -29,6 +31,8 @@ export default function AgendaCalendario({
     definirSelecaoDeVarios,
     slotsDaReserva,
     isEditMode,
+    dataReferencia,
+    turnoDestaque,
 }: AgendaCalendarioProps) {
     const isMobile = useIsMobile();
 
@@ -56,6 +60,8 @@ export default function AgendaCalendario({
                     alternarSelecaoSlot={alternarSelecaoSlot}
                     definirSelecaoDeVarios={definirSelecaoDeVarios}
                     slotsDaReserva={slotsDaReserva}
+                    dataReferencia={dataReferencia}
+                    turnoDestaque={turnoDestaque}
                 />
             </Card>
         );

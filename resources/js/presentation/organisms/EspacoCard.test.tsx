@@ -139,10 +139,23 @@ describe('EspacoCard', () => {
         expect(screen.queryByText(/horário livre|horários livres/)).not.toBeInTheDocument();
     });
 
-    it('leva o link para a agenda na semana da data filtrada', () => {
-        render(<EspacoCard espaco={{ ...mockEspaco, horarios_livres: 2 }} user={null} semanaDestino="2026-11-20" />);
+    it('leva o link para a agenda na semana, turno e capacidade filtrados e ativa modo compacto mobile', () => {
+        const { container } = render(
+            <EspacoCard
+                espaco={{ ...mockEspaco, horarios_livres: 2 }}
+                user={null}
+                semanaDestino="2026-11-20"
+                turnoDestino="tarde"
+                capacidadeDestino="30"
+                compactOnMobile
+            />,
+        );
 
-        expect(screen.getByRole('link', { name: /Consultar horários/i })).toHaveAttribute('href', '/espacos/10?semana=2026-11-20');
+        expect(screen.getByRole('link', { name: /Consultar horários/i })).toHaveAttribute(
+            'href',
+            '/espacos/10?semana=2026-11-20&turno=tarde&capacidade=30',
+        );
+        expect(container.querySelector('[data-compact-mobile="true"]')).toBeInTheDocument();
     });
 
     it('navega para a agenda na semana da data filtrada ao clicar no card sem callback próprio', () => {

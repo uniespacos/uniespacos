@@ -74,24 +74,34 @@ interface CalendarDiaMobileProps {
     slotsDaReserva?: SlotCalendario[];
     exigirGestor?: boolean;
     modoSelecaoInicial?: 'hoje' | 'primeiroComReserva';
+    dataReferencia?: string;
+    turnoDestaque?: Turno;
 }
 
 function calcularIndiceInicial(
     diasSemana: AgendaDiasSemanaType[],
     modoSelecaoInicial: 'hoje' | 'primeiroComReserva',
     indicadoresDias: Map<string, IndicadorDia>,
+    dataReferencia?: string,
 ): number {
     const indiceHoje = Math.max(
         diasSemana.findIndex((dia) => dia.ehHoje),
         0,
     );
 
-    if (modoSelecaoInicial !== 'primeiroComReserva') {
-        return indiceHoje;
+    if (modoSelecaoInicial === 'primeiroComReserva') {
+        const indicePrimeiroComReserva = diasSemana.findIndex((dia) => indicadoresDias.get(dia.valor)?.temSlot);
+        return indicePrimeiroComReserva !== -1 ? indicePrimeiroComReserva : indiceHoje;
     }
 
-    const indicePrimeiroComReserva = diasSemana.findIndex((dia) => indicadoresDias.get(dia.valor)?.temSlot);
-    return indicePrimeiroComReserva !== -1 ? indicePrimeiroComReserva : indiceHoje;
+    if (dataReferencia) {
+        const indiceReferencia = diasSemana.findIndex((dia) => dia.valor === dataReferencia);
+        if (indiceReferencia !== -1) {
+            return indiceReferencia;
+        }
+    }
+
+    return indiceHoje;
 }
 
 export default function CalendarDiaMobile({
@@ -103,6 +113,8 @@ export default function CalendarDiaMobile({
     slotsDaReserva,
     exigirGestor = true,
     modoSelecaoInicial = 'hoje',
+    dataReferencia,
+    turnoDestaque,
 }: CalendarDiaMobileProps) {
     const { t } = useTranslation();
     const agendasOrdenadas = useMemo(
@@ -126,7 +138,7 @@ export default function CalendarDiaMobile({
         [diasSemana, agendasPorTurno, slotsDaReserva, isSlotSelecionado],
     );
 
-    const [indiceDia, setIndiceDia] = useState(() => calcularIndiceInicial(diasSemana, modoSelecaoInicial, indicadoresDias));
+    const [indiceDia, setIndiceDia] = useState(() => calcularIndiceInicial(diasSemana, modoSelecaoInicial, indicadoresDias, dataReferencia));
 
     const diaVisivel = diasSemana[indiceDia];
 
@@ -199,10 +211,11 @@ export default function CalendarDiaMobile({
                 const selecionaveisDoTurno = slots.map(({ slot }) => slot).filter(slotPodeSerSelecionado);
                 const todosMarcados = selecionaveisDoTurno.length > 0 && selecionaveisDoTurno.every((slot) => isSlotSelecionado(slot));
                 const rotuloTurno = TURNO_LABEL[turno];
+                const isTurnoDestacado = turnoDestaque === turno;
 
                 return (
-                    <div key={agendaId}>
-                        <div className="bg-muted/40 flex items-center justify-between gap-2 pr-1 pl-3">
+                    <div key={agendaId} data-turno-destaque={isTurnoDestacado ? 'true' : undefined}>
+                        <div className={cn('bg-muted/40 flex items-center justify-between gap-2 pr-1 pl-3', isTurnoDestacado && 'bg-primary/10')}>
                             <span className="text-foreground py-1.5 text-[11px] font-bold tracking-wide uppercase">{rotuloTurno}</span>
 
                             {definirSelecaoDeVarios && (

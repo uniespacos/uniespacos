@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
-import { chaveTurnoFiltro, formatarDataFiltro, parseTurnoFiltro } from '@/lib/utils/disponibilidade-filtro';
+import { capacidadeValida, chaveTurnoFiltro, formatarDataFiltro, parseTurnoFiltro } from '@/lib/utils/disponibilidade-filtro';
 import { EmptyState } from '@/presentation/molecules/EmptyState';
 import GenericHeader from '@/presentation/molecules/GenericHeader';
 import PaginacaoListas from '@/presentation/molecules/PaginacaoListas';
@@ -43,13 +43,15 @@ export default function EspacosPage() {
         user: User;
     }>().props;
 
+    const capacidadeFiltrada = capacidadeValida(filters.capacidade);
+    const hasIntentionFilters = Boolean(filters.data) || Boolean(capacidadeFiltrada);
+
     const hasActiveFilters =
         Boolean(filters.search) ||
         Boolean(filters.unidade && filters.unidade !== 'all') ||
         Boolean(filters.modulo && filters.modulo !== 'all') ||
         Boolean(filters.andar && filters.andar !== 'all') ||
-        Boolean(filters.capacidade && filters.capacidade !== 'qualquer') ||
-        Boolean(filters.data) ||
+        hasIntentionFilters ||
         Boolean(filters.turno);
 
     const turnoFiltrado = parseTurnoFiltro(filters.turno);
@@ -63,7 +65,17 @@ export default function EspacosPage() {
         : null;
 
     const handleSolicitarReserva = (espacoId: string) => {
-        router.get(route('espacos.show', espacoId), filters.data ? { semana: filters.data } : {});
+        const params: Record<string, string> = {};
+        if (filters.data) {
+            params.semana = filters.data;
+            if (turnoFiltrado) {
+                params.turno = turnoFiltrado;
+            }
+        }
+        if (capacidadeFiltrada) {
+            params.capacidade = capacidadeFiltrada;
+        }
+        router.get(route('espacos.show', espacoId), params);
     };
 
     return (
@@ -92,6 +104,9 @@ export default function EspacosPage() {
                                     user={user}
                                     handleSolicitarReserva={handleSolicitarReserva}
                                     semanaDestino={filters.data}
+                                    turnoDestino={filters.data ? turnoFiltrado : undefined}
+                                    capacidadeDestino={capacidadeFiltrada || undefined}
+                                    compactOnMobile={hasIntentionFilters}
                                 />
                             ))}
                         </div>

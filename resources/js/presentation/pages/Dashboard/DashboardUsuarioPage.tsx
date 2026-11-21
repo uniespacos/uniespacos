@@ -1,14 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/i18n';
+import { capacidadeValida } from '@/lib/utils/disponibilidade-filtro';
 import { EmptyState } from '@/presentation/molecules/EmptyState';
+import { QUALQUER_TURNO_INTENCAO, ReservaIntencaoFields, type TurnoIntencao } from '@/presentation/molecules/ReservaIntencaoFields';
 import TabsItemReserva from '@/presentation/molecules/TabsItemReserva';
 import TabsItemEspacosFavoritos from '@/presentation/organisms/TabsItemEspacosFavoritos';
 import AppLayout from '@/presentation/templates/AppLayout';
 import { Espaco, Reserva, User, type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { format } from 'date-fns';
 import { ArrowRight, CalendarPlus, ListChecks, Sparkles, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -43,6 +45,9 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
     const espacosRecentes = props.espacosRecentes ?? pageProps.espacosRecentes ?? [];
 
     const [searchTermFavoritos, setSearchTermFavoritos] = useState('');
+    const [dataIntencao, setDataIntencao] = useState('');
+    const [turnoIntencao, setTurnoIntencao] = useState<TurnoIntencao>(QUALQUER_TURNO_INTENCAO);
+    const [capacidadeIntencao, setCapacidadeIntencao] = useState('');
 
     const filteredEspacosFavoritos = useMemo(() => {
         if (!searchTermFavoritos) return espacosFavoritos;
@@ -50,79 +55,84 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
         return espacosFavoritos.filter((e) => e.nome.toLowerCase().includes(termo) || e.andar?.modulo?.unidade?.nome.toLowerCase().includes(termo));
     }, [espacosFavoritos, searchTermFavoritos]);
 
-    const atalhosSecundarios = [
-        {
-            label: t('dashboard.actions.meus_favoritos'),
-            descricao: t('dashboard.actions.meus_favoritos_desc'),
-            Icone: Star,
-            href: route('espacos.favoritos'),
-        },
-        {
-            label: t('nav.minhas_reservas'),
-            descricao: t('dashboard.actions.minhas_reservas_desc'),
-            Icone: ListChecks,
-            href: route('reservas.index'),
-        },
-    ];
+    const handleDataIntencaoChange = (novaData: Date | undefined) => {
+        const formatada = novaData ? format(novaData, 'yyyy-MM-dd') : '';
+        setDataIntencao(formatada);
+        if (!formatada) {
+            setTurnoIntencao(QUALQUER_TURNO_INTENCAO);
+        }
+    };
+
+    const handleBuscarEspacos = () => {
+        const query: Record<string, string> = {};
+        if (dataIntencao) {
+            query.data = dataIntencao;
+            if (turnoIntencao !== QUALQUER_TURNO_INTENCAO) {
+                query.turno = turnoIntencao;
+            }
+        }
+        const capValida = capacidadeValida(capacidadeIntencao);
+        if (capValida) {
+            query.capacidade = capValida;
+        }
+        router.get(route('espacos.index'), query);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('dashboard.title')} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
-                <div className="border-border/80 from-card via-card/80 to-primary/5 relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 shadow-xs sm:p-8">
-                    <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                        <div className="space-y-2">
+                <div className="border-border/80 from-card via-card/80 to-primary/5 relative overflow-hidden rounded-2xl border bg-gradient-to-br p-5 shadow-xs sm:p-7">
+                    <div className="relative z-10 flex flex-col gap-5">
+                        <div className="space-y-1.5">
                             <div className="inline-flex items-center gap-2">
                                 <Badge variant="secondary" className="bg-background/80 text-xs font-medium backdrop-blur-xs">
                                     <Sparkles className="text-primary mr-1 h-3 w-3" />
                                     UniEspaços
                                 </Badge>
                             </div>
-                            <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                            <h1 className="text-foreground text-xl font-bold tracking-tight sm:text-2xl">
                                 {t('dashboard.welcome', { name: user.name })}
                             </h1>
-                            <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
+                            <p className="text-muted-foreground max-w-2xl text-xs sm:text-sm">
                                 {user.setor
-                                    ? `${user.setor.nome} (${user.setor.sigla}) • ${t('dashboard.welcome_sub')}`
-                                    : `${t('dashboard.welcome_sub')}! ${t('espacos.consultar_espacos_desc')}`}
+                                    ? `${user.setor.nome} (${user.setor.sigla}) • ${t('dashboard.actions.assistente_subtitulo')}`
+                                    : t('dashboard.actions.assistente_subtitulo')}
                             </p>
                         </div>
-                        <div className="flex flex-col gap-2.5 sm:flex-row">
-                            <Button
-                                size="lg"
-                                onClick={() => {
-                                    router.get(route('espacos.index'));
+
+                        <div className="bg-background/80 border-border/70 space-y-4 rounded-xl border p-4 backdrop-blur-xs">
+                            <ReservaIntencaoFields
+                                data={dataIntencao}
+                                turno={turnoIntencao}
+                                capacidade={capacidadeIntencao}
+                                onDataChange={handleDataIntencaoChange}
+                                onTurnoChange={setTurnoIntencao}
+                                onCapacidadeChange={(valor) => {
+                                    setCapacidadeIntencao(valor);
                                 }}
-                                className="shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                <CalendarPlus className="mr-2 h-5 w-5" />
-                                {t('dashboard.actions.consultar_espacos')}
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
+                                disponibilidade
+                                idPrefix="dashboard-"
+                            />
+
+                            <div className="border-border/50 flex flex-col items-stretch justify-between gap-3 border-t pt-3 sm:flex-row sm:items-center">
+                                <Button type="button" size="lg" onClick={handleBuscarEspacos} className="h-11 shadow-sm transition-all sm:h-10">
+                                    <CalendarPlus className="mr-2 h-4 w-4" />
+                                    {t('dashboard.actions.buscar_espacos_disponiveis')}
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+
+                                <Link
+                                    href={route('espacos.index')}
+                                    className="text-muted-foreground hover:text-primary inline-flex min-h-11 items-center justify-center gap-1.5 text-xs font-medium transition-colors sm:min-h-9"
+                                >
+                                    <span>{t('dashboard.actions.explorar_catalogo')}</span>
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                </Link>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {atalhosSecundarios.map(({ label, descricao, Icone, href }) => (
-                        <Link key={href} href={href} className="group block min-w-0">
-                            <Card className="border-border/70 group-hover:border-primary/50 h-full min-w-0 transition-all duration-200 group-hover:shadow-sm">
-                                <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
-                                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-3 transition-colors">
-                                            <Icone className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
-                                            <p className="text-muted-foreground truncate text-xs">{descricao}</p>
-                                        </div>
-                                    </div>
-                                    <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
                 </div>
 
                 {espacosRecentes.length > 0 && (

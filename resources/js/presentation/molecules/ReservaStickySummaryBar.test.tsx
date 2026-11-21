@@ -1,7 +1,6 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ReservaStickySummaryBar } from './ReservaStickySummaryBar';
 import { SlotReservaItem } from '@/types/reserva-stepper';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { ReservaStickySummaryBar } from './ReservaStickySummaryBar';
 
 describe('ReservaStickySummaryBar', () => {
     const mockSlots: SlotReservaItem[] = [
@@ -15,10 +14,11 @@ describe('ReservaStickySummaryBar', () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it('renders total slot counter correctly', () => {
+    it('renders total slot counter and consolidated interval summary correctly', () => {
         render(<ReservaStickySummaryBar slots={mockSlots} onConfirm={jest.fn()} onClear={jest.fn()} />);
 
         expect(screen.getByText('2 horários selecionados')).toBeInTheDocument();
+        expect(screen.getByText(/25\/08 • 08:00–10:00/)).toBeInTheDocument();
         expect(screen.getByText('Pronto para preencher a solicitação')).toBeInTheDocument();
     });
 

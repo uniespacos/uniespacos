@@ -154,6 +154,10 @@ export const en = {
         actions: {
             solicitar_reserva: 'Request Reservation',
             consultar_espacos: 'Browse Spaces',
+            explorar_catalogo: 'Explore full space catalog',
+            buscar_espacos_disponiveis: 'Search available spaces',
+            assistente_titulo: 'New booking request',
+            assistente_subtitulo: 'Tell us when and for how many people you need a space',
             gerir_reservas: 'Manage Reservations',
             meus_favoritos: 'Favorite Spaces',
             meus_favoritos_desc: 'Quickly access your saved spaces',
@@ -356,12 +360,15 @@ export const en = {
             title_placeholder: 'E.g.: Computing opening lecture',
             description_label: 'Details for the manager (optional)',
             description_placeholder: 'E.g.: activity goal, required equipment...',
+            add_description_toggle: 'Add note for the manager (optional)',
+            hide_description_toggle: 'Hide note',
             char_counter: '{{count}}/{{max}}',
             public_label: 'Estimated audience (optional)',
             public_placeholder: 'E.g.: 40',
             public_over_capacity: "Above this space's capacity of {{count}} people. You can still send it; the manager will review it.",
             category_label: 'Category (optional)',
             category_placeholder: 'E.g.: Class, Lecture, Defense',
+            category_other: 'Other...',
             category_suggestions: {
                 aula: 'Class',
                 palestra: 'Lecture',
@@ -471,6 +478,7 @@ export const en = {
         detalhes_espaco: {
             titulo: 'Space details and managers',
         },
+        voltar_busca: 'Back to search',
     },
     auth: {
         layout: {
@@ -690,6 +698,15 @@ export const en = {
             busca_label: 'Search',
             limpar_busca: 'Clear search',
             remover_filtro: 'Remove {{filtro}} filter',
+            hoje: 'Today',
+            amanha: 'Tomorrow',
+            minimizar_busca: 'Minimize search',
+            expandir_busca: 'Expand search',
+            mais_filtros: 'More filters',
+            ocultar_mais_filtros: 'Hide extra filters',
+            passo1_titulo: 'What do you need for your booking?',
+            passo1_resumo_vazio: 'Any date, shift, or capacity',
+            capacidade_atalho: '{{count}}+',
         },
         empty: {
             title: 'No spaces found',
