@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0-rc.128](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.127...v1.5.0-rc.128) (2026-11-21)
+
+
+### Features
+
+* reduz esforço mobile para reservar espaço ([7d3b350](https://github.com/uniespacos/uniespacos/commit/7d3b350b12c376fbd6a687a521bafb4208fdd920))
+* reduz esforço mobile para reservar espaço (atalhos hoje/amanhã/turno, cards compactos, home reordenada) ([25dbcb1](https://github.com/uniespacos/uniespacos/commit/25dbcb124920f60d77f820cce26fc26d338fb7a1))
+
 ## [1.5.0-rc.127](https://github.com/uniespacos/uniespacos/compare/v1.5.0-rc.126...v1.5.0-rc.127) (2026-11-20)
 
 
