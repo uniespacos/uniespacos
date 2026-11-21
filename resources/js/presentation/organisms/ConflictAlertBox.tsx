@@ -36,16 +36,6 @@ export function ConflictAlertBox({ conflicts }: ConflictAlertBoxProps): React.Re
                         {conflictEntries.map(([horarioId, conflict]) => (
                             <li key={horarioId}>
                                 <span className="font-medium">{conflict.conflito_reserva_titulo}</span>
-                                {conflict.conflito_user_name ? (
-                                    <>
-                                        {' — '}
-                                        <span>
-                                            {t('reservas.gestor.conflict_with_user', {
-                                                user: conflict.conflito_user_name,
-                                            })}
-                                        </span>
-                                    </>
-                                ) : null}
                             </li>
                         ))}
                     </ul>

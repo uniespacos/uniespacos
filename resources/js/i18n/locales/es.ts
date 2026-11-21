@@ -314,7 +314,6 @@ export const es = {
         },
         gestor: {
             conflicts_detected: 'Advertencia: {{count}} franja(s) horaria(s) de esta reserva se superpone(n) con otra(s) reserva(s).',
-            conflict_with_user: 'Solicitante: {{user}}',
             conflicts_note:
                 'Los horarios en conflicto con otra reserva aprobada quedan bloqueados para aprobación y se rechazan automáticamente al guardar la evaluación.',
             conflict_cache_snapshot_title: 'Captura de Conflictos ({{count}} detectados)',
@@ -940,6 +939,7 @@ export const es = {
         too_many_requests_desc: 'Ha realizado demasiadas solicitudes en un intervalo corto. Espere unos momentos antes de intentarlo de nuevo.',
         server_error_title: 'Error interno del servidor',
         server_error_desc: 'Algo salió mal por nuestra parte. El equipo técnico ha sido notificado. Por favor, inténtelo de nuevo en unos instantes.',
+        url_param_invalid: 'Uno de los parámetros de la página no es válido. Revisa el filtro o la semana seleccionada.',
     },
     privacidade: {
         title: 'Política de Privacidad',

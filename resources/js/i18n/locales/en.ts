@@ -313,7 +313,6 @@ export const en = {
         },
         gestor: {
             conflicts_detected: 'Warning: {{count}} time slot(s) of this reservation overlap(s) with another reservation(s).',
-            conflict_with_user: 'Requester: {{user}}',
             conflicts_note:
                 'Time slots conflicting with another approved reservation are blocked from approval and will be automatically rejected when saving the evaluation.',
             conflict_cache_snapshot_title: 'Conflict Snapshot ({{count}} detected)',
@@ -938,6 +937,7 @@ export const en = {
         too_many_requests_desc: 'You have made too many requests recently. Please wait a moment before trying again.',
         server_error_title: 'Internal Server Error',
         server_error_desc: 'Something went wrong on our end. The technical team has been notified. Please try again shortly.',
+        url_param_invalid: 'One of the page parameters is invalid. Check the filter or the selected week.',
     },
     privacidade: {
         title: 'Privacy Policy',

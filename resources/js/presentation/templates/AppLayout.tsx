@@ -1,3 +1,4 @@
+import { useErrosParametrosUrl } from '@/hooks/use-erros-parametros-url';
 import AppLayoutTemplate from '@/presentation/templates/app/AppSidebarLayout';
 import { FlashMessages, type BreadcrumbItem } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -11,6 +12,8 @@ interface AppLayoutProps {
 
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
     const { flash } = usePage<{ flash: FlashMessages }>().props;
+
+    useErrosParametrosUrl();
 
     useEffect(() => {
         if (flash.success) {

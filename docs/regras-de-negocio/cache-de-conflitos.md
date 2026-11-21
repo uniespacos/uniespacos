@@ -90,7 +90,6 @@ No arquivo `resources/js/types/index.d.ts`:
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
-    conflito_user_name: string;
 }
 
 export interface Reserva {
