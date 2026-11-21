@@ -82,5 +82,10 @@
     "Each time slot date must be on or before the end date.": "La fecha de cada horario debe ser igual o anterior a la fecha final.",
     "The estimated audience must be an integer.": "El público estimado debe ser un número entero.",
     "The estimated audience must be at least :min.": "El público estimado debe ser de al menos :min.",
-    "The estimated audience may not be greater than :max.": "El público estimado no puede ser mayor que :max."
+    "The estimated audience may not be greater than :max.": "El público estimado no puede ser mayor que :max.",
+    "This reservation is archived and can no longer be changed.": "Esta reserva está archivada y ya no puede modificarse.",
+    "The requested scope is not valid for this action.": "El alcance solicitado no es válido para esta acción.",
+    "You are not authorized to act on the requested time slots.": "No tiene autorización para actuar sobre los horarios solicitados.",
+    "Cannot remove floor ':andar' because it already has spaces assigned.": "No es posible eliminar la planta ':andar' porque ya tiene espacios asignados.",
+    "This email address has already been verified.": "Este correo electrónico ya está verificado."
 }

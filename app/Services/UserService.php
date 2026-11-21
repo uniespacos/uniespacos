@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\EmailJaVerificadoException;
 use App\Models\Agenda;
 use App\Models\Instituicao;
 use App\Models\Setor;
@@ -101,7 +102,7 @@ class UserService
     public function resendVerificationEmail(User $user): void
     {
         if ($user->hasVerifiedEmail()) {
-            throw new \RuntimeException('Este e-mail já está verificado.');
+            throw new EmailJaVerificadoException;
         }
 
         $user->sendEmailVerificationNotification();

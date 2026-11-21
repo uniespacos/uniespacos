@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Exceptions\DominioException;
+use App\Exceptions\EmailJaVerificadoException;
 use App\Support\MensagemDeErro;
+use ErrorException;
 use Illuminate\Database\QueryException;
 use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\Log;
@@ -12,9 +15,11 @@ use Monolog\Handler\TestHandler;
 use Monolog\Logger as MonologLogger;
 use Monolog\LogRecord;
 use PDOException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
+use TypeError;
 
 class MensagemDeErroTest extends TestCase
 {
@@ -104,17 +109,66 @@ class MensagemDeErroTest extends TestCase
     #[Test]
     public function excecao_de_dominio_preserva_a_mensagem(): void
     {
-        $mensagem = MensagemDeErro::paraUsuario(new RuntimeException('Este e-mail já está verificado.'));
+        $mensagem = MensagemDeErro::paraUsuario(new EmailJaVerificadoException);
 
         $this->assertSame('Este e-mail já está verificado.', $mensagem);
     }
 
     #[Test]
+    public function subclasse_direta_de_dominio_exception_preserva_a_mensagem(): void
+    {
+        $dominio = new class('Mensagem de domínio') extends DominioException {};
+
+        $this->assertSame('Mensagem de domínio', MensagemDeErro::paraUsuario($dominio));
+    }
+
+    #[Test]
     public function excecao_de_dominio_nao_gera_registro_de_erro(): void
     {
-        MensagemDeErro::paraUsuario(new RuntimeException('Este e-mail já está verificado.'));
+        MensagemDeErro::paraUsuario(new EmailJaVerificadoException);
 
         $this->assertSame([], $this->registrosDeErro());
+    }
+
+    #[Test]
+    #[DataProvider('excecoesNaoDeDominio')]
+    public function excecao_que_nao_e_de_dominio_vira_generica_sem_vazar_a_mensagem(\Throwable $excecao): void
+    {
+        $mensagem = MensagemDeErro::paraUsuario($excecao);
+
+        $this->assertSame(self::GENERICA_PT_BR, $mensagem);
+        $this->assertStringNotContainsString('segredo-interno', $mensagem);
+    }
+
+    #[Test]
+    #[DataProvider('excecoesNaoDeDominio')]
+    public function excecao_que_nao_e_de_dominio_e_registrada_no_log(\Throwable $excecao): void
+    {
+        MensagemDeErro::paraUsuario($excecao);
+
+        $registros = $this->registrosDeErro();
+        $this->assertCount(1, $registros);
+        $this->assertSame($excecao, $registros[0]->context['exception']);
+    }
+
+    #[Test]
+    #[DataProvider('excecoesNaoDeDominio')]
+    public function excecao_que_nao_e_de_dominio_nao_registra_quando_o_chamador_ja_registra(\Throwable $excecao): void
+    {
+        MensagemDeErro::paraUsuario($excecao, [], registrar: false);
+
+        $this->assertCount(0, $this->registrosDeErro());
+    }
+
+    /**
+     * @return iterable<string, array{\Throwable}>
+     */
+    public static function excecoesNaoDeDominio(): iterable
+    {
+        yield 'TypeError' => [new TypeError('segredo-interno: argumento inválido')];
+        yield 'ErrorException' => [new ErrorException('segredo-interno: /var/www/app/Services/X.php')];
+        yield 'RuntimeException' => [new RuntimeException('segredo-interno: smtp down')];
+        yield 'Exception simples' => [new \Exception('segredo-interno: throw genérico')];
     }
 
     /**
