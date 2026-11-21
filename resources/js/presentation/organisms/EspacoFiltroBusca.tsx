@@ -25,7 +25,7 @@ import { assertNever } from '@/lib/utils/exhaustive';
 import { DatePicker } from '@/presentation/molecules/DatePicker';
 import { Andar, Modulo, Unidade } from '@/types';
 import { router } from '@inertiajs/react';
-import { format, isBefore, parseISO, startOfToday } from 'date-fns';
+import { addDays, format, isBefore, parseISO, startOfToday } from 'date-fns';
 import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -489,7 +489,7 @@ export default function EspacoFiltroBusca({
     };
 
     return (
-        <Card className="border-border/80 mb-6 shadow-xs">
+        <Card className="border-border/80 mb-2 shadow-xs md:mb-6">
             <CardContent className="space-y-4 p-4">
                 {/* Linha de Busca e Gatilho do Drawer Mobile */}
                 <div className="flex items-center gap-2">
@@ -501,7 +501,9 @@ export default function EspacoFiltroBusca({
                         <Input
                             id="espacos-busca"
                             placeholder={t('espacos.filtros.buscar')}
-                            className="pr-9 pl-9"
+                            className="h-11 pr-9 pl-9 md:h-9"
+                            type="search"
+                            enterKeyHint="search"
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
@@ -522,7 +524,7 @@ export default function EspacoFiltroBusca({
                     {/* Drawer de Filtros no Mobile (< md) */}
                     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                         <DrawerTrigger asChild>
-                            <Button variant="outline" className="relative flex items-center gap-2 md:hidden">
+                            <Button variant="outline" className="relative flex h-11 items-center gap-2 md:hidden">
                                 <SlidersHorizontal className="h-4 w-4" />
                                 <span>{t('espacos.filtros.filtros_button')}</span>
                                 {quantidadeFiltrosAtivos > 0 && (
@@ -558,6 +560,55 @@ export default function EspacoFiltroBusca({
                         </DrawerContent>
                     </Drawer>
                 </div>
+
+                {/* Atalhos de um toque no mobile: data e turno sem abrir o drawer */}
+                {disponibilidade && (
+                    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden" role="group" aria-label={t('espacos.filtros.quando')}>
+                        {[
+                            { chave: 'hoje', label: t('espacos.filtros.atalho_hoje'), data: format(startOfToday(), 'yyyy-MM-dd') },
+                            { chave: 'amanha', label: t('espacos.filtros.atalho_amanha'), data: format(addDays(startOfToday(), 1), 'yyyy-MM-dd') },
+                        ].map(({ chave, label, data }) => {
+                            const ativo = localFilters.data === data;
+                            return (
+                                <Button
+                                    key={chave}
+                                    type="button"
+                                    size="sm"
+                                    variant={ativo ? 'default' : 'outline'}
+                                    aria-pressed={ativo}
+                                    className="h-11 shrink-0 rounded-full px-4"
+                                    onClick={() => {
+                                        executarFiltro(
+                                            { ...localFilters, data: ativo ? '' : data, turno: ativo ? QUALQUER_TURNO : localFilters.turno },
+                                            searchTerm,
+                                        );
+                                    }}
+                                >
+                                    {label}
+                                </Button>
+                            );
+                        })}
+                        {localFilters.data !== '' &&
+                            TURNOS_ORDENADOS.map((turno) => {
+                                const ativo = localFilters.turno === turno;
+                                return (
+                                    <Button
+                                        key={turno}
+                                        type="button"
+                                        size="sm"
+                                        variant={ativo ? 'default' : 'outline'}
+                                        aria-pressed={ativo}
+                                        className="h-11 shrink-0 rounded-full px-4"
+                                        onClick={() => {
+                                            handleTurnoChange(ativo ? QUALQUER_TURNO : turno);
+                                        }}
+                                    >
+                                        {t(chaveTurnoFiltro(turno))}
+                                    </Button>
+                                );
+                            })}
+                    </div>
+                )}
 
                 {/* Filtros em Grid no Desktop (>= md) */}
                 <div className={cn('hidden grid-cols-2 gap-4 md:grid', disponibilidade ? 'lg:grid-cols-3' : 'lg:grid-cols-4')}>
