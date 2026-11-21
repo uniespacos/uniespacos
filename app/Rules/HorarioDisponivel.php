@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Rules;
 
+use App\Enums\Reserva\EscopoEdicaoEnum;
+use App\Enums\Reserva\RecorrenciaReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Services\ExpansaoHorariosService;
 use Carbon\Carbon;
@@ -75,11 +77,11 @@ class HorarioDisponivel implements DataAwareRule, ValidationRule
         }
 
         $agendaIdInt = is_int($agendaId) ? $agendaId : (int) $agendaId;
-        $recorrencia = is_string($this->data['recorrencia'] ?? null) ? $this->data['recorrencia'] : 'unica';
+        $recorrencia = is_string($this->data['recorrencia'] ?? null) ? $this->data['recorrencia'] : RecorrenciaReservaEnum::UNICA->value;
         $editScope = is_string($this->data['edit_scope'] ?? null) ? $this->data['edit_scope'] : null;
         $dataFinalRaw = is_string($this->data['data_final'] ?? null) ? $this->data['data_final'] : null;
 
-        if ($editScope === 'single') {
+        if ($editScope === EscopoEdicaoEnum::SINGLE->value) {
             $semanaEditada = $this->semanaEditada();
 
             if ($semanaEditada !== null && ($data < $semanaEditada[0] || $data > $semanaEditada[1])) {
