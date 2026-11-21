@@ -1,5 +1,5 @@
 import { type DecisaoAvaliacaoType, SituacaoHorario, SituacaoReserva } from '@/contracts';
-import { Horario, Reserva, User } from '@/types';
+import { Horario, Reserva } from '@/types';
 import { act, renderHook } from '@testing-library/react';
 import { useReservationSlots } from './use-reservation-slots';
 
@@ -15,7 +15,7 @@ describe('useReservationSlots', () => {
         observacao: '',
         created_at: '',
         updated_at: '',
-        user: { id: 1, name: 'User Teste' } as User,
+        user: { id: 1, name: 'User Teste' },
         horarios,
     });
 

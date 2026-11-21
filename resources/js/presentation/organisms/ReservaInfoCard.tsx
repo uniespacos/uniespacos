@@ -16,6 +16,8 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
     const espaco = reserva.horarios[0]?.agenda?.espaco;
     const publicoEstimado = typeof reserva.publico_estimado === 'number' ? reserva.publico_estimado : undefined;
     const capacidadeEspaco = espaco?.capacidade_pessoas;
+    const email = reserva.user?.email ?? '';
+    const telefone = reserva.user?.telefone ?? '';
 
     return (
         <Card className="min-w-0">
@@ -30,7 +32,7 @@ export function ReservaInfoCard({ reserva, children }: ReservaInfoCardProps) {
                         {t('reservas.detalhes.solicitante')}: {reserva.user?.name}
                     </span>
                 </CardDescription>
-                {reserva.user && (reserva.user.email || reserva.user.telefone) && (
+                {reserva.user && (email !== '' || telefone !== '') && (
                     <div className="mt-3 space-y-2 text-sm">
                         {reserva.user.email && (
                             <div className="flex items-center gap-2">
