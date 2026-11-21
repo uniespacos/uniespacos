@@ -130,9 +130,7 @@ final class RelatorioService
         $instituicaoId = null;
         $agendaIds = null;
         if (($escopo['tipo'] ?? null) === 'institucional') {
-            $instituicaoIdRaw = $escopo['instituicaoId'] ?? 0;
-            $instituicaoIdEscopo = is_int($instituicaoIdRaw) ? $instituicaoIdRaw : 0;
-            $instituicaoId = $instituicaoIdEscopo > 0 ? $instituicaoIdEscopo : null;
+            $instituicaoId = $this->instituicaoIdDoEscopo($escopo);
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
             $agendaIdsEscopo = $escopo['agendaIds'] ?? [];
             $agendaIds = is_array($agendaIdsEscopo) ? array_values($agendaIdsEscopo) : [];
@@ -207,13 +205,13 @@ final class RelatorioService
                 dataFim: $filtros->dataFim,
                 situacoes: $filtros->situacoes,
                 turnos: $filtros->turnos,
-                instituicaoId: isset($escopo['instituicaoId']) && is_int($escopo['instituicaoId']) ? $escopo['instituicaoId'] : null,
+                instituicaoId: $this->instituicaoIdDoEscopo($escopo),
                 unidadeId: $filtros->unidadeId,
                 moduloId: $filtros->moduloId,
                 andarId: $filtros->andarId,
                 espacoId: $filtros->espacoId,
                 setorId: $filtros->setorId,
-                agendaIds: $filtros->agendaIds,
+                agendaIds: null,
             );
         }
 
@@ -239,6 +237,20 @@ final class RelatorioService
         }
 
         abort(403, 'Sem permissão para acessar relatórios.');
+    }
+
+    /**
+     * @param  array<string, mixed>  $escopo
+     */
+    private function instituicaoIdDoEscopo(array $escopo): int
+    {
+        $instituicaoId = $escopo['instituicaoId'] ?? null;
+
+        if (! is_int($instituicaoId) || $instituicaoId <= 0) {
+            abort(403, 'Sem permissão para acessar relatórios.');
+        }
+
+        return $instituicaoId;
     }
 
     /**

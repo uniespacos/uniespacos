@@ -21,9 +21,15 @@ class RelatorioPolicy
     public function aplicarEscopoParaUsuario(User $user): array
     {
         if ($user->can('relatorios.escopo-instituicao') || $user->can('secao.dashboard-institucional')) {
+            $instituicaoId = $user->instituicaoId();
+
+            if ($instituicaoId === null) {
+                return [];
+            }
+
             return [
                 'tipo' => 'institucional',
-                'instituicaoId' => $user->instituicaoId(),
+                'instituicaoId' => $instituicaoId,
                 'unidadeId' => null,
                 'agendaIds' => [],
             ];
