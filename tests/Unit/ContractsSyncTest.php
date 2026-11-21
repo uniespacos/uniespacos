@@ -8,11 +8,11 @@ use App\Enums\Agenda\AgendaEnum;
 use App\Enums\ErrorCode;
 use App\Enums\Relatorio\FormatoRelatorioEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
+use App\Enums\Reserva\ModoArquivoEnum;
+use App\Enums\Reserva\OrdenacaoReservaEnum;
 use App\Enums\Reserva\RecorrenciaReservaEnum;
 use App\Enums\Reserva\StatusAvaliacaoHorarioEnum;
 use App\Enums\Reserva\ValidationStatusEnum;
-use App\Enums\SituacaoReserva\ModoArquivoEnum;
-use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use PHPUnit\Framework\TestCase;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Relatorio\Reports;
 
+use App\Enums\Agenda\AgendaEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Models\User;
 use App\Repositories\EspacoRepositoryInterface;
@@ -37,7 +38,7 @@ final class OcupacaoEspacosRelatorio implements RelatorioInterface
             ->map(function ($total, $espacoId) use ($espacos, $filtros, $inicio, $fim) {
                 $espaco = $espacos->get($espacoId);
 
-                $turnosSel = $filtros->turnos ?: ['manha', 'tarde', 'noite'];
+                $turnosSel = $filtros->turnos ?: array_column(AgendaEnum::cases(), 'value');
                 $slots = array_sum(array_map(
                     fn ($t) => config("relatorios.slots_por_turno.$t", 0),
                     $turnosSel

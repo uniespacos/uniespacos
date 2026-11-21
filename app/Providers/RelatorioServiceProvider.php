@@ -12,9 +12,6 @@ use Illuminate\Support\ServiceProvider;
 
 final class RelatorioServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/relatorios.php', 'relatorios');
@@ -24,8 +21,5 @@ final class RelatorioServiceProvider extends ServiceProvider
         $this->app->singleton(ExporterFactory::class, fn ($app) => new ExporterFactory($app->tagged('relatorio.exporters')));
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void {}
 }

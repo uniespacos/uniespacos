@@ -13,7 +13,6 @@ use Laravel\Telescope\TelescopeApplicationServiceProvider;
 class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 {
     /**
-     * Register any application services.
      * Telescope is only loaded in the local environment.
      */
     public function register(): void

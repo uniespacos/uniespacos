@@ -34,8 +34,6 @@ class InstituicaoService
     }
 
     /**
-     * Creates and persists a new institution.
-     *
      * @param  array<string, mixed>  $data
      */
     public function store(array $data): Instituicao
@@ -44,8 +42,6 @@ class InstituicaoService
     }
 
     /**
-     * Updates an existing institution with the given data.
-     *
      * @param  array<string, mixed>  $data
      */
     public function update(Instituicao $instituicao, array $data): Instituicao
@@ -53,9 +49,6 @@ class InstituicaoService
         return $this->repoInstituicao->update($data, $instituicao->id);
     }
 
-    /**
-     * Deletes the given institution from the database.
-     */
     public function delete(Instituicao $instituicao): bool
     {
         return $this->repoInstituicao->destroy($instituicao->id);

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\SituacaoReserva\ModoArquivoEnum;
-use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
+use App\Enums\Reserva\ModoArquivoEnum;
+use App\Enums\Reserva\OrdenacaoReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Http\Resources\ReservaResource;
 use App\Jobs\AvaliarReservaJob;
@@ -21,6 +21,7 @@ use App\Repositories\EspacoRepositoryInterface;
 use App\Repositories\ReservaRepositoryInterface;
 use App\Support\SemanaDeReferencia;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -256,8 +257,8 @@ class ReservaService
     {
         $horariosLiberados = $reserva->horarios()->get(['id', 'data', 'agenda_id']);
 
-        $reserva->horarios()->update(['situacao' => 'inativa']);
-        $reserva->update(['situacao' => 'inativa']);
+        $reserva->horarios()->update(['situacao' => SituacaoReservaEnum::INATIVA->value]);
+        $reserva->update(['situacao' => SituacaoReservaEnum::INATIVA->value]);
 
         return $horariosLiberados;
     }
@@ -402,7 +403,7 @@ class ReservaService
             }
         }
 
-        $reserva->load(['user']);
+        $reserva->load(['user' => fn (BelongsTo $relacao) => $relacao->select(['users.id', 'users.name', 'users.email', 'users.telefone'])]);
         $reserva->setRelation('horarios', $horariosDaReserva);
         $reserva->existing_justification = $reserva->horarios()
             ->whereNotNull('justificativa')

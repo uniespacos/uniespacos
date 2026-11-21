@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Reserva\RecorrenciaReservaEnum;
 use App\Rules\DataDoHorarioNoPeriodo;
 use App\Rules\HorarioDisponivel;
 use App\Rules\HorariosMesmoEspaco;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StoreReservaRequest extends FormRequest
 {
@@ -20,9 +22,6 @@ class StoreReservaRequest extends FormRequest
         return Auth::check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
@@ -33,7 +32,7 @@ class StoreReservaRequest extends FormRequest
             'termo_responsabilidade' => ['required', 'accepted'],
             'data_inicial' => ['required', 'date', 'after_or_equal:today'],
             'data_final' => ['required', 'date', 'after_or_equal:data_inicial'],
-            'recorrencia' => ['required', 'in:unica,15dias,1mes,personalizado'],
+            'recorrencia' => ['required', Rule::enum(RecorrenciaReservaEnum::class)],
             'horarios_solicitados' => ['required', 'array', 'min:1', new HorariosMesmoEspaco],
             'horarios_solicitados.*.data' => ['required', 'date', 'after_or_equal:today', new DataDoHorarioNoPeriodo],
             'horarios_solicitados.*.horario_inicio' => ['required', 'date_format:H:i:s'],

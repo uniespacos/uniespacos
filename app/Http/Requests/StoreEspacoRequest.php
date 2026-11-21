@@ -17,9 +17,6 @@ class StoreEspacoRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('espacos.criar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [

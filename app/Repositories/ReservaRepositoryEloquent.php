@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\Reserva\ValidationStatusEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Horario;
 use App\Models\Reserva;
@@ -272,7 +273,7 @@ class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements Reserv
     {
         return $this->model->newQuery()
             ->where('id', '!=', $reservaId)
-            ->where('validation_status', 'completed')
+            ->where('validation_status', ValidationStatusEnum::COMPLETED->value)
             ->whereIn('situacao', [
                 SituacaoReservaEnum::EM_ANALISE->value,
                 SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
@@ -297,7 +298,7 @@ class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements Reserv
     public function reservasParaRevalidarAposLiberacao(SupportCollection $slotsLiberados): Collection
     {
         return $this->model->newQuery()
-            ->where('validation_status', 'completed')
+            ->where('validation_status', ValidationStatusEnum::COMPLETED->value)
             ->whereIn('situacao', [
                 SituacaoReservaEnum::INDEFERIDA->value,
                 SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,

@@ -28,9 +28,6 @@ class ReservationEvaluatedNotification extends BaseNotification
         $this->evaluator = $evaluator;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

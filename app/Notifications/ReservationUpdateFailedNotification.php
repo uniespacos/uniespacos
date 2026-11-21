@@ -28,9 +28,6 @@ class ReservationUpdateFailedNotification extends BaseNotification
         $this->user = $user;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

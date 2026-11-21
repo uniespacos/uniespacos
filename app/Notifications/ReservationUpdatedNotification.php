@@ -21,9 +21,6 @@ class ReservationUpdatedNotification extends BaseNotification
         $this->reserva = $reserva;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

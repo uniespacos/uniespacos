@@ -34,8 +34,6 @@ class UnidadeService
     }
 
     /**
-     * Creates and persists a new unit.
-     *
      * @param  array<string, mixed>  $data
      */
     public function store(array $data): Unidade
@@ -44,8 +42,6 @@ class UnidadeService
     }
 
     /**
-     * Updates an existing unit with the given data.
-     *
      * @param  array<string, mixed>  $data
      */
     public function update(Unidade $unidade, array $data): Unidade
@@ -53,9 +49,6 @@ class UnidadeService
         return $this->repoUnidade->update($data, $unidade->id);
     }
 
-    /**
-     * Deletes the given unit from the database.
-     */
     public function delete(Unidade $unidade): bool
     {
         return $this->repoUnidade->destroy($unidade->id);

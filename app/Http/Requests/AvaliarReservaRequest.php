@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Reserva\EscopoEdicaoEnum;
 use App\Enums\Reserva\StatusAvaliacaoHorarioEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Horario;
@@ -21,9 +22,6 @@ class AvaliarReservaRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('reservas.avaliar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $validStatusValues = array_merge(
@@ -32,13 +30,13 @@ class AvaliarReservaRequest extends FormRequest
         );
 
         return [
-            'situacao' => ['required', Rule::in(['parcialmente_deferida', 'deferida', 'indeferida', 'em_analise'])],
+            'situacao' => ['required', Rule::in(SituacaoReservaEnum::valoresDeAvaliacao())],
             'motivo' => ['required_if:situacao,indeferida', 'nullable', 'string', 'max:2000'],
             'observacao' => ['nullable', 'string', 'max:500'],
             'horarios_avaliados' => ['required', 'array'],
             'horarios_avaliados.*.status' => ['required', Rule::in($validStatusValues)],
             'horarios_avaliados.*.id' => ['required', 'integer'],
-            'evaluation_scope' => ['required', 'string', Rule::in(['recurring', 'single'])],
+            'evaluation_scope' => ['required', 'string', Rule::enum(EscopoEdicaoEnum::class)],
         ];
     }
 
@@ -76,7 +74,6 @@ class AvaliarReservaRequest extends FormRequest
                 $horariosIds = [];
                 foreach ($horariosAvaliados as $item) {
                     if (is_array($item)) {
-                        // Tenta 'id' na raiz, depois 'dadosReserva.horarioDB.id'
                         if (isset($item['id'])) {
                             $horariosIds[] = $item['id'];
                         } elseif (isset($item['dadosReserva']['horarioDB']['id'])) {

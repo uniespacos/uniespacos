@@ -135,7 +135,7 @@ final class RelatorioService
             $instituicaoId = $instituicaoIdEscopo > 0 ? $instituicaoIdEscopo : null;
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
             $agendaIdsEscopo = $escopo['agendaIds'] ?? [];
-            $agendaIds = is_array($agendaIdsEscopo) && ! empty($agendaIdsEscopo) ? $agendaIdsEscopo : null;
+            $agendaIds = is_array($agendaIdsEscopo) ? array_values($agendaIdsEscopo) : [];
         } else {
             abort(403, 'Sem permissão para acessar relatórios.');
         }

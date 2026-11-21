@@ -17,9 +17,6 @@ class StoreUserRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('usuarios.criar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [

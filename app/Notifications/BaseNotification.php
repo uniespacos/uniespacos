@@ -80,9 +80,6 @@ abstract class BaseNotification extends Notification implements ShouldQueue
         return $this->gestorUnicoId;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
@@ -92,8 +89,6 @@ abstract class BaseNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
@@ -101,9 +96,6 @@ abstract class BaseNotification extends Notification implements ShouldQueue
         return $this->payload();
     }
 
-    /**
-     * Get the broadcastable representation of the notification.
-     */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage(CamposPublicosNotificacao::dadosPublicos($this->payload()));

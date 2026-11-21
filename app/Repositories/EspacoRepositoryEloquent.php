@@ -303,6 +303,10 @@ class EspacoRepositoryEloquent extends BaseRepositoryEloquent implements EspacoR
      */
     public function listarComLocalizacaoParaOpcoes(?int $instituicaoId, ?array $agendaIds): Collection
     {
+        if ($agendaIds === []) {
+            return new Collection;
+        }
+
         $query = $this->model->newQuery()->with('andar.modulo.unidade');
 
         if ($instituicaoId !== null) {

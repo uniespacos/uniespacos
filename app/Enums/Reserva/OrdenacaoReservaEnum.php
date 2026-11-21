@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Enums\SituacaoReserva;
+namespace App\Enums\Reserva;
 
 /**
  * Critério de ordenação das listagens de reserva.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Enums\SituacaoReserva;
+namespace App\Enums\Reserva;
 
 /**
  * Eixo de arquivamento das listagens de reserva.

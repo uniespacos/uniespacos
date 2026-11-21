@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\SituacaoReserva\ModoArquivoEnum;
-use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
+use App\Enums\Reserva\ModoArquivoEnum;
+use App\Enums\Reserva\OrdenacaoReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use Carbon\Carbon;
 use Database\Factories\ReservaFactory;

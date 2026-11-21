@@ -29,7 +29,7 @@ enum SituacaoReservaEnum: string
      *
      * INATIVA fica de fora porque nao e resultado de avaliacao, e sim estado
      * de arquivamento; ela e tratada pelo eixo `arquivo`
-     * (ver ModoArquivoEnum,.
+     * (ver ModoArquivoEnum).
      *
      * @return array<int, string>
      */

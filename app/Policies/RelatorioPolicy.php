@@ -20,7 +20,6 @@ class RelatorioPolicy
      */
     public function aplicarEscopoParaUsuario(User $user): array
     {
-        // Institucional: acesso a todas as agendas de sua instituição
         if ($user->can('relatorios.escopo-instituicao') || $user->can('secao.dashboard-institucional')) {
             return [
                 'tipo' => 'institucional',
@@ -30,7 +29,6 @@ class RelatorioPolicy
             ];
         }
 
-        // Gestor: acesso apenas a suas agendas gerenciadas
         if ($user->can('relatorios.escopo-agendas') || $user->can('secao.dashboard-gestor') || $user->can('reservas.avaliar')) {
             /** @var array<int> $agendaIds */
             $agendaIds = $user->agendas()->pluck('id')->all();
@@ -43,7 +41,6 @@ class RelatorioPolicy
             ];
         }
 
-        // Fallback: acesso negado
         return [];
     }
 }

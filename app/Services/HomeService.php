@@ -83,10 +83,10 @@ class HomeService
         $espacosFavoritos = $user->favoritos()->with('andar.modulo')->get();
 
         $statusDasReservas = [
-            'em_analise' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::EM_ANALISE->value),
-            'parcialmente_deferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value),
-            'deferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::DEFERIDA->value),
-            'indeferida' => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::INDEFERIDA->value),
+            SituacaoReservaEnum::EM_ANALISE->value => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::EM_ANALISE->value),
+            SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value),
+            SituacaoReservaEnum::DEFERIDA->value => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::DEFERIDA->value),
+            SituacaoReservaEnum::INDEFERIDA->value => $this->dashboard->contarReservasDoUsuarioPorSituacao($user->id, SituacaoReservaEnum::INDEFERIDA->value),
         ];
 
         $espacosRecentes = $this->espacosRecentesDoUsuario($user);
