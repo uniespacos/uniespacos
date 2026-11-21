@@ -61,8 +61,8 @@ class ReservaListagemConsultasTest extends TestCase
 
         $reservas = $this->listar($dono)['reservas']->getCollection()->keyBy('id');
 
-        $this->assertTrue($reservas[$editavel->id]->can_update);
-        $this->assertFalse($reservas[$avaliada->id]->can_update);
+        $this->assertTrue($reservas[$editavel->id]['can_update']);
+        $this->assertFalse($reservas[$avaliada->id]['can_update']);
     }
 
     public function test_atributo_auxiliar_nao_vaza_para_o_payload(): void
@@ -72,7 +72,7 @@ class ReservaListagemConsultasTest extends TestCase
 
         $reserva = $this->listar($dono)['reservas']->getCollection()->first();
 
-        $this->assertArrayNotHasKey('possui_horario_avaliado', $reserva->toArray());
+        $this->assertArrayNotHasKey('possui_horario_avaliado', $reserva);
     }
 
     /**

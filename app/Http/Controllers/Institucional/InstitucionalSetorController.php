@@ -15,6 +15,7 @@ use App\Services\SetorService;
 use App\Services\UnidadeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +23,8 @@ use Inertia\Response;
 class InstitucionalSetorController extends Controller
 {
     use RespondeComFlash;
+
+    private const CAMPOS_INSTITUICAO = ['id', 'nome', 'sigla', 'endereco', 'created_at', 'updated_at', 'unidades'];
 
     public function __construct(
         protected SetorService $service,
@@ -43,7 +46,7 @@ class InstitucionalSetorController extends Controller
         $setores->withQueryString();
 
         return Inertia::render('Administrativo/Setores/Setores', [
-            'instituicao' => $instituicao,
+            'instituicao' => Arr::only($instituicao->toArray(), self::CAMPOS_INSTITUICAO),
             'unidades' => $this->unidadeService->getAllByInstituicao($instituicaoId)->load(['setors']),
             'setores' => $setores,
             'filters' => [

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\SituacaoReserva\ModoArquivoEnum;
 use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Http\Resources\ReservaResource;
 use App\Jobs\AvaliarReservaJob;
 use App\Jobs\ProcessarCriacaoReserva;
 use App\Jobs\UpdateReservaJob;
@@ -53,24 +54,19 @@ class ReservaService
         $reservas = $this->repoReserva->getPaginatedForUser($user->id, $filters, $perPage)
             ->withQueryString();
 
-        $reservas->getCollection()->transform(function (Reserva $reserva) use ($user) {
-            $reserva->can_update = $user->can('update', $reserva);
-            $reserva->makeHidden('possui_horario_avaliado');
-
-            return $reserva;
-        });
+        $reservas->getCollection()->transform(fn (Reserva $reserva): array => (new ReservaResource($reserva, $user->can('update', $reserva)))->resolve());
 
         $reservaToShow = null;
         $reservaIdFiltro = $filters['reserva'] ?? null;
         if (! empty($reservaIdFiltro) && filter_var($reservaIdFiltro, FILTER_VALIDATE_INT) !== false) {
-            $reservaToShow = $this->repoReserva->findWithWeekSlots((int) $reservaIdFiltro, $semana->inicio, $semana->fim);
+            $reservaDoFiltro = $this->repoReserva->findWithWeekSlots((int) $reservaIdFiltro, $semana->inicio, $semana->fim);
 
-            if ($reservaToShow) {
+            if ($reservaDoFiltro) {
                 // A reserva é resolvida por ID do filtro, sem route binding: a
                 // autorização tem de ocorrer aqui, não na borda HTTP.
-                Gate::forUser($user)->authorize('view', $reservaToShow);
+                Gate::forUser($user)->authorize('view', $reservaDoFiltro);
 
-                $reservaToShow->can_update = $user->can('update', $reservaToShow);
+                $reservaToShow = (new ReservaResource($reservaDoFiltro, $user->can('update', $reservaDoFiltro)))->resolve();
             }
         }
 
@@ -371,17 +367,24 @@ class ReservaService
 
         $filters = $this->normalizarFiltros($filters);
 
+        /** @var LengthAwarePaginator<int, Reserva> $reservas */
         $reservas = $this->repoReserva->getPaginatedForGestor($agendaIds, $filters, $perPage)
             ->withQueryString();
 
+        $reservas->getCollection()->transform(fn (Reserva $reserva): array => (new ReservaResource($reserva))->resolve());
+
         $reservaToShow = null;
         if ($filters['reserva'] ?? null) {
-            $reservaToShow = $this->repoReserva->findForGestorModal(
+            $reservaDoFiltro = $this->repoReserva->findForGestorModal(
                 (int) $filters['reserva'],
                 $agendaIds,
                 $semana->inicio,
                 $semana->fim
             );
+
+            if ($reservaDoFiltro) {
+                $reservaToShow = (new ReservaResource($reservaDoFiltro))->resolve();
+            }
         }
 
         return [

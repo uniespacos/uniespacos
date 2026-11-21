@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\UserResource;
 use App\Support\CamposPublicosNotificacao;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -91,7 +92,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user->loadMissing(['setor', 'roles.permissions', 'permissions']);
 
-        return array_merge($user->toArray(), [
+        return array_merge(UserResource::make($user)->resolve(), [
             'unread_notifications_count' => $user->unreadNotifications()->count(),
             'roles' => $user->getRoleNames(),
             'permissions' => $user->getAllPermissions()->pluck('name'),

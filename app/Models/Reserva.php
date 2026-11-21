@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property bool $can_update Set dynamically in ReservaService based on policy check.
  * @property string|null $existing_justification Set dynamically in ReservaService with first non-null justificativa.
  * @property int|null $publico_estimado
  * @property string|null $categoria
