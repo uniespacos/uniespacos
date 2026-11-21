@@ -124,14 +124,14 @@ Log::info('Atualização de perfil', [
 
 **Arquivo:** `app/Support/MensagemDeErro.php`
 
-`MensagemDeErro::paraUsuario($e)` monta o texto que vai para flash ou resposta ao usuário:
+`MensagemDeErro::paraUsuario($e)` monta o texto que vai para flash ou resposta ao usuário. A regra é uma **lista de permissão**: só `DominioException` (e suas subclasses) repassa a mensagem. Qualquer outra exceção vira a mensagem genérica e vai para o log.
 
 | Tipo de exceção | Texto devolvido | Log |
 |-----------------|-----------------|-----|
-| Exceção de domínio (regra de negócio) | A própria mensagem da exceção | Nenhum |
-| `QueryException` ou `PDOException` | Texto genérico traduzido via `__()`. A chave é `MensagemDeErro::GENERICA` ("an internal error occurred. Please try again."); em pt-BR sai "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
+| `DominioException` e subclasses (regra de negócio) | A própria mensagem da exceção | Nenhum |
+| Qualquer outra (`QueryException`, `PDOException`, `TypeError`, falha de disco, exceção de pacote) | Texto genérico traduzido via `__()`. A chave é `MensagemDeErro::GENERICA` ("an internal error occurred. Please try again."); em pt-BR sai "ocorreu uma falha interna. Tente novamente." | `Log::error` com `exception` |
 
-`QueryException` e `PDOException` carregam SQL e valores. Por isso o detalhe vai só para o log.
+Antes da lista de permissão, `paraUsuario` repassava `getMessage()` de qualquer exceção. Assim, um `TypeError` ou um caminho de arquivo podia aparecer no flash do usuário. `QueryException` e `PDOException` carregam SQL e valores, por isso o detalhe vai só para o log.
 
 O parâmetro `registrar` (padrão `true`) evita log duplicado. Passe `registrar: false` quando o chamador já registrou a exceção:
 
@@ -144,6 +144,53 @@ return back()->with('error', __('Error creating unit: :message', ['message' => M
 O prefixo é uma chave `__()` em inglês, e o detalhe entra como `:message`. Ver a seção de mensagens traduzíveis abaixo.
 
 **Regra:** nunca concatenar `$e->getMessage()` direto em flash ou resposta. Use sempre `MensagemDeErro::paraUsuario()`.
+
+### Hierarquia `DominioException`
+
+Erro de regra de negócio é uma exceção de domínio. Ela estende `\DomainException` e fica no namespace `App\Exceptions`. Só ela é "segura para o usuário" e só ela escapa dos jobs sem retry.
+
+| Classe | Quando é lançada |
+|--------|------------------|
+| `ConflitoDeHorarioException` | Um horário solicitado colide com um horário deferido, sob trava (criação ou edição). O service passa uma mensagem técnica, que o job não repassa ao usuário |
+| `ReservaArquivadaException` | Avaliação de reserva arquivada (situação `inativa`). Não é checada na edição |
+| `EscopoInvalidoException` | `edit_scope` ou `evaluation_scope` fora do enum, ou `edited_week_date` inválida |
+| `AutorizacaoDeJobException` | Horário avaliado fora das agendas do gestor, detectado no job |
+| `AndarComEspacosException` | Remoção de um andar que ainda tem espaços, na edição do módulo (`ModuloService`) |
+| `EmailJaVerificadoException` | Reenvio de verificação para e-mail já verificado (`UserService`) |
+| `HorariosAusentesException` | Criação de reserva sem horários. O FormRequest (`min:1`) barra o caso antes do job |
+| `ContaNaoPodeSerAnonimizadaException` | Exclusão de conta de quem ainda gerencia uma agenda (`ExclusaoDeContaService`). A mensagem pede para tirar a gestão antes |
+
+As mensagens da maioria dessas exceções são traduzidas pelo método protegido `DominioException::traduzir()`, que usa `__()`. Quando a exceção chega ao flash, o texto é o da tradução. `HorariosAusentesException` ainda usa texto fixo, e na prática o FormRequest impede o caso.
+
+### RespondeComFlash
+
+Os controllers institucionais usam o trait `App\Http\Controllers\Concerns\RespondeComFlash`, com `executar($acao, $mensagemSucesso, $mensagemErro, ...)`. A falha sempre volta pelo flash `error`, que o layout mostra como toast. Antes, `Setor` e `Módulo` usavam `withErrors` para o `destroy`, e a falha ficava invisível. `$mensagemErro` é a chave com `:message`, preenchida por `MensagemDeErro::paraUsuario()`.
+
+Hoje o trait é usado por Instituição, Módulo, Setor, Unidade e Usuário. `InstitucionalEspacoController`, `ReservaController` e `GestorReservaController` ainda têm `try/catch` próprio, com mensagens fixas em alguns casos. `ReservaController::store` devolve a falha com `withErrors(['error' => ...])`, e não pelo flash. `InstitucionalUsuarioController` ainda tem `try/catch` em `updatePermissions` e `destroy`, apesar do trait. Essa diferença é pendência parcial (backlog, DEB-R9).
+
+### Domínio e transitório
+
+Um job separa dois tipos de falha, e cada um tem destino diferente:
+
+```mermaid
+flowchart TD
+    J["Job.handle() chama o service"] --> R{"Que tipo de exceção?"}
+    R -->|"DominioException<br/>(regra de negócio)"| F["Log::warning<br/>fail($e): sem retry"]
+    R -->|"Qualquer outra<br/>(banco, timeout, rede, bug)"| T["Log::error<br/>relança: worker reagenda<br/>até tries e backoff"]
+    F --> FL["failed(): notifica o solicitante<br/>ou grava o estado final da reserva"]
+    T --> E{"Tentativas<br/>esgotadas?"}
+    E -->|"não"| J
+    E -->|"sim"| FL
+```
+
+| Tipo | Retry | Log | Quem trata |
+|------|-------|-----|------------|
+| Domínio | Não. `fail()` marca o job como falho na primeira tentativa | `Log::warning` (sem stack trace, que não ajuda na regra) | O job, que chama `fail()` |
+| Transitório | Sim, até `$tries`, com `backoff()` quando o job define | `Log::error` com stack trace | O worker. `failed()` roda só depois da última tentativa |
+
+Os jobs de reserva usam essa regra com `tries` diferente: `ProcessarCriacaoReserva` tem `tries = 1`, porque a criação não é idempotente (uma nova tentativa poderia gravar a reserva duas vezes). `UpdateReservaJob`, `AvaliarReservaJob` e `ValidateReservationConflictsJob` têm `tries = 3`. A tabela completa está em [fluxo de reservas, seção 4.5](../regras-de-negocio/fluxo-de-reservas.md#retry-e-falhas-dos-jobs).
+
+Efeitos pós-commit (notificação, despacho e publicação em tempo real) têm regra própria: a falha vira `Log::warning` e não marca o job como falho. O commit já aconteceu, então repetir o job não faria sentido.
 
 ## Logging Estruturado
 
@@ -199,43 +246,52 @@ A flag é aplicada em `AppServiceProvider::boot()`. Fora de `local` e `developme
 **Arquivo:** `app/Jobs/ProcessarCriacaoReserva.php`
 
 ```php
-public function handle(ExpansaoHorariosService $expansao): void
+public function handle(CriacaoDeReservaService $criacao, ReservaBroadcaster $broadcaster): void
 {
     Log::info('ProcessarCriacaoReserva started', [
         'solicitante_id' => $this->solicitante->id,
     ]);
 
     try {
-        // ... lógica do job ...
-
-        Log::info('Reservation created', [
-            'reserva_id' => $reserva->id,
-            'situacao' => $reserva->situacao,
-            'horarios_count' => count($linhas),
+        [$reserva, $gestores] = $criacao->criar($this->dadosRequisicao, $this->solicitante);
+    } catch (DominioException $e) {
+        Log::warning('ProcessarCriacaoReserva failed', [
+            'solicitante_id' => $this->solicitante->id,
+            'exception' => $e,
         ]);
 
-        // ✅ IMPORTANTE: notify() em try-catch
-        // Se a notificação falhar, a exceção é capturada e logada
-        // — o job continua e não falha por erro do provedor de email
-        foreach ($gestoresUnicos as $gestor) {
-            if ($gestor->id !== $this->solicitante->id) {
-                try {
-                    $gestor->notify(new NewReservationNotification($reserva));
-                } catch (Exception $e) {
-                    Log::warning('Falha ao notificar gestor sobre nova reserva', [
-                        'gestor_id' => $gestor->id,
-                        'reserva_id' => $reserva->id,
-                        'exception' => $e,
-                    ]);
-                }
-            }
-        }
-    } catch (Exception $e) {
+        $this->fail($e);
+
+        return;
+    } catch (Throwable $e) {
         Log::error('ProcessarCriacaoReserva failed', [
             'solicitante_id' => $this->solicitante->id,
             'exception' => $e,
         ]);
-        $this->fail($e);
+
+        throw $e;
+    }
+
+    // Efeitos pós-commit: cada um em try-catch. A notificação é a que mais falha por provedor de e-mail.
+    $this->notificarGestores($reserva, $gestores);
+}
+
+private function notificarGestores(Reserva $reserva, Collection $gestores): void
+{
+    foreach ($gestores as $gestor) {
+        if ($gestor->id === $this->solicitante->id) {
+            continue;
+        }
+
+        try {
+            $gestor->notify(new NewReservationNotification($reserva));
+        } catch (Exception $e) {
+            Log::warning('Falha ao notificar gestor sobre nova reserva', [
+                'gestor_id' => $gestor->id,
+                'reserva_id' => $reserva->id,
+                'exception' => $e,
+            ]);
+        }
     }
 }
 ```
@@ -281,30 +337,25 @@ try {
 - Não há `user_id` no contexto: o publicador roda dentro de jobs e services, e `reserva_id` já identifica o caso.
 - Falha do broadcast não reverte a reserva nem a notificação, e não impede a invalidação do cache de relatórios (despachada antes, ver [tempo-real.md](./tempo-real.md#ponto-único-de-publicação-reservabroadcaster)).
 
-#### Novo Modo de Falha — Conflito Detectado Sob Lock
+#### Conflito Detectado Sob Trava
 
-Além de falhas de notificação, o `ProcessarCriacaoReserva` pode falhar por um conflito detectado **durante a transação**, entre a montagem das linhas de horário e a sua inserção no banco.
+A criação pode falhar por um conflito detectado **dentro da transação**, depois da montagem das linhas e antes da inserção dos horários.
 
-**Onde ocorre:** Dentro da transação `DB::transaction()`, após `$expansao->montar()` ter gerado as linhas de horário e antes de `Horario::insert($linhas)`.
+**Onde ocorre:** `CriacaoDeReservaService::criar()`, dentro de `DB::transaction()`, depois de `TravaDeHorarios::adquirir()` e de `conflitosDeferidos()`, e antes de `inserirHorarios()`.
 
-**O que dispara:** Um loop de revalidação percorre cada linha de horário a inserir e verifica se existe um horário `deferida` (aprovado) na mesma `agenda_id`, mesma `data`, cujo intervalo de horário se sobrepõe ao novo (`horario_inicio < novo.horario_fim AND horario_fim > novo.horario_inicio`). Se encontrar, lança:
-
-```php
-throw new Exception("Conflito detectado sob lock para agenda {agenda_id} em {data}. Outra reserva pode ter sido criada simultaneamente.");
-```
+**O que dispara:** `ConflitoDeHorarioException`, uma `DominioException`. A mensagem técnica do service é `Conflito detectado sob lock para agenda {agenda_id} em {data}...`.
 
 **Como se propaga:**
 
-1. A `Exception` é lançada dentro de `DB::transaction()`.
-2. Laravel **desfaz automaticamente** a transação (rollback), incluindo o `Reserva::create()` que foi feito antes da montagem.
-3. A exceção é capturada pelo `catch (Exception $e)` que envolve todo o `handle()`.
-4. `Log::error('ProcessarCriacaoReserva failed', [...])` registra o evento com a exceção completa.
-5. `$this->fail($e)` é chamado explicitamente dentro do próprio `catch` — isso é diferente de deixar a exceção se propagar naturalmente para fora de `handle()`. Quando o job chama `fail()` sobre si mesmo, o Laravel marca o job como falho, remove-o da fila e invoca o método `failed()` **imediatamente**, na primeira tentativa, sem aguardar esgotar os `$tries = 3` (esse contador de retries só se aplica quando a exceção escapa de `handle()` sem ser capturada; aqui ela é capturada e a falha é forçada de propósito).
-6. O método `failed()` do job é invocado de imediato, que dispara `ReservationFailedNotification` ao solicitante.
+1. O service lança a exceção dentro de `DB::transaction()`. O Laravel desfaz a transação, inclusive o `INSERT` da própria reserva. Nada é gravado.
+2. `ProcessarCriacaoReserva::handle()` captura `DominioException` antes do `catch (Throwable)`.
+3. O job registra `Log::warning` (não `error`: é regra de negócio, não bug) e chama `$this->fail($e)`.
+4. Como `fail()` marca o job como falho na hora, o retry não acontece. Com `tries = 1` isso já seria verdade, mas o `fail()` explícito deixa a intenção clara.
+5. O método `failed()` roda e dispara `ReservationFailedNotification` ao solicitante.
 
-**Reutilização do mecanismo de notificação:** Não há nenhuma notificação nova. O canal existente `ReservationFailedNotification`, já disparado pelo `failed()` do job para outros cenários de falha (exceção durante criação ou durante notificação aos gestores), cobre também esse novo modo de falha de conflito. O solicitante recebe uma notificação única avisando que a reserva não pôde ser processada, sem necessidade de distinguir o motivo específico.
+**Erro transitório:** se a exceção for de infraestrutura (por exemplo, `QueryException` no meio da transação), o `catch (Throwable)` registra `Log::error` e relança. Com `tries = 1`, o job vai para `failed()` na mesma tentativa.
 
-**Nota sobre testes:** quando o job é instanciado diretamente e `handle()` é chamado sem passar pela fila de verdade (padrão usado em `tests/Unit/Jobs/*` e `tests/Feature/ReservaConcorrenciaTest.php`, via `app()->call([$job, 'handle'])`), a propriedade interna do job que representa o "job de fila real" nunca é preenchida. Nesse cenário, `$this->fail($e)` é um no-op silencioso (`InteractsWithQueue::fail()` só age se esse job real existir) — o `failed()` não é chamado, e a exceção não escapa de `handle()`. Os testes desse cenário validam o efeito observável (rollback: nenhum horário conflitante persistido) em vez de tentar capturar a exceção.
+**Teste:** o job é instanciado com `app()->call([$job, 'handle'])` em alguns testes. Nesse caso não há job de fila real, e `$this->fail($e)` não tem efeito (`InteractsWithQueue::fail()` só age com o job da fila). Os testes desse cenário validam o efeito observável (rollback: nenhum horário conflitante persistido) e não a chamada de `failed()`.
 
 #### Em Controller — Tratamento de Falha ao Despachar
 
@@ -449,7 +500,7 @@ class StoreReservaRequest extends FormRequest
 
 ### Layer 3: Jobs
 
-Jobs implementam `ShouldQueue` e possuem retry logic. O handler de exceção envolve o job — se falhar, é retentado até `$tries`.
+Jobs implementam `ShouldQueue` e são cascas sobre um service de domínio. O job só deserializa, chama o service, separa o erro de domínio do transitório e trata a falha. O tipo de erro decide se há retry (ver [Domínio e transitório](#domínio-e-transitório)).
 
 **Padrão:**
 
@@ -459,15 +510,19 @@ class MeuJob implements ShouldQueue
     public int $tries = 3;
     public int $timeout = 360;
 
-    public function handle(): void
+    public function handle(MeuService $servico): void
     {
         try {
-            // Lógica do job
-            $this->notificar();
-        } catch (Exception $e) {
-            Log::error('MeuJob failed', ['exception' => $e]);
-            $this->fail($e);  // Marca job como falho, dispara failed()
+            $servico->executar($this->dados);
+        } catch (DominioException $e) {
+            Log::warning('MeuJob rejeitado pela regra de negócio', ['exception' => $e]);
+            $this->fail($e);  // Sem retry; dispara failed()
+
+            return;
         }
+
+        // Erro transitório não é capturado aqui: propaga e o worker reagenda até $tries.
+        $this->notificar();
     }
 
     private function notificar(): void
@@ -482,8 +537,8 @@ class MeuJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        // Chamado quando $tries é excedido
-        Log::error('MeuJob exhausted retries', ['exception' => $exception]);
+        // Chamado quando a exceção é de domínio ou quando $tries é excedido
+        Log::error('MeuJob failed', ['exception' => $exception]);
     }
 }
 ```
@@ -492,6 +547,8 @@ class MeuJob implements ShouldQueue
 
 1. **`notify()` sempre em `try-catch`:** Falha do provedor de email não derruba o job
 2. **Não relançar exception em notify():** `Log::warning()` e continuar
+3. **Erro de domínio não é retentado:** `DominioException` vai para `fail()`. Erro transitório é relançado, e o retry acontece
+4. **Não marcar falha depois do commit:** a falha de notificação, despacho ou publicação vira aviso, e o job segue como sucesso
 
 ### Layer 4: Políticas de Autorização
 
@@ -669,7 +726,8 @@ Valor persistido que o usuário vê (ex.: nome de conta anonimizada) é gravado 
 | Tipo | Exemplos | Logging | Stack Trace |
 |------|----------|---------|------------|
 | **Esperados** | Validação falha, usuário não autorizado, taxa excedida | `Log::warning()` ou silencioso | Não |
-| **Inesperados** | PDOException, RuntimeException, falha de conexão | `Log::error()` | Sim |
+| **De domínio** | `DominioException`: conflito de horário, reserva arquivada, escopo inválido | `Log::warning()`, sem retry | Não |
+| **Inesperados** | PDOException, RuntimeException, falha de conexão | `Log::error()`, com retry quando há job | Sim |
 
 **Inesperados recebem stack trace completo** no log porque ajudam a identificar bugs.
 
@@ -811,6 +869,9 @@ Log::info('Ação crítica realizada', [
 
 ## Referências
 
+- **DominioException e subclasses:** `app/Exceptions/DominioException.php`
+- **MensagemDeErro:** `app/Support/MensagemDeErro.php`
+- **RespondeComFlash:** `app/Http/Controllers/Concerns/RespondeComFlash.php`
 - **ErrorEnvelope:** `app/Exceptions/ErrorEnvelope.php`
 - **ExceptionContext:** `app/Exceptions/ExceptionContext.php`
 - **ErrorCode enum:** `app/Enums/ErrorCode.php`

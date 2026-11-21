@@ -162,7 +162,7 @@ Cada gestor recebe uma notificação `ReservationCanceledNotification` com:
 
 ## Os Modos de Filtro (ModoArquivoEnum)
 
-O enum `ModoArquivoEnum` define como as listas são filtradas:
+O enum `ModoArquivoEnum` (`app/Enums/Reserva/ModoArquivoEnum.php`) define como as listas são filtradas:
 
 ### ATIVAS (padrão)
 
@@ -332,7 +332,7 @@ Gestor avalia:
   - 2026-09-12 → INDEFERIDA (conflito)
   - 2026-09-19 → INDEFERIDA (conflito)
 
-UpdateReservaJob (na edição de um horário) atualiza data_inicial com a menor data 
+A edição de um horário (`EdicaoDeReservaService`, chamado pelo `UpdateReservaJob`) atualiza data_inicial com a menor data 
 do horário sendo editado aquela semana → data_inicial pode virar 2026-09-01 (no passado!)
 
 Se abrirmos o calendário com data_inicial = 2026-09-01, nenhum horário aparecerá.

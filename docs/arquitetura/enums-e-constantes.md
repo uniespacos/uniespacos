@@ -8,6 +8,8 @@ Este documento descreve todos os enums e constantes de domínio do UniEspaços, 
 - [ValidationStatusEnum — Status da Validação de Conflitos](#validationstatusenum--status-da-validação-de-conflitos)
 - [ModoArquivoEnum — Filtro de Ativas/Arquivadas](#modoarquivoenum--filtro-de-ativasarquivadas)
 - [OrdenacaoReservaEnum — Critérios de Ordenação](#ordenacaoreservaenum--critérios-de-ordenação)
+- [EscopoEdicaoEnum — Escopo de Edição e Avaliação](#escopoedicaoenum--escopo-de-edição-e-avaliação)
+- [StatusAvaliacaoHorarioEnum — Status de Avaliação de Horário](#statusavaliacaohorarioenum--status-de-avaliação-de-horário)
 - [AgendaEnum — Turnos de Gestão](#agendaenum--turnos-de-gestão)
 - [CampusEnum — Campi da Universidade](#campusenum--campi-da-universidade)
 - [DiasSemanaEnum — Dias da Semana](#diassemanaenum--dias-da-semana)
@@ -60,7 +62,7 @@ SituacaoReservaEnum::labelDe('desconhecido')// Retorna: 'desconhecido' (fallback
 
 ### Regra de Agregação (Cascata)
 
-A situação de uma `Reserva` é **calculada automaticamente** dos seus `Horario.situacao` via `AvaliarReservaJob::updateReservaOverallStatus()`:
+A situação de uma `Reserva` é **calculada automaticamente** dos seus `Horario.situacao` via `AvaliacaoDeReservaService::atualizarSituacaoGeral()`:
 
 ```
 Se a reserva está inativa:
@@ -134,7 +136,7 @@ O enum **não é referenciado** no código. A coluna é escrita e comparada com 
 
 ## ModoArquivoEnum — Filtro de Ativas/Arquivadas
 
-**Localização:** `app/Enums/SituacaoReserva/ModoArquivoEnum.php`
+**Localização:** `app/Enums/Reserva/ModoArquivoEnum.php` (movido de `app/Enums/SituacaoReserva/`; os enums de reserva que não são de situação ficam em `app/Enums/Reserva/`)
 
 **Tipo de dado:** string (enum)
 
@@ -180,7 +182,7 @@ Dois eixos independentes, sem conflito.
 
 ## OrdenacaoReservaEnum — Critérios de Ordenação
 
-**Localização:** `app/Enums/SituacaoReserva/OrdenacaoReservaEnum.php`
+**Localização:** `app/Enums/Reserva/OrdenacaoReservaEnum.php` (movido de `app/Enums/SituacaoReserva/`)
 
 **Tipo de dado:** string (enum)
 
@@ -221,6 +223,47 @@ Dentro de cada grupo, ordena por `created_at DESC`.
 
 ---
 
+## EscopoEdicaoEnum — Escopo de Edição e Avaliação
+
+**Localização:** `app/Enums/Reserva/EscopoEdicaoEnum.php`
+
+**Tipo de dado:** string (enum)
+
+Define se uma edição ou avaliação alcança só a semana visível (`single`) ou toda a série (`recurring`). Substitui as strings `'single'` e `'recurring'` que estavam espalhadas pelos jobs e services.
+
+| Caso | Valor | Uso |
+|------|-------|-----|
+| `SINGLE` | `single` | Só a semana de `edited_week_date` (edição) ou os horários da semana visível (avaliação) |
+| `RECURRING` | `recurring` | Toda a série da reserva |
+
+**Onde é usado:**
+- `UpdateReservaRequest::edit_scope` e `AvaliarReservaRequest::evaluation_scope`, com `Rule::enum(EscopoEdicaoEnum::class)`
+- `EdicaoDeReservaService` e `AvaliacaoDeReservaService`, com `EscopoEdicaoEnum::tryFrom(...) ?? throw new EscopoInvalidoException`
+
+**Contrato TypeScript:** `EscopoRecorrencia` em `resources/js/contracts/recorrencia.contract.ts`. O teste `tests/Unit/EscopoEdicaoEnumContratoTest.php` falha se os casos PHP e TS divergirem.
+
+---
+
+## StatusAvaliacaoHorarioEnum — Status de Avaliação de Horário
+
+**Localização:** `app/Enums/Reserva/StatusAvaliacaoHorarioEnum.php`
+
+**Tipo de dado:** string (enum)
+
+Status de um horário dentro da requisição de avaliação, ainda antes de ser decidido. Hoje tem um único caso.
+
+| Caso | Valor | Significado |
+|------|-------|-------------|
+| `SOLICITADO` | `solicitado` | Slot do calendário ainda não decidido. A avaliação grava esse slot como `em_analise` |
+
+**Onde é usado:**
+- `AvaliarReservaRequest`, em `horarios_avaliados.*.status`, junto com os valores de `SituacaoReservaEnum::valoresDeAvaliacao()`
+- `AvaliacaoDeReservaService`, que converte `solicitado` em `em_analise` ao gravar
+
+**Contrato TypeScript:** `StatusAvaliacaoHorario` em `resources/js/contracts/status-avaliacao-horario.contract.ts`, com `SOLICITADO: 'solicitado'`. O teste `ContractsSyncTest::test_status_avaliacao_horario_enum_esta_estritamente_sincronizado` garante a paridade. O barrel `resources/js/contracts/index.ts` exporta o arquivo.
+
+---
+
 ## AgendaEnum — Turnos de Gestão
 
 **Localização:** `app/Enums/Agenda/AgendaEnum.php`
@@ -248,7 +291,12 @@ Cada `Agenda` representa um turno × espaço × gestor. Um espaço pode ter múl
 // - Auditório A + Noite (gestor Pedro)
 ```
 
-**Nota:** O enum é semântico; não há validação automática de que `Horario.horario_inicio` respeite a faixa do turno. É responsabilidade da lógica de negócio.
+**Onde o turno é tratado como enum** (antes eram literais `'manha'`, `'tarde'` e `'noite'`):
+- Validação: `Rule::enum(AgendaEnum::class)` em `AlterarGestoresEspacoRequest` (`gestores.turno.*`); `Rule::in(array_column(AgendaEnum::cases(), 'value'))` em `ListarEspacosRequest`; regra `in:` montada a partir de `AgendaEnum::cases()` nos requests de relatório
+- `EspacoService`: a criação das três agendas e a troca de gestor por turno usam `AgendaEnum`
+- Notificações de gestor: o rótulo do turno ("Manhã", "Tarde", "Noite") é traduzido a partir do enum
+
+**Nota:** O enum é semântico; não há validação automática de que `Horario.horario_inicio` respeite a faixa do turno. É responsabilidade da lógica de negócio. A grade canônica de horários ainda vive no front (`resources/js/constants/turnos.ts`), tratado em [backlog](../backlog.md) (DEB-A1).
 
 ---
 
@@ -458,7 +506,7 @@ Transições de `Reserva.situacao` com o gatilho de cada uma. O diagrama de esta
 | *(criação)* | `em_analise` | Reserva criada | `ProcessarCriacaoReserva` | Estado inicial padrão. |
 | *(criação)* | `deferida` | Reserva criada com um único gestor (que é o solicitante) | `ProcessarCriacaoReserva` | Auto-aprovação: solicitante é gestor de todos os espaços. |
 | *(criação)* | `parcialmente_deferida` | Reserva criada com múltiplos gestores, um é o solicitante | `ProcessarCriacaoReserva` | Auto-aprovação parcial: solicitante é gestor de alguns espaços. |
-| `em_analise` | `deferida` | Todos os horários avaliados como `deferida` | `AvaliarReservaJob` | Agregação: `updateReservaOverallStatus()` detecta todos deferidos. |
+| `em_analise` | `deferida` | Todos os horários avaliados como `deferida` | `AvaliarReservaJob` (via `AvaliacaoDeReservaService`) | Agregação: `atualizarSituacaoGeral()` detecta todos deferidos. |
 | `em_analise` | `indeferida` | Todos os horários avaliados como `indeferida` | `AvaliarReservaJob` | Agregação: nenhum horário foi aprovado. |
 | `em_analise` | `parcialmente_deferida` | Mix de horários `deferida` + `indeferida` | `AvaliarReservaJob` | Agregação: alguns aprovados, alguns rejeitados. |
 | `deferida` | `parcialmente_deferida` | Gestor rejeita alguns horários previamente aprovados | `AvaliarReservaJob` | Reavaliar aprovados pode gerar parcial. |
@@ -480,9 +528,9 @@ Transições de `Reserva.situacao` com o gatilho de cada uma. O diagrama de esta
 
 2. **`em_analise` é interruptível.** Horários neste estado não bloqueiam novas submissões ou criação de novos horários. Pode-se reavaliar (mudar de status) enquanto está em análise.
 
-3. **Agregação é automática.** `Reserva.situacao` nunca é setado diretamente; é calculado por `updateReservaOverallStatus()` após cada avaliação de horários.
+3. **Agregação é automática.** `Reserva.situacao` nunca é setado diretamente; é calculado por `atualizarSituacaoGeral()` após cada avaliação de horários.
 
-4. **Conflitos convertem em `indeferida`.** Se um horário tiver conflito com outro já `deferida`, é automaticamente marcado como `indeferida` (via `AvaliarReservaJob::handle()`), mesmo que o gestor tenha tentado aprovar.
+4. **Conflitos convertem em `indeferida`.** Se um horário tiver conflito com outro já `deferida`, é automaticamente marcado como `indeferida` (via `AvaliacaoDeReservaService::avaliar()`, chamado pelo `AvaliarReservaJob`), mesmo que o gestor tenha tentado aprovar.
 
 5. **Replicação em escopo "all".** Quando o escopo de avaliação é "todos" (avaliar toda a recorrência), o status é replicado para todos os horários do mesmo dia da semana e faixa horária, exceto conflitantes.
 

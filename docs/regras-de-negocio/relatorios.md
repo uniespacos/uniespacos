@@ -60,6 +60,16 @@ O conjunto de agendas e a instituição visíveis ao usuário são decididos pel
 
 Em [`RelatorioService`](../../app/Services/Relatorio/RelatorioService.php), o escopo sobrescreve os filtros da requisição antes de agregar: no perfil institucional, a instituição é fixada; no perfil gestor, `agendaIds` é fixado e os filtros de unidade, módulo, andar e setor são descartados. Usuário sem nenhuma permissão de escopo recebe 403.
 
+**Escopo vazio ou nulo é negado, nunca tratado como "sem filtro":**
+
+| Caso | Resultado |
+|------|-----------|
+| Institucional sem instituição (usuário sem setor, unidade ou instituição) | `403`. Antes, a ausência de instituição era lida como ausência de filtro e mostrava dados de todas as instituições |
+| Gestor sem agendas | Relatório e opções de inventário vazios, porque `agendaIds: []` não casa nenhum registro. Antes, as opções de inventário mostravam os espaços de todos |
+| Permissão de relatório ausente | `403` |
+
+A regra vale para a geração (`gerar`, por `agregarComCache` e `agregar`, que chamam `aplicarEscopo`) e para as opções de filtro (`opcoesInventario`). Os dois caminhos passam pelo mesmo `obterEscopo`.
+
 ## 3. Cache
 
 Fluxo de `agregarComCache` (usado por `gerar` e `dados`):

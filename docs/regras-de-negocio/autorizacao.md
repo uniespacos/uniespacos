@@ -567,6 +567,16 @@ A policy testa primeiro o escopo institucional. Um usuário que tenha as duas pe
 
 A remoção desse fallback está planejada e registrada em [backlog](../backlog.md).
 
+**Escopo vazio ou nulo é negado.** Não existe "sem filtro" como padrão de falha:
+
+| Caso | Escopo | Resultado |
+|------|--------|-----------|
+| Institucional sem instituição (usuário sem setor, unidade ou instituição) | Vazio | `403`. `RelatorioService::obterEscopo` lança `AuthorizationException`, e `instituicaoIdDoEscopo` recusa `instituicaoId` nulo ou não positivo |
+| Gestor sem agendas | `tipo: 'gestor'` com `agendaIds: []` | Relatórios e opções de inventário ficam vazios. `listarComLocalizacaoParaOpcoes` devolve coleção vazia para lista vazia, e as consultas com `whereIn` vazio não casam nenhum registro |
+| Usuário sem permissão de relatório | Vazio | `403` |
+
+Antes dessa regra, o caso institucional sem instituição tratava a ausência de instituição como ausência de filtro e via dados de todas as instituições. O gestor sem agendas recebia as opções de inventário de todos os espaços.
+
 Cache de resultados e tipos de relatório: ver [relatórios](./relatorios.md).
 
 ---
@@ -696,6 +706,22 @@ Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAno
 
 ---
 
+## Autorização nos FormRequests e no `edit()`
+
+A regra de autorização de cada ação tem uma única fonte: a Policy do recurso, ou a permissão Spatie quando a ação é de criação ou de listagem sem recurso.
+
+| Classe | `authorize()` | Fonte de verdade |
+|--------|---------------|------------------|
+| `StoreEspacoRequest`, `StoreInstituicaoRequest`, `StoreSetorRequest`, `StoreUnidadeRequest`, `StoreModuloRequest` | `hasPermissionTo('<recurso>.criar')` | Permissão Spatie |
+| `UpdateEspacoRequest`, `UpdateInstituicaoRequest`, `UpdateSetorRequest`, `UpdateUnidadeRequest`, `UpdateModuloRequest` | `can('update', <recurso da rota>)` | Policy `update` |
+| `UpdateRoleRequest` | `can('update', <role da rota>)` | Policy `update` |
+
+Os `UpdateXRequest` continuam estendendo o `StoreXRequest` para herdar as regras de validação, mas sobrescrevem `authorize()` e não chamam mais o `authorize()` do pai. Antes, a atualização chamava o pai e exigia a permissão de criar, e um papel com `*.atualizar` e sem `*.criar` levava `403`. O `UpdateModuloRequest` passa pela `ModuloPolicy::update`, que confere a permissão `modulos.atualizar`.
+
+Os métodos `edit()` de Espaço, Instituição, Módulo, Unidade e Setor também chamam `authorize('update', ...)`. Assim, um usuário sem permissão de atualizar não consegue abrir a tela de edição pela URL.
+
+`UpdateReservaRequest::authorize()` devolve `true`, e a permissão fica no controller (`$this->authorize('update', $reserva)`), que é a Policy de reserva.
+
 ## Mapeamento de Routes → Policies
 
 | Rota | Método HTTP | Controller | Policy | Requer Permissão | Nota |
@@ -712,6 +738,8 @@ Contas ativas seguem as mesmas regras de antes. Testes: `InstitucionalUsuarioAno
 ---
 
 ## Histórico de Mudanças
+
+**2026-11-21:** Atualização dos FormRequests de edição para a Policy `update` (sem a exigência de criar), `authorize()` no `edit()` de Espaço, Instituição, Módulo, Unidade e Setor, escopo de relatório negado quando vazio ou nulo (institucional sem instituição, `403`). Ver as seções [Autorização nos FormRequests](#autorização-nos-formrequests-e-no-edit) e [Escopo dos relatórios](#escopo-dos-relatórios).
 
 **2026-08-23:** Revogada a permissão `'reservas.atualizar'` do role `'institucional'` (admin). Antes, admin podia editar qualquer reserva indevidamente, contrariando a separação de papéis da arquitetura: admin é gestão institucional geral (usuários, espaços, instituições etc.), a gestão de reservas (editar/avaliar) é exclusiva do gestor de agenda. Agora admin edita apenas sua própria reserva, se estiver `em_analise` e nenhum horário foi avaliado — mesma regra de um usuário comum. Admin mantém `'reservas.visualizar'` (monitoramento). A permissão `'reservas.deletar'` foi revogada no mesmo dia (ver abaixo). Ver migration `2026_08_23_184530_revoke_reservas_atualizar_from_institucional.php`.
 

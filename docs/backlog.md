@@ -2,7 +2,7 @@
 
 > **Fonte única do que falta fazer.** Consolida os planos e auditorias de agosto a outubro de 2026, conferidos contra o código em 04/11/2026.
 > **Base:** `main`, `develop` e produção na v1.7.0 (20/11/2026; `develop` pela sincronização depois do release) · staging na `1.5.0-rc.125` (mesmo código da 1.7.0).
-> **Atualizado em:** 2026-11-20.
+> **Atualizado em:** 2026-11-21.
 
 ## Como ler
 
@@ -40,7 +40,7 @@ Decidido pelo responsável em 04/11/2026: o código de cada onda sai numa PR ún
 - **1.6.0** (em produção desde 05/11/2026): Onda 2, parte 1. #505, #507 e #509 (T-19, T-19b, T-20, T-21 e T-26 (a, b, d, e)).
 - **1.6.1** (em produção desde 14/11/2026; Onda 3, parte 1; branch `feat/onda-3-estabilidade`, #518): S26 e S14. É patch, não minor: a parte só tem `fix`. Decidido pelo responsável em 06/11/2026: fecha antes da Onda 2 parte 2, com o número que o release-please gera, sem forçar a versão.
 - **1.7.0 (em produção desde 20/11/2026)**: Onda 2, parte 2 (#525, #527, #529, #531, #534, #538, #540, #542, #544–#549). T-31, T-31c, T-35, T-41, T-19c/d/e/g/h/i, T-38, T-46, T-29 (parte a + T-29b), modernização/acessibilidade de frontend, performance e correções do fluxo de reservas. Ficam para depois da 1.7.0: T-29c, T-19f e T-35b.
-- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S17, S33, S34/S35, S14b, S14c e S14d. Sai como patch se tiver só `fix`.
+- **Onda 3, parte 2 (mesma branch de integração, depois da 1.6.1)**: S42, S34/S35, S14b, S14c e S14d. Sai como patch se tiver só `fix`. S17 e S33 saíram desta lista em 21/11/2026 (concluídas, ver Entregas recentes).
 - **Depois:** Ondas 4, 5, 6 e 7, em ordem, uma minor por onda. Os itens que dependem de decisão institucional entram na minor da onda quando a decisão sair.
 - **Aviso:** o release-please só gera versão com `feat` ou `fix`. A minor só sai se a onda tiver `feat`; uma onda só com `fix` gera patch.
 - **Ordem:** a Onda 2 (parte 2) e a Onda 3 andam em paralelo. A Onda 3 parte 1 fechou primeiro, como 1.6.1 (14/11/2026); a Onda 2 parte 2 saiu como 1.7.0 (20/11/2026), e a `develop` volta a receber PR de código depois da sincronização `main` → `develop` (esta PR). Regra geral: enquanto uma versão estiver em staging aguardando produção, nenhuma PR de código entra na `develop` antes da PR `develop` → `main`.
@@ -118,17 +118,14 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **T-29c** · Tempo de resposta neutro na recuperação de senha — `P3` · médio · segurança
   No "esqueci a senha" e na redefinição, o tempo de resposta ainda varia conforme a conta existe, por causa do broker de senhas do Laravel. Corrigir depende de estender o broker. Resíduo da T-29 (parte a e T-29b entraram em produção na `1.7.0` via #525).
   **Pronto quando:** a medição de tempo entre conta existente e inexistente fica dentro de uma faixa definida, com teste ou roteiro registrado.
+- [ ] **S83** · E-mail do gestor da agenda visível ao solicitante na tela da reserva — `P3` · pequeno · lgpd
+  Comportamento deliberado hoje: a consulta da semana da reserva carrega o e-mail do gestor da agenda para o solicitante. É dado pessoal exposto a quem não precisa dele. Depende de decisão de produto e LGPD, junto com a F-05 e a T-43. **Pronto quando:** a decisão está registrada; se restringir, o payload e um teste de privacidade cobrem o caso. Achado em 21/11/2026.
 - [ ] **T-47, T-48** · Revisões periódicas e métricas de prestação de contas — `P3` · tarefa humana e recorrente · dependem da T-15, da T-10 e da T-16.
 
 ## Onda 3 — Estabilidade e segurança da v1 (`P1`)
 
 - [ ] **S42** · Revisar a configuração de proxies confiáveis (borda e aplicação) — `P1` · pequeno · segurança
   = B28, E1-35, D-EST-17.
-- [ ] **S17** · Congelar o relógio nos testes que dependem da data real — `P2` · médio · teste
-  Habilita a S33 e a S36 (a S26 entrou no #518 sem depender dela). 18 arquivos de teste PHP usam `now()` ou `today()` sem congelar (contagem de 04/11/2026); o workflow diário em `develop` só pega a falha depois que ela acontece. = B63.
-  **Pronto quando:** existe um trait de congelamento em `tests/Concerns/` e a suíte passa em duas datas simuladas (dia 31 e dia 1).
-- [ ] **S33** · Separar erro de domínio, erro transitório e erro pós-commit nos jobs — `P1` · grande · bug
-  Decisão tomada: `tries=1` em `ProcessarCriacaoReserva` (I8). Depende da S17 (a S26, da qual também dependia, entrou no #518). = B15, B61, E1-18.
 - [ ] **S14b** · Conferir o dono atual antes de reatribuir uma agenda a outro gestor — `P3` · pequeno · segurança
   Ao salvar as agendas de um gestor, uma agenda que já pertence a outro gestor pode mudar de dono sem aviso a quem a tinha. Comportamento anterior à S14. **Objetivo:** a troca de dono de agenda é explícita e o gestor anterior é avisado. Achado em 04/11/2026. Reproduzido no teste da S14 em staging (06/11/2026): uma agenda escolhida por engano no modal passou para a conta de teste sem nenhum aviso (estava sem gestor, sem prejuízo). Até a correção, quem usa o modal confere a agenda antes de salvar.
 - [ ] **S14c** · A factory de espaço atribui o papel de gestor como efeito colateral — `P4` · pequeno · teste
@@ -139,7 +136,9 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
   **Achado no código (08/11/2026):** o vínculo pelo espaço (`EspacoService`) já segue a regra. O modal (`UserService::updatePermissions`, `atualizarPapelUnico` e `atualizarAgendasDeUsuarioComPapeisAcumulados`) não segue: (a) com papel único `gestor` e lista de agendas vazia, continua gestor; (b) com papéis acumulados que incluem `gestor`, ao perder todas as agendas continua gestor; (c) com papéis acumulados sem `gestor`, não vira gestor ao receber agenda. Regra de negócio em [autorização](./regras-de-negocio/autorizacao.md#decisão-sobre-papéis-acumulados).
   **Pronto quando:** no modal, perder a última agenda tira o papel de gestor, e a notificação de remoção sai depois do commit; receber agenda dá o papel de gestor, inclusive para quem acumula papéis; há testes de feature para os três casos.
 - [ ] **S34, S35** · Alinhar os timeouts da fila e reparar reservas presas — `P2` · médio · bug
-  Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33; a parte automática depende da DT-14. = B16, E1-19, E1-20.
+  Alvo: `retry_after` maior que o timeout do worker, que é maior que o dos jobs. Hoje os tempos estão invertidos: o job tem 360 s, e o worker e o `retry_after` têm 90 s. Começo parcial: o comando de reparo existente só cobre validações pendentes, não todos os estados presos. Depende da S33 (concluída em 21/11/2026); a parte automática depende da DT-14. = B16, E1-19, E1-20.
+- [ ] **S80** · Reparar reservas presas em `processing` na validação de conflitos — `P2` · pequeno · bug
+  O comando de reparo existente (`FixStuckReservationsValidation`) só cobre reservas em `pending`. Se o worker cai no meio, a reserva fica em `processing` e não é reparada. O limite de idade depende do alinhamento de timeouts da S34/S35. **Pronto quando:** o comando também repara `processing` acima do limite, com teste de feature. Achado em 21/11/2026 (auditoria de qualidade do backend).
 - [ ] **QA119-F4** · Falha da edição de reserva não aparece na tela — `P2` · pequeno · observabilidade/UX
   Quando o `UpdateReservaJob` falha depois das retentativas, o solicitante só recebe a `ReservationUpdateFailedNotification`. Na tela, o botão segue em "Atualizando…" e nada indica a falha (achado do QA da rc.119). Relacionado à S33, que trata os erros dos jobs.
   **Pronto quando:** a tela da reserva mostra o estado de falha da edição sem depender da notificação, e um teste de feature cobre o caminho de falha.
@@ -160,7 +159,7 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **S38** · Endurecer o escopo padrão dos relatórios para contas sem vínculo organizacional completo — `P2` · médio · segurança
   Negar por padrão quando o escopo não puder ser determinado. Depende da S37 (e da S36). = B5, E1-08.
 - [ ] **S36** · "Hoje" no fuso de negócio (America/Bahia) nas regras de data — `P2` · médio · bug
-  À noite, o usuário pode não conseguir reservar para o próprio dia, porque a validação usa UTC. Decisão tomada: regras em America/Bahia, armazenamento em UTC (D-EST-02). Depende da S17. = B3, E1-04.
+  À noite, o usuário pode não conseguir reservar para o próprio dia, porque a validação usa UTC. Decisão tomada: regras em America/Bahia, armazenamento em UTC (D-EST-02). Depende da S17 (concluída em 21/11/2026). = B3, E1-04.
 - [ ] **RR-H3** · Fechar a brecha de reserva dupla sob concorrência — `P2` · médio · bug
   O lock só alcança linhas que já existem e não há restrição no banco; duas criações simultâneas no mesmo horário vazio podem passar. **Abordagem decidida pelo responsável em 08/11/2026:** lock consultivo do PostgreSQL (advisory lock) por agenda e dia.
   **Pronto quando:** um teste com duas conexões reais não grava dois horários deferidos sobrepostos.
@@ -182,6 +181,10 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
   Aguarda rodar em produção as consultas de conferência (somente leitura) do relatório da fase 09 dos débitos 2026-09. = AF-R4a.
 - [ ] **DEB-A1** · Validar no backend o horário contra a grade e o turno da agenda — `P3` · médio · débito técnico
   A grade canônica ainda vive no frontend (`resources/js/constants/turnos.ts`). Depende do #104.
+- [ ] **S81** · Avisar o gestor quando a avaliação falha de vez — `P2` · pequeno · decisão
+  `AvaliarReservaJob::failed()` só registra em log. Se a avaliação esgota as tentativas, o gestor não sabe, e a reserva fica como estava. **Decisão de produto:** notificar o gestor (e como), ou manter só o log. **Pronto quando:** a decisão está registrada e, se for notificar, há teste da notificação dentro de `try-catch`. Achado em 21/11/2026.
+- [ ] **S82** · Decidir se reserva arquivada bloqueia a edição no job — `P2` · pequeno · decisão
+  `ReservaArquivadaException` só é lançada na avaliação (situação `inativa`). A edição não confere arquivamento no service: um job de edição já enfileirado antes do arquivamento ainda grava. **Pronto quando:** a regra está decidida em [arquivamento](./regras-de-negocio/arquivamento.md) e, se bloquear, a edição lança a exceção de domínio e há teste. Achado em 21/11/2026.
 
 ## Onda 5 — Qualidade, operação e débitos técnicos (`P2`–`P4`)
 
@@ -227,7 +230,7 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **DEB-L2** · `LoginRequest` e `AuthenticatedSessionController` são código morto — `P4` · pequeno · débito técnico
   Nenhum código usa as duas classes além delas mesmas; as rotas que as usavam estão dentro de um bloco comentado em `routes/auth.php`. O login real é o do Fortify. Remover junto com a S65, que cobre o resto de `Auth/` (conferir antes, porque o arquivo de rotas tem outras partes). Achado em 06/11/2026.
 - [ ] **DEB-R4** · Reduzir o baseline do PHPStan — `P4` · grande · débito técnico
-  O nível 9 está ativo e o gate impede crescimento, mas o `phpstan-baseline.neon` ainda ignora cerca de 400 erros.
+  O nível 9 está ativo e o gate impede crescimento. Na branch `ccr-4da86129-791luw` (21/11/2026), a baseline caiu de 341 para 225 entradas. Continua aberto: a baseline ainda ignora 225 entradas.
 - [ ] **S65, S70, B39, B49, B50** · Limpeza de código morto e de ferramentas — `P4` · médio · débito técnico
   Controllers `Auth/` e `routes/auth.php` (conferir antes: o arquivo tem rotas ativas), `docker/production/nginx`, `compose.test.yml` e `versions.txt`; Prettier com o plugin do Tailwind (B34, B48; conferir depois da atualização do Prettier); Jest em worktree com ponto no caminho (B49); resposta das rotas `show` removidas (B39).
 - [ ] **DEB-D3** · Admin: `DeleteItem` genérico em Roles e `ViewModeToggle` em todas as listas — `P4` · pequeno.
@@ -240,6 +243,24 @@ Concluída em produção: `T-05` tratada em 02/11/2026; `T-05b` (remoção segur
 - [ ] **S74** · Garantir a unicidade de andar por módulo no banco, com testes — `P3` · médio · débito técnico
   A regra existe só na aplicação (`StoreModuloRequest::validateAndaresUniqueness` e `updateOrCreate` em `ModuloService::update`). Não há índice único `(modulo_id, nome)` em `andars`, e não há testes de criação ou edição de módulo. Antes da migration, conferir duplicatas em produção (no banco de dev não há nenhuma).
   **Pronto quando:** há testes de feature de criação e edição de módulo; a unicidade é decidida (índice único ou só aplicação) e, se for índice, a migration roda sem duplicatas em produção.
+- [ ] **S84** · Aplicar `whereNumber` nas rotas com `{param}` de id — `P3` · pequeno · bug
+  Outras rotas com parâmetro de id não restrito a número podem dar 500 de bigint no Postgres. A rota de reservas já usa `whereNumber('reserva')`. **Pronto quando:** as rotas com `{param}` de id aceitam só número, com teste de valor não numérico retornando 404. Achado em 21/11/2026.
+- [ ] **S85** · Gestor designado para dois turnos na mesma operação recebe duas notificações — `P4` · pequeno · bug
+  `EspacoService::updateGestores` monta um envio por turno. Quem recebe dois turnos na mesma operação recebe duas mensagens de designação. **Pronto quando:** as notificações do mesmo gestor na operação são agrupadas, com teste. Achado em 21/11/2026.
+- [ ] **DEB-R9** · Tratamento de erro central nos controllers (M5) — `P4` · pequeno · débito técnico · parcial desde 21/11/2026
+  `RespondeComFlash` já cobre Instituição, Módulo, Setor, Unidade e Usuário. Falta: `InstitucionalEspacoController`, `ReservaController` e `GestorReservaController` ainda têm `try/catch` próprio, e `ReservaController::store` devolve a falha por `withErrors`, não pelo flash. `InstitucionalUsuarioController` ainda tem `try/catch` em `updatePermissions` e `destroy`, apesar do trait. **Pronto quando:** esses controllers tratam a falha pelo trait (ou por tratamento central equivalente), a falha de `store` volta pelo flash `error`, e os testes de feature de falha passam.
+- [ ] **DEB-R10** · Camada de saída, continuação do M9: props dinâmicas e tela de avaliação — `P3` · médio · débito técnico
+  Tirar do model as props dinâmicas `is_conflicted`, `conflict_details` e `existing_justification`, levando-as a um Resource. Criar `HorarioResource` e o Resource da tela de avaliação. Hoje `setor` vai cru em `auth.user`. **Pronto quando:** os models não declaram essas props, o payload de avaliação e o `auth.user` passam por Resource, e `PayloadsDeSaidaCaracterizacaoTest` acompanha o formato.
+- [ ] **DEB-R11** · Cast `date` em `data_inicial` e `data_final` — `P3` · pequeno · débito técnico
+  Hoje saem como string crua com hora. A mudança altera o formato enviado ao front, então o front precisa ser conferido junto. **Pronto quando:** o cast está no model, o front lê a data sem hora e os testes de payload passam.
+- [ ] **DEB-R12** · `resumo_horarios` como serviço com consulta explícita — `P3` · pequeno · débito técnico
+  O accessor `Reserva::resumoHorarios` faz uma consulta a cada acesso, sem cache, e é usado por quatro templates de e-mail. Mover a montagem para um presenter ou service chamado pelos templates. **Pronto quando:** os quatro templates usam o novo ponto, sem accessor com consulta, e os testes de e-mail passam.
+- [ ] **DEB-R13** · Horizonte de conflito calculado de forma diferente no editor e na agenda do espaço — `P3` · pequeno · débito técnico
+  `SemanaDeReferencia` tem dois horizontes: um a partir do fim da semana (agenda do espaço) e outro a partir da data de referência (editor). Estão separados para não mudar as props das telas. **Pronto quando:** há uma regra única, ou a diferença está justificada em [regras de validação](./regras-de-negocio/validacao.md) e coberta por teste.
+- [ ] **DEB-R14** · Tipos de retorno nativos em `BaseRepositoryEloquent` — `P4` · pequeno · débito técnico
+  `store`, `get` e `update` têm só PHPDoc. Completar os tipos nativos é decisão de arquitetura (ver [repositórios](./arquitetura/repositorios.md)). **Pronto quando:** os métodos têm tipo nativo e o PHPStan nível 9 passa sem nova entrada na baseline.
+- [ ] **DEB-R15** · Regra "gestor único é solicitante" duplicada — `P4` · pequeno · débito técnico
+  `AutoAprovacaoService` e `BaseNotification::gestorUnicoId()` calculam a mesma regra. Centralizar em uma implementação. **Pronto quando:** há uma só implementação, com testes cobrindo a notificação e a auto-aprovação.
 
 ## Onda 6 — Internacionalização (`P2`–`P4`)
 
@@ -411,7 +432,7 @@ Plano revisado em 01/11 (rev. 3) e ainda não iniciado. Plano e auditoria locais
 | D-EST-04 e D-8 · Cadência de releases | processo de release |
 | D-9 · Institucional sem agendas deve avaliar reservas? | regra de autorização |
 | D-6 · Login institucional (@uesb.edu.br), requisito "Must" original ainda sem issue | nova issue |
-| D-1 · Multi-instituição | v2 |
+| D-1 · Multi-instituição (já feito na branch `ccr-4da86129-791luw`, 21/11/2026: `edit()` de Espaço, Instituição, Módulo, Unidade e Setor exige `authorize('update')`, e o escopo institucional sem instituição é negado com `403`; falta o escopo de instituição nas Policies) | v2 |
 | D-2, D-3, D-4 e D-5 · Público do #107; escopo do #46; escopo do #49; ADR do #104 | #107, #46, #49, #104 |
 | B39 · O que as rotas `show` removidas devem responder | S65 |
 | RR-D3 · Destino dos horários com data anterior à criação | RR-D3 |
@@ -454,6 +475,7 @@ Resolvidos, cancelados ou obsoletos que ainda aparecem nos planos antigos:
 
 Para contexto; o histórico completo está no [`CHANGELOG.md`](../CHANGELOG.md).
 
+- **21/11** · branch `ccr-4da86129-791luw` (PR ainda não aberta; o número entra na própria PR): refatoração do backend a partir da auditoria de qualidade do backend de 2026-11-21. Fecham **S17** (trait `CongelaRelogio` em `tests/Concerns/`, com data padrão 18/11/2026 10:00 em America/Bahia e sobrescrita por `TESTE_RELOGIO`, aplicado em 26 arquivos de teste) e **S33** (jobs como casca sobre `CriacaoDeReservaService`, `EdicaoDeReservaService` e `AvaliacaoDeReservaService`; `DominioException` vai para `fail()` sem retry; `tries` por job, com `tries = 1` na criação; falhas de efeito pós-commit viram aviso). Fecham também **S75** (edição de espaço não notifica mais gestores; a notificação de designação recebe espaço e turno, com i18n), **S76** (arquivos novos gravados antes da transação e removidos se ela falhar; antigos apagados e notificações enviadas só depois do commit), **S77** (`semana` e filtros de reserva com FormRequest; `?semana=` inválido vira erro de validação), **S78** (`Update*Request` consulta a Policy `update`, sem exigir criar), **S79** (`MensagemDeErro` com lista de permissão: só `DominioException` repassa a mensagem), **DEB-R5** (regra de conflito única em `conflitosDeferidos`, com `TravaDeHorarios`, `SlotDeHorario` e `EscopoEdicaoEnum`; M1, M2 e M10), **DEB-R6** (`BaseRepositoryEloquent` e `DashboardRepository`; M3 e M6), **DEB-R7** (enums no lugar de literais de situação, turno e escopo; `StatusAvaliacaoHorarioEnum` com contrato TS; M4), **DEB-R8** (`UserResource` e `ReservaResource` com lista de permissão, e `can_update` fora do model; recorte de `User` e `Reserva` de M9) e **DEB-R9** (M5, **parcial**: `RespondeComFlash` em Instituição, Módulo, Setor, Unidade e Usuário; `InstitucionalEspacoController`, `ReservaController` e `GestorReservaController` ainda têm `try/catch` próprio, e `ReservaController::store` devolve a falha por `withErrors`; o resíduo fica aberto no item DEB-R9 da Onda 5). Também na branch, efeitos pós-commit à prova de retry: `ReservaBroadcaster::publicar` protege o `ReservaAlterada::dispatch` com try-catch e `Log::warning`, `AvaliacaoDeReservaService::aposCommit` protege a publicação, e `UpdateReservaJob` separa em try distintos o dispatch da revalidação e o broadcast. Motivo: com o retry da S33, uma falha pós-commit relançada faria o job rodar de novo e duplicar a avaliação e as notificações. Também na branch: `BaseNotification::via` com gestor único memoizado (M8, M3), `ModoArquivoEnum` e `OrdenacaoReservaEnum` movidos para `app/Enums/Reserva/`, `Rule::enum` nos FormRequests, LGPD dos payloads de reserva (`user:id,name` no modal do solicitante, sem telefone no modal do gestor, e `id,name,email,telefone` na avaliação), gestor sem agenda com opções vazias, escopo institucional sem instituição negado com `403` e `edit()` com `authorize('update')`. Pendências novas: S80 a S85 e DEB-R10 a DEB-R15. **DEB-R4** continua aberto (baseline do PHPStan de 341 para 225 entradas). **D-1** continua aberto (o `authorize` do `edit()` já foi feito).
 - **20/11 (reconciliada sobre `develop` pós-`1.7.0`)** · #536 `feat/ux-solicitacao-usuario` (aberta em 19/11/2026; pronta para merge em `develop` e publicação em staging): solicitação de espaço com menos esforço para o usuário comum (`UX-01` a `UX-17`), reconciliada com os ajustes da `1.7.0` (#538, #540, #542, #544, #545 e #550) e correção do PHPStan nível 9 (`ListarEspacosRequest`, `EspacoRepositoryEloquent` e `HomeService`). Filtro de disponibilidade por data e turno na lista, agenda acessível por teclado (`<button>` nativo) com Shift+clique e marcar o turno, modal em 2 passos com tela de sucesso, e público estimado, categoria e aceite do termo gravados (migration aditiva `2026_11_19_120000` validada em 6 rodadas contra o estado de staging), preservando todos os fixes de recorrência/edição/a11y/i18n da `1.7.0`. Pendências novas registradas: `UX-18` a `UX-23`.
 - **20/11** · #550 sincronização `main` → `develop` depois da `1.7.0` e fechamento dos itens operacionais em produção no backlog (`v1.5.0-rc.125` em staging).
 - **20/11** · #548 e #549 release `1.7.0` em produção (Onda 2 parte 2 + performance/modernização/acessibilidade e correções de reservas: #525–#547). Backup manual cifrado pré-deploy com teste de abertura e cópia externa conferidos; fila vazia antes do deploy; sem migration. Pós-deploy OK: todos os 5 serviços na imagem `1.7.0`, `postgres:16.15` saudável e não recriado, `StopSignal` `SIGQUIT`/`SIGTERM` (`T-19d`), `app:check-env` com `0 falhas` e `1 aviso` (`session_encrypt`, após rotação da credencial do banco), `config('retencao')` em `90/90/90/90/1/7/90` e `LOG_DAILY_DAYS=90` efetivos (`T-19g`), `fotos:reprocessar` executado (`1` em ordem, `0` pendentes, `T-31`), `base:anonimizar --dry-run` recusado em `production` (`T-41`), tabelas do Telescope com `0` linhas (`T-19c`), `jobs=0`, `0` novos `failed_jobs` (os `8` existentes são de `22/10` a `13/11`), `0` erros em `storage/logs/` pós-deploy, `queue-worker` processando normalmente e validação pública em `https://uniespacos.uesb.br` OK (`T-38` fontes locais, chunks Vite, 0 erros de Console). Higiene no servidor concluída no mesmo dia: `T-05b` executada (~5 GB liberados, de 55% para 42% de uso em `/`), backups pré-`1.5.0`/`1.6.0` (e dumps em texto plano soltos na home) destruídos com `shred` (`T-23`), e `storage/backups/` tratado. Fecham: `T-05b`, `T-08`, `T-31`, `T-35`, `T-19c`, `T-19g`, `T-38`, `T-46`, `T-29` (parte a + `T-29b`), `S73`, `S72`, `RR-H2`, `RR-F01`, `RR-F04`, `S26c`, `DOC-01`, `DOC-02`.
@@ -517,6 +539,7 @@ Os planos e auditorias ficam fora do git (`docs/auditoria*` e `docs/plano-*` est
 | Estabilização v1 | 01–10/10 | parado em 10/10; fase 0 e onda 1 entregues | Ondas 3 a 5 e decisões |
 | LGPD | 31/10 | em execução; lote 1 em staging | Ondas 1 e 2 |
 | i18n | 31/10–01/11 | plano revisado (rev. 3), não iniciado | Onda 6 |
+| Auditoria de qualidade do backend (de 21/11/2026) | 21/11 | refatoração na branch `ccr-4da86129-791luw`; A1 a A5 e M1 a M10 tratados (M5 em parte) | DEB-R4, D-1, S80 a S85 e DEB-R10 a DEB-R15 |
 
 ## Como manter
 

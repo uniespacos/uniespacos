@@ -40,10 +40,10 @@ Este documento descreve os cinco models principais, seus comportamentos, scopes,
 
 ### Atributos Dinâmicos (Computados em Runtime)
 
-- **`can_update`** — Boolean, definido por `ReservaService` via policy check. Indica se o usuário autenticado pode editar a reserva.
-- **`existing_justification`** — String ou null, extraído de `ReservaService::getForGestorReview()` com a primeira justificativa não nula entre seus horários.
-- **`situacao_formatada`** — Rótulo legível (ex: "Em Análise") via `getSituacaoFormatadaAttribute()`.
-- **`resumo_horarios`** — Array de objetos com texto descritivo dos horários (resumido para ≤10 ou agrupado por agenda).
+- **`can_update`** — Não é atributo do model. Quem o monta é o `ReservaResource`, quando recebe a flag calculada pelo service (`$user->can('update', $reserva)`). Aparece só nos payloads de listagem do solicitante e do gestor. Ver [Resources](#casts-accessors-e-saída-resources).
+- **`existing_justification`** — Ainda definido dinamicamente por `ReservaService` (`getForGestorReview`), com a primeira justificativa não nula entre os horários. Não é coluna; está declarado só como `@property` no PHPDoc. Remover essa declaração e as props de `Horario` é a pendência DEB-R10 do [backlog](../backlog.md).
+- **`situacao_formatada`** — Accessor `Attribute::make` (`situacaoFormatada()`), com o rótulo legível (ex: "Em Análise").
+- **`resumo_horarios`** — Accessor `Attribute::make` (`resumoHorarios()`) com a lista de horários da reserva (resumida para ≤10 ou agrupada por agenda). Faz uma consulta a cada acesso, sem cache. Não é código morto: quatro templates de e-mail usam o campo. Mover para um presenter ou service é a pendência DEB-R12.
 
 ### Scopes
 
@@ -67,11 +67,11 @@ Reserva::ordenar(OrdenacaoReservaEnum::SITUACAO)->get();
 
 ### Métodos Públicos
 
-#### `getSituacaoFormatadaAttribute(): string`
+#### `situacaoFormatada(): Attribute` (acesso: `$reserva->situacao_formatada`)
 
 Retorna o rótulo legível da situação atual. Exemplo: `'em_analise'` → `'Em Análise'`.
 
-#### `getResumoHorariosAttribute(): array`
+#### `resumoHorarios(): Attribute` (acesso: `$reserva->resumo_horarios`)
 
 Retorna um sumário dos horários da reserva:
 - Se ≤ 10 horários: lista detalhada (data, hora, turno).
@@ -100,7 +100,7 @@ Veja `HorarioDisponivel` (app/Rules) — rejeita faixa que se sobrepõe a horár
 
 ### Regras de Negócio — Cascata de Situação
 
-A `situacao` de uma `Reserva` é **agregada dos seus horários** (calculada em `AvaliarReservaJob::updateReservaOverallStatus()`):
+A `situacao` de uma `Reserva` é **agregada dos seus horários** (calculada em `AvaliacaoDeReservaService::atualizarSituacaoGeral()`):
 
 ```
 Se totalHorarios === 0:
@@ -146,8 +146,8 @@ Caso contrário (mix de deferida/indeferida):
 
 ### Atributos Dinâmicos (Computados em Runtime)
 
-- **`is_conflicted`** — Boolean, definido por `ReservaService` quando há conflito com outra reserva.
-- **`conflict_details`** — String com descrição do conflito (ex: "Conflito com a reserva 'Reunião XYZ' de João").
+- **`is_conflicted`** — Boolean, ainda definido por `ReservaService` quando há conflito com outra reserva (`getForGestorReview`). Declarado só no PHPDoc do model. Pendência DEB-R10.
+- **`conflict_details`** — String com a descrição do conflito, também definida por `ReservaService`. Mesma pendência DEB-R10.
 
 ### Scopes
 
@@ -245,7 +245,7 @@ Espaco::forgetFavoritosCache($user->id);
 Espaco::forgetFavoritosCache();
 ```
 
-#### `getIsFavoritedByUserAttribute(): bool`
+#### `isFavoritedByUser(): Attribute` (acesso: `$espaco->is_favorited_by_user`)
 
 Retorna se o usuário autenticado favoritou este espaço. Usa cache estático para evitar N+1 queries.
 
@@ -404,8 +404,8 @@ Este diagrama ilustra como os models interagem:
 ### Listar minhas reservas ativas, ordenadas por situação
 
 ```php
-use App\Enums\SituacaoReserva\ModoArquivoEnum;
-use App\Enums\SituacaoReserva\OrdenacaoReservaEnum;
+use App\Enums\Reserva\ModoArquivoEnum;
+use App\Enums\Reserva\OrdenacaoReservaEnum;
 
 $reservas = Reserva::arquivo(ModoArquivoEnum::ATIVAS)
     ->ordenar(OrdenacaoReservaEnum::SITUACAO)
@@ -417,12 +417,12 @@ $reservas = Reserva::arquivo(ModoArquivoEnum::ATIVAS)
 ### Verificar se posso editar uma reserva
 
 ```php
-// Atributo dinâmico definido por ReservaService
-if ($reserva->can_update) {
+// Na tela, can_update vem do ReservaResource (payload da listagem), não do model
+if ($reserva['can_update']) {
     // Renderizar botão de edição
 }
 
-// Ou manualmente via Policy
+// No backend, a decisão é da Policy
 if ($user->can('update', $reserva)) {
     // Usuario tem permissão
 }
@@ -456,7 +456,7 @@ $espaco = $agenda->espaco; // Espaco
 ### Buscar reservas em análise que compartilham slots com uma recém-aprovada
 
 ```php
-// Disparado automaticamente após aprovar um horário (AvaliarReservaJob::triggerConflictRevalidation)
+// Disparado automaticamente após aprovar um horário (AvaliacaoDeReservaService::revalidarConflitos, depois do commit)
 $reservasParaRevalidar = Reserva::where('situacao', 'em_analise')
     ->where('validation_status', 'completed')
     ->whereHas('horarios', function ($query) use ($slotsOcupados) {
@@ -464,6 +464,28 @@ $reservasParaRevalidar = Reserva::where('situacao', 'em_analise')
     })
     ->get();
 ```
+
+---
+
+## Casts, accessors e saída (Resources)
+
+**Casts.** Os models declaram casts no método `casts(): array`, e não na propriedade `$casts`. Têm esse método: `Reserva`, `User`, `Espaco`, `Andar` e `Role`. Exemplos: em `Reserva`, `conflict_cache` é `array`, `publico_estimado` é `integer` e `termo_aceito_em` é `datetime`. Em `User`, `email_verified_at` é `datetime` e `password` é `hashed`.
+
+**Accessors.** Usam `Attribute::make` (`protected function nome(): Attribute`), e não o método `getXAttribute()`. Exemplos: `User::name`, `User::profilePic`, `Espaco::isFavoritedByUser`, `Reserva::situacaoFormatada` e `Reserva::resumoHorarios`.
+
+**Datas sem cast.** `data_inicial` e `data_final` da reserva não têm cast `date`. Por isso o payload sai com a string crua, com hora. Trocar o cast muda o formato enviado ao front, e fica como pendência DEB-R11.
+
+**Saída para o Inertia (Resources).** O model não vai cru para o front. Dois `JsonResource` fazem uma lista de permissão do que é enviado:
+
+| Resource | Campos | Quem usa |
+|----------|--------|----------|
+| `UserResource` | `id`, `name`, `email`, `email_verified_at`, `telefone`, `profile_pic`, `setor_id`, `created_at`, `updated_at` e `setor`. Na listagem de usuários (`paraListagem`), um conjunto menor: `id`, `name`, `email`, `telefone`, `email_verified_at`, `setor_id`, `roles` e `anonimizado` | `auth.user` (`HandleInertiaRequests`) e a listagem de usuários (`UserService`) |
+| `ReservaResource` | `id`, `titulo`, `descricao`, `situacao`, `data_inicial`, `data_final`, `recorrencia`, `observacao`, `user_id`, `created_at`, `updated_at`, `validation_status`, `conflict_cache`, `publico_estimado`, `categoria`, `horarios` e `user`. `can_update` entra só quando o service passa a flag | Listagens de reserva do solicitante e do gestor (`ReservaService`) |
+
+- `can_update` não existe no model. Ele é calculado pela Policy e entregue pelo Resource.
+- `termo_aceito_em` fica fora dos dois Resources e em `$hidden` no model.
+- O formato desses payloads é fixado pelo teste `tests/Feature/PayloadsDeSaidaCaracterizacaoTest.php`.
+- Ainda não há Resource para o `HorarioResource` nem para a tela de avaliação. `setor` segue cru em `auth.user`. Essa parte é a pendência DEB-R10.
 
 ---
 
@@ -487,6 +509,8 @@ enum SituacaoReservaEnum: string {
 
 ### `ModoArquivoEnum`
 
+Localização: `app/Enums/Reserva/ModoArquivoEnum.php`.
+
 ```php
 enum ModoArquivoEnum: string {
     case ATIVAS = 'ativas';         // Exclui inativas (padrão)
@@ -499,6 +523,8 @@ enum ModoArquivoEnum: string {
 ```
 
 ### `OrdenacaoReservaEnum`
+
+Localização: `app/Enums/Reserva/OrdenacaoReservaEnum.php`.
 
 ```php
 enum OrdenacaoReservaEnum: string {

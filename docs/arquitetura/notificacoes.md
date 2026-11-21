@@ -33,10 +33,12 @@ Cada notificação recebe três atributos:
 ```php
 abstract class BaseNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use HasQueueableRetry, Queueable;
     // ...
 }
 ```
+
+`HasQueueableRetry` (em `app/Notifications/Concerns/`) define `$tries = 5` e `backoff()` de 30, 60, 120 e 300 segundos. As subclasses herdam esses valores, e o `BaseNotification` não redeclara mais `tries` nem `backoff`.
 
 Isso garante que:
 
@@ -55,20 +57,18 @@ public function via(object $notifiable): array
     if (property_exists($this, 'reserva') && $this->reserva instanceof Reserva) {
         $isApplicant = $this->reserva->user_id === $notifiable->id;
 
-        $managerIds = Agenda::whereIn(
-            'id',
-            Horario::where('reserva_id', $this->reserva->id)->select('agenda_id')
-        )->pluck('user_id')->unique();
-
-        $isSoleManager = $managerIds->count() === 1 && $managerIds->first() === $notifiable->id;
-
-        if ($isApplicant && $isSoleManager) {
+        if ($isApplicant && $this->gestorUnicoId($this->reserva) === $notifiable->id) {
             return $channels;  // Sem 'mail'
         }
     }
 
     $channels[] = 'mail';
     return $channels;
+}
+
+private function gestorUnicoId(Reserva $reserva): ?int
+{
+    // Resolvido uma vez por instância: o loop de canais do Laravel chama via() por destinatário.
 }
 ```
 
@@ -77,9 +77,11 @@ public function via(object $notifiable): array
 1. Inicializa com `['database', 'broadcast']`
 2. Se a notificação possui propriedade `reserva`:
    - Verifica se o destinatário é o solicitante da reserva
-   - Verifica se é o ÚNICO gestor de TODAS as agendas incluídas
+   - Verifica se é o ÚNICO gestor de TODAS as agendas incluídas (`gestorUnicoId()`)
    - Se ambas condições forem verdadeiras, **retorna apenas database + broadcast** (email suprimido)
 3. Caso contrário, adiciona `'mail'` à lista
+
+**Memoização:** o gestor único não depende do destinatário. `gestorUnicoId()` faz uma consulta por instância de notificação (guardada em `$gestorUnicoId` e `$gestorUnicoResolvido`), e não uma por destinatário. Antes, cada chamada de `via()` repetia a consulta de `Agenda` e `Horario`.
 
 **Quando email é suprimido:**
 
@@ -225,7 +227,7 @@ Job: ProcessarCriacaoReserva
 
 **Namespace:** `App\Notifications\ReservationEvaluatedNotification`
 
-**Disparada por:** `AvaliarReservaJob::handle()`
+**Disparada por:** `AvaliacaoDeReservaService` (depois do commit), chamado pelo `AvaliarReservaJob`
 
 **Destinatário:** O solicitante da reserva
 
@@ -310,7 +312,7 @@ URL: route('reservas.show', $reserva->id)
 
 **Disparada por:** `ProcessarCriacaoReserva::failed()`
 
-**Destinatário:** O solicitante (quando job exaure 3 tentativas)
+**Destinatário:** O solicitante, quando a criação falha. `ProcessarCriacaoReserva` tem `tries = 1`, então a falha é definitiva na primeira tentativa
 
 **Canais:** `database`, `broadcast`, `mail`
 
@@ -366,27 +368,33 @@ Propriedades extras:
 
 **Disparada por:**
 
-- `EspacoService::updateGestores()`: ao designar um novo gestor para um turno do espaço, quando ele ainda não tem `reservas.avaliar`
+- `EspacoService::updateGestores()`: ao passar a ocupar um turno do espaço. Quem já ocupava o turno não recebe de novo. A notificação sai depois do commit, em `updateGestores`. A edição do espaço (`EspacoService::update()`, como trocar nome, descrição ou fotos) não notifica gestores
 - `UserService::updatePermissions()`: só em transição real, depois do commit. Dispara quando o usuário passa a ser gestor (papel único que vira `gestor`) ou quando, já sendo gestor, ganha uma agenda nova. Salvar sem mudança não reenvia. Usuário com mais de um papel só dispara se ganhar agenda nova
 
 **Destinatário:** Usuário recém-designado como gestor
 
 **Canais:** `database`, `broadcast`, `mail`
 
+**Construtor:** `__construct(User $manager, ?Espaco $espaco = null, ?AgendaEnum $turno = null)`. Com espaço e turno, a notificação é específica. Sem eles, cai no texto genérico. O turno é o enum `AgendaEnum`.
+
 **Payload:**
 
 ```
-Título: "Gestão de Espaços"
+Título: "Gestão de Espaços" (traduzido)
 Descrição: Variável conforme contexto:
-  - Genérica: "Você foi designado como gestor de agenda."
-  - Específica: "Você foi designado como gestor do espaço: {$espacoNome} Turno: {$turno}."
-URL: route('espacos.index') ou route('espacos.show', $espaco->id)
+  - Específica: "Você foi designado como gestor do espaço ":espaco" para o turno :turno." (traduzido)
+  - Genérica: "Você foi designado como gestor de agenda." (traduzido)
+URL: route('espacos.show', $espaco->id) na específica; route('espacos.index') na genérica
 
 Propriedades extras:
 - $manager: User
 - $espacoNome: string|null
-- $turno: string|null
+- $turnoRotulo: string|null (Manhã, Tarde ou Noite, traduzido)
 ```
+
+**Tradução:** os textos são resolvidos com `__()` no construtor, no idioma da requisição que criou a notificação, e seguem prontos na fila. Esta notificação não usa `traducaoNoFront()`, ao contrário das notificações de reserva.
+
+**Histórico:** antes, o texto ficava fixo em pt-BR, fora do `__()`, e a URL vinha de `$manager->agendas->first()?->espaco`. Para um gestor de mais de um espaço, o link apontava para outro espaço. Com o `Espaco` recebido no construtor, a URL é a do espaço da notificação.
 
 **Supressão de Email:** Não aplicável
 
@@ -634,17 +642,19 @@ Toda chamada a `.notify()` em jobs e services **deve estar envolvida em try-catc
 ### Exemplo: ProcessarCriacaoReserva
 
 ```php
-foreach ($gestoresUnicos as $gestor) {
-    if ($gestor->id !== $this->solicitante->id) {
-        try {
-            $gestor->notify(new NewReservationNotification($reserva));
-        } catch (Exception $e) {
-            Log::warning('Falha ao notificar gestor sobre nova reserva', [
-                'gestor_id' => $gestor->id,
-                'reserva_id' => $reserva->id,
-                'exception' => $e,
-            ]);
-        }
+foreach ($gestores as $gestor) {
+    if ($gestor->id === $this->solicitante->id) {
+        continue;
+    }
+
+    try {
+        $gestor->notify(new NewReservationNotification($reserva));
+    } catch (Exception $e) {
+        Log::warning('Falha ao notificar gestor sobre nova reserva', [
+            'gestor_id' => $gestor->id,
+            'reserva_id' => $reserva->id,
+            'exception' => $e,
+        ]);
     }
 }
 ```
@@ -662,12 +672,14 @@ foreach ($gestoresUnicos as $gestor) {
 ```php
 public function failed(Throwable $exception): void
 {
-    Log::error('UpdateReservaJob exhausted all retries', [...]);
+    Log::error('UpdateReservaJob failed', [...]);
 
-    try {
-        $this->user->notify(new ReservationUpdateFailedNotification(...));
-    } catch (Exception $e) {
-        Log::error('Failed to send reservation update failure notification', [...]);
+    if ($this->reserva->user !== null) {
+        try {
+            $this->reserva->user->notify(new ReservationUpdateFailedNotification($this->reserva, $this->user));
+        } catch (Exception $e) {
+            Log::error('Failed to send reservation update failure notification', [...]);
+        }
     }
 }
 ```
@@ -694,6 +706,12 @@ Em todo job ou service que altera reserva, as notificações (banco, e-mail e ca
 | `AvaliarReservaJob` | Revalidação de conflitos → `ReservationEvaluatedNotification` (solicitante) → `publicar('evaluated')` |
 | `ValidateReservationConflictsJob` | Grava `conflict_cache` e `completed` → `publicar('validated')` (sem notificação) |
 | `ReservaService::notificarCancelamento()` | `ReservationCanceledNotification` (gestores) → revalidação de conflitos → `publicar('canceled')` |
+
+### Pós-commit: sem `after_commit` global
+
+Os efeitos externos (notificação, despacho de job e publicação) só rodam depois do commit. Cada ponto de uso garante isso: o job ou o service chama esses efeitos depois do retorno do service de domínio, nunca dentro de `DB::transaction`. Por exemplo, `EspacoService::updateGestores` monta as notificações dentro da transação, guarda as chamadas numa lista e só as executa depois do commit.
+
+Por decisão, `config/queue.php` mantém `after_commit => false` nas quatro conexões. Ligar `after_commit` globalmente mudaria o momento de todos os jobs do sistema, inclusive os que não têm efeito pós-commit. O tratamento fica em cada ponto de uso, onde ele é visível no código. O fluxo completo de efeitos e a ordem estão em [fluxo de reservas, seção 4.4](../regras-de-negocio/fluxo-de-reservas.md#efeitos-pos-commit).
 
 ---
 
@@ -811,7 +829,7 @@ Para histório confiável, use a notificação de `database` — sempre persiste
 
 ### 4. Retry Automático em Falha
 
-Se o envio falha depois de enfileirado, o worker tenta de novo até `$tries` (5 tentativas), com backoff de 30, 60, 120 e 300 segundos.
+Se o envio falha depois de enfileirado, o worker tenta de novo até `$tries` (5 tentativas), com backoff de 30, 60, 120 e 300 segundos. Esses valores vêm do trait `HasQueueableRetry`, comum a todas as notificações.
 
 Se `notify()` lança exceção de forma síncrona (ex.: serialização), o try-catch do job captura, registra log e não há nova tentativa.
 
