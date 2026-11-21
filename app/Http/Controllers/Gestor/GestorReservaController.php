@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Gestor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AvaliarReservaRequest;
+use App\Http\Requests\ListarReservasRequest;
+use App\Http\Requests\SemanaRequest;
 use App\Models\Reserva;
 use App\Services\ReservaService;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -18,31 +18,29 @@ use Inertia\Response;
 
 class GestorReservaController extends Controller
 {
-    use AuthorizesRequests;
-
     public function __construct(
         protected ReservaService $service,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(ListarReservasRequest $request): Response
     {
         $data = $this->service->getGestorListing(
             Auth::user(),
-            $request->input('semana', 'today'),
-            $request->only(['search', 'situacao', 'arquivo', 'ordenar', 'reserva', 'data_inicio', 'data_fim'])
+            $request->semana(),
+            $request->filtros(),
         );
 
         return Inertia::render('Reservas/Gestor/ReservasGestorPage', $data);
     }
 
-    public function show(Request $request, Reserva $reserva): Response
+    public function show(SemanaRequest $request, Reserva $reserva): Response
     {
         $this->authorize('viewForGestor', $reserva);
 
         $data = $this->service->getForGestorReview(
             $reserva,
             Auth::user(),
-            $request->input('semana', '')
+            $request->semana()
         );
 
         return Inertia::render('Reservas/Gestor/AvaliarReservaPage', $data);

@@ -67,6 +67,12 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
                 },
                 'user:id,name',
             ])
+            ->withExists([
+                'horarios as possui_horario_avaliado' => fn ($q) => $q->whereIn('situacao', [
+                    SituacaoReservaEnum::DEFERIDA->value,
+                    SituacaoReservaEnum::INDEFERIDA->value,
+                ]),
+            ])
             ->ordenar($filters['ordenar'] ?? null)
             ->paginate($perPage);
     }

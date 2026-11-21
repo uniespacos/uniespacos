@@ -91,12 +91,6 @@ parameters:
 			path: app/Http/Controllers/EspacoController.php
 
 		-
-			message: '#^Parameter \#2 \$weekReference of method App\\Services\\EspacoService\:\:getWithWeekSchedule\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/EspacoController.php
-
-		-
 			message: '#^Parameter \#1 \$user of static method App\\Enums\\Relatorio\\TipoRelatorioEnum\:\:disponiveisPara\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -127,19 +121,7 @@ parameters:
 			path: app/Http/Controllers/Gestor/GestorReservaController.php
 
 		-
-			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getGestorListing\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Gestor/GestorReservaController.php
-
-		-
 			message: '#^Parameter \#3 \$gestor of method App\\Services\\ReservaService\:\:evaluate\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Gestor/GestorReservaController.php
-
-		-
-			message: '#^Parameter \#3 \$weekRef of method App\\Services\\ReservaService\:\:getForGestorReview\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Gestor/GestorReservaController.php
@@ -278,18 +260,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#2 \$user of method App\\Services\\ReservaService\:\:create\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/ReservaController.php
-
-		-
-			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getEditData\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/ReservaController.php
-
-		-
-			message: '#^Parameter \#2 \$weekRef of method App\\Services\\ReservaService\:\:getListingForUser\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/ReservaController.php
@@ -1531,18 +1501,6 @@ parameters:
 			path: app/Services/EspacoService.php
 
 		-
-			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|string\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Services/EspacoService.php
-
-		-
-			message: '#^Cannot call method format\(\) on Carbon\\Carbon\|string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/EspacoService.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
 			count: 1
@@ -1809,18 +1767,6 @@ parameters:
 		-
 			message: '#^Cannot access property \$id on mixed\.$#'
 			identifier: property.nonObject
-			count: 1
-			path: app/Services/ReservaService.php
-
-		-
-			message: '#^Cannot call method copy\(\) on Carbon\\Carbon\|string\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Services/ReservaService.php
-
-		-
-			message: '#^Cannot call method format\(\) on Carbon\\Carbon\|string\.$#'
-			identifier: method.nonObject
 			count: 1
 			path: app/Services/ReservaService.php
 

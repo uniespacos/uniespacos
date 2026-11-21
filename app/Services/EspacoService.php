@@ -17,7 +17,7 @@ use App\Repositories\ModuloRepositoryInterface;
 use App\Repositories\UnidadeRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
 use App\Services\Relatorio\RelatorioService;
-use Carbon\Carbon;
+use App\Support\SemanaDeReferencia;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -89,44 +89,17 @@ class EspacoService
     }
 
     /**
-     * Loads an Espaco with its week-filtered schedule for the public show page.
-     *
      * @return array<string, mixed>
      */
-    public function getWithWeekSchedule(Espaco $espaco, string $weekReference = 'today'): array
+    public function getWithWeekSchedule(Espaco $espaco, ?string $weekReference = null): array
     {
-        $reference = Carbon::parse($weekReference)->locale('pt_BR');
-        $weekStart = $reference->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
-        $weekEnd = $reference->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
-        $conflictHorizonEnd = Carbon::parse($weekEnd)->addMonth()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+        $semana = SemanaDeReferencia::de($weekReference);
 
-        $espaco->load([
-            'andar.modulo.unidade.instituicao',
-            'agendas' => function ($query) use ($weekStart, $conflictHorizonEnd) {
-                $query->with([
-                    'user:id,name,email,setor_id',
-                    'user.setor:id,nome,sigla',
-                    'horarios' => function ($q) use ($weekStart, $conflictHorizonEnd) {
-                        $q->where('situacao', 'deferida')
-                            ->whereBetween('data', [$weekStart, $conflictHorizonEnd])
-                            ->with([
-                                'reserva:id,titulo,situacao,observacao,user_id',
-                                'reserva.user:id,name,setor_id',
-                                'reserva.user.setor:id,nome,sigla',
-                                'avaliador:id,name',
-                            ]);
-                    },
-                ]);
-            },
-        ]);
+        $espaco = $this->repoEspaco->carregarAgendaDaSemana($espaco, $semana);
 
         return [
             'espaco' => $espaco,
-            'semana' => [
-                'inicio' => $weekStart,
-                'fim' => $weekEnd,
-                'referencia' => $reference->format('Y-m-d'),
-            ],
+            'semana' => $semana->paraProps(),
         ];
     }
 
@@ -190,9 +163,20 @@ class EspacoService
     {
         $newPaths = $this->gravarArquivos($newFiles);
 
+        $imagensDoEspaco = (array) ($espaco->imagens ?? []);
+        $pathsParaRemover = array_values(array_intersect($pathsToDelete, $imagensDoEspaco));
+        $pathsForaDoEspaco = array_values(array_diff($pathsToDelete, $imagensDoEspaco));
+
+        if ($pathsForaDoEspaco !== []) {
+            Log::warning('Caminhos de imagem fora do espaço ignorados na atualização', [
+                'espaco_id' => $espaco->id,
+                'caminhos' => $pathsForaDoEspaco,
+            ]);
+        }
+
         try {
-            $updatedEspaco = DB::transaction(function () use ($espaco, $data, $newPaths, $pathsToDelete) {
-                $currentPaths = array_values(array_diff((array) ($espaco->imagens ?? []), $pathsToDelete));
+            $updatedEspaco = DB::transaction(function () use ($espaco, $data, $newPaths, $imagensDoEspaco, $pathsParaRemover) {
+                $currentPaths = array_values(array_diff($imagensDoEspaco, $pathsParaRemover));
                 $allPaths = array_values(array_merge($currentPaths, $newPaths));
 
                 $mainImagePath = null;
@@ -217,7 +201,7 @@ class EspacoService
             throw $e;
         }
 
-        $this->removerArquivos($pathsToDelete);
+        $this->removerArquivos($pathsParaRemover);
 
         $this->relatorioService->invalidarCacheDoTipo(TipoRelatorioEnum::INVENTARIO_ESPACOS);
 

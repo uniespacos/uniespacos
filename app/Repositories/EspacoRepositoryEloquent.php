@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Espaco;
+use App\Support\SemanaDeReferencia;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,9 +21,6 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
         protected Espaco $espaco,
     ) {}
 
-    /**
-     * Stores a new instance of Espaco in the database
-     */
     public function store(array $data): Espaco
     {
         return $this->espaco->create($data);
@@ -239,17 +237,37 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             ->pluck('capacidade_pessoas');
     }
 
-    /**
-     * Returns an instance of Espaco from the given id
-     */
+    public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco
+    {
+        $inicio = $semana->inicio;
+        $horizonte = $horizonteFim ?? $semana->horizonteDeConflito();
+
+        return $espaco->load([
+            'andar.modulo.unidade.instituicao',
+            'agendas' => function ($query) use ($inicio, $horizonte) {
+                $query->with([
+                    'user:id,name,email,setor_id',
+                    'user.setor:id,nome,sigla',
+                    'horarios' => function ($q) use ($inicio, $horizonte) {
+                        $q->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
+                            ->whereBetween('data', [$inicio, $horizonte])
+                            ->with([
+                                'reserva:id,titulo,situacao,observacao,user_id',
+                                'reserva.user:id,name,setor_id',
+                                'reserva.user.setor:id,nome,sigla',
+                                'avaliador:id,name',
+                            ]);
+                    },
+                ]);
+            },
+        ]);
+    }
+
     public function get(int|string $id): ?Espaco
     {
         return $this->espaco->find($id);
     }
 
-    /**
-     * Updates the data of an instance of Espaco
-     */
     public function update(array $data, int|string $id): Espaco
     {
         $espaco = $this->espaco->findOrFail($id);
@@ -258,9 +276,6 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
         return $espaco;
     }
 
-    /**
-     * Removes an instance of Espaco from the database
-     */
     public function destroy(int|string $id): bool
     {
         return (bool) $this->espaco->findOrFail($id)->delete();

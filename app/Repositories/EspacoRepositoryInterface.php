@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Espaco;
+use App\Support\SemanaDeReferencia;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
@@ -13,9 +14,6 @@ interface EspacoRepositoryInterface
 {
     public function __construct(Espaco $espaco);
 
-    /**
-     * Stores a new instance of Espaco in the database
-     */
     public function store(array $data): Espaco;
 
     /**
@@ -48,17 +46,14 @@ interface EspacoRepositoryInterface
     public function getDistinctCapacidadesByInstituicao(int $instituicaoId): SupportCollection;
 
     /**
-     * Returns an instance of Espaco from the given id
+     * Carrega o espaço com a agenda da semana: horários deferidos entre o início da
+     * semana e o horizonte de conflito.
      */
+    public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco;
+
     public function get(int|string $id): ?Espaco;
 
-    /**
-     * Updates the data of an instance of Espaco
-     */
     public function update(array $data, int|string $id): Espaco;
 
-    /**
-     * Removes an instance of Espaco from the database
-     */
     public function destroy(int|string $id): bool;
 }
