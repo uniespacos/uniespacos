@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Espaco;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -184,5 +185,13 @@ class UserRepositoryEloquent implements UserRepositoryInterface
             ->whereHas('agendas.espaco.andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->distinct('id')
             ->count();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getComPapel(Role $papel): Collection
+    {
+        return $this->user->newQuery()->role($papel)->get();
     }
 }

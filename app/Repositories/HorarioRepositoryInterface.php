@@ -63,4 +63,16 @@ interface HorarioRepositoryInterface extends CrudRepositoryInterface
      * @return array<int, array{nome: string|null, count: int}>
      */
     public function rankingEspacosMaisOcupados(?int $instituicaoId, int $limite): array;
+
+    /**
+     * @param  array<int>  $agendaIds
+     * @return SupportCollection<int|string, mixed>
+     */
+    public function idsDaReservaNasAgendas(int $reservaId, array $agendaIds): SupportCollection;
+
+    /**
+     * @param  array<int>  $horarioIds
+     * @param  array<int>  $agendaIds
+     */
+    public function existeForaDasAgendas(array $horarioIds, array $agendaIds): bool;
 }

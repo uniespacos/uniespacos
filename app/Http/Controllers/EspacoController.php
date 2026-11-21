@@ -23,7 +23,7 @@ class EspacoController extends Controller
     {
         $user = Auth::user();
         $filters = $request->validated();
-        $instituicaoId = $user->setor->unidade->instituicao_id;
+        $instituicaoId = $user?->instituicaoId() ?? abort(403);
 
         $filterOptions = $this->service->getFilterOptions($instituicaoId);
 

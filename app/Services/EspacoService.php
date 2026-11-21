@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Enums\Agenda\AgendaEnum;
 use App\Enums\Relatorio\TipoRelatorioEnum;
-use App\Models\Agenda;
 use App\Models\Espaco;
 use App\Models\User;
 use App\Notifications\UserAssignedAsManagerNotification;
@@ -256,7 +255,7 @@ class EspacoService
 
                 if ($oldUserId) {
                     $oldUser = $this->repoUser->get($oldUserId);
-                    if ($oldUser && ! Agenda::where('user_id', $oldUserId)->exists()) {
+                    if ($oldUser && ! $this->repoUser->temAgendaGerida($oldUser)) {
                         $oldUser->removeRole('gestor');
                         $envios[] = fn () => $this->notificarComIsolamento(
                             $oldUser,

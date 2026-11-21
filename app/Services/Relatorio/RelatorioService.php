@@ -9,6 +9,7 @@ use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Models\Espaco;
 use App\Models\User;
 use App\Policies\RelatorioPolicy;
+use App\Repositories\EspacoRepositoryInterface;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
 use App\Services\Relatorio\Exporters\ExporterFactory;
@@ -24,6 +25,7 @@ final class RelatorioService
     public function __construct(
         private RelatorioFactory $relatorios,
         private ExporterFactory $exporters,
+        private EspacoRepositoryInterface $espacos,
     ) {}
 
     public function gerar(User $usuario, TipoRelatorioEnum $tipo, FormatoRelatorioEnum $formato, FiltrosRelatorio $filtros): BinaryFileResponse|StreamedResponse
@@ -123,29 +125,22 @@ final class RelatorioService
      */
     public function opcoesInventario(User $usuario): array
     {
-        $espacosQuery = Espaco::query()->with('andar.modulo.unidade');
-
         $escopo = $this->obterEscopo($usuario);
 
+        $instituicaoId = null;
+        $agendaIds = null;
         if (($escopo['tipo'] ?? null) === 'institucional') {
             $instituicaoIdRaw = $escopo['instituicaoId'] ?? 0;
-            $instituicaoId = is_int($instituicaoIdRaw) ? $instituicaoIdRaw : 0;
-            if ($instituicaoId > 0) {
-                $espacosQuery->whereHas(
-                    'andar.modulo.unidade',
-                    fn ($u) => $u->where('instituicao_id', $instituicaoId)
-                );
-            }
+            $instituicaoIdEscopo = is_int($instituicaoIdRaw) ? $instituicaoIdRaw : 0;
+            $instituicaoId = $instituicaoIdEscopo > 0 ? $instituicaoIdEscopo : null;
         } elseif (($escopo['tipo'] ?? null) === 'gestor') {
-            $agendaIds = $escopo['agendaIds'] ?? [];
-            if (is_array($agendaIds) && ! empty($agendaIds)) {
-                $espacosQuery->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
-            }
+            $agendaIdsEscopo = $escopo['agendaIds'] ?? [];
+            $agendaIds = is_array($agendaIdsEscopo) && ! empty($agendaIdsEscopo) ? $agendaIdsEscopo : null;
         } else {
             abort(403, 'Sem permissão para acessar relatórios.');
         }
 
-        $espacos = $espacosQuery->get()->filter(
+        $espacos = $this->espacos->listarComLocalizacaoParaOpcoes($instituicaoId, $agendaIds)->filter(
             fn (Espaco $espaco) => $espaco->andar?->modulo?->unidade !== null
         );
 

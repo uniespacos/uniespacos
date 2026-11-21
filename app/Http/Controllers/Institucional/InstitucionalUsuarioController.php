@@ -12,13 +12,11 @@ use App\Http\Requests\ListarUsuariosRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdatePermissionsRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\UserService;
 use App\Support\MensagemDeErro;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -43,9 +41,6 @@ class InstitucionalUsuarioController extends Controller
             isset($validated['setor_id']) ? (int) $validated['setor_id'] : null,
             (bool) ($validated['anonimizados'] ?? false),
         );
-        /** @var LengthAwarePaginator<int, array<string, mixed>> $usuarios */
-        $usuarios = $data['users'];
-        $data['users'] = $usuarios->through(fn (array $usuario): array => UserResource::paraListagem($usuario));
 
         return Inertia::render('Administrativo/Usuarios/Usuarios', $data);
     }

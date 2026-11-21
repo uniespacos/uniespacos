@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Repositories\PermissionRepositoryInterface;
 use App\Repositories\RoleRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -16,6 +17,7 @@ class RoleService
     public function __construct(
         protected RoleRepositoryInterface $repoRole,
         protected PermissionRepositoryInterface $repoPermission,
+        protected UserRepositoryInterface $repoUser,
     ) {}
 
     /**
@@ -92,7 +94,7 @@ class RoleService
         return DB::transaction(function () use ($role) {
             $commonRole = Role::findByName('comum', 'web');
 
-            User::role($role)->get()->each(function (User $user) use ($role, $commonRole) {
+            $this->repoUser->getComPapel($role)->each(function (User $user) use ($role, $commonRole) {
                 $user->removeRole($role);
                 if (! $user->hasRole($commonRole)) {
                     $user->assignRole($commonRole);

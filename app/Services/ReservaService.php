@@ -12,7 +12,6 @@ use App\Jobs\AvaliarReservaJob;
 use App\Jobs\ProcessarCriacaoReserva;
 use App\Jobs\UpdateReservaJob;
 use App\Jobs\ValidateReservationConflictsJob;
-use App\Models\Espaco;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
@@ -112,7 +111,7 @@ class ReservaService
         ]);
 
         $espaco = $reserva->horarios->first()?->agenda?->espaco  // @phpstan-ignore nullsafe.neverNull
-            ?? Espaco::whereHas('agendas.horarios.reserva', fn ($q) => $q->where('id', $reserva->id))->firstOrFail();
+            ?? $this->repoEspaco->encontrarPorReservaOuFalhar($reserva->id);
 
         $espaco = $this->repoEspaco->carregarAgendaDaSemana($espaco, $semana, $semana->horizonteDeConflitoAPartirDaReferencia());
 
@@ -329,24 +328,7 @@ class ReservaService
             return;
         }
 
-        $reservasParaRevalidar = Reserva::query()
-            ->where('validation_status', 'completed')
-            ->whereIn('situacao', [
-                SituacaoReservaEnum::INDEFERIDA->value,
-                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
-            ])
-            ->whereHas('horarios', function ($query) use ($slotsLiberados) {
-                $query->where(function ($q) use ($slotsLiberados) {
-                    foreach ($slotsLiberados as $slot) {
-                        $q->orWhere(function ($orQ) use ($slot) {
-                            $orQ->where('data', $slot['data'])
-                                ->where('agenda_id', $slot['agenda_id']);
-                        });
-                    }
-                });
-            })
-            ->select('id')
-            ->get();
+        $reservasParaRevalidar = $this->repoReserva->reservasParaRevalidarAposLiberacao($slotsLiberados);
 
         foreach ($reservasParaRevalidar as $reserva) {
             Log::info('Disparando revalidação por cancelamento de reserva', [

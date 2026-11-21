@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -69,4 +70,9 @@ interface UserRepositoryInterface
     public function removerTokenDeRedefinicaoDeSenha(string $email): void;
 
     public function contarGestoresDaInstituicao(?int $instituicaoId): int;
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getComPapel(Role $papel): Collection;
 }

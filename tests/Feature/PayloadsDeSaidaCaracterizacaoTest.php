@@ -92,17 +92,11 @@ class PayloadsDeSaidaCaracterizacaoTest extends TestCase
         ]],
     ];
 
-    private const USUARIO_MODAL = [
+    private const USUARIO_MODAL_GESTOR = [
         'id' => 'int',
         'name' => 'string',
         'email' => 'string',
-        'email_verified_at' => 'null|string',
-        'telefone' => 'null|string',
         'profile_pic' => 'null|string',
-        'setor_id' => 'null|int',
-        'created_at' => 'string',
-        'updated_at' => 'string',
-        'two_factor_confirmed_at' => 'null',
     ];
 
     private const RESERVA_BASE = [
@@ -405,7 +399,7 @@ class PayloadsDeSaidaCaracterizacaoTest extends TestCase
         );
 
         $this->assertEstrutura(
-            [...self::RESERVA_BASE, 'can_update' => 'bool', ...$this->relacoes(self::AGENDA_USER_MODAL, self::USUARIO_MODAL, true)],
+            [...self::RESERVA_BASE, 'can_update' => 'bool', ...$this->relacoes(self::AGENDA_USER_MODAL, self::USUARIO_REFERENCIA, true)],
             $props['reservaToShow'],
             'reservaToShow',
         );
@@ -457,7 +451,7 @@ class PayloadsDeSaidaCaracterizacaoTest extends TestCase
         $this->assertCount(1, $props['reservas']['data']);
         $this->assertEstrutura([...self::RESERVA_BASE, ...$relacoesGestor], $props['reservas']['data'][0], 'reservas.data[0]');
         $this->assertEstrutura(
-            [...self::RESERVA_BASE, 'horarios' => ['*' => $horarioGestorModal], 'user' => self::USUARIO_MODAL],
+            [...self::RESERVA_BASE, 'horarios' => ['*' => $horarioGestorModal], 'user' => self::USUARIO_MODAL_GESTOR],
             $props['reservaToShow'],
             'reservaToShow',
         );

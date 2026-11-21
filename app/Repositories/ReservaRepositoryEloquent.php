@@ -11,6 +11,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * @extends BaseRepositoryEloquent<Reserva>
@@ -67,7 +68,7 @@ class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements Reserv
     public function findWithWeekSlots(int $reservaId, string $weekStart, string $weekEnd): ?Reserva
     {
         return $this->model->with([
-            'user',
+            'user:id,name',
             'horarios' => function ($query) {
                 $query->orderBy('data')->orderBy('horario_inicio')
                     ->with(['agenda.espaco.andar.modulo.unidade', 'agenda.user:id,name,email,setor_id', 'avaliador:id,name']);
@@ -120,7 +121,7 @@ class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements Reserv
         return $this->model
             ->whereHas('horarios', fn ($q) => $q->whereIn('agenda_id', $agendaIds))
             ->with([
-                'user',
+                'user:id,name,email,profile_pic',
                 'horarios' => function ($query) use ($agendaIds) {
                     $query->whereIn('agenda_id', $agendaIds)
                         ->orderBy('data')->orderBy('horario_inicio')
@@ -261,5 +262,57 @@ class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements Reserv
                 $h->where('data', '<=', $fim);
             }
         });
+    }
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsOcupados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposAprovacao(int $reservaId, SupportCollection $slotsOcupados): Collection
+    {
+        return $this->model->newQuery()
+            ->where('id', '!=', $reservaId)
+            ->where('validation_status', 'completed')
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::EM_ANALISE->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
+            ->whereHas('horarios', function ($query) use ($slotsOcupados): void {
+                $query->where(function ($q) use ($slotsOcupados): void {
+                    foreach ($slotsOcupados as $slot) {
+                        $q->orWhere(function ($orQ) use ($slot): void {
+                            $orQ->where('data', $slot['data'])->where('agenda_id', $slot['agenda_id']);
+                        });
+                    }
+                });
+            })
+            ->select('id')
+            ->get();
+    }
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsLiberados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposLiberacao(SupportCollection $slotsLiberados): Collection
+    {
+        return $this->model->newQuery()
+            ->where('validation_status', 'completed')
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::INDEFERIDA->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
+            ->whereHas('horarios', function ($query) use ($slotsLiberados): void {
+                $query->where(function ($q) use ($slotsLiberados): void {
+                    foreach ($slotsLiberados as $slot) {
+                        $q->orWhere(function ($orQ) use ($slot): void {
+                            $orQ->where('data', $slot['data'])
+                                ->where('agenda_id', $slot['agenda_id']);
+                        });
+                    }
+                });
+            })
+            ->select('id')
+            ->get();
     }
 }

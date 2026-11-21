@@ -167,4 +167,28 @@ class HorarioRepositoryEloquent extends BaseRepositoryEloquent implements Horari
             ->values()
             ->all();
     }
+
+    /**
+     * @param  array<int>  $agendaIds
+     * @return SupportCollection<int|string, mixed>
+     */
+    public function idsDaReservaNasAgendas(int $reservaId, array $agendaIds): SupportCollection
+    {
+        return $this->model->newQuery()
+            ->where('reserva_id', $reservaId)
+            ->whereIn('agenda_id', $agendaIds)
+            ->pluck('id');
+    }
+
+    /**
+     * @param  array<int>  $horarioIds
+     * @param  array<int>  $agendaIds
+     */
+    public function existeForaDasAgendas(array $horarioIds, array $agendaIds): bool
+    {
+        return $this->model->newQuery()
+            ->whereIn('id', $horarioIds)
+            ->whereNotIn('agenda_id', $agendaIds)
+            ->exists();
+    }
 }

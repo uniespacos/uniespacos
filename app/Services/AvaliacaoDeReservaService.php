@@ -16,6 +16,7 @@ use App\Models\Reserva;
 use App\Models\User;
 use App\Notifications\ReservationEvaluatedNotification;
 use App\Repositories\HorarioRepositoryInterface;
+use App\Repositories\ReservaRepositoryInterface;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,6 +33,7 @@ class AvaliacaoDeReservaService
     public function __construct(
         private ConflictDetectionService $conflictService,
         private HorarioRepositoryInterface $horarios,
+        private ReservaRepositoryInterface $reservas,
         private ReservaBroadcaster $broadcaster,
     ) {}
 
@@ -137,10 +139,7 @@ class AvaliacaoDeReservaService
      */
     private function horariosConflitantesDoGestor(Reserva $reserva, array $agendasDoGestorIds): array
     {
-        $horariosDoGestorIds = Horario::query()
-            ->where('reserva_id', $reserva->id)
-            ->whereIn('agenda_id', $agendasDoGestorIds)
-            ->pluck('id');
+        $horariosDoGestorIds = $this->horarios->idsDaReservaNasAgendas($reserva->id, $agendasDoGestorIds);
 
         $conflitantes = $this->conflictService->findConflictsFor($reserva->id)
             ->filter(fn ($conflito, $horarioId): bool => $horariosDoGestorIds->contains($horarioId))
@@ -286,10 +285,7 @@ class AvaliacaoDeReservaService
             return;
         }
 
-        $existeHorarioDeAgendaAlheia = Horario::query()
-            ->whereIn('id', $horariosIds)
-            ->whereNotIn('agenda_id', $agendasDoGestorIds)
-            ->exists();
+        $existeHorarioDeAgendaAlheia = $this->horarios->existeForaDasAgendas($horariosIds, $agendasDoGestorIds);
 
         if ($existeHorarioDeAgendaAlheia) {
             throw new AutorizacaoDeJobException;
@@ -337,24 +333,7 @@ class AvaliacaoDeReservaService
             return;
         }
 
-        $reservasParaRevalidar = Reserva::query()
-            ->where('id', '!=', $reserva->id)
-            ->where('validation_status', 'completed')
-            ->whereIn('situacao', [
-                SituacaoReservaEnum::EM_ANALISE->value,
-                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
-            ])
-            ->whereHas('horarios', function ($query) use ($slotsOcupados): void {
-                $query->where(function ($q) use ($slotsOcupados): void {
-                    foreach ($slotsOcupados as $slot) {
-                        $q->orWhere(function ($orQ) use ($slot): void {
-                            $orQ->where('data', $slot['data'])->where('agenda_id', $slot['agenda_id']);
-                        });
-                    }
-                });
-            })
-            ->select('id')
-            ->get();
+        $reservasParaRevalidar = $this->reservas->reservasParaRevalidarAposAprovacao($reserva->id, $slotsOcupados);
 
         foreach ($reservasParaRevalidar as $reservaParaRevalidar) {
             Log::info('Disparando revalidação de conflito por aprovação de reserva', [

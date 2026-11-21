@@ -107,6 +107,8 @@ class AvaliacaoDeReservaServiceTest extends TestCase
         $this->mock(HorarioRepositoryInterface::class, function (MockInterface $mock): void {
             $mock->shouldReceive('linhasDaReserva')->andReturn(collect());
             $mock->shouldReceive('conflitosDeferidos')->andReturn(collect());
+            $mock->shouldReceive('idsDaReservaNasAgendas')->andReturn(collect());
+            $mock->shouldReceive('existeForaDasAgendas')->andReturn(false);
             $mock->shouldReceive('atualizarDaReservaEmLote')->andThrow(new QueryException(
                 'pgsql',
                 'update "horarios" set "situacao" = ?',

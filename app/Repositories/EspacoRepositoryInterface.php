@@ -57,4 +57,12 @@ interface EspacoRepositoryInterface extends CrudRepositoryInterface
      * semana e o horizonte de conflito.
      */
     public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco;
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @return Collection<int, Espaco>
+     */
+    public function listarComLocalizacaoParaOpcoes(?int $instituicaoId, ?array $agendaIds): Collection;
+
+    public function encontrarPorReservaOuFalhar(int $reservaId): Espaco;
 }

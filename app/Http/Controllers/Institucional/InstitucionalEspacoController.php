@@ -30,7 +30,7 @@ class InstitucionalEspacoController extends Controller
         $this->authorize('viewAny', Espaco::class);
 
         $user = Auth::user();
-        $instituicaoId = $user->setor->unidade->instituicao_id;
+        $instituicaoId = $user?->instituicaoId() ?? abort(403);
         $filters = $request->validated();
         $filterOptions = $this->service->getFilterOptions($instituicaoId);
 
@@ -47,7 +47,7 @@ class InstitucionalEspacoController extends Controller
 
     public function create(): Response
     {
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $formData = $this->service->getFormData($instituicaoId);
 
         return Inertia::render('Administrativo/Espacos/CadastrarEspaco', $formData);
@@ -91,7 +91,7 @@ class InstitucionalEspacoController extends Controller
         $this->authorize('update', $espaco);
 
         $espaco->load('andar.modulo.unidade');
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $formData = $this->service->getFormData($instituicaoId);
 
         return Inertia::render('Administrativo/Espacos/CadastrarEspaco', array_merge(

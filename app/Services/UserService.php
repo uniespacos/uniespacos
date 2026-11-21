@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\EmailJaVerificadoException;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Notifications\UserAssignedAsManagerNotification;
 use App\Notifications\UserRemovedAsManagerNotification;
@@ -48,11 +49,11 @@ class UserService
 
         /** @var LengthAwarePaginator<int, User> $users */
         $users = $this->repoUser->getPaginatedForAdminByInstituicao($instituicaoId, $search, $setorId, $apenasAnonimizados);
-        $users->through(fn (User $user) => array_merge($user->toArray(), [
+        $users->through(fn (User $user): array => UserResource::paraListagem(array_merge($user->toArray(), [
             'name' => $user->name,
             'roles' => $user->getRoleNames(),
             'anonimizado' => $user->estaAnonimizado(),
-        ]));
+        ])));
         $users->withQueryString();
 
         return [

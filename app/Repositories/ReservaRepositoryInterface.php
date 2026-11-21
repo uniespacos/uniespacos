@@ -8,6 +8,7 @@ use App\Models\Reserva;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * @extends CrudRepositoryInterface<Reserva>
@@ -76,4 +77,16 @@ interface ReservaRepositoryInterface extends CrudRepositoryInterface
      * @return Collection<int, Reserva>
      */
     public function listarParaRelatorioDePeriodo(?CarbonInterface $inicio, ?CarbonInterface $fim, ?array $situacoes, ?array $agendaIds, ?array $turnos, ?int $instituicaoId): Collection;
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsOcupados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposAprovacao(int $reservaId, SupportCollection $slotsOcupados): Collection;
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsLiberados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposLiberacao(SupportCollection $slotsLiberados): Collection;
 }

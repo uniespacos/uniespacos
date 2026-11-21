@@ -55,24 +55,6 @@ parameters:
 			path: app/Http/Controllers/Auth/VerifyEmailController.php
 
 		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/EspacoController.php
-
-		-
-			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/EspacoController.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/EspacoController.php
-
-		-
 			message: '#^Parameter \#1 \$user of method App\\Services\\EspacoService\:\:addFavorite\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -137,24 +119,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/HomeController.php
-
-		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
-
-		-
-			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalEspacoController.php
 
 		-
 			message: '#^Parameter \#4 \$pathsToDelete of method App\\Services\\EspacoService\:\:update\(\) expects array\<string\>, mixed given\.$#'

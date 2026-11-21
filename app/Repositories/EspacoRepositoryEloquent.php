@@ -296,4 +296,30 @@ class EspacoRepositoryEloquent extends BaseRepositoryEloquent implements EspacoR
             },
         ]);
     }
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @return Collection<int, Espaco>
+     */
+    public function listarComLocalizacaoParaOpcoes(?int $instituicaoId, ?array $agendaIds): Collection
+    {
+        $query = $this->model->newQuery()->with('andar.modulo.unidade');
+
+        if ($instituicaoId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($u) => $u->where('instituicao_id', $instituicaoId));
+        }
+
+        if ($agendaIds !== null) {
+            $query->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+        }
+
+        return $query->get();
+    }
+
+    public function encontrarPorReservaOuFalhar(int $reservaId): Espaco
+    {
+        return $this->model->newQuery()
+            ->whereHas('agendas.horarios.reserva', fn ($q) => $q->where('id', $reservaId))
+            ->firstOrFail();
+    }
 }
