@@ -27,6 +27,13 @@ interface HorarioRepositoryInterface
     public function conflitosDeferidos(array $linhas, ?int $ignorarReservaId = null): SupportCollection;
 
     /**
+     * Horarios de uma reserva, indexados pelo id do horario, no formato aceito por conflitosDeferidos.
+     *
+     * @return SupportCollection<int, array{agenda_id: int, data: string, horario_inicio: string, horario_fim: string}>
+     */
+    public function linhasDaReserva(int $reservaId): SupportCollection;
+
+    /**
      * Atualiza numa unica query os horarios da reserva que estao nas agendas informadas.
      *
      * @param  list<int>  $horarioIds

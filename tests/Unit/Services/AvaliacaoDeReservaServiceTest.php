@@ -105,6 +105,8 @@ class AvaliacaoDeReservaServiceTest extends TestCase
         [$gestor, $reserva, $horarios] = $this->reservaComHorarios(1);
 
         $this->mock(HorarioRepositoryInterface::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('linhasDaReserva')->andReturn(collect());
+            $mock->shouldReceive('conflitosDeferidos')->andReturn(collect());
             $mock->shouldReceive('atualizarDaReservaEmLote')->andThrow(new QueryException(
                 'pgsql',
                 'update "horarios" set "situacao" = ?',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\Agenda\AgendaEnum;
 use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -17,31 +18,49 @@ class UserRemovedAsManagerNotification extends BaseNotification
 
     public function __construct(User $user, ?string $espacoNome = null, ?string $turno = null)
     {
-        $message = 'Você foi removido como gestor de agenda.';
-
-        if ($espacoNome && $turno) {
-            $message = 'Você foi removido como gestor do espaço: '.$espacoNome.' Turno: '.$turno.'.';
-        }
-
-        parent::__construct('Gestão de Espaços', $message, route('espacos.index'));
-
         $this->user = $user;
         $this->espacoNome = $espacoNome;
         $this->turno = $turno;
+
+        if ($espacoNome && $turno) {
+            parent::__construct(
+                (string) __('Space Management'),
+                (string) __('You were removed as manager of the space ":espaco" for the :turno shift.', [
+                    'espaco' => $espacoNome,
+                    'turno' => self::rotuloDoTurno($turno),
+                ]),
+                route('espacos.index')
+            );
+
+            return;
+        }
+
+        parent::__construct(
+            (string) __('Space Management'),
+            (string) __('You were removed as schedule manager.'),
+            route('espacos.index')
+        );
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Você foi removido como gestor de agenda.')
+            ->subject((string) __('You were removed as schedule manager.'))
             ->view('emails.users.user_removed_as_manager', [
                 'user' => $this->user,
                 'espacoNome' => $this->espacoNome,
-                'turno' => $this->turno,
+                'turno' => $this->turno !== null ? self::rotuloDoTurno($this->turno) : null,
                 'url' => $this->url,
             ]);
+    }
+
+    private static function rotuloDoTurno(string $turno): string
+    {
+        return (string) match (AgendaEnum::tryFrom($turno)) {
+            AgendaEnum::MANHA => __('Morning'),
+            AgendaEnum::TARDE => __('Afternoon'),
+            AgendaEnum::NOITE => __('Evening'),
+            null => $turno,
+        };
     }
 }

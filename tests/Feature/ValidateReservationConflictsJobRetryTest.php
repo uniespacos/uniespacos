@@ -11,6 +11,7 @@ use App\Jobs\ValidateReservationConflictsJob;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Services\ConflictDetectionService;
+use App\Services\ReservaBroadcaster;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
@@ -29,7 +30,7 @@ class ValidateReservationConflictsJobRetryTest extends TestCase
         $job = (new ValidateReservationConflictsJob($reserva))->withFakeQueueInteractions();
         $erro = new QueryException('pgsql', 'select 1', [], new Exception('timeout'));
 
-        $this->assertThrows(fn () => $job->handle($this->servicoQueFalha($erro)), QueryException::class);
+        $this->assertThrows(fn () => $job->handle($this->servicoQueFalha($erro), app(ReservaBroadcaster::class)), QueryException::class);
 
         $job->assertNotFailed();
         $job->assertNotReleased();
@@ -56,7 +57,7 @@ class ValidateReservationConflictsJobRetryTest extends TestCase
         $reserva = $this->criarReservaEmProcessamento();
         $job = (new ValidateReservationConflictsJob($reserva))->withFakeQueueInteractions();
 
-        $job->handle($this->servicoQueFalha(new ConflitoDeHorarioException));
+        $job->handle($this->servicoQueFalha(new ConflitoDeHorarioException), app(ReservaBroadcaster::class));
 
         $job->assertFailedWith(ConflitoDeHorarioException::class);
         $job->assertNotReleased();

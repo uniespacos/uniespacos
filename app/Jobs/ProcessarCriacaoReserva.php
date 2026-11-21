@@ -47,16 +47,6 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
         try {
             [$reserva, $gestores] = $criacao->criar($this->dadosRequisicao, $this->solicitante);
-
-            $this->notificarGestores($reserva, $gestores);
-
-            ValidateReservationConflictsJob::dispatch($reserva);
-
-            Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
-
-            $this->notificarSolicitanteDeCriacao($reserva);
-
-            $broadcaster->publicar($reserva, 'created');
         } catch (DominioException $e) {
             Log::warning('ProcessarCriacaoReserva failed', [
                 'solicitante_id' => $this->solicitante->id,
@@ -64,6 +54,8 @@ class ProcessarCriacaoReserva implements ShouldQueue
             ]);
 
             $this->fail($e);
+
+            return;
         } catch (Throwable $e) {
             Log::error('ProcessarCriacaoReserva failed', [
                 'solicitante_id' => $this->solicitante->id,
@@ -72,6 +64,8 @@ class ProcessarCriacaoReserva implements ShouldQueue
 
             throw $e;
         }
+
+        $this->efeitosPosCommit($reserva, $gestores, $broadcaster);
     }
 
     public function failed(Throwable $exception): void
@@ -84,6 +78,36 @@ class ProcessarCriacaoReserva implements ShouldQueue
         } catch (Exception $e) {
             Log::error('Falha fatal ao enviar notificação de erro de criação de reserva', [
                 'solicitante_id' => $this->solicitante->id,
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    /**
+     * @param  Collection<int, User>  $gestores
+     */
+    private function efeitosPosCommit(Reserva $reserva, Collection $gestores, ReservaBroadcaster $broadcaster): void
+    {
+        $this->notificarGestores($reserva, $gestores);
+
+        try {
+            ValidateReservationConflictsJob::dispatch($reserva);
+
+            Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da criação de reserva: validação de conflitos não despachada', [
+                'reserva_id' => $reserva->id,
+                'exception' => $e,
+            ]);
+        }
+
+        $this->notificarSolicitanteDeCriacao($reserva);
+
+        try {
+            $broadcaster->publicar($reserva, 'created');
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da criação de reserva: broadcast não publicado', [
+                'reserva_id' => $reserva->id,
                 'exception' => $e,
             ]);
         }

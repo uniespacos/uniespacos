@@ -74,6 +74,19 @@ class HorarioRepositoryEloquent implements HorarioRepositoryInterface
         return $conflitos;
     }
 
+    public function linhasDaReserva(int $reservaId): SupportCollection
+    {
+        return $this->horario->newQuery()->toBase()
+            ->where('reserva_id', $reservaId)
+            ->get(['id', 'agenda_id', 'data', 'horario_inicio', 'horario_fim'])
+            ->mapWithKeys(fn (\stdClass $horario): array => [(int) $horario->id => [
+                'agenda_id' => (int) $horario->agenda_id,
+                'data' => (string) $horario->data,
+                'horario_inicio' => (string) $horario->horario_inicio,
+                'horario_fim' => (string) $horario->horario_fim,
+            ]]);
+    }
+
     public function atualizarDaReservaEmLote(array $horarioIds, int $reservaId, array $agendaIds, array $atributos): int
     {
         return $this->horario->newQuery()

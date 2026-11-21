@@ -824,7 +824,7 @@ class AvaliarReservaJobTest extends TestCase
 
     private function servicoDeAvaliacao(): AvaliacaoDeReservaService
     {
-        return app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => new ConflictDetectionService]);
+        return app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => app(ConflictDetectionService::class)]);
     }
 
     /**

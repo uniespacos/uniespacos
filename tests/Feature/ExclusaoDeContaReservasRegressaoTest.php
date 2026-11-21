@@ -228,6 +228,6 @@ class ExclusaoDeContaReservasRegressaoTest extends TestCase
             'observacao' => 'Aprovado em teste',
         ], $this->gestor);
 
-        $job->handle(app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => new ConflictDetectionService]));
+        $job->handle(app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => app(ConflictDetectionService::class)]));
     }
 }

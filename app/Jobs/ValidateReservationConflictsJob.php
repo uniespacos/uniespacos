@@ -47,7 +47,7 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
         return [30, 60];
     }
 
-    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
+    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster): void
     {
         Log::info('ValidateReservationConflictsJob started', ['reserva_id' => $this->reserva->id]);
 
