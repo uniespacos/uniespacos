@@ -5,93 +5,81 @@ declare(strict_types=1);
 namespace Tests\Unit\Requests;
 
 use App\Http\Requests\UpdateModuloRequest;
+use App\Models\Instituicao;
+use App\Models\Modulo;
+use App\Models\Unidade;
 use App\Models\User;
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Container\Container as ContainerContract;
-use Illuminate\Contracts\Foundation\Application as ApplicationContract;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Facade;
-use Mockery;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Routing\Route;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
+use Tests\TestCase;
 
 class UpdateModuloRequestTest extends TestCase
 {
-    private ?ContainerContract $previousContainer = null;
-
-    private ?ApplicationContract $previousFacadeApp = null;
+    private Modulo $modulo;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->previousContainer = Container::getInstance();
-        $this->previousFacadeApp = Facade::getFacadeApplication();
+        Permission::firstOrCreate(['name' => 'modulos.atualizar', 'guard_name' => 'web']);
 
-        $app = new Application;
-        Container::setInstance($app);
-        Facade::clearResolvedInstances();
-        Facade::setFacadeApplication($app);
+        $instituicao = Instituicao::factory()->create();
+        $unidade = Unidade::factory()->create(['instituicao_id' => $instituicao->id]);
+        $this->modulo = Modulo::factory()->create(['unidade_id' => $unidade->id]);
     }
 
-    protected function tearDown(): void
+    #[Test]
+    public function autoriza_usuario_com_permissao_de_atualizar_o_modulo(): void
     {
-        Facade::clearResolvedInstances();
-        Facade::setFacadeApplication($this->previousFacadeApp);
-        Container::setInstance($this->previousContainer);
-        Mockery::close();
+        $usuario = $this->usuarioComPermissao();
 
-        parent::tearDown();
+        $this->assertTrue($this->requisicaoPara($usuario)->authorize());
     }
 
-    public function test_authorize_permite_quando_usuario_tem_modulos_atualizar(): void
+    #[Test]
+    public function nega_usuario_sem_permissao_de_atualizar_o_modulo(): void
     {
-        $user = Mockery::mock(User::class);
-        $user->shouldReceive('hasPermissionTo')
-            ->once()
-            ->with('modulos.atualizar')
-            ->andReturn(true);
+        $usuario = User::factory()->create();
 
-        $authMock = Mockery::mock();
-        $authMock->shouldReceive('user')
-            ->once()
-            ->andReturn($user);
-        Auth::swap($authMock);
-
-        $request = new UpdateModuloRequest;
-
-        $this->assertTrue($request->authorize());
+        $this->assertFalse($this->requisicaoPara($usuario)->authorize());
     }
 
-    public function test_authorize_nega_quando_usuario_nao_tem_modulos_atualizar(): void
+    #[Test]
+    public function nega_quando_nao_ha_usuario_autenticado(): void
     {
-        $user = Mockery::mock(User::class);
-        $user->shouldReceive('hasPermissionTo')
-            ->once()
-            ->with('modulos.atualizar')
-            ->andReturn(false);
-
-        $authMock = Mockery::mock();
-        $authMock->shouldReceive('user')
-            ->once()
-            ->andReturn($user);
-        Auth::swap($authMock);
-
-        $request = new UpdateModuloRequest;
-
-        $this->assertFalse($request->authorize());
+        $this->assertFalse($this->requisicaoPara(null)->authorize());
     }
 
-    public function test_authorize_nega_quando_nao_ha_usuario_autenticado(): void
+    #[Test]
+    public function nega_quando_a_rota_nao_traz_o_modulo(): void
     {
-        $authMock = Mockery::mock();
-        $authMock->shouldReceive('user')
-            ->once()
-            ->andReturn(null);
-        Auth::swap($authMock);
+        $usuario = $this->usuarioComPermissao();
 
-        $request = new UpdateModuloRequest;
+        $requisicao = UpdateModuloRequest::create('/institucional/modulos', 'PUT');
+        $requisicao->setUserResolver(fn () => $usuario);
 
-        $this->assertFalse($request->authorize());
+        $this->assertFalse($requisicao->authorize());
+    }
+
+    private function usuarioComPermissao(): User
+    {
+        $usuario = User::factory()->create();
+        $usuario->givePermissionTo('modulos.atualizar');
+
+        return $usuario;
+    }
+
+    private function requisicaoPara(?User $usuario): UpdateModuloRequest
+    {
+        $requisicao = UpdateModuloRequest::create('/institucional/modulos/'.$this->modulo->id, 'PUT');
+
+        $rota = (new Route(['PUT'], 'institucional/modulos/{modulo}', []))->bind($requisicao);
+        $rota->setParameter('modulo', $this->modulo);
+
+        $requisicao->setRouteResolver(fn () => $rota);
+        $requisicao->setUserResolver(fn () => $usuario);
+
+        return $requisicao;
     }
 }

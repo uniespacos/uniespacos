@@ -9,10 +9,12 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase
 {
+    use CongelaRelogio;
     use DatabaseTransactions;
 
     public function test_email_verification_screen_can_be_rendered()

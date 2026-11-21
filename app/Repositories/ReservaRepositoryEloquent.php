@@ -4,42 +4,29 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\Reserva\ValidationStatusEnum;
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
+use App\Models\Horario;
 use App\Models\Reserva;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
-class ReservaRepositoryEloquent implements ReservaRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Reserva>
+ */
+class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements ReservaRepositoryInterface
 {
-    public function __construct(
-        protected Reserva $reserva,
-    ) {}
+    public function __construct(Reserva $reserva)
+    {
+        parent::__construct($reserva);
+    }
 
     private function dataFiltro(mixed $valor): string
     {
         return is_string($valor) ? $valor : '';
-    }
-
-    public function store(array $data): Reserva
-    {
-        return $this->reserva->create($data);
-    }
-
-    /**
-     * Returns all instances of Reserva from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Reserva>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->reserva->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
     }
 
     /**
@@ -49,7 +36,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPaginatedForUser(int $userId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->where('user_id', $userId)
             ->arquivo($filters['arquivo'] ?? null)
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($q2) => $q2->where('titulo', 'like', '%'.$s.'%')->orWhere('descricao', 'like', '%'.$s.'%')))
@@ -66,6 +53,12 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
                 },
                 'user:id,name',
             ])
+            ->withExists([
+                'horarios as possui_horario_avaliado' => fn ($q) => $q->whereIn('situacao', [
+                    SituacaoReservaEnum::DEFERIDA->value,
+                    SituacaoReservaEnum::INDEFERIDA->value,
+                ]),
+            ])
             ->ordenar($filters['ordenar'] ?? null)
             ->paginate($perPage);
     }
@@ -75,8 +68,8 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function findWithWeekSlots(int $reservaId, string $weekStart, string $weekEnd): ?Reserva
     {
-        return $this->reserva->with([
-            'user',
+        return $this->model->with([
+            'user:id,name',
             'horarios' => function ($query) {
                 $query->orderBy('data')->orderBy('horario_inicio')
                     ->with(['agenda.espaco.andar.modulo.unidade', 'agenda.user:id,name,email,setor_id', 'avaliador:id,name']);
@@ -92,7 +85,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPaginatedForGestor(array $agendaIds, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->whereHas('horarios', function ($q) use ($agendaIds) {
                 $q->whereIn('agenda_id', $agendaIds);
             })
@@ -126,10 +119,10 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function findForGestorModal(int $reservaId, array $agendaIds, string $weekStart, string $weekEnd): ?Reserva
     {
-        return $this->reserva
+        return $this->model
             ->whereHas('horarios', fn ($q) => $q->whereIn('agenda_id', $agendaIds))
             ->with([
-                'user',
+                'user:id,name,email,profile_pic',
                 'horarios' => function ($query) use ($agendaIds) {
                     $query->whereIn('agenda_id', $agendaIds)
                         ->orderBy('data')->orderBy('horario_inicio')
@@ -144,17 +137,9 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ])->find($reservaId);
     }
 
-    public function get(int|string $id): ?Reserva
+    public function inserirHorarios(array $linhas): void
     {
-        return $this->reserva->find($id);
-    }
-
-    public function update(array $data, int|string $id): Reserva
-    {
-        $reserva = $this->reserva->findOrFail($id);
-        $reserva->update($data);
-
-        return $reserva;
+        Horario::insert($linhas);
     }
 
     /**
@@ -162,15 +147,173 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPendentesDoSolicitante(int $userId): Collection
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->where('user_id', $userId)
             ->where('situacao', SituacaoReservaEnum::EM_ANALISE->value)
             ->lockForUpdate()
             ->get();
     }
 
-    public function destroy(int|string $id): bool
+    public function contarDaInstituicao(?int $instituicaoId, ?CarbonInterface $inicio, ?CarbonInterface $fim): int
     {
-        return (bool) $this->reserva->findOrFail($id)->delete();
+        $query = $this->consultaDaInstituicaoNoPeriodo($instituicaoId, $inicio, $fim);
+
+        return $query->count();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function contarPorSituacaoDaInstituicao(?int $instituicaoId, ?CarbonInterface $inicio, ?CarbonInterface $fim): array
+    {
+        return $this->consultaDaInstituicaoNoPeriodo($instituicaoId, $inicio, $fim)
+            ->selectRaw('situacao, count(*) as total')
+            ->groupBy('situacao')
+            ->pluck('total', 'situacao')
+            ->map(fn (mixed $total): int => is_numeric($total) ? (int) $total : 0)
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{nome: string|null, count: int}>
+     */
+    public function rankingSetoresDaInstituicao(?int $instituicaoId, int $limite): array
+    {
+        return $this->model->newQuery()
+            ->whereHas('user.setor.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->join('users', 'reservas.user_id', '=', 'users.id')
+            ->join('setors', 'users.setor_id', '=', 'setors.id')
+            ->groupBy('setors.id', 'setors.nome')
+            ->selectRaw('setors.nome as nome, count(*) as count')
+            ->orderByDesc('count')
+            ->limit($limite)
+            ->get()
+            ->map(function (Reserva $linha): array {
+                $nome = $linha->getAttribute('nome');
+                $total = $linha->getAttribute('count');
+
+                return [
+                    'nome' => is_string($nome) ? $nome : null,
+                    'count' => is_numeric($total) ? (int) $total : 0,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<mixed>|null  $situacoes
+     * @param  array<mixed>|null  $agendaIds
+     * @param  array<mixed>|null  $turnos
+     * @return Collection<int, Reserva>
+     */
+    public function listarParaRelatorioDePeriodo(?CarbonInterface $inicio, ?CarbonInterface $fim, ?array $situacoes, ?array $agendaIds, ?array $turnos, ?int $instituicaoId): Collection
+    {
+        $query = $this->model->newQuery()->with('user')->withCount('horarios');
+
+        $this->aplicarPeriodoEmHorarios($query, $inicio, $fim);
+
+        if ($situacoes !== null) {
+            $query->whereIn('situacao', $situacoes);
+        }
+
+        if ($agendaIds !== null) {
+            $query->whereHas('horarios', fn ($h) => $h->whereIn('agenda_id', $agendaIds));
+        }
+
+        if ($turnos !== null) {
+            $query->whereHas('horarios.agenda', fn ($q) => $q->whereIn('turno', $turnos));
+        }
+
+        if ($instituicaoId !== null && $agendaIds === null) {
+            $query->whereHas('horarios.agenda.espaco.andar.modulo.unidade', fn ($u) => $u->where('instituicao_id', $instituicaoId));
+        }
+
+        return $query->latest('data_inicial')->get();
+    }
+
+    /**
+     * @return Builder<Reserva>
+     */
+    private function consultaDaInstituicaoNoPeriodo(?int $instituicaoId, ?CarbonInterface $inicio, ?CarbonInterface $fim): Builder
+    {
+        $query = $this->model->newQuery()
+            ->whereHas('horarios.agenda.espaco.andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
+
+        $this->aplicarPeriodoEmHorarios($query, $inicio, $fim);
+
+        return $query;
+    }
+
+    /**
+     * @param  Builder<Reserva>  $query
+     */
+    private function aplicarPeriodoEmHorarios(Builder $query, ?CarbonInterface $inicio, ?CarbonInterface $fim): void
+    {
+        if ($inicio === null && $fim === null) {
+            return;
+        }
+
+        $query->whereHas('horarios', function ($h) use ($inicio, $fim) {
+            if ($inicio !== null && $fim !== null) {
+                $h->whereBetween('data', [$inicio, $fim]);
+            } elseif ($inicio !== null) {
+                $h->where('data', '>=', $inicio);
+            } elseif ($fim !== null) {
+                $h->where('data', '<=', $fim);
+            }
+        });
+    }
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsOcupados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposAprovacao(int $reservaId, SupportCollection $slotsOcupados): Collection
+    {
+        return $this->model->newQuery()
+            ->where('id', '!=', $reservaId)
+            ->where('validation_status', ValidationStatusEnum::COMPLETED->value)
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::EM_ANALISE->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
+            ->whereHas('horarios', function ($query) use ($slotsOcupados): void {
+                $query->where(function ($q) use ($slotsOcupados): void {
+                    foreach ($slotsOcupados as $slot) {
+                        $q->orWhere(function ($orQ) use ($slot): void {
+                            $orQ->where('data', $slot['data'])->where('agenda_id', $slot['agenda_id']);
+                        });
+                    }
+                });
+            })
+            ->select('id')
+            ->get();
+    }
+
+    /**
+     * @param  SupportCollection<int, array{data: string, agenda_id: int}>  $slotsLiberados
+     * @return Collection<int, Reserva>
+     */
+    public function reservasParaRevalidarAposLiberacao(SupportCollection $slotsLiberados): Collection
+    {
+        return $this->model->newQuery()
+            ->where('validation_status', ValidationStatusEnum::COMPLETED->value)
+            ->whereIn('situacao', [
+                SituacaoReservaEnum::INDEFERIDA->value,
+                SituacaoReservaEnum::PARCIALMENTE_DEFERIDA->value,
+            ])
+            ->whereHas('horarios', function ($query) use ($slotsLiberados): void {
+                $query->where(function ($q) use ($slotsLiberados): void {
+                    foreach ($slotsLiberados as $slot) {
+                        $q->orWhere(function ($orQ) use ($slot): void {
+                            $orQ->where('data', $slot['data'])
+                                ->where('agenda_id', $slot['agenda_id']);
+                        });
+                    }
+                });
+            })
+            ->select('id')
+            ->get();
     }
 }

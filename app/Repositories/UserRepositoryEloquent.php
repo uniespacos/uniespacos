@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Espaco;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,9 +18,6 @@ class UserRepositoryEloquent implements UserRepositoryInterface
         protected User $user,
     ) {}
 
-    /**
-     * Stores a new instance of User in the database
-     */
     public function store(array $data): User
     {
         return $this->user->create($data);
@@ -80,7 +78,7 @@ class UserRepositoryEloquent implements UserRepositoryInterface
      * Por padrão, contas anonimizadas ficam fora da listagem. Com $apenasAnonimizados,
      * a listagem mostra somente elas.
      */
-    public function getPaginatedForAdminByInstituicao(int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedForAdminByInstituicao(?int $instituicaoId, ?string $search, ?int $setorId, bool $apenasAnonimizados = false, int $perPage = 10): LengthAwarePaginator
     {
         $padraoAnonimizado = $this->padraoLikeEmailAnonimizado();
 
@@ -127,17 +125,11 @@ class UserRepositoryEloquent implements UserRepositoryInterface
             ->find($id);
     }
 
-    /**
-     * Returns an instance of User from the given id
-     */
     public function get(int|string $id): ?User
     {
         return $this->user->find($id);
     }
 
-    /**
-     * Updates the data of an instance of User
-     */
     public function update(array $data, int|string $id): User
     {
         $user = $this->user->findOrFail($id);
@@ -185,5 +177,21 @@ class UserRepositoryEloquent implements UserRepositoryInterface
     public function removerTokenDeRedefinicaoDeSenha(string $email): void
     {
         DB::table('password_reset_tokens')->where('email', $email)->delete();
+    }
+
+    public function contarGestoresDaInstituicao(?int $instituicaoId): int
+    {
+        return $this->user->newQuery()
+            ->whereHas('agendas.espaco.andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->distinct('id')
+            ->count();
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getComPapel(Role $papel): Collection
+    {
+        return $this->user->newQuery()->role($papel)->get();
     }
 }

@@ -14,6 +14,7 @@ use App\Models\Setor;
 use App\Models\Unidade;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -29,6 +30,8 @@ use Tests\TestCase;
  */
 class ReservaListagemLocalTest extends TestCase
 {
+    use CongelaRelogio;
+
     private const MODULO = 'Pavilhão Central';
 
     private const ANDAR = 'Terceiro Andar';

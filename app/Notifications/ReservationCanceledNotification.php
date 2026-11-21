@@ -47,9 +47,6 @@ class ReservationCanceledNotification extends BaseNotification
         ];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

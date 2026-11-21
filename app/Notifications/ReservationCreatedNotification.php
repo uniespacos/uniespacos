@@ -37,9 +37,6 @@ class ReservationCreatedNotification extends BaseNotification
         $this->reserva = $reserva;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         $subjectPrefix = $this->reserva->situacao === SituacaoReservaEnum::DEFERIDA->value

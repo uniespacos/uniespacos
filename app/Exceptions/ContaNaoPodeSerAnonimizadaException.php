@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use DomainException;
-
-final class ContaNaoPodeSerAnonimizadaException extends DomainException
+final class ContaNaoPodeSerAnonimizadaException extends DominioException
 {
     public static function gestorDeAgenda(): self
     {

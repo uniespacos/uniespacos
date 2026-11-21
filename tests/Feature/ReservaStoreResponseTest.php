@@ -9,10 +9,13 @@ use App\Models\Agenda;
 use App\Models\Espaco;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ReservaStoreResponseTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarPayloadValido(): array
     {
         $espaco = Espaco::factory()->create();

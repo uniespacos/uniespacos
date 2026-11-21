@@ -18,9 +18,6 @@ class UpdateUserRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('usuarios.atualizar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $userId = $this->route('usuario');

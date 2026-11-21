@@ -10,17 +10,12 @@ use App\Models\User;
 
 class ReservaPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
         return $user->hasPermissionTo('reservas.listar');
     }
 
     /**
-     * Determine whether the user can view the model.
-     *
      * ATENÇÃO: este método é a única barreira contra IDOR nas rotas
      * reservas.index (?reserva=), reservas.show e reservas.edit. A permission
      * 'reservas.visualizar' é intencional: o papel 'institucional' depende dela
@@ -31,18 +26,14 @@ class ReservaPolicy
         return $user->hasPermissionTo('reservas.visualizar') || $user->id === $reserva->user_id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
         return false;
     }
 
     /**
-     * Determine whether the user can update the model.
-     * Allowed only for the reservation owner while the situacao is 'em_analise'
-     * and no horarios have been individually evaluated yet, or if user has update permission.
+     * Dono com a reserva ainda em análise e sem horário avaliado, ou quem tem reservas.atualizar.
+     * Listagens carregam `possui_horario_avaliado` via withExists para evitar uma consulta por item.
      */
     public function update(User $user, Reserva $reserva): bool
     {
@@ -54,40 +45,26 @@ class ReservaPolicy
             return false;
         }
 
-        $hasProcessedSlots = $reserva->horarios()
-            ->whereIn('situacao', [SituacaoReservaEnum::DEFERIDA->value, SituacaoReservaEnum::INDEFERIDA->value])
-            ->exists();
-
-        return ! $hasProcessedSlots;
+        return ! $this->possuiHorarioAvaliado($reserva);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Reserva $reserva): bool
     {
         return $user->hasPermissionTo('reservas.deletar') || $user->id === $reserva->user_id;
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Reserva $reserva): bool
     {
         return false;
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Reserva $reserva): bool
     {
         return false;
     }
 
     /**
-     * Determine whether a gestor can view the reservation details/review page.
-     * Requires the user to have reservas.avaliar permission and manage at least one agenda associated with the reservation.
+     * Exige reservas.avaliar e ao menos uma agenda da reserva gerenciada pelo gestor.
      */
     public function viewForGestor(User $user, Reserva $reserva): bool
     {
@@ -102,8 +79,7 @@ class ReservaPolicy
     }
 
     /**
-     * Determine whether a gestor can submit an evaluation for the reservation.
-     * Terminal archived ('inativa') reservations cannot be evaluated.
+     * Reservas arquivadas ('inativa') são terminais e não podem ser avaliadas.
      */
     public function evaluateForGestor(User $user, Reserva $reserva): bool
     {
@@ -112,5 +88,16 @@ class ReservaPolicy
         }
 
         return $this->viewForGestor($user, $reserva);
+    }
+
+    private function possuiHorarioAvaliado(Reserva $reserva): bool
+    {
+        if (array_key_exists('possui_horario_avaliado', $reserva->getAttributes())) {
+            return (bool) $reserva->getAttribute('possui_horario_avaliado');
+        }
+
+        return $reserva->horarios()
+            ->whereIn('situacao', [SituacaoReservaEnum::DEFERIDA->value, SituacaoReservaEnum::INDEFERIDA->value])
+            ->exists();
     }
 }

@@ -17,9 +17,6 @@ class StoreInstituicaoRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('instituicoes.criar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [

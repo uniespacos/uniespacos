@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Exceptions\AutorizacaoDeJobException;
+use App\Exceptions\ReservaArquivadaException;
 use App\Jobs\AvaliarReservaJob;
 use App\Jobs\ValidateReservationConflictsJob;
 use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Services\AvaliacaoDeReservaService;
 use App\Services\ConflictDetectionService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -56,11 +59,9 @@ class AvaliarReservaJobTest extends TestCase
         ];
 
         $job = new AvaliarReservaJob($reserva, $validatedData, $manager);
-        $conflictService = new ConflictDetectionService;
 
-        // Act
         try {
-            $job->handle($conflictService);
+            $job->handle($this->servicoDeAvaliacao());
         } catch (\Exception $e) {
             $this->fail('Job failed with exception: '.$e->getMessage());
         }
@@ -107,7 +108,7 @@ class AvaliarReservaJobTest extends TestCase
         ];
 
         $job = new AvaliarReservaJob($reserva, $validatedData, $manager);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         // Assert
         $reserva->refresh();
@@ -117,10 +118,10 @@ class AvaliarReservaJobTest extends TestCase
     }
 
     /**
-     * Issue #265: the entry-layer guard. The job must refuse to process
-     * an archived reservation at the entry point, throwing an exception.
+     * Issue #265: the entry-layer guard. The job must refuse to process an archived
+     * reservation and fail without retry.
      */
-    public function test_evaluating_archived_reservation_throws_exception()
+    public function test_evaluating_archived_reservation_fails_without_retry()
     {
         // Arrange
         $manager = User::factory()->create();
@@ -146,11 +147,14 @@ class AvaliarReservaJobTest extends TestCase
             'observacao' => 'Test observation',
         ];
 
-        // Act & Assert
         $job = new AvaliarReservaJob($reserva, $validatedData, $manager);
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Cannot evaluate an archived reservation.');
-        $job->handle(new ConflictDetectionService);
+        $job->withFakeQueueInteractions();
+
+        $job->handle($this->servicoDeAvaliacao());
+
+        $job->assertFailedWith(ReservaArquivadaException::class);
+        $job->assertNotReleased();
+        $this->assertSame('inativa', $horario->fresh()->situacao);
     }
 
     public function test_reservation_status_aggregation_becomes_parcialmente_deferida_when_all_assessed()
@@ -181,7 +185,7 @@ class AvaliarReservaJobTest extends TestCase
         ];
 
         $job = new AvaliarReservaJob($reserva, $validatedData, $manager);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         // Assert
         $reserva->refresh();
@@ -216,7 +220,7 @@ class AvaliarReservaJobTest extends TestCase
 
         // Act
         $job = new AvaliarReservaJob($reserva, $validatedData, $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         // Assert: Horario should be updated successfully
         $this->assertDatabaseHas('horarios', [
@@ -254,11 +258,14 @@ class AvaliarReservaJobTest extends TestCase
             'observacao' => null,
         ];
 
-        // Act & Assert: Job should throw exception for unauthorized agenda
         $job = new AvaliarReservaJob($reserva, $validatedData, $gestorA);
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Authorization failed: one or more horarios do not belong to managed agendas.');
-        $job->handle(new ConflictDetectionService);
+        $job->withFakeQueueInteractions();
+
+        $job->handle($this->servicoDeAvaliacao());
+
+        $job->assertFailedWith(AutorizacaoDeJobException::class);
+        $job->assertNotReleased();
+        $this->assertSame('em_analise', $horarioEmAgendaB->fresh()->situacao);
     }
 
     public function test_gestor_cannot_evaluate_mixed_horarios_with_unmanaged_agenda()
@@ -297,11 +304,14 @@ class AvaliarReservaJobTest extends TestCase
             'observacao' => null,
         ];
 
-        // Act & Assert: Job should throw exception because one horario is from unmanaged agenda
         $job = new AvaliarReservaJob($reserva, $validatedData, $gestorA);
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Authorization failed: one or more horarios do not belong to managed agendas.');
-        $job->handle(new ConflictDetectionService);
+        $job->withFakeQueueInteractions();
+
+        $job->handle($this->servicoDeAvaliacao());
+
+        $job->assertFailedWith(AutorizacaoDeJobException::class);
+        $job->assertNotReleased();
+        $this->assertSame('em_analise', $horarioEmAgendaA->fresh()->situacao);
     }
 
     public function test_avaliar_reserva_triggers_conflict_revalidation_for_em_analise_reservas(): void
@@ -348,7 +358,7 @@ class AvaliarReservaJobTest extends TestCase
         ];
 
         $job = new AvaliarReservaJob($reservaA, $validatedData, $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         // Assert: ValidateReservationConflictsJob deve ter sido despachado para B
         Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {
@@ -406,7 +416,7 @@ class AvaliarReservaJobTest extends TestCase
         ];
 
         $job = new AvaliarReservaJob($reservaA, $validatedData, $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         // Assert: ValidateReservationConflictsJob deve ter sido despachado para B (que está parcialmente_deferida)
         Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {
@@ -463,7 +473,7 @@ class AvaliarReservaJobTest extends TestCase
             'horarios_avaliados' => [['id' => $horarioProprio->id, 'status' => 'deferida']],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertDatabaseHas('horarios', [
             'id' => $horarioAlheio->id,
@@ -536,7 +546,7 @@ class AvaliarReservaJobTest extends TestCase
             'horarios_avaliados' => [['id' => $horarioLivre->id, 'status' => 'deferida']],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertDatabaseHas('horarios', [
             'id' => $horarioEmConflito->id,
@@ -599,7 +609,7 @@ class AvaliarReservaJobTest extends TestCase
             'horarios_avaliados' => [['id' => $horarioEmConflito->id, 'status' => 'deferida']],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $horarioAvaliado = Horario::findOrFail($horarioEmConflito->id);
         $this->assertSame('indeferida', $horarioAvaliado->situacao);
@@ -622,7 +632,7 @@ class AvaliarReservaJobTest extends TestCase
         $job = new AvaliarReservaJob($reserva, $this->avaliacaoDeConflito($horarioEmConflito), $gestor);
 
         app()->setLocale('pt_BR');
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertSame(
             'Conflict with another approved reservation at this time.',
@@ -642,7 +652,7 @@ class AvaliarReservaJobTest extends TestCase
         $job = new AvaliarReservaJob($reserva, $this->avaliacaoDeConflito($horarioEmConflito), $gestor);
 
         app()->setLocale('en');
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertSame(
             'Conflito com outra reserva deferida neste horário.',
@@ -698,7 +708,7 @@ class AvaliarReservaJobTest extends TestCase
             ],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
         $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'em_analise', 'user_id' => null]);
@@ -758,7 +768,7 @@ class AvaliarReservaJobTest extends TestCase
             ],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
         $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'em_analise', 'user_id' => null]);
@@ -805,11 +815,16 @@ class AvaliarReservaJobTest extends TestCase
             ],
             'observacao' => null,
         ], $gestor);
-        $job->handle(new ConflictDetectionService);
+        $job->handle($this->servicoDeAvaliacao());
 
         $this->assertDatabaseHas('horarios', ['id' => $semana1->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
         $this->assertDatabaseHas('horarios', ['id' => $semana2->id, 'situacao' => 'deferida', 'user_id' => $gestor->id]);
         $this->assertSame('deferida', $reserva->fresh()->situacao);
+    }
+
+    private function servicoDeAvaliacao(): AvaliacaoDeReservaService
+    {
+        return app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => app(ConflictDetectionService::class)]);
     }
 
     /**

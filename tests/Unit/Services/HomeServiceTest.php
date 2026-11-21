@@ -20,7 +20,7 @@ class HomeServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new HomeService;
+        $this->service = app(HomeService::class);
     }
 
     protected function tearDown(): void

@@ -7,6 +7,7 @@ namespace App\Services\Relatorio\Reports;
 use App\Enums\Relatorio\TipoRelatorioEnum;
 use App\Models\Espaco;
 use App\Models\User;
+use App\Repositories\EspacoRepositoryInterface;
 use App\Services\Relatorio\Data\ColunaRelatorio;
 use App\Services\Relatorio\Data\DadosRelatorio;
 use App\Services\Relatorio\Data\FiltrosRelatorio;
@@ -14,33 +15,20 @@ use Carbon\CarbonImmutable;
 
 final class InventarioEspacosRelatorio implements RelatorioInterface
 {
+    public function __construct(
+        private EspacoRepositoryInterface $espacos,
+    ) {}
+
     public function gerar(User $usuario, FiltrosRelatorio $filtros): DadosRelatorio
     {
-        $query = Espaco::query()->with(['andar.modulo.unidade', 'agendas.user']);
-
-        if ($filtros->agendaIds !== null) {
-            $query->whereHas('agendas', fn ($q) => $q->whereIn('id', $filtros->agendaIds));
-        } elseif ($filtros->instituicaoId !== null) {
-            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $filtros->instituicaoId));
-        }
-
-        if ($filtros->unidadeId !== null) {
-            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('id', $filtros->unidadeId));
-        }
-
-        if ($filtros->moduloId !== null) {
-            $query->whereHas('andar.modulo', fn ($q) => $q->where('id', $filtros->moduloId));
-        }
-
-        if ($filtros->andarId !== null) {
-            $query->whereHas('andar', fn ($q) => $q->where('id', $filtros->andarId));
-        }
-
-        if ($filtros->espacoId !== null) {
-            $query->where('id', $filtros->espacoId);
-        }
-
-        $espacos = $query->get();
+        $espacos = $this->espacos->listarParaInventario(
+            $filtros->agendaIds,
+            $filtros->instituicaoId,
+            $filtros->unidadeId,
+            $filtros->moduloId,
+            $filtros->andarId,
+            $filtros->espacoId,
+        );
 
         $linhas = $espacos->map(function (Espaco $espaco) {
             $gestores = $espaco->agendas

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Institucional;
 
+use App\Http\Controllers\Concerns\RespondeComFlash;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarModulosRequest;
@@ -12,8 +13,6 @@ use App\Http\Requests\UpdateModuloRequest;
 use App\Models\Modulo;
 use App\Services\ModuloService;
 use App\Services\UnidadeService;
-use App\Support\MensagemDeErro;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -21,7 +20,7 @@ use Inertia\Response;
 
 class InstitucionalModuloController extends Controller
 {
-    use AuthorizesRequests;
+    use RespondeComFlash;
 
     public function __construct(
         protected ModuloService $service,
@@ -32,7 +31,7 @@ class InstitucionalModuloController extends Controller
     {
         $this->authorize('viewAny', Modulo::class);
 
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $validated = $request->validated();
         $search = $validated['search'] ?? null;
         $unidade = $validated['unidade'] ?? null;
@@ -54,8 +53,7 @@ class InstitucionalModuloController extends Controller
 
     public function create(): Response
     {
-        $user = Auth::user();
-        $instituicao = $user->setor->unidade->instituicao;
+        $instituicao = Auth::user()?->instituicao() ?? abort(403);
 
         return Inertia::render('Administrativo/Modulos/CadastrarModulo', [
             'instituicao' => $instituicao,
@@ -67,20 +65,20 @@ class InstitucionalModuloController extends Controller
     {
         $this->authorize('create', Modulo::class);
 
-        try {
-            $this->service->store($request->validated());
-
-            return redirect()->route('institucional.modulos.index')
-                ->with('success', __('Module created successfully!'));
-        } catch (\Exception $e) {
-            return back()->with(['error' => __('Error creating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
-        }
+        return $this->executar(
+            fn () => $this->service->store($request->validated()),
+            __('Module created successfully!'),
+            'Error creating module: :message',
+            rotaSucesso: 'institucional.modulos.index',
+            comEntrada: true,
+        );
     }
 
     public function edit(Modulo $modulo): Response
     {
-        $user = Auth::user();
-        $instituicao = $user->setor->unidade->instituicao;
+        $this->authorize('update', $modulo);
+
+        $instituicao = Auth::user()?->instituicao() ?? abort(403);
 
         $modulo->load(['andars', 'unidade.instituicao']);
 
@@ -95,14 +93,13 @@ class InstitucionalModuloController extends Controller
     {
         $this->authorize('update', $modulo);
 
-        try {
-            $this->service->update($modulo, $request->validated());
-
-            return redirect()->route('institucional.modulos.index')
-                ->with('success', __('Module updated successfully!'));
-        } catch (\Exception $e) {
-            return back()->with(['error' => __('Error updating module: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
-        }
+        return $this->executar(
+            fn () => $this->service->update($modulo, $request->validated()),
+            __('Module updated successfully!'),
+            'Error updating module: :message',
+            rotaSucesso: 'institucional.modulos.index',
+            comEntrada: true,
+        );
     }
 
     public function destroy(ConfirmPasswordRequest $request, Modulo $modulo): RedirectResponse
@@ -113,12 +110,10 @@ class InstitucionalModuloController extends Controller
             return back()->with('error', __('The password provided is incorrect.'));
         }
 
-        try {
-            $this->service->delete($modulo);
-
-            return back()->with('success', __('Module removed successfully!'));
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => __('Error removing module: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
-        }
+        return $this->executar(
+            fn () => $this->service->delete($modulo),
+            __('Module removed successfully!'),
+            'Error removing module: :message',
+        );
     }
 }

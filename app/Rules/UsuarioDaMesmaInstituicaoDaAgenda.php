@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Rules;
 
 use App\Models\Espaco;
-use App\Models\User;
+use App\Repositories\EspacoRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Translation\PotentiallyTranslatedString;
@@ -14,15 +15,15 @@ class UsuarioDaMesmaInstituicaoDaAgenda implements ValidationRule
 {
     protected ?Espaco $espaco;
 
-    public function __construct(int $espacoId)
-    {
-        $this->espaco = Espaco::find($espacoId);
+    public function __construct(
+        int $espacoId,
+        private EspacoRepositoryInterface $espacos,
+        private UserRepositoryInterface $usuarios,
+    ) {
+        $this->espaco = $this->espacos->get($espacoId);
     }
 
     /**
-     * Run the validation rule.
-     * Ensures the assigned user belongs to the same institution as the space.
-     *
      * @param  Closure(string): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -31,7 +32,13 @@ class UsuarioDaMesmaInstituicaoDaAgenda implements ValidationRule
             return;
         }
 
-        $user = User::find($value);
+        if (! is_int($value) && ! is_string($value)) {
+            $fail('O espaço ou usuário informado é inválido.');
+
+            return;
+        }
+
+        $user = $this->usuarios->get($value);
 
         if (! $user || ! $this->espaco) {
             $fail('O espaço ou usuário informado é inválido.');
@@ -39,7 +46,10 @@ class UsuarioDaMesmaInstituicaoDaAgenda implements ValidationRule
             return;
         }
 
-        if ($user->setor->unidade->instituicao_id !== $this->espaco->andar->modulo->unidade->instituicao_id) {
+        $instituicaoDoUsuario = $user->instituicaoId();
+        $instituicaoDoEspaco = $this->espaco->andar?->modulo?->unidade?->instituicao_id;
+
+        if ($instituicaoDoUsuario === null || $instituicaoDoUsuario !== $instituicaoDoEspaco) {
             $fail('O gestor deve pertencer à mesma instituição do espaço.');
         }
     }

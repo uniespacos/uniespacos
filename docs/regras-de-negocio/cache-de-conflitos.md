@@ -4,7 +4,7 @@
 
 O `conflict_cache` é um **snapshot histórico** de conflitos detectados no momento em que `ValidateReservationConflictsJob` processa uma reserva. É uma coluna `json` nullable na tabela `reservas` (migration `2025_09_14_235335_add_validation_fields_to_reservas_table.php`), exposta na interface do gestor como informação secundária de auditoria — **nunca é fonte de verdade**.
 
-**Contraste crítico:** A fonte de verdade atual é `ConflictDetectionService::findConflictsFor()`, chamada ao vivo dentro de `ReservaService::getForGestorReview()` a cada carregamento da página do gestor, cujo resultado é consumido como prop `todosOsConflitos` no componente `ConflictAlertBox`, que apenas informa o gestor. O bloqueio dos horários conflitantes é automático no backend, feito por `AvaliarReservaJob` (marca como `indeferida`).
+**Contraste crítico:** A fonte de verdade atual é `ConflictDetectionService::findConflictsFor()`, chamada ao vivo dentro de `ReservaService::getForGestorReview()` a cada carregamento da página do gestor, cujo resultado é consumido como prop `todosOsConflitos` no componente `ConflictAlertBox`, que apenas informa o gestor. O bloqueio dos horários conflitantes é automático no backend, feito por `AvaliacaoDeReservaService` (marca como `indeferida`), dentro do job `AvaliarReservaJob`.
 
 ## Origem e Escritura
 
@@ -22,7 +22,7 @@ namespace App\Jobs;
 
 class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
 {
-    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
+    public function handle(ConflictDetectionService $conflictService, ReservaBroadcaster $broadcaster): void
     {
         // Marca como "processing"
         $this->reserva->update(['validation_status' => 'processing']);
@@ -45,7 +45,7 @@ class ValidateReservationConflictsJob implements ShouldBeUnique, ShouldQueue
 **Pontos-chave:**
 - Job é único por reserva ID (`uniqueId()` = `"validate-conflicts-{$reserva->id}"`) — evita duplicação na fila.
 - TTL de unicidade: 1 hora (`uniqueFor()` = 3600 segundos) — suficiente para completar, evita chave orfã.
-- Em caso de falha, marca `validation_status = 'failed'` e reloga erro.
+- `tries = 3`, com backoff de 30 s e 60 s. Erro transitório é relançado e reagendado. Só depois da última tentativa, `failed()` grava `validation_status = 'failed'` e publica `validated`, para a tela sair de "processando". Erro de domínio vai direto para `fail()`, sem retry.
 - A publicação `validated` vem depois do commit de `completed`. Se o broadcast falhar, o `ReservaBroadcaster` registra `warning` e não lança exceção: o job não cai no `catch` e o status permanece `completed`. Falha de tempo real não regrava `failed`.
 - `validated` **não** invalida o cache de relatórios. Só a ação de alteração (`created`, `updated`, `evaluated`, `canceled`) despacha `ReservaAlterada`, que é o gatilho do listener (ver [relatorios.md](./relatorios.md#3-cache)).
 
@@ -90,7 +90,6 @@ No arquivo `resources/js/types/index.d.ts`:
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
-    conflito_user_name: string;
 }
 
 export interface Reserva {
@@ -198,7 +197,7 @@ private function revalidateConflictedReservations(Collection $horariosLiberados)
 }
 ```
 
-**Alinhamento com fluxo de aprovação:** O job `AvaliarReservaJob::triggerConflictRevalidation()` já revalidava `em_analise` e `parcialmente_deferida`. Agora o cancelamento também inclui `parcialmente_deferida`, criando simetria.
+**Alinhamento com fluxo de aprovação:** `AvaliacaoDeReservaService::revalidarConflitos()`, chamado depois do commit da avaliação, já revalidava `em_analise` e `parcialmente_deferida`. Agora o cancelamento também inclui `parcialmente_deferida`, criando simetria.
 
 ### Teste de Cobertura
 
@@ -229,7 +228,7 @@ Novo teste: `test_cancelamento_revalida_reservas_parcialmente_deferidas_que_comp
 | **Consumo frontend** | Componente `ConflictCacheSnapshotPanel` renderiza o snapshot em painel colapsável |
 | **Fonte de verdade** | `ConflictDetectionService::findConflictsFor()` recalculado ao vivo em `todosOsConflitos` |
 | **Divergência esperada** | Sim; snapshot pode estar desatualizado se reservas foram criadas/canceladas após o snapshot |
-| **Impacto em decisões do gestor** | Nenhum bloqueio: `ConflictAlertBox` (que usa `todosOsConflitos`) é informativo. O bloqueio dos conflitos é aplicado por `AvaliarReservaJob` |
+| **Impacto em decisões do gestor** | Nenhum bloqueio: `ConflictAlertBox` (que usa `todosOsConflitos`) é informativo. O bloqueio dos conflitos é aplicado por `AvaliacaoDeReservaService` |
 | **Propósito do snapshot** | Auditoria, investigação histórica, transparência do que o backend viu naquele momento |
 
 ---

@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use App\Models\Espaco;
+use App\Support\SemanaDeReferencia;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,35 +15,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
-class EspacoRepositoryEloquent implements EspacoRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Espaco>
+ */
+class EspacoRepositoryEloquent extends BaseRepositoryEloquent implements EspacoRepositoryInterface
 {
-    public function __construct(
-        protected Espaco $espaco,
-    ) {}
-
-    /**
-     * Stores a new instance of Espaco in the database
-     */
-    public function store(array $data): Espaco
+    public function __construct(Espaco $espaco)
     {
-        return $this->espaco->create($data);
-    }
-
-    /**
-     * Returns all instances of Espaco from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Espaco>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->espaco->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
+        parent::__construct($espaco);
     }
 
     /**
@@ -52,7 +32,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator
     {
-        $query = $this->espaco->newQuery()
+        $query = $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
         $disponibilidade = $this->disponibilidadeSolicitada($filters);
@@ -194,7 +174,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = $this->espaco->newQuery()
+        $query = $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
         return $this->applyFilters($query, $filters)
@@ -231,7 +211,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getDistinctCapacidadesByInstituicao(int $instituicaoId): SupportCollection
     {
-        return $this->espaco->newQuery()
+        return $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->select('capacidade_pessoas')
             ->distinct()
@@ -239,30 +219,111 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
             ->pluck('capacidade_pessoas');
     }
 
-    /**
-     * Returns an instance of Espaco from the given id
-     */
-    public function get(int|string $id): ?Espaco
+    public function contarDaInstituicao(?int $instituicaoId): int
     {
-        return $this->espaco->find($id);
+        return $this->model->newQuery()
+            ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
+            ->count();
     }
 
     /**
-     * Updates the data of an instance of Espaco
+     * @param  array<mixed>|null  $agendaIds
+     * @return Collection<int, Espaco>
      */
-    public function update(array $data, int|string $id): Espaco
+    public function listarParaInventario(?array $agendaIds, ?int $instituicaoId, ?int $unidadeId, ?int $moduloId, ?int $andarId, ?int $espacoId): Collection
     {
-        $espaco = $this->espaco->findOrFail($id);
-        $espaco->update($data);
+        $query = $this->model->newQuery()->with(['andar.modulo.unidade', 'agendas.user']);
 
-        return $espaco;
+        if ($agendaIds !== null) {
+            $query->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+        } elseif ($instituicaoId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
+        }
+
+        if ($unidadeId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($q) => $q->where('id', $unidadeId));
+        }
+
+        if ($moduloId !== null) {
+            $query->whereHas('andar.modulo', fn ($q) => $q->where('id', $moduloId));
+        }
+
+        if ($andarId !== null) {
+            $query->whereHas('andar', fn ($q) => $q->where('id', $andarId));
+        }
+
+        if ($espacoId !== null) {
+            $query->where('id', $espacoId);
+        }
+
+        return $query->get();
     }
 
     /**
-     * Removes an instance of Espaco from the database
+     * @param  array<int|string>  $ids
+     * @return Collection<int, Espaco>
      */
-    public function destroy(int|string $id): bool
+    public function getComLocalizacaoPorIds(array $ids): Collection
     {
-        return (bool) $this->espaco->findOrFail($id)->delete();
+        return $this->model->newQuery()
+            ->with('andar.modulo.unidade')
+            ->whereIn('id', $ids)
+            ->get();
+    }
+
+    public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco
+    {
+        $inicio = $semana->inicio;
+        $horizonte = $horizonteFim ?? $semana->horizonteDeConflito();
+
+        return $espaco->load([
+            'andar.modulo.unidade.instituicao',
+            'agendas' => function ($query) use ($inicio, $horizonte) {
+                $query->with([
+                    'user:id,name,email,setor_id',
+                    'user.setor:id,nome,sigla',
+                    'horarios' => function ($q) use ($inicio, $horizonte) {
+                        $q->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
+                            ->whereBetween('data', [$inicio, $horizonte])
+                            ->with([
+                                'reserva:id,titulo,situacao,observacao,user_id',
+                                'reserva.user:id,name,setor_id',
+                                'reserva.user.setor:id,nome,sigla',
+                                'avaliador:id,name',
+                            ]);
+                    },
+                ]);
+            },
+        ]);
+    }
+
+    /**
+     * @param  array<mixed>|null  $agendaIds
+     * @return Collection<int, Espaco>
+     */
+    public function listarComLocalizacaoParaOpcoes(?int $instituicaoId, ?array $agendaIds): Collection
+    {
+        if ($agendaIds === []) {
+            return new Collection;
+        }
+
+        $query = $this->model->newQuery()->with('andar.modulo.unidade');
+
+        if ($instituicaoId !== null) {
+            $query->whereHas('andar.modulo.unidade', fn ($u) => $u->where('instituicao_id', $instituicaoId));
+        }
+
+        if ($agendaIds !== null) {
+            $query->whereHas('agendas', fn ($q) => $q->whereIn('id', $agendaIds));
+        }
+
+        return $query->get();
+    }
+
+    public function encontrarPorReservaOuFalhar(int $reservaId): Espaco
+    {
+        return $this->model->newQuery()
+            ->whereHas('agendas.horarios.reserva', fn ($q) => $q->where('id', $reservaId))
+            ->firstOrFail();
     }
 }

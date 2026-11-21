@@ -11,6 +11,7 @@ use App\Models\Reserva;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -24,6 +25,8 @@ use Tests\TestCase;
  */
 class ReservaOrdenacaoTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarReserva(User $dono, User $gestorDaAgenda, string $situacao, string $titulo, Carbon|string|null $criadaEm = null): Reserva
     {
         $espaco = Espaco::factory()->create();

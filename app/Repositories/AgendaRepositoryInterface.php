@@ -7,43 +7,38 @@ namespace App\Repositories;
 use App\Models\Agenda;
 use Illuminate\Database\Eloquent\Collection;
 
-interface AgendaRepositoryInterface
+/**
+ * @extends CrudRepositoryInterface<Agenda>
+ */
+interface AgendaRepositoryInterface extends CrudRepositoryInterface
 {
     public function __construct(Agenda $agenda);
 
     /**
-     * Stores a new instance of Agenda in the database
-     */
-    public function store(array $data): Agenda;
-
-    /**
-     * Returns all instances of Agenda from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Agenda>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection;
-
-    /**
-     * Returns Agenda records for the given ids with their user eager-loaded
-     *
      * @param  array<int>  $ids
      * @return Collection<int, Agenda>
      */
     public function getWithUserByIds(array $ids): Collection;
 
     /**
-     * Returns an instance of Agenda from the given id
+     * @return Collection<int, Agenda>
      */
-    public function get(int|string $id): ?Agenda;
+    public function getComEspacoDoUsuario(int $userId): Collection;
 
     /**
-     * Updates the data of an instance of Agenda
+     * @return array<mixed>
      */
-    public function update(array $data, int|string $id): Agenda;
+    public function idsDoUsuario(int $userId): array;
+
+    public function desvincularDoUsuario(int $userId): void;
 
     /**
-     * Removes an instance of Agenda from the database
+     * @param  array<mixed>  $ids
      */
-    public function destroy(int|string $id): bool;
+    public function desvincularIds(array $ids): void;
+
+    /**
+     * @param  array<mixed>  $ids
+     */
+    public function vincularAoUsuario(array $ids, int $userId): void;
 }

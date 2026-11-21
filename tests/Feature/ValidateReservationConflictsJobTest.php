@@ -11,16 +11,21 @@ use App\Models\Agenda;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use App\Services\AvaliacaoDeReservaService;
 use App\Services\ConflictDetectionService;
+use App\Services\ReservaBroadcaster;
 use Illuminate\Bus\UniqueLock;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ValidateReservationConflictsJobTest extends TestCase
 {
+    use CongelaRelogio;
+
     public function test_validate_reservation_conflicts_job_dispatches_event_on_completion(): void
     {
         Event::fake();
@@ -32,9 +37,9 @@ class ValidateReservationConflictsJobTest extends TestCase
         ]);
 
         $job = new ValidateReservationConflictsJob($reserva);
-        $conflictService = new ConflictDetectionService;
+        $conflictService = app(ConflictDetectionService::class);
 
-        $job->handle($conflictService);
+        $job->handle($conflictService, app(ReservaBroadcaster::class));
 
         Event::assertDispatched(ReservaEvent::class, function ($event) use ($reserva) {
             return $event->action === 'validated' && $event->reservaId === $reserva->id;
@@ -51,9 +56,9 @@ class ValidateReservationConflictsJobTest extends TestCase
         ]);
 
         $job = new ValidateReservationConflictsJob($reserva);
-        $conflictService = new ConflictDetectionService;
+        $conflictService = app(ConflictDetectionService::class);
 
-        $job->handle($conflictService);
+        $job->handle($conflictService, app(ReservaBroadcaster::class));
 
         $reserva->refresh();
 
@@ -122,7 +127,7 @@ class ValidateReservationConflictsJobTest extends TestCase
         ];
 
         $jobA = new AvaliarReservaJob($reservaA, $validatedDataA1, $gestor);
-        $jobA->handle(new ConflictDetectionService);
+        $jobA->handle(app()->makeWith(AvaliacaoDeReservaService::class, ['conflictService' => app(ConflictDetectionService::class)]));
 
         // Assert: ValidateReservationConflictsJob foi despachado para B
         Bus::assertDispatched(ValidateReservationConflictsJob::class, function ($job) use ($reservaB) {

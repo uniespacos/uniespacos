@@ -6,11 +6,8 @@ namespace App\Http\Requests;
 
 class UpdateEspacoRequest extends StoreEspacoRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return parent::authorize();
+        return $this->user()?->can('update', $this->route('espaco')) ?? false;
     }
 }

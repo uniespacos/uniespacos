@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\Reserva\ValidationStatusEnum;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -81,7 +82,7 @@ class CleanDuplicateHorariosCommand extends Command
             // o `reservas:fix-validations` reprocessar.
             DB::table('reservas')
                 ->whereIn('id', $reservasAfetadas->all())
-                ->update(['validation_status' => 'pending', 'conflict_cache' => null]);
+                ->update(['validation_status' => ValidationStatusEnum::PENDING->value, 'conflict_cache' => null]);
         });
 
         $this->info("{$total} registros duplicados removidos.");

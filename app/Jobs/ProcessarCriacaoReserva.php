@@ -4,25 +4,21 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Enums\SituacaoReserva\SituacaoReservaEnum;
-use App\Models\Agenda;
-use App\Models\Horario;
+use App\Exceptions\DominioException;
 use App\Models\Reserva;
 use App\Models\User;
 use App\Notifications\NewReservationNotification;
 use App\Notifications\ReservationCreatedNotification;
 use App\Notifications\ReservationFailedNotification;
-use App\Services\AutoAprovacaoService;
-use App\Services\ExpansaoHorariosService;
+use App\Services\CriacaoDeReservaService;
 use App\Services\ReservaBroadcaster;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -30,215 +26,48 @@ class ProcessarCriacaoReserva implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Number of times the job may be attempted.
-     */
-    public int $tries = 3;
+    // A criacao nao e idempotente: uma nova tentativa poderia gravar a reserva duas vezes.
+    public int $tries = 1;
 
-    /**
-     * Maximum number of seconds the job may run.
-     */
     public int $timeout = 360;
 
     /**
-     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string, horarios_solicitados: array<int, array<string, mixed>>}  $dadosRequisicao  Validated data from StoreReservaRequest. As chaves opcionais ausentes em jobs enfileirados antes do deploy sao tratadas como null.
-     * @param  User  $solicitante  The user making the reservation request.
+     * @param  array{titulo: string, descricao?: string, data_inicial: string, data_final: string, recorrencia: string, publico_estimado?: int|null, categoria?: string|null, termo_aceito_em?: string, horarios_solicitados: array<int, array<string, mixed>>}  $dadosRequisicao  As chaves opcionais ausentes em jobs enfileirados antes do deploy sao tratadas como null.
      */
     public function __construct(
         protected array $dadosRequisicao,
         protected User $solicitante,
     ) {}
 
-    /**
-     * Execute the job — creates the Reserva, generates all recurring Horario records,
-     * notifies managers, and dispatches conflict validation.
-     *
-     * O servico e injetado aqui, e nao no construtor: o job e serializado para a
-     * fila e so as propriedades do construtor viajam junto.
-     */
-    public function handle(ExpansaoHorariosService $expansao, AutoAprovacaoService $autoAprovacao, ReservaBroadcaster $broadcaster = new ReservaBroadcaster): void
+    public function handle(CriacaoDeReservaService $criacao, ReservaBroadcaster $broadcaster): void
     {
         Log::info('ProcessarCriacaoReserva started', [
             'solicitante_id' => $this->solicitante->id,
         ]);
 
         try {
-            $horariosData = $this->dadosRequisicao['horarios_solicitados'];
-            if (empty($horariosData)) {
-                throw new Exception('horarios_solicitados deve ser um array não-vazio');
-            }
+            [$reserva, $gestores] = $criacao->criar($this->dadosRequisicao, $this->solicitante);
+        } catch (DominioException $e) {
+            Log::warning('ProcessarCriacaoReserva failed', [
+                'solicitante_id' => $this->solicitante->id,
+                'exception' => $e,
+            ]);
 
-            // Uma query para todas as agendas e seus gestores, em vez de um
-            // findOrFail por slot dentro do loop.
-            /** @var array<int, int> $agendasIds */
-            $agendasIds = collect($horariosData)->pluck('agenda_id')->unique()->filter()->all();
-            $agendasMap = Agenda::with('user')
-                ->whereIn('id', $agendasIds)
-                ->get()
-                ->keyBy('id');
+            $this->fail($e);
 
-            [$reserva, $gestoresUnicos] = DB::transaction(function () use ($expansao, $autoAprovacao, $agendasMap, $horariosData) {
-                $reserva = Reserva::create([
-                    'titulo' => $this->dadosRequisicao['titulo'],
-                    'descricao' => $this->dadosRequisicao['descricao'] ?? '',
-                    'data_inicial' => $this->dadosRequisicao['data_inicial'],
-                    'data_final' => $this->dadosRequisicao['data_final'],
-                    'recorrencia' => $this->dadosRequisicao['recorrencia'],
-                    'publico_estimado' => $this->dadosRequisicao['publico_estimado'] ?? null,
-                    'categoria' => $this->dadosRequisicao['categoria'] ?? null,
-                    'termo_aceito_em' => $this->dadosRequisicao['termo_aceito_em'] ?? null,
-                    'user_id' => $this->solicitante->id,
-                    'situacao' => SituacaoReservaEnum::EM_ANALISE->value,
-                ]);
-
-                // Adquirir lock pessimista sobre horarios da faixa de datas
-                $agendasAfetadas = collect($horariosData)
-                    ->pluck('agenda_id')
-                    ->unique()
-                    ->filter()
-                    ->values()
-                    ->sort()
-                    ->all();
-
-                $dataInicial = Carbon::parse($reserva->data_inicial)->toDateString();
-                $dataFinal = Carbon::parse($reserva->data_final)->toDateString();
-
-                Horario::whereIn('agenda_id', $agendasAfetadas)
-                    ->whereBetween('data', [$dataInicial, $dataFinal])
-                    ->lockForUpdate()
-                    ->get();
-
-                [$linhas, $agendasUsadas] = $expansao->montar(
-                    $horariosData,
-                    $agendasMap,
-                    (string) $reserva->recorrencia,
-                    Carbon::parse($reserva->data_final),
-                    (int) $reserva->id,
-                    fn (Agenda $agenda) => $autoAprovacao->resolverSituacaoEAvaliador($agenda, $this->solicitante->id),
-                );
-
-                // Revalidar conflitos sob lock, antes de inserir
-                foreach ($linhas as $novaLinha) {
-                    $agendaIdRaw = $novaLinha['agenda_id'] ?? 0;
-                    $dataRaw = $novaLinha['data'] ?? '';
-                    $horarioFimRaw = $novaLinha['horario_fim'] ?? '';
-                    $horarioInicioRaw = $novaLinha['horario_inicio'] ?? '';
-
-                    if (! (is_int($agendaIdRaw) || is_string($agendaIdRaw))) {
-                        $agendaIdRaw = 0;
-                    }
-                    if (! is_string($dataRaw)) {
-                        $dataRaw = '';
-                    }
-                    if (! is_string($horarioFimRaw)) {
-                        $horarioFimRaw = '';
-                    }
-                    if (! is_string($horarioInicioRaw)) {
-                        $horarioInicioRaw = '';
-                    }
-
-                    $agendaId = (int) $agendaIdRaw;
-                    $data = (string) $dataRaw;
-                    $horarioFim = (string) $horarioFimRaw;
-                    $horarioInicio = (string) $horarioInicioRaw;
-
-                    $conflito = Horario::where('agenda_id', $agendaId)
-                        ->where('data', $data)
-                        ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)
-                        ->where('horario_inicio', '<', $horarioFim)
-                        ->where('horario_fim', '>', $horarioInicio)
-                        ->exists();
-
-                    if ($conflito) {
-                        $msg = 'Conflito detectado sob lock para agenda '.$agendaId.' em '.$data.'. Outra reserva pode ter sido criada simultaneamente.';
-
-                        throw new Exception($msg);
-                    }
-                }
-
-                if ($linhas !== []) {
-                    Horario::insert($linhas);
-
-                    $datasGeradas = array_values(array_filter(
-                        array_map(fn (array $linha): ?string => is_string($linha['data'] ?? null) ? $linha['data'] : null, $linhas)
-                    ));
-                    if ($datasGeradas !== []) {
-                        $minDataGerada = min($datasGeradas);
-                        $maxDataGerada = max($datasGeradas);
-                        $atualizarPeriodo = [];
-                        if ($minDataGerada < $dataInicial) {
-                            $atualizarPeriodo['data_inicial'] = $minDataGerada;
-                        }
-                        if ($maxDataGerada > $dataFinal) {
-                            $atualizarPeriodo['data_final'] = $maxDataGerada;
-                        }
-                        if ($atualizarPeriodo !== []) {
-                            $reserva->update($atualizarPeriodo);
-                        }
-                    }
-                }
-
-                // Agenda sem gestor atribuido nao entra na conta — antes disso
-                // o acesso direto a `$gestor->id` estourava nesse caso.
-                $gestoresUnicos = $agendasUsadas->map(fn (Agenda $a) => $a->user)->filter()->unique('id')->values();
-
-                $novaSituacao = $autoAprovacao->calcularSituacaoReserva($gestoresUnicos, $this->solicitante->id);
-                if ($novaSituacao !== null) {
-                    $reserva->update(['situacao' => $novaSituacao]);
-                }
-
-                Log::info('Reservation created', [
-                    'reserva_id' => $reserva->id,
-                    'situacao' => $reserva->situacao,
-                    'horarios_count' => count($linhas),
-                ]);
-
-                return [$reserva, $gestoresUnicos];
-            });
-
-            foreach ($gestoresUnicos as $gestor) {
-                if ($gestor->id !== $this->solicitante->id) {
-                    try {
-                        $gestor->notify(new NewReservationNotification($reserva));
-                    } catch (Exception $e) {
-                        Log::warning('Falha ao notificar gestor sobre nova reserva', [
-                            'gestor_id' => $gestor->id,
-                            'reserva_id' => $reserva->id,
-                            'exception' => $e,
-                        ]);
-                    }
-                }
-            }
-
-            ValidateReservationConflictsJob::dispatch($reserva);
-
-            Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
-
-            try {
-                $this->solicitante->notify(new ReservationCreatedNotification($reserva));
-            } catch (Exception $e) {
-                Log::warning('Falha ao enviar notificação de reserva criada', [
-                    'reserva_id' => $reserva->id,
-                    'solicitante_id' => $this->solicitante->id,
-                    'exception' => $e,
-                ]);
-            }
-
-            $broadcaster->publicar($reserva, 'created');
-
-        } catch (Exception $e) {
+            return;
+        } catch (Throwable $e) {
             Log::error('ProcessarCriacaoReserva failed', [
                 'solicitante_id' => $this->solicitante->id,
                 'exception' => $e,
             ]);
-            $this->fail($e);
+
+            throw $e;
         }
+
+        $this->efeitosPosCommit($reserva, $gestores, $broadcaster);
     }
 
-    /**
-     * Handle a job failure after all retries are exhausted.
-     * Notifies the requester that their reservation could not be processed.
-     */
     public function failed(Throwable $exception): void
     {
         try {
@@ -248,6 +77,71 @@ class ProcessarCriacaoReserva implements ShouldQueue
             ));
         } catch (Exception $e) {
             Log::error('Falha fatal ao enviar notificação de erro de criação de reserva', [
+                'solicitante_id' => $this->solicitante->id,
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    /**
+     * @param  Collection<int, User>  $gestores
+     */
+    private function efeitosPosCommit(Reserva $reserva, Collection $gestores, ReservaBroadcaster $broadcaster): void
+    {
+        $this->notificarGestores($reserva, $gestores);
+
+        try {
+            ValidateReservationConflictsJob::dispatch($reserva);
+
+            Log::info('Conflict validation dispatched', ['reserva_id' => $reserva->id]);
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da criação de reserva: validação de conflitos não despachada', [
+                'reserva_id' => $reserva->id,
+                'exception' => $e,
+            ]);
+        }
+
+        $this->notificarSolicitanteDeCriacao($reserva);
+
+        try {
+            $broadcaster->publicar($reserva, 'created');
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da criação de reserva: broadcast não publicado', [
+                'reserva_id' => $reserva->id,
+                'exception' => $e,
+            ]);
+        }
+    }
+
+    /**
+     * @param  Collection<int, User>  $gestores
+     */
+    private function notificarGestores(Reserva $reserva, Collection $gestores): void
+    {
+        foreach ($gestores as $gestor) {
+            if ($gestor->id === $this->solicitante->id) {
+                continue;
+            }
+
+            try {
+                $gestor->notify(new NewReservationNotification($reserva));
+            } catch (Exception $e) {
+                Log::warning('Falha ao notificar gestor sobre nova reserva', [
+                    'gestor_id' => $gestor->id,
+                    'reserva_id' => $reserva->id,
+                    'exception' => $e,
+                ]);
+            }
+        }
+    }
+
+    private function notificarSolicitanteDeCriacao(Reserva $reserva): void
+    {
+        try {
+            $this->solicitante->notify(new ReservationCreatedNotification($reserva));
+        } catch (Exception $e) {
+            Log::warning('Falha ao enviar notificação de reserva criada', [
+                'reserva_id' => $reserva->id,
                 'solicitante_id' => $this->solicitante->id,
                 'exception' => $e,
             ]);

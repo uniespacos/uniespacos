@@ -311,7 +311,6 @@ export const ptBR = {
         },
         gestor: {
             conflicts_detected: 'Atenção: {{count}} horário(s) desta reserva possui(em) sobreposição com outra(s) reserva(s).',
-            conflict_with_user: 'Solicitante: {{user}}',
             conflicts_note:
                 'Horários com conflito contra outra reserva deferida ficam bloqueados para aprovação e são indeferidos automaticamente ao salvar a avaliação.',
             conflict_cache_snapshot_title: 'Snapshot de Conflitos ({{count}} detectados)',
@@ -937,6 +936,7 @@ export const ptBR = {
         too_many_requests_desc: 'Você realizou muitas tentativas em um curto intervalo. Aguarde alguns instantes antes de tentar novamente.',
         server_error_title: 'Erro interno do servidor',
         server_error_desc: 'Algo deu errado do nosso lado. A equipe técnica foi notificada. Tente novamente em alguns instantes.',
+        url_param_invalid: 'Um dos parâmetros da página é inválido. Verifique o filtro ou a semana selecionada.',
     },
     privacidade: {
         title: 'Política de Privacidade',

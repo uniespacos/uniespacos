@@ -7,72 +7,62 @@ namespace App\Repositories;
 use App\Models\Agenda;
 use Illuminate\Database\Eloquent\Collection;
 
-class AgendaRepositoryEloquent implements AgendaRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Agenda>
+ */
+class AgendaRepositoryEloquent extends BaseRepositoryEloquent implements AgendaRepositoryInterface
 {
-    public function __construct(
-        protected Agenda $agenda,
-    ) {}
-
-    /**
-     * Stores a new instance of Agenda in the database
-     */
-    public function store(array $data): Agenda
+    public function __construct(Agenda $agenda)
     {
-        return $this->agenda->create($data);
+        parent::__construct($agenda);
     }
 
     /**
-     * Returns all instances of Agenda from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Agenda>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->agenda->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
-    }
-
-    /**
-     * Returns Agenda records for the given ids with their user eager-loaded
-     *
      * @param  array<int>  $ids
      * @return Collection<int, Agenda>
      */
     public function getWithUserByIds(array $ids): Collection
     {
-        return $this->agenda->whereIn('id', $ids)->with('user')->get();
+        return $this->model->whereIn('id', $ids)->with('user')->get();
     }
 
     /**
-     * Returns an instance of Agenda from the given id
+     * @return Collection<int, Agenda>
      */
-    public function get(int|string $id): ?Agenda
+    public function getComEspacoDoUsuario(int $userId): Collection
     {
-        return $this->agenda->find($id);
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->with(['espaco.andar.modulo.unidade'])
+            ->get();
     }
 
     /**
-     * Updates the data of an instance of Agenda
+     * @return array<mixed>
      */
-    public function update(array $data, int|string $id): Agenda
+    public function idsDoUsuario(int $userId): array
     {
-        $agenda = $this->agenda->findOrFail($id);
-        $agenda->update($data);
+        return $this->model->newQuery()->where('user_id', $userId)->pluck('id')->all();
+    }
 
-        return $agenda;
+    public function desvincularDoUsuario(int $userId): void
+    {
+        $this->model->newQuery()->where('user_id', $userId)->update(['user_id' => null]);
     }
 
     /**
-     * Removes an instance of Agenda from the database
+     * @param  array<mixed>  $ids
      */
-    public function destroy(int|string $id): bool
+    public function desvincularIds(array $ids): void
     {
-        return (bool) $this->agenda->findOrFail($id)->delete();
+        $this->model->newQuery()->whereIn('id', $ids)->update(['user_id' => null]);
+    }
+
+    /**
+     * @param  array<mixed>  $ids
+     */
+    public function vincularAoUsuario(array $ids, int $userId): void
+    {
+        $this->model->newQuery()->whereIn('id', $ids)->update(['user_id' => $userId]);
     }
 }

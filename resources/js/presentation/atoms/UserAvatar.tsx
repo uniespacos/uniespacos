@@ -5,7 +5,7 @@ import { type User } from '@/types';
 import { useState } from 'react';
 
 interface UserAvatarProps {
-    user: User;
+    user: Pick<User, 'name' | 'profile_pic'>;
     className?: string;
     fallbackClassName?: string;
 }

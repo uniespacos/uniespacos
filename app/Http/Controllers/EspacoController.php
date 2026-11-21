@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ListarEspacosRequest;
+use App\Http\Requests\SemanaRequest;
 use App\Models\Espaco;
 use App\Services\EspacoService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,8 +22,8 @@ class EspacoController extends Controller
     public function index(ListarEspacosRequest $request): Response
     {
         $user = Auth::user();
-        $filters = $request->only(['search', 'unidade', 'modulo', 'andar', 'capacidade', 'data', 'turno']);
-        $instituicaoId = $user->setor->unidade->instituicao_id;
+        $filters = $request->validated();
+        $instituicaoId = $user?->instituicaoId() ?? abort(403);
 
         $filterOptions = $this->service->getFilterOptions($instituicaoId);
 
@@ -38,14 +38,14 @@ class EspacoController extends Controller
         ]);
     }
 
-    public function show(Request $request, Espaco $espaco): Response|RedirectResponse
+    public function show(SemanaRequest $request, Espaco $espaco): Response|RedirectResponse
     {
         if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
                 ->with('error', __('This space does not have a manager defined yet.'));
         }
 
-        $data = $this->service->getWithWeekSchedule($espaco, $request->input('semana', 'today'));
+        $data = $this->service->getWithWeekSchedule($espaco, $request->semana());
 
         return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }

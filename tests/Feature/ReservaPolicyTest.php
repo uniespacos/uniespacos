@@ -9,10 +9,13 @@ use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ReservaPolicyTest extends TestCase
 {
+    use CongelaRelogio;
+
     // use DatabaseTransactions; // Removed as it is now in TestCase
 
     public function test_user_cannot_edit_reservation_if_partially_evaluated()

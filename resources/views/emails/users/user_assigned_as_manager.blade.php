@@ -1,20 +1,20 @@
 @extends('emails.layout')
 
 @section('content')
-    <p>Prezado(a) {{ $manager->name }},</p>
+    <p>{{ __('Dear :name,', ['name' => $manager->name]) }}</p>
 
     @if($espacoNome && $turno)
-        <p>Você foi designado(a) como gestor(a) do espaço <strong>'{{ $espacoNome }}'</strong> para o turno <strong>'{{ $turno }}'</strong>.</p>
-        <p>A partir de agora, você é responsável por avaliar as solicitações de reserva para este espaço neste turno.</p>
-        <p>Para gerenciar este espaço, clique no botão abaixo:</p>
-        <div class="cta-container"><a href="{{ $url }}" class="button">Gerenciar Espaço</a></div>
+        <p>{{ __('You were designated as manager of the space ":espaco" for the :turno shift.', ['espaco' => $espacoNome, 'turno' => $turno]) }}</p>
+        <p>{{ __('From now on, you are responsible for reviewing reservation requests for this space in this shift.') }}</p>
+        <p>{{ __('To manage this space, click the button below:') }}</p>
+        <div class="cta-container"><a href="{{ $url }}" class="button">{{ __('Manage Space') }}</a></div>
     @else
-        <p>Você foi designado(a) como gestor(a) de agenda em nosso sistema.</p>
-        <p>A partir de agora, você pode gerenciar agendas e espaços que lhe foram atribuídos.</p>
-        <p>Para acessar o painel de gestão de espaços, clique no botão abaixo:</p>
-        <div class="cta-container"><a href="{{ $url }}" class="button">Acessar Painel de Gestão</a></div>
+        <p>{{ __('You were designated as schedule manager in our system.') }}</p>
+        <p>{{ __('From now on, you can manage the schedules and spaces assigned to you.') }}</p>
+        <p>{{ __('To access the space management panel, click the button below:') }}</p>
+        <div class="cta-container"><a href="{{ $url }}" class="button">{{ __('Access Management Panel') }}</a></div>
     @endif
 
-    <p>Atenciosamente,</p>
-    <p>Equipe UniEspaços</p>
+    <p>{{ __('Regards,') }}</p>
+    <p>{{ __('UniEspaços Team') }}</p>
 @endsection

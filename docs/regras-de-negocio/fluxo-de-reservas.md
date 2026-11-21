@@ -1,5 +1,5 @@
 # Fluxo de reservas
-> Última atualização: 2026-11-19 | Fluxo central de reservas: estados, criação, avaliação, cascata de revalidação, cancelamento e notificações
+> Última atualização: 2026-11-21 | Fluxo central de reservas: estados, criação, avaliação, cascata de revalidação, cancelamento e notificações
 
 ## Índice
 
@@ -199,13 +199,16 @@ flowchart TD
 
 ### 4.2 Backend — Processamento Assíncrono
 
+O job de criação é uma casca: deserializa os dados, chama `CriacaoDeReservaService::criar()`, trata a falha e, só depois do commit, dispara os efeitos externos. A regra de negócio (reserva, expansão, trava, conflito e auto-aprovação) fica no service, testável sem fila.
+
 ```mermaid
 sequenceDiagram
     participant Browser
     participant ReservaController
     participant ReservaService
     participant Queue as "Queue Worker"
-    participant ProcessarCriacaoReserva as "ProcessarCriacaoReserva Job"
+    participant Job as "ProcessarCriacaoReserva (casca)"
+    participant Service as "CriacaoDeReservaService"
     participant DB as "PostgreSQL"
     participant ValidateJob as "ValidateReservationConflictsJob"
     participant Notification
@@ -213,44 +216,46 @@ sequenceDiagram
     Browser->>ReservaController: POST /reservas (dados validados)
     ReservaController->>ReservaService: create(data, user)
     ReservaService->>Queue: ProcessarCriacaoReserva::dispatch(data, user)
-    ReservaController-->>Browser: back() (sem redirect; a tela de sucesso aparece no modal)
+    ReservaController-->>Browser: back() (sem redirect, a tela de sucesso aparece no modal)
 
-    Queue->>ProcessarCriacaoReserva: handle()
-    ProcessarCriacaoReserva->>DB: BEGIN TRANSACTION
-    ProcessarCriacaoReserva->>DB: INSERT INTO reservas (situacao='em_analise', validation_status='pending')
-    ProcessarCriacaoReserva->>DB: SELECT horarios ... WHERE agenda_id IN (...) AND data BETWEEN ... FOR UPDATE (lock pessimista, agenda_id ordenado)
-    ProcessarCriacaoReserva->>DB: Revalida conflito sob lock (mesma janela de agenda_id/data, situacao='deferida', overlap) — se detectar, ROLLBACK + throw
-    loop Para cada horario_solicitado com recorrência semanal
-        ProcessarCriacaoReserva->>DB: INSERT INTO horarios (situacao='em_analise' ou 'deferida' se auto-aprovação)
-    end
-    ProcessarCriacaoReserva->>DB: Auto-aprovação? Atualiza situacao='deferida' (se único gestor de TODAS)
-    ProcessarCriacaoReserva->>DB: COMMIT
+    Queue->>Job: handle()
+    Job->>Service: criar(dados, solicitante)
+    Service->>DB: BEGIN
+    Service->>DB: INSERT reservas (situacao='em_analise')
+    Service->>DB: expande horários e resolve a situação de cada agenda
+    Service->>DB: TravaDeHorarios::adquirir (SELECT ... FOR UPDATE por agenda e período)
+    Service->>DB: conflitosDeferidos(linhas): se houver, ConflitoDeHorarioException (nada é gravado)
+    Service->>DB: INSERT horarios, atualiza data_inicial, data_final e situacao (auto-aprovação)
+    Service->>DB: COMMIT
+    Service-->>Job: [reserva, gestores]
 
-    ProcessarCriacaoReserva->>Notification: NewReservationNotification → Gestores (se não auto-aprovada)
-    ProcessarCriacaoReserva->>Queue: ValidateReservationConflictsJob::dispatch(reserva)
-    ProcessarCriacaoReserva->>Notification: ReservationCreatedNotification → Solicitante (suprime mail em auto-aprovação)
-    ProcessarCriacaoReserva->>ProcessarCriacaoReserva: publicar 'created' (ReservaAlterada + ReservaEvent, por último)
+    Job->>Notification: NewReservationNotification → gestores (se não auto-aprovada)
+    Job->>Queue: ValidateReservationConflictsJob::dispatch(reserva)
+    Job->>Notification: ReservationCreatedNotification → solicitante (mail suprimido em auto-aprovação)
+    Job->>Job: publicar 'created' (ReservaAlterada + ReservaEvent, por último)
 
     Queue->>ValidateJob: handle()
     ValidateJob->>DB: UPDATE reservas SET validation_status='processing'
-    ValidateJob->>DB: SQL JOIN horarios para detectar conflitos (mesma agenda, data, sobreposição de horário)
+    ValidateJob->>DB: conflitos deferidos por agenda e data (ConflictDetectionService)
     ValidateJob->>DB: UPDATE reservas SET conflict_cache=JSON, validation_status='completed'
-    ValidateJob->>ValidateJob: publicar 'validated' (só ReservaEvent; falha não grava 'failed')
+    ValidateJob->>ValidateJob: publicar 'validated' (só ReservaEvent, falha não grava 'failed')
 ```
 
-### 4.2.1 Defesa Contra Race Condition: Lock Pessimista e Revalidação
+Os services de domínio são `CriacaoDeReservaService` (criação), `EdicaoDeReservaService` (edição) e `AvaliacaoDeReservaService` (avaliação do gestor). Os três jobs ficam como casca: o retry e o tratamento de falha estão na seção [4.5](#retry-e-falhas-dos-jobs).
 
-Há uma janela de tempo entre a validação síncrona de conflitos (na requisição HTTP, que apenas bloqueia slots já aprovados) e a inserção real dos novos horários (que ocorre quando o `ProcessarCriacaoReserva` job roda). Duas requisições concorrentes poderiam ambas passar na validação e ambas inserirem horários sobrepostos.
+### 4.2.1 Defesa Contra Race Condition: Trava e Revalidação sob Lock
 
-Para cobrir essa brecha, o job implementa uma defesa em duas etapas:
+Há uma janela de tempo entre a validação síncrona de conflitos (na requisição HTTP, que apenas bloqueia slots já aprovados) e a inserção real dos novos horários (que ocorre quando o job roda). Duas requisições concorrentes poderiam ambas passar na validação e ambas inserirem horários sobrepostos.
 
-1. **Lock Pessimista (`lockForUpdate`):** Logo após criar a `Reserva`, antes de montar as linhas de horário, o job adquire um lock exclusivo sobre todos os horários existentes cuja `agenda_id` esteja entre as agendas afetadas pela nova reserva E cuja `data` esteja dentro do intervalo `data_inicial` até `data_final` da reserva. Os `agenda_id` são ordenados de forma determinística (`->sort()`) antes do lock para evitar deadlock entre transações concorrentes que poderiam acumular locks em ordens distintas.
+A defesa tem duas etapas, usadas pela criação e pela edição:
 
-2. **Revalidação de Conflito Sob Lock:** Depois que a expansão monta as linhas de horário a inserir, o job revalida cada linha nova contra horários já existentes e aprovados. Especificamente, para cada linha, verifica se existe um horário com mesma `agenda_id`, mesma `data`, `situacao = 'deferida'`, e cujo intervalo de horário se sobrepõe (`horario_inicio < novo.horario_fim AND horario_fim > novo.horario_inicio`). Se encontrar, lança uma `Exception` com mensagem descritiva, causando rollback automático da transação (desfeito inclusive o `Reserva::create` daquela tentativa). A exceção propaga para o `catch (Exception $e)` que envolve o `handle()`, é logada com `Log::error()`, e `$this->fail($e)` ativa o método `failed()` do job, que dispara `ReservationFailedNotification` ao solicitante.
+1. **Trava pessimista (`TravaDeHorarios::adquirir`):** adquire `lockForUpdate` sobre os horários das agendas afetadas, dentro do período da reserva (menor e maior data das linhas). Os `agenda_id` são deduplicados e ordenados antes do lock, para evitar deadlock entre transações concorrentes. A trava exige transação aberta: fora dela o lock seria liberado na hora, e o método lança `LogicException`.
 
-A mesma estratégia de lock e revalidação foi aplicada em `UpdateReservaJob.php` em ambos os escopos (`edit_scope === 'recurring'` e `edit_scope === 'single'`):
-- **Escopo `recurring`:** Lock adquirido sobre os horários das agendas afetadas dentro do intervalo `data_inicial`–`data_final`, posicionado antes da leitura de avaliações já feitas (`$avaliacoes`). A revalidação ocorre após a expansão montar as linhas, antes da inserção final. A verificação exclui horários da própria reserva sendo editada (`where('reserva_id', '!=', $this->reserva->id)`) para evitar falso conflito com horários antigos que já foram deletados.
-- **Escopo `single`:** o job considera só os slots cuja data cai na semana (seg–dom) de `edited_week_date`, e compara com os horários dessa semana pela chave `agenda_id|data|horario_inicio` (não usa `id`). Apaga os horários que saíram do payload, cria os que entraram e mantém os coincidentes, preservando situação, justificativa e avaliador. Lock sobre os horários das agendas afetadas na semana (entre `startOfWeek()` e `endOfWeek()`). A revalidação ocorre para cada horário novo, imediatamente antes do `create()`, e exclui horários da própria reserva da verificação de conflito. Ao final, `data_inicial` e `data_final` são recalculadas pelo menor e pelo maior horário restante.
+2. **Revalidação sob lock (`conflitosDeferidos`):** com a trava adquirida, as linhas novas são checadas contra os horários já deferidos. Se alguma colidir, o service lança `ConflitoDeHorarioException` antes de qualquer `INSERT`, e a transação faz rollback (inclusive o `INSERT` da própria reserva). O critério é o mesmo de todas as validações de conflito: ver [seção 11](#validação-conflitos).
+
+A edição usa a mesma trava e a mesma regra, excluindo a própria reserva da checagem (`ignorarReservaId`), para não acusar conflito com horários antigos que ela mesma está substituindo:
+- **Escopo `recurring`:** a trava cobre as agendas afetadas dentro do período da série; a revalidação roda sobre as linhas expandidas, antes da gravação.
+- **Escopo `single`:** só entram os slots da semana de `edited_week_date`. A identidade de cada horário é `agenda_id|data|horario_inicio` (a mesma do índice único da tabela), não o `id`. Os horários que saíram do payload são apagados, os novos são criados e os coincidentes são mantidos, preservando situação, justificativa e avaliador. Ao final, `data_inicial` e `data_final` são recalculadas pelo menor e pelo maior horário restante.
 - **Escopos e propagação:** a diferença entre os dois escopos, a propagação do escopo `recurring` às demais semanas e o trade-off de editar só uma semana estão em [`recorrencia.md`, seção 5](./recorrencia.md#5-edição-de-reserva-escopos).
 
 ### 4.2.2 Dados da solicitação e aceite do termo
@@ -275,22 +280,58 @@ O field `validation_status` acompanha o progresso do `ValidateReservationConflic
 | `pending` | Job não iniciado ainda | → `processing` quando job inicia |
 | `processing` | Job rodando, detectando conflitos | → `completed` ou `failed` |
 | `completed` | Validação terminada com sucesso; `conflict_cache` está atualizado | Permanece até próxima revalidação |
-| `failed` | Job falhou após retries; cache pode estar desatualizado | Manual (não há retry automático) |
+| `failed` | Erro de domínio ou tentativas esgotadas (3, com backoff de 30 s e 60 s); cache pode estar desatualizado | Gravado em `failed()`, que também publica `validated` para a tela sair de "processando". Sem reparo automático: reservas presas em `processing` ficam para o backlog (S80) |
 
 **Nota:** Durante `pending` ou `processing`, a `AvaliarReservaPage` (gestor) exibe um spinner e bloqueia avaliação, pois não há conflitos verificados ainda.
 
 ### 4.4 Efeitos Depois do Commit {#efeitos-pos-commit}
 
-Os efeitos externos de uma alteração de reserva só rodam depois que a transação foi commitada, nesta ordem:
+Os efeitos externos de uma alteração de reserva só rodam depois que a transação foi commitada. Os jobs e o service de avaliação só chamam esses efeitos depois do retorno do service, nunca dentro de `DB::transaction`.
+
+```mermaid
+flowchart TD
+    C["Commit da transação<br/>(service de domínio)"] --> N["notify() por destinatário<br/>(try-catch: falha vira warning)"]
+    N --> V["ValidateReservationConflictsJob::dispatch<br/>(falha vira warning)"]
+    V --> P["ReservaBroadcaster::publicar()"]
+    P --> A["ReservaAlterada: invalida cache de relatórios<br/>(só created, updated, evaluated e canceled)"]
+    A --> E["ReservaEvent: tempo real<br/>(falha vira warning)"]
+```
 
 | Ordem | Efeito | Se falhar |
 |-------|--------|-----------|
-| 1 | Validação de conflitos (`ValidateReservationConflictsJob`, na criação, edição e cascata de avaliação) | `validation_status = 'failed'` (após retries) |
+| 1 | Validação de conflitos (`ValidateReservationConflictsJob`, na criação, edição e cascata de avaliação) | Falha ao despachar vira warning. Falha do próprio job grava `validation_status = 'failed'` (após retries) |
 | 2 | Notificações (`notify()` em try-catch, uma por destinatário) | `Log::warning`; o fluxo segue |
-| 3 | Invalidação do cache de relatórios (`ReservaAlterada`, listener na fila) | Só para `created`, `updated`, `evaluated` e `canceled`. `validated` não invalida |
-| 4 | Tempo real (`ReservaEvent` via `ReservaBroadcaster::publicar()`) | `Log::warning`; não altera a situação da reserva, o `validation_status` nem as notificações |
+| 3 | Publicação (`ReservaBroadcaster::publicar()`): primeiro `ReservaAlterada` (cache de relatórios, só para `created`, `updated`, `evaluated` e `canceled`) e depois `ReservaEvent` (tempo real) | A falha de `ReservaAlterada` e a de `ReservaEvent` viram `Log::warning`; não alteram a situação, o `validation_status` nem as notificações |
 
-O tempo real é sempre o último passo. A exceção de status é `validated`: depois de gravar `completed`, falha de broadcast não regrava `failed`. O cancelamento segue a mesma regra, com a revalidação de reservas em conflito antes da publicação (ver [seção 8](#cancelamento)).
+A publicação é sempre o último passo. A exceção de status é `validated`: depois de gravar `completed`, falha de broadcast não regrava `failed`. O cancelamento segue a mesma regra, com a revalidação de reservas em conflito antes da publicação (ver [seção 8](#cancelamento)).
+
+Nenhum efeito pós-commit relança exceção para o job. Isso vale para o despacho de `ReservaAlterada`, para `ReservaEvent` e para a publicação chamada por `AvaliacaoDeReservaService::aposCommit` e `UpdateReservaJob`, que separa em try distintos o despacho da revalidação e o broadcast. Com o retry da S33, um job que relançasse essa falha rodaria de novo e duplicaria a avaliação e as notificações já gravadas.
+
+Cada ponto de uso resolve o efeito pós-commit no próprio fluxo. O `config/queue.php` mantém `after_commit => false` nas quatro conexões, por decisão: uma ligação global mudaria o momento de todos os jobs do sistema, e o efeito já é tratado onde ele nasce.
+
+### 4.5 Retry e Falhas dos Jobs {#retry-e-falhas-dos-jobs}
+
+Os jobs separam dois tipos de falha. A regra completa, com exemplos, está em [`arquitetura/erros-e-logs.md`](../arquitetura/erros-e-logs.md#domínio-e-transitório).
+
+| Job | `tries` | Erro de domínio (`DominioException`) | Erro transitório (banco, timeout, rede) |
+|-----|---------|--------------------------------------|------------------------------------------|
+| `ProcessarCriacaoReserva` | 1 | `fail()` sem retry; `failed()` avisa o solicitante | Relançado; como `tries = 1`, falha de vez. Não é idempotente (I8): uma nova tentativa poderia gravar a reserva duas vezes |
+| `UpdateReservaJob` | 3, backoff 30 s e 60 s | `fail()` sem retry | Relançado e reagendado; esgotadas as tentativas, `failed()` notifica o solicitante |
+| `AvaliarReservaJob` | 3 | `fail()` sem retry (ex.: reserva arquivada, escopo inválido, horário fora da autorização do gestor) | Relançado e reagendado; `failed()` só registra em log (ver backlog S81) |
+| `ValidateReservationConflictsJob` | 3, backoff 30 s e 60 s | `fail()` sem retry; `failed()` também grava `validation_status = failed` e publica `validated` (o cálculo de conflitos não lança exceção de domínio hoje) | Relançado e reagendado; `failed()` grava `validation_status = failed` e publica `validated` |
+
+```mermaid
+flowchart TD
+    J["Job.handle() chama o service"] --> R{"Que tipo de erro?"}
+    R -->|"DominioException<br/>(regra de negócio)"| F["fail($e): sem retry<br/>log de aviso"]
+    R -->|"Outro Throwable<br/>(infraestrutura)"| T["Relança: o worker<br/>reagenda até tries"]
+    T --> E{"Tentativas<br/>esgotadas?"}
+    E -->|"não"| J
+    E -->|"sim"| FL["failed(): notifica ou grava<br/>o estado final da reserva"]
+    F --> FL
+```
+
+Efeitos pós-commit (notificação, despacho e publicação) não entram nesse fluxo: a falha deles vira aviso e não marca o job como falho, para não repetir um trabalho que já foi commitado.
 
 ### Disponibilidade na lista de espaços
 
@@ -348,52 +389,50 @@ sequenceDiagram
     participant GestorCtrl as "GestorReservaController"
     participant ReservaService
     participant Queue as "Queue Worker"
-    participant AvaliarJob as "AvaliarReservaJob"
+    participant AvaliarJob as "AvaliarReservaJob (casca)"
+    participant AvaliacaoSvc as "AvaliacaoDeReservaService"
     participant ConflictService as "ConflictDetectionService"
     participant DB
     participant ValidateJob as "ValidateReservationConflictsJob"
     participant Notification
 
     Browser->>GestorCtrl: PATCH /gestor/reservas/{id} (horarios_avaliados, evaluation_scope, motivo)
-    GestorCtrl->>GestorCtrl: authorize('viewForGestor', reserva)<br/>Verifica se gestor gerencia alguma agenda da reserva
+    GestorCtrl->>GestorCtrl: authorize('evaluateForGestor', reserva)<br/>Verifica se gestor gerencia alguma agenda da reserva
     GestorCtrl->>ReservaService: evaluate(reserva, data, gestor)
     ReservaService->>Queue: AvaliarReservaJob::dispatch(reserva, data, gestor)
     GestorCtrl-->>Browser: redirect → gestor.reservas.index (flash "processando")
 
-    Queue->>AvaliarJob: handle(conflictService)
-    AvaliarJob->>ConflictService: findConflictsFor(reserva.id)
-    ConflictService->>DB: SQL JOIN para detectar horarios com conflito (situacao='deferida' + sobreposição)
+    Queue->>AvaliarJob: handle()
+    AvaliarJob->>AvaliacaoSvc: avaliar(reserva, dados, gestor, locale)
+    AvaliacaoSvc->>AvaliacaoSvc: reserva arquivada? escopo válido? horários dentro das agendas do gestor?
+    AvaliacaoSvc->>ConflictService: findConflictsFor(reserva.id)
+    ConflictService->>DB: conflitos com horários deferidos (regra única, seção 11)
     DB-->>ConflictService: mapa horario_id → conflito
 
     alt evaluation_scope === 'single'
-        loop Para cada horario na semana visível
-            AvaliarJob->>DB: UPDATE horarios (situacao, justificativa, user_id)<br/>Se conflitante → força 'indeferida'
-        end
+        AvaliacaoSvc->>DB: UPDATE em lote por grupo de decisão, na semana visível<br/>Se conflitante → força 'indeferida'
     else evaluation_scope === 'recurring'
-        AvaliarJob->>DB: UPDATE horarios conflitantes → 'indeferida' + justificativa
-        loop Para cada padrão único (agenda_id + horario_inicio + dia_da_semana)
-            AvaliarJob->>DB: UPDATE todos os horarios recorrentes não conflitantes<br/>Propaga status para toda a série
-        end
+        AvaliacaoSvc->>DB: UPDATE conflitantes → 'indeferida' + justificativa
+        AvaliacaoSvc->>DB: UPDATE em lote os horários recorrentes não conflitantes<br/>Propaga status para toda a série
     end
 
-    AvaliarJob->>AvaliarJob: updateReservaOverallStatus()<br/>Recalcula situacao da Reserva pelo agregado dos Horarios
-    
+    AvaliacaoSvc->>DB: atualizarSituacaoGeral()<br/>Recalcula situacao da Reserva pelo agregado dos Horarios
+    AvaliacaoSvc->>DB: COMMIT
+
+    Note over AvaliacaoSvc: depois do commit
     alt Algum horário foi aprovado (deferida)?
-        AvaliarJob->>AvaliarJob: triggerConflictRevalidation()
-        loop Para cada reserva em_analise que compartilha (data, agenda_id)
-            AvaliarJob->>Queue: ValidateReservationConflictsJob::dispatch(reserva_afetada)
-        end
+        AvaliacaoSvc->>Queue: revalidarConflitos(): ValidateReservationConflictsJob::dispatch(reserva_afetada)<br/>para cada reserva que compartilha (data, agenda_id)
     end
-    
-    AvaliarJob->>Notification: ReservationEvaluatedNotification → Solicitante (database + broadcast + mail)
-    AvaliarJob->>AvaliarJob: publicar 'evaluated' (ReservaAlterada + ReservaEvent, por último)
+
+    AvaliacaoSvc->>Notification: ReservationEvaluatedNotification → Solicitante (try-catch)
+    AvaliacaoSvc->>AvaliacaoSvc: publicar 'evaluated' (ReservaAlterada + ReservaEvent, por último)
 ```
 
 ---
 
 ## 6. Regra de Status Agregado da Reserva {#status-agregado}
 
-A situação final da `Reserva` é calculada em `AvaliarReservaJob::updateReservaOverallStatus()`:
+A situação final da `Reserva` é calculada em `AvaliacaoDeReservaService::atualizarSituacaoGeral()`, dentro da transação da avaliação. Uma reserva sem horários fica `indeferida`:
 
 ```mermaid
 flowchart TD
@@ -435,10 +474,10 @@ Quando o gestor aprova horários (`deferida`), o sistema automaticamente revalid
 
 ### 7.1 Mecanismo
 
-1. **Identificação de aprovações:** AvaliarReservaJob detecta quais horários foram aprovados (status `deferida`) nesta avaliação.
+1. **Identificação de aprovações:** `AvaliacaoDeReservaService` detecta quais horários foram aprovados (status `deferida`) nesta avaliação. A revalidação roda depois do commit, em `revalidarConflitos()`.
 
-2. **Busca de afetadas:** Procura outras reservas que:
-   - Estão em `situacao = 'em_analise'` (pendentes de avaliação)
+2. **Busca de afetadas** (`ReservaRepositoryEloquent::reservasParaRevalidarAposAprovacao`): procura outras reservas que:
+   - Estão em `situacao` `em_analise` ou `parcialmente_deferida` (ainda com horários pendentes)
    - Têm `validation_status = 'completed'` (já validadas)
    - Compartilham pelo menos um slot (`data`, `agenda_id`) com os horários recém-aprovados
 
@@ -450,8 +489,8 @@ Quando o gestor aprova horários (`deferida`), o sistema automaticamente revalid
 
 ```mermaid
 graph TD
-    A["AvaliarReservaJob aprova Horários<br/>da Reserva A"] -->|Identifica aprovações| B["Lista de slots aprovados:<br/>data, agenda_id, horario_inicio/fim"]
-    B -->|Busca afetadas| C["Query: Reservas em_analise,<br/>validation_status=completed,<br/>que compartilham slots"]
+    A["AvaliacaoDeReservaService aprova Horários<br/>da Reserva A (após o commit)"] -->|Identifica aprovações| B["Lista de slots aprovados:<br/>data, agenda_id"]
+    B -->|Busca afetadas| C["Query: Reservas em_analise ou parcialmente_deferida,<br/>validation_status=completed,<br/>que compartilham slots"]
     C -->|Para cada reserva| D["ValidateReservationConflictsJob<br/>dispatchado"]
     D -->|Atualiza| E["conflict_cache da reserva"]
     
@@ -464,7 +503,7 @@ graph TD
 - **Reserva A:** Solicitante pede segundo-feira 14h na Agenda X. Fica em análise.
 - **Reserva B:** Outro solicitante pede segunda-feira 14h na mesma Agenda X. Fica em análise, sem conflitos iniciais (pois A ainda não foi aprovada).
 - **Gestor aprova A:** `ValidateReservationConflictsJob` roda e marca os horários de A como `deferida`.
-- **Cascata:** AvaliarReservaJob detecta que B compartilha a mesma Agenda+Data+Hora, dispara novo `ValidateReservationConflictsJob` para B.
+- **Cascata:** o service de avaliação detecta que B compartilha a mesma Agenda+Data+Hora e despacha um novo `ValidateReservationConflictsJob` para B, depois do commit.
 - **B re-validado:** O novo job detecta conflito de B com A agora, atualiza `conflict_cache` de B.
 
 > **Objetivo:** Garantir que o gestor sempre veja o estado atual de conflitos ao avaliar uma reserva, mesmo que outra tenha sido aprovada após a submissão.
@@ -522,7 +561,7 @@ O canal `broadcast` permite que o frontend (`resources/js/presentation/organisms
 | `ReservationEvaluatedNotification` | Solicitante | `AvaliarReservaJob` | Após gestor avaliar e finalizar a reserva |
 | `ReservationCanceledNotification` | Gestores afetados | `ReservaService.cancel()` | Quando solicitante cancela a reserva |
 | `ReservationUpdatedNotification` | Solicitante | `UpdateReservaJob` | Após edição da reserva (atualização de horários) |
-| `ReservationFailedNotification` | Solicitante | `ProcessarCriacaoReserva.failed()` | Quando criação falha após 3 retries |
+| `ReservationFailedNotification` | Solicitante | `ProcessarCriacaoReserva.failed()` | Quando a criação falha. O job tem `tries = 1`, então a falha é definitiva na primeira tentativa |
 | `ReservationUpdateFailedNotification` | Solicitante | `UpdateReservaJob.failed()` | Quando atualização falha após 3 retries |
 
 ### 9.3 Supressão de E-mail em Auto-Aprovação
@@ -559,7 +598,7 @@ graph TD
 As listagens de reservas filtram por dois eixos independentes:
 
 - **Avaliação** (`situacao`): `em_analise`, `deferida`, `indeferida`, `parcialmente_deferida`. O filtro aceita somente esses valores.
-- **Arquivo** (`arquivo`): `ativas` (padrão), `arquivadas` (`situacao = 'inativa'`) ou `todas`. Enum `ModoArquivoEnum` (`app/Enums/SituacaoReserva/ModoArquivoEnum.php`), aplicado pelo scope `Reserva::scopeArquivo` (`app/Models/Reserva.php`).
+- **Arquivo** (`arquivo`): `ativas` (padrão), `arquivadas` (`situacao = 'inativa'`) ou `todas`. Enum `ModoArquivoEnum` (`app/Enums/Reserva/ModoArquivoEnum.php`), aplicado pelo scope `Reserva::scopeArquivo` (`app/Models/Reserva.php`).
 
 Detalhes, normalização de `?situacao=inativa` e cenários de uso: [`arquivamento.md`](./arquivamento.md).
 
@@ -573,7 +612,7 @@ Detalhes, normalização de `?situacao=inativa` e cenários de uso: [`arquivamen
 
 ### 11.2 Condição de Bloqueio
 
-Um horário solicitado é **indisponível** se já existe um `Horario` com:
+A regra é única no backend: `HorarioRepository::conflitosDeferidos()` resolve todas as linhas em uma consulta. Usam essa mesma regra `HorarioDisponivel` (validação do formulário), `ConflictDetectionService` (leitura para o gestor), `CriacaoDeReservaService` e `EdicaoDeReservaService` (sob trava). Um horário solicitado é **indisponível** se já existe um `Horario` com:
 - Mesma `agenda_id` e mesma `data`
 - **Sobreposição de intervalo**: o horário existente começa antes do fim do solicitado (`horario_inicio < horario_fim`) e termina depois do início do solicitado (`horario_fim > horario_inicio`)
 - `situacao = 'deferida'` (apenas aprovados bloqueiam)
@@ -582,7 +621,9 @@ Um horário solicitado é **indisponível** se já existe um `Horario` com:
 
 Quando bloqueia, a mensagem cita a data do primeiro conflito e a faixa solicitada (em pt-BR, `O horário :start–:end de :date já está reservado.`). Detalhes e a regra de período em [`validacao.md`](./validacao.md).
 
-Intervalos adjacentes (um termina exatamente quando o outro começa) não conflitam.
+Intervalos adjacentes (um termina exatamente quando o outro começa) não conflitam. Quando um slot colide com mais de um horário, o conflito reportado é o primeiro por data e hora de início, então a mensagem é a mesma em qualquer validação.
+
+O critério em SQL abaixo é ilustrativo; a implementação está em `HorarioRepositoryEloquent::conflitosDeferidos`.
 
 ```sql
 SELECT EXISTS (
@@ -620,7 +661,7 @@ graph TD
     style H fill:#c8e6c9
 ```
 
-Na avaliação pelo gestor, `AvaliarReservaJob` marca como `indeferida` os horários do próprio gestor que conflitam com horários já deferidos.
+Na avaliação pelo gestor, `AvaliacaoDeReservaService` marca como `indeferida` os horários do próprio gestor que conflitam com horários já deferidos.
 
 ---
 
@@ -644,7 +685,17 @@ Os componentes seguem Atomic Design em `resources/js/presentation/` (primitivos 
 
 ## 13. Arquitetura Backend {#arquitetura}
 
-O fluxo segue Controller → Service → Repository. As interfaces de repositório são ligadas às implementações Eloquent no `AppServiceProvider`. Detalhes em [`repositorios.md`](../arquitetura/repositorios.md).
+O fluxo segue Controller → Service → Repository. Os jobs são cascas sobre os services de domínio, que concentram a regra e são testáveis sem fila:
+
+| Service | Responsabilidade | Chamado por |
+|---------|------------------|-------------|
+| `CriacaoDeReservaService` | Cria reserva e horários, sob trava, com revalidação de conflito | `ProcessarCriacaoReserva` |
+| `EdicaoDeReservaService` | Edita a reserva nos escopos `single` e `recurring`, sob trava | `UpdateReservaJob` |
+| `AvaliacaoDeReservaService` | Aplica a avaliação do gestor, atualiza a situação geral e faz os efeitos pós-commit | `AvaliarReservaJob` |
+| `TravaDeHorarios` | `lockForUpdate` por agenda e período; exige transação aberta | Os três services acima |
+| `SlotDeHorario` (`App\Support`) | Normaliza a linha de horário (`HH:MM:SS`, data) antes de comparar | Services e `HorarioDisponivel` |
+
+As interfaces de repositório são ligadas às implementações Eloquent no `AppServiceProvider`. Detalhes em [`repositorios.md`](../arquitetura/repositorios.md).
 
 ---
 
@@ -661,9 +712,13 @@ Pendências e próximos passos: [`../backlog.md`](../backlog.md).
 | [`ReservaController.php`](../../app/Http/Controllers/ReservaController.php) | CRUD HTTP do solicitante |
 | [`GestorReservaController.php`](../../app/Http/Controllers/Gestor/GestorReservaController.php) | HTTP de avaliação do gestor |
 | [`ReservaService.php`](../../app/Services/ReservaService.php) | Orquestração e despacho de jobs |
-| [`ProcessarCriacaoReserva.php`](../../app/Jobs/ProcessarCriacaoReserva.php) | Job de criação assíncrona |
-| [`UpdateReservaJob.php`](../../app/Jobs/UpdateReservaJob.php) | Job de atualização assíncrona |
-| [`AvaliarReservaJob.php`](../../app/Jobs/AvaliarReservaJob.php) | Job de avaliação do gestor |
+| [`ProcessarCriacaoReserva.php`](../../app/Jobs/ProcessarCriacaoReserva.php) | Job de criação assíncrona (casca sobre `CriacaoDeReservaService`) |
+| [`UpdateReservaJob.php`](../../app/Jobs/UpdateReservaJob.php) | Job de atualização assíncrona (casca sobre `EdicaoDeReservaService`) |
+| [`AvaliarReservaJob.php`](../../app/Jobs/AvaliarReservaJob.php) | Job de avaliação do gestor (casca sobre `AvaliacaoDeReservaService`) |
+| [`CriacaoDeReservaService.php`](../../app/Services/CriacaoDeReservaService.php) | Regra da criação: expansão, trava, conflito e auto-aprovação |
+| [`EdicaoDeReservaService.php`](../../app/Services/EdicaoDeReservaService.php) | Regra da edição nos escopos `single` e `recurring` |
+| [`AvaliacaoDeReservaService.php`](../../app/Services/AvaliacaoDeReservaService.php) | Regra da avaliação e efeitos depois do commit |
+| [`TravaDeHorarios.php`](../../app/Services/TravaDeHorarios.php) | Trava pessimista por agenda e período |
 | [`EspacoRepositoryEloquent.php`](../../app/Repositories/EspacoRepositoryEloquent.php) | Filtro de disponibilidade e `horarios_livres` da lista pública |
 | [`config/reservas.php`](../../config/reservas.php) | Fuso de negócio e grade de horários por turno (espelho do front) |
 | [`ValidateReservationConflictsJob.php`](../../app/Jobs/ValidateReservationConflictsJob.php) | Job de validação de conflitos |

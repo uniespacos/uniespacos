@@ -4,7 +4,7 @@ Este documento descreve o padrão Repository + Interface do projeto: como encaps
 
 ## Repositórios Registrados
 
-Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface`, `RetencaoRepositoryInterface`, `AnonimizacaoDeBaseRepositoryInterface` e `FotoPerfilRepositoryInterface`.
+Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento cobre `ReservaRepositoryInterface`, `AgendaRepositoryInterface`, `HorarioRepositoryInterface`, `DashboardRepositoryInterface`, `RetencaoRepositoryInterface`, `AnonimizacaoDeBaseRepositoryInterface` e `FotoPerfilRepositoryInterface`, além da base CRUD `BaseRepositoryEloquent`.
 
 | Interface | Implementação Eloquent | Detalhado aqui |
 |-----------|------------------------|----------------|
@@ -15,7 +15,8 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 | `AnonimizacaoDeBaseRepositoryInterface` | `AnonimizacaoDeBaseRepositoryDb` (query builder, sem model) | [Sim](#anonimizacaodebaserepositoryinterface) |
 | `EspacoRepositoryInterface` | `EspacoRepositoryEloquent` | [Sim](#espacorepositoryinterface) |
 | `FotoPerfilRepositoryInterface` | `FotoPerfilRepositoryEloquent` | [Sim](#fotoperfilrepositoryinterface) |
-| `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | Não |
+| `HorarioRepositoryInterface` | `HorarioRepositoryEloquent` | [Sim](#horariorepositoryinterface) |
+| `DashboardRepositoryInterface` | `DashboardRepositoryEloquent` | [Sim](#dashboardrepositoryinterface) |
 | `InstituicaoRepositoryInterface` | `InstituicaoRepositoryEloquent` | Não |
 | `ModuloRepositoryInterface` | `ModuloRepositoryEloquent` | Não |
 | `ReservaRepositoryInterface` | `ReservaRepositoryEloquent` | [Sim](#reservarepositoryinterface) |
@@ -30,6 +31,9 @@ Todos os bindings ficam em `AppServiceProvider`. O detalhamento deste documento 
 - [Por Que Usar Repository?](#por-que-usar-repository)
 - [ReservaRepositoryInterface](#reservarepositoryinterface)
 - [AgendaRepositoryInterface](#agendarepositoryinterface)
+- [BaseRepositoryEloquent e CrudRepositoryInterface](#baserepositoryeloquent-e-crudrepositoryinterface)
+- [HorarioRepositoryInterface](#horariorepositoryinterface)
+- [DashboardRepositoryInterface](#dashboardrepositoryinterface)
 - [RetencaoRepositoryInterface](#retencaorepositoryinterface)
 - [AnonimizacaoDeBaseRepositoryInterface](#anonimizacaodebaserepositoryinterface)
 - [FotoPerfilRepositoryInterface](#fotoperfilrepositoryinterface)
@@ -77,6 +81,22 @@ Isso permite:
 - **Trocar implementação** sem alterar consumers (ex: trocar para cache, banco NoSQL)
 - **Mockar em testes** injetando uma implementação fake
 - **Decoupling** — controller não depende de Eloquent, depende de contrato
+
+---
+
+## BaseRepositoryEloquent e CrudRepositoryInterface
+
+`CrudRepositoryInterface<TModel>` (`@template TModel of Model`) define o CRUD que quase todo repositório precisa: `store`, `getList`, `get`, `update` e `destroy`. `BaseRepositoryEloquent<TModel>`, abstrato em `app/Repositories/BaseRepositoryEloquent.php`, implementa esse contrato uma vez, com o model injetado no construtor.
+
+Os repositórios concretos estendem a base e declaram o model no PHPDoc (`@extends BaseRepositoryEloquent<Espaco>`). Cada um fica só com as consultas específicas:
+
+| Repositório | Estende a base |
+|-------------|----------------|
+| `AgendaRepositoryEloquent`, `AndarRepositoryEloquent`, `EspacoRepositoryEloquent`, `HorarioRepositoryEloquent`, `InstituicaoRepositoryEloquent`, `ModuloRepositoryEloquent`, `ReservaRepositoryEloquent`, `SetorRepositoryEloquent`, `UnidadeRepositoryEloquent` | Sim (nove) |
+| `UserRepositoryEloquent` | Não. Não tem `destroy`, então o contrato básico não serve |
+
+- `store`, `get` e `update` não têm tipo de retorno nativo, só PHPDoc. `getList` e `destroy` já declaram o tipo. Completar os tipos nativos é a pendência DEB-R14.
+- A redução do CRUD repetido fez a baseline do PHPStan cair de 341 para 225 entradas. O débito geral continua em DEB-R4.
 
 ---
 
@@ -159,6 +179,61 @@ $result = $service->getListingForUser($user, '2026-w36', []);
 ```
 
 Sem repository, seria preciso mockar Model + QueryBuilder + múltiplos métodos.
+
+---
+
+## HorarioRepositoryInterface
+
+Os horários são a base da regra de conflito. Três pontos do repositório e do serviço formam a defesa.
+
+### `conflitosDeferidos(array $linhas, ?int $ignorarReservaId = null): Collection`
+
+Resolve **todas** as linhas de uma requisição em uma consulta só, e não uma `EXISTS` por linha. Cada linha é normalizada por `App\Support\SlotDeHorario` antes da comparação (o Postgres devolve `HH:MM:SS`, e a comparação de string precisa do mesmo formato).
+
+- Critério: `situacao = 'deferida'`, mesma `agenda_id` e mesma `data`, e sobreposição estrita (`horario_inicio < fim AND horario_fim > inicio`). Intervalos adjacentes não conflitam.
+- `$ignorarReservaId` exclui os horários da própria reserva, na edição.
+- Retorna um mapa: índice da linha → `['linha' => ..., 'conflito' => ...]`, só para as linhas que colidem. Para cada linha, o conflito é o primeiro por data e hora de início, então a mensagem é a mesma em qualquer validação.
+
+Quem usa, todos com a mesma regra:
+
+| Uso | Onde | Sob trava? |
+|-----|------|------------|
+| Validação do formulário | `HorarioDisponivel` (todas as linhas, incluindo recorrência, em uma consulta) | Não |
+| Leitura para o gestor | `ConflictDetectionService::findConflictsFor()` | Não |
+| Criação | `CriacaoDeReservaService::garantirSemConflito()` | Sim |
+| Edição (escopos `single` e `recurring`) | `EdicaoDeReservaService::garantirSemConflito()` | Sim |
+
+### `bloquearPeriodo(array $agendaIds, string $dataInicial, string $dataFinal): void`
+
+`SELECT ... FOR UPDATE` nos horários das agendas no período. Não deve ser chamado direto: o caminho normal é `TravaDeHorarios::adquirir()`.
+
+### `atualizarDaReservaEmLote(array $horarioIds, int $reservaId, array $agendaIds, array $atributos): int`
+
+Um `UPDATE` para todos os horários de um mesmo grupo de decisão. A avaliação agrupa os horários com os mesmos atributos (situação e justificativa) e chama o método uma vez por grupo. O filtro por `reserva_id` e pelas agendas do gestor impede gravar horário de outra reserva ou de outra agenda.
+
+### `TravaDeHorarios` (serviço, não repositório)
+
+`App\Services\TravaDeHorarios::adquirir(array $agendaIds, string $dataInicial, string $dataFinal)` é a trava usada pela criação e pela edição:
+
+- Remove IDs repetidos e ordena os IDs antes do lock. A ordem fixa evita deadlock entre transações concorrentes.
+- Exige transação aberta. Sem ela, o `lockForUpdate` seria liberado na hora, e o método lança `LogicException`.
+- Não tem parâmetro de reserva: a trava vale para a agenda e o período, e a exclusão da própria reserva fica no `conflitosDeferidos`.
+
+A regra de conflito estava copiada em três lugares, com uma consulta por linha gerada. Hoje ela está em um método só.
+
+---
+
+## DashboardRepositoryInterface
+
+`DashboardRepositoryInterface` reúne as consultas dos painéis, usadas por `HomeService`. Ligada em `AppServiceProvider` a `DashboardRepositoryEloquent`.
+
+| Painel | Métodos |
+|--------|---------|
+| Institucional | `contarEspacos`, `contarGestores`, `contarReservasCriadasEntre`, `ultimosUsuarios`, `ultimosEspacosComAgendas`, `ultimosGestores`, `ultimasUnidadesComEspacos` |
+| Solicitante | `reservasRecentesDoUsuario`, `contarReservasDoUsuarioPorSituacao`, `espacosRecentesDoUsuario` |
+| Gestor | `reservasPendentesDoGestor`, `contarReservasDoGestorPorSituacao`, `contarReservasAvaliadasHojeDoGestor`, `contarEspacosDoGestor` |
+
+As contagens do painel institucional são globais: não respeitam a instituição do usuário. Isso faz parte da decisão multi-instituição (D-1, v2), que está fora desta refatoração.
 
 ---
 
@@ -709,6 +784,8 @@ $reservas = $this->repoReserva->getWithRelations(
 - ❌ Encoraja lazy-loading acidental
 
 **Conclusão:** Especialização é melhor para este projeto. O custo de manutenção é compensado pela segurança e performance.
+
+A exceção é o CRUD básico (`store`, `get`, `getList`, `update` e `destroy`), que `BaseRepositoryEloquent` implementa para todos os repositórios que só precisam dele. As consultas com relacionamentos e filtros continuam especializadas, uma por caso de uso.
 
 ---
 

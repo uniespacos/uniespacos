@@ -10,6 +10,7 @@ use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,8 @@ use Tests\TestCase;
  */
 class ReservaAuthorizationTest extends TestCase
 {
+    use CongelaRelogio;
+
     /**
      * Builds a coherent Reserva + Agenda + Horario trio for the current week.
      *

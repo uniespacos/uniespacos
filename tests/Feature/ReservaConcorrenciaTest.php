@@ -13,10 +13,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Notification;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ReservaConcorrenciaTest extends TestCase
 {
+    use CongelaRelogio;
     use DatabaseTransactions;
 
     protected function setUp(): void

@@ -42,15 +42,10 @@ class FortifyServiceProvider extends ServiceProvider
 
     private const HASH_DESCARTAVEL = '$2y$12$/wdPtsmGFf27zeIHql0AG.8wf8zp6j4Hx5WK9NVNswjsl0fnbATTe';
 
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // Bind your custom VerifyEmailResponse
         $this->app->singleton(VerifyEmailResponseContract::class, CustomVerifyEmailResponse::class);
 
-        // Bind your custom LoginResponse
         $this->app->singleton(LoginResponseContract::class, CustomLoginResponse::class);
 
         $this->app->singleton(LogoutResponseContract::class, CustomLogoutResponse::class);
@@ -59,9 +54,6 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->singleton(SuccessfulPasswordResetLinkRequestResponseContract::class, NeutralPasswordResetLinkResponse::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Fortify::createUsersUsing(CreateNewUser::class);
@@ -76,7 +68,6 @@ class FortifyServiceProvider extends ServiceProvider
             }
         });
 
-        // Tell Fortify to render Inertia views for standard authentication pages
         Fortify::loginView(function () {
             return Inertia::render('auth/login', [ // Updated to lowercase based on convention
                 'canResetPassword' => Route::has('password.request'),
@@ -115,7 +106,6 @@ class FortifyServiceProvider extends ServiceProvider
             return Inertia::render('auth/confirm-password');
         });
 
-        // Explicitly define where to redirect after email verification
         Fortify::redirects('email-verification', '/dashboard?verified=1');
 
         RateLimiter::for('login', function (Request $request) {

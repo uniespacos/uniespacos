@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use Illuminate\Database\QueryException;
+use App\Exceptions\DominioException;
 use Illuminate\Support\Facades\Log;
-use PDOException;
 use Throwable;
 
 final class MensagemDeErro
@@ -19,19 +18,14 @@ final class MensagemDeErro
      */
     public static function paraUsuario(Throwable $e, array $contexto = [], bool $registrar = true): string
     {
-        if (! self::ehFalhaDeInfraestrutura($e)) {
+        if ($e instanceof DominioException) {
             return $e->getMessage();
         }
 
         if ($registrar) {
-            Log::error('Falha de infraestrutura ao processar ação do usuário', $contexto + ['exception' => $e]);
+            Log::error('Falha não tratada ao processar ação do usuário', $contexto + ['exception' => $e]);
         }
 
         return __(self::GENERICA);
-    }
-
-    private static function ehFalhaDeInfraestrutura(Throwable $e): bool
-    {
-        return $e instanceof QueryException || $e instanceof PDOException;
     }
 }

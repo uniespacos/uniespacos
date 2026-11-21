@@ -64,7 +64,7 @@ Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function (
     // Reservas
     // ---------------------------
 
-    Route::resource('reservas', ReservaController::class);
+    Route::resource('reservas', ReservaController::class)->except(['create'])->whereNumber('reserva');
 
     // ---------------------------
     // Rotas para Usuário Gestor

@@ -173,10 +173,10 @@ flowchart TD
     A["Edição: escolha do escopo no passo 1"] --> B{"edit_scope"}
     B -->|"recurring: Todas as ocorrências"| C["Front: propagarEdicaoRecorrente<br/>diferença em relação aos horários originais"]
     C --> D["PATCH com os horários da série"]
-    D --> E["UpdateReservaJob, recurring<br/>apaga todos os horários<br/>expande com ExpansaoHorariosService<br/>restaura avaliações já feitas"]
+    D --> E["EdicaoDeReservaService, recurring<br/>apaga todos os horários<br/>expande com ExpansaoHorariosService<br/>restaura avaliações já feitas"]
     B -->|"single: Apenas esta semana"| F["Front: envia os horários da grade<br/>sem propagação"]
     F --> G["PATCH com edited_week_date"]
-    G --> H["UpdateReservaJob, single<br/>filtra os slots da semana seg–dom<br/>compara por agenda, data e horario_inicio"]
+    G --> H["EdicaoDeReservaService, single<br/>filtra os slots da semana seg–dom<br/>compara por agenda, data e horario_inicio"]
     H --> H1["Apaga os horários que saíram"]
     H --> H2["Cria os horários que entraram"]
     H --> H3["Mantém os coincidentes<br/>(situação, justificativa e avaliador)"]
@@ -193,7 +193,7 @@ flowchart TD
 - uma adição propagada não recria a data que o usuário removeu explicitamente;
 - datas anteriores a hoje não mudam, e nada é criado fora de `data_inicial`–`data_final`.
 
-**Backend** (`UpdateReservaJob`, escopo `recurring`):
+**Backend** (`EdicaoDeReservaService`, chamado pelo `UpdateReservaJob`, escopo `recurring`):
 
 1. Grava `titulo`, `descricao`, `recorrencia`, `data_inicial` e `data_final`.
 2. Guarda as avaliações já feitas (situação, justificativa e avaliador de horários `deferida` ou `indeferida`), indexadas por `agenda_id|data|horario_inicio`.
@@ -207,7 +207,7 @@ flowchart TD
 
 **Front:** não propaga nada. Envia os horários da grade e `edited_week_date`, e a revisão não expande (ver 5.3).
 
-**Backend** (`UpdateReservaJob`, escopo `single`):
+**Backend** (`EdicaoDeReservaService`, chamado pelo `UpdateReservaJob`, escopo `single`):
 
 1. Filtra os slots para a semana (seg–dom) de `edited_week_date`. Slots de outras semanas são ignorados.
 2. Usa como identidade de cada horário a chave `agenda_id|data|horario_inicio`, que é a mesma do índice único `horarios_unique_slot_per_reserva`. Não usa `id`.

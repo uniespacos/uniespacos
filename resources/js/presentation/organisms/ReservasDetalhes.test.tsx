@@ -19,7 +19,7 @@ const mockReserva: Reserva = {
         id: 1,
         name: 'Carlos Silva',
         email: 'carlos@uesb.edu.br',
-    } as User,
+    },
     horarios: [
         {
             id: 1,

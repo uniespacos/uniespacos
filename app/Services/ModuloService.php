@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AndarComEspacosException;
 use App\Models\Modulo;
 use App\Repositories\ModuloRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -65,9 +66,7 @@ class ModuloService
 
             foreach ($modulo->andars->whereNotIn('nome', $requestedFloorNames) as $andar) {
                 if ($andar->espacos()->exists()) {
-                    throw new \Exception(
-                        "Cannot remove floor '{$andar->nome}' because it already has spaces assigned."
-                    );
+                    throw AndarComEspacosException::porNome($andar->nome);
                 }
                 $andar->delete();
             }

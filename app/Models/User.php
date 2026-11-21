@@ -77,6 +77,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Setor::class);
     }
 
+    public function instituicao(): ?Instituicao
+    {
+        return $this->setor?->unidade?->instituicao;
+    }
+
+    public function instituicaoId(): ?int
+    {
+        return $this->setor?->unidade?->instituicao_id;
+    }
+
     /**
      * @return HasMany<Agenda, $this>
      */

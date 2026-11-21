@@ -1,4 +1,4 @@
-import { Espaco, Horario, Reserva, SlotCalendario, User } from '@/types';
+import { Espaco, Horario, Reserva, SlotCalendario } from '@/types';
 import { act, renderHook } from '@testing-library/react';
 import { type SyntheticEvent } from 'react';
 import { toast } from 'sonner';
@@ -75,7 +75,7 @@ describe('useAgendaSelection', () => {
             updated_at: '',
             situacao: 'em_analise',
             horarios: mockHorarios,
-            user: { id: 10, name: 'Solicitante' } as User,
+            user: { id: 10, name: 'Solicitante' },
         };
     });
 

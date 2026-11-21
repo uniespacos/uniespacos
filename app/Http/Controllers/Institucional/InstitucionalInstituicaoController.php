@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Institucional;
 
+use App\Http\Controllers\Concerns\RespondeComFlash;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarInstituicoesRequest;
@@ -11,15 +12,13 @@ use App\Http\Requests\StoreInstituicaoRequest;
 use App\Http\Requests\UpdateInstituicaoRequest;
 use App\Models\Instituicao;
 use App\Services\InstituicaoService;
-use App\Support\MensagemDeErro;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class InstitucionalInstituicaoController extends Controller
 {
-    use AuthorizesRequests;
+    use RespondeComFlash;
 
     public function __construct(
         protected InstituicaoService $service,
@@ -57,6 +56,8 @@ class InstitucionalInstituicaoController extends Controller
 
     public function edit(Instituicao $instituico): Response
     {
+        $this->authorize('update', $instituico);
+
         return Inertia::render('Administrativo/Instituicoes/EditarInstituicao', [
             'instituicao' => $instituico,
         ]);
@@ -66,14 +67,13 @@ class InstitucionalInstituicaoController extends Controller
     {
         $this->authorize('update', $instituico);
 
-        try {
-            $this->service->update($instituico, $request->validated());
-
-            return redirect()->route('institucional.instituicoes.index')
-                ->with('success', __('Institution updated successfully.'));
-        } catch (\Throwable $th) {
-            return back()->withInput()->with('error', __('Error updating institution: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
-        }
+        return $this->executar(
+            fn () => $this->service->update($instituico, $request->validated()),
+            __('Institution updated successfully.'),
+            'Error updating institution: :message',
+            rotaSucesso: 'institucional.instituicoes.index',
+            comEntrada: true,
+        );
     }
 
     public function destroy(ConfirmPasswordRequest $request, Instituicao $instituico): RedirectResponse

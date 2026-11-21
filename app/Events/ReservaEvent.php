@@ -23,8 +23,6 @@ class ReservaEvent implements ShouldBroadcastNow
     ) {}
 
     /**
-     * Get the channels the event should broadcast on.
-     *
      * @return array<int, Channel|PrivateChannel>
      */
     public function broadcastOn(): array

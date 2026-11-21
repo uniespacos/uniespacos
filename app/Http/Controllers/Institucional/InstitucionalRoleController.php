@@ -10,14 +10,11 @@ use App\Http\Requests\SyncRolePermissionsRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Role;
 use App\Services\RoleService;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 
 class InstitucionalRoleController extends Controller
 {
-    use AuthorizesRequests;
-
     public function __construct(
         protected RoleService $roleService,
     ) {}

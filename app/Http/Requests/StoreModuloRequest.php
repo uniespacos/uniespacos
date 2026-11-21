@@ -17,9 +17,6 @@ class StoreModuloRequest extends FormRequest
         return Auth::user()?->hasPermissionTo('modulos.criar');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [

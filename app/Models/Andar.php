@@ -22,11 +22,14 @@ class Andar extends Model
     ];
 
     /**
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'tipo_acesso' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'tipo_acesso' => 'array',
+        ];
+    }
 
     /**
      * @return BelongsTo<Modulo, $this>

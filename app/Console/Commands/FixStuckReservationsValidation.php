@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\Reserva\ValidationStatusEnum;
 use App\Jobs\ValidateReservationConflictsJob;
 use App\Models\Reserva;
 use Illuminate\Console\Command;
@@ -31,7 +32,7 @@ class FixStuckReservationsValidation extends Command
     {
         $this->info('Iniciando a busca por reservas com validação pendente...');
 
-        $reservasParaValidar = Reserva::where('validation_status', 'pending')->get();
+        $reservasParaValidar = Reserva::where('validation_status', ValidationStatusEnum::PENDING->value)->get();
 
         if ($reservasParaValidar->isEmpty()) {
             $this->info('Nenhuma reserva com validação pendente foi encontrada. Tudo certo!');

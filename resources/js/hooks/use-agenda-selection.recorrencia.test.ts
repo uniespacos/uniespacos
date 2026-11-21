@@ -1,5 +1,5 @@
 import { EscopoRecorrencia, RecorrenciaReserva } from '@/contracts/recorrencia.contract';
-import { type Espaco, type Horario, type Reserva, type SlotCalendario, type User } from '@/types';
+import { type Espaco, type Horario, type Reserva, type SlotCalendario } from '@/types';
 import { type ReservaFormData } from '@/types/reserva-stepper';
 import { act, renderHook } from '@testing-library/react';
 import { format } from 'date-fns';
@@ -235,7 +235,7 @@ describe('useAgendaSelection: propagacao da edicao recorrente', () => {
             updated_at: '',
             situacao: 'em_analise',
             horarios,
-            user: { id: 10, name: 'Solicitante' } as User,
+            user: { id: 10, name: 'Solicitante' },
         };
     }
 

@@ -32,23 +32,17 @@ Este documento descreve as Rules customizadas, os FormRequests que as usam e ond
 
 #### Lógica de Validação
 
-```php
-// Simplificado de app/Rules/HorarioDisponivel.php
-if ($editScope === 'single') {
-    // Slot fora da semana (seg–dom) de edited_week_date: retorna sem validar
-    $datasParaVerificar = [$data];
-} else {
-    $datasParaVerificar = app(ExpansaoHorariosService::class)->datasExpandidasParaSlot($horario, $horariosRaw, $recorrencia, $dataFinalRaw);
-}
+Todos os slots da requisição são checados em uma única consulta, na primeira validação do lote. A consulta é `HorarioRepository::conflitosDeferidos()`, a mesma regra usada pela criação e pela edição sob trava (ver [fluxo de reservas, seção 11](./fluxo-de-reservas.md#validação-conflitos)):
 
-DB::table('horarios')
-    ->whereIn('data', $datasParaVerificar)
-    ->where('agenda_id', $agendaId)
-    ->where('situacao', SituacaoReservaEnum::DEFERIDA->value)  // Apenas deferida bloqueia
-    ->where('horario_inicio', '<', $horarioFim)                // Sobreposição de intervalo
-    ->where('horario_fim', '>', $horarioInicio)
-    ->orderBy('data')->orderBy('horario_inicio')
-    ->first();                                                  // + reserva_id != $ignorarReservaId, se informado
+```php
+// Simplificado de app/Rules/HorarioDisponivel.php e HorarioRepositoryEloquent::conflitosDeferidos
+// Uma linha por slot e por data gerada pela recorrência:
+// - edit_scope = single: só as datas da semana (seg–dom) de edited_week_date
+// - criação e edit_scope = recurring: datas expandidas por ExpansaoHorariosService
+
+$encontrados = $horarios->conflitosDeferidos($linhas, $ignorarReservaId);
+// Critério: situacao = 'deferida', mesma agenda e data, horario_inicio < fim AND horario_fim > inicio
+// Retorna o primeiro conflito por data e hora de início, por slot
 ```
 
 Dois horários conflitam quando seus intervalos se sobrepõem. Intervalos adjacentes (um termina no instante em que o outro começa) não conflitam. Para recorrências periódicas (`15dias`, `1mes`, `personalizado`), cada slot enviado tem suas datas expandidas via `ExpansaoHorariosService::datasExpandidasParaSlot()` (até `data_final`, parando antes de seleções explícitas em semanas futuras do mesmo dia da semana) e todas são checadas já no envio. Na edição de ocorrência única (`edit_scope === 'single'`), a regra valida só os slots cuja data cai na semana (seg–dom) de `edited_week_date`; slots de outras semanas são aceitos sem checagem, porque o job não os grava. Na edição, `UpdateReservaRequest` passa o ID da reserva ao construtor (`new HorarioDisponivel($reservaId)`), e os horários da própria reserva são excluídos da checagem. Na criação, `StoreReservaRequest` usa `new HorarioDisponivel` sem argumento.
@@ -100,7 +94,7 @@ es:    "El horario :start–:end del día :date ya está reservado."
 | `StoreReservaRequest` | `horarios_solicitados.*.data` | Sempre |
 | `UpdateReservaRequest` | `horarios_solicitados.*.data` | Só com `edit_scope = recurring` |
 
-Na edição `single`, a regra não entra. O job recalcula `data_inicial` e `data_final` a partir do menor e do maior horário restante (`UpdateReservaJob`), então o período não limita os slots da semana editada.
+Na edição `single`, a regra não entra. O service de edição recalcula `data_inicial` e `data_final` a partir do menor e do maior horário restante (`EdicaoDeReservaService`, chamado pelo `UpdateReservaJob`), então o período não limita os slots da semana editada.
 
 #### Lógica de Validação
 
@@ -294,7 +288,7 @@ O `withValidator` também impõe a integridade da sequência: não pode haver ga
 | `termo_responsabilidade` | `required`, `accepted` | Aceite do termo de responsabilidade. O service grava `termo_aceito_em` e não persiste o campo (ver [fluxo de reservas](./fluxo-de-reservas.md#4-fluxo-completo-de-criação-de-reserva)) |
 | `data_inicial` | `required`, `date`, `after_or_equal:today` | Início do período (hoje ou futura) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
-| `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
+| `recorrencia` | `required`, `Rule::enum(RecorrenciaReservaEnum)` | Padrão de repetição (`unica`, `15dias`, `1mes`, `personalizado`) |
 | `horarios_solicitados` | `required`, `array`, `min:1`, **`HorariosMesmoEspaco`** | Array de time slots solicitados (validação de espaço único) |
 | `horarios_solicitados.*.data` | `required`, `date`, `after_or_equal:today`, **`DataDoHorarioNoPeriodo`** | Data de cada horário (hoje ou futura, e dentro de `data_inicial`–`data_final`) |
 | `horarios_solicitados.*.horario_inicio` | `required`, `date_format:H:i:s` | Hora de início (HH:MM:SS) |
@@ -324,13 +318,13 @@ O `withValidator` também impõe a integridade da sequência: não pode haver ga
 | `termo_responsabilidade` | `sometimes`, `accepted` | A tela sempre envia, então na prática cada edição pede novo aceite. Se vier, `termo_aceito_em` é regravado com o instante do request |
 | `data_inicial` | `required`, `date` | Início do período (sem validação de data passada) |
 | `data_final` | `required`, `date`, `after_or_equal:data_inicial` | Término do período (≥ data inicial) |
-| `recorrencia` | `required`, `in:unica,15dias,1mes,personalizado` | Padrão de repetição |
+| `recorrencia` | `required`, `Rule::enum(RecorrenciaReservaEnum)` | Padrão de repetição (`unica`, `15dias`, `1mes`, `personalizado`) |
 | `horarios_solicitados` | `present`, `array`, **`HorariosMesmoEspaco`** | Array de time slots (pode ser vazio, validação de espaço único) |
 | `horarios_solicitados.*.data` | `required`, `date`, **`DataDoHorarioNoPeriodo`** (só com `edit_scope = recurring`) | Data de cada horário (sem validação de data passada) |
 | `horarios_solicitados.*.horario_inicio` | `required`, `date_format:H:i:s` | Hora de início (HH:MM:SS) |
 | `horarios_solicitados.*.horario_fim` | `required`, `date_format:H:i:s`, `after:horarios_solicitados.*.horario_inicio` | Hora de término (deve ser posterior ao início) |
 | `horarios_solicitados.*.agenda_id` | `required`, `integer`, `exists:agendas,id`, **`HorarioDisponivel`** | Validação de disponibilidade (na `single`, só dos slots da semana editada) |
-| `edit_scope` | `required`, `Rule::in(['single', 'recurring'])` | Single: edita só a semana de `edited_week_date`; Recurring: edita toda a série |
+| `edit_scope` | `required`, `string`, `Rule::enum(EscopoEdicaoEnum)` | `single`: edita só a semana de `edited_week_date`; `recurring`: edita toda a série |
 | `edited_week_date` | `required_if:edit_scope,single`, `nullable`, `date` | Data de referência para edição única (define a semana seg–dom) |
 
 **Diferenças Intencionais em Relação a `StoreReservaRequest`:**
@@ -353,8 +347,13 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 | Campo | Rules | Propósito |
 |-------|-------|----------|
-| `situacao` | `required`, `Rule::in(['parcialmente_deferida', 'deferida', 'indeferida', 'em_analise'])` | Decisão da avaliação |
+| `situacao` | `required`, `Rule::in(SituacaoReservaEnum::valoresDeAvaliacao())` | Decisão da avaliação. A lista vem do enum, não de literais |
 | `motivo` | `required_if:situacao,indeferida`, `nullable`, `string`, `max:2000` | Justificativa. Obrigatório quando a situação é `indeferida` |
+| `observacao` | `nullable`, `string`, `max:500` | Observação do gestor sobre a reserva |
+| `horarios_avaliados` | `required`, `array` | Decisão por horário |
+| `horarios_avaliados.*.id` | `required`, `integer` | Id do horário avaliado |
+| `horarios_avaliados.*.status` | `required`, `Rule::in(...)` | Valores de `SituacaoReservaEnum::valoresDeAvaliacao()` mais `solicitado` (`StatusAvaliacaoHorarioEnum`, que o front usa para slot ainda não decidido). A avaliação grava `solicitado` como `em_analise` |
+| `evaluation_scope` | `required`, `string`, `Rule::enum(EscopoEdicaoEnum)` | `single` ou `recurring`, mesmo enum da edição |
 
 **Mensagens personalizadas:**
 
@@ -375,7 +374,7 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 | Campo | Rules | Propósito |
 |-------|-------|----------|
 | `gestores` | `required` | Objeto contendo turnos e usuários |
-| `gestores.turno.*` | `required`, `string`, `in:manha,tarde,noite` | Identificação do turno |
+| `gestores.turno.*` | `required`, `string`, `Rule::enum(AgendaEnum)` | Identificação do turno (`manha`, `tarde`, `noite`) |
 | `gestores.user_id.*` | `nullable`, `exists:users,id`, **`UsuarioDaMesmaInstituicaoDaAgenda($espacoId)`** | Gestor do turno (validado) |
 
 **Autorização:**
@@ -392,7 +391,7 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 
 **Autorização:**
 - `StoreModuloRequest::authorize()` exige `modulos.criar`.
-- `UpdateModuloRequest` estende `StoreModuloRequest` (mesmas regras de campos e andares), mas sobrescreve `authorize()` para exigir `modulos.atualizar`, em alinhamento com `ModuloPolicy::update()`.
+- `UpdateModuloRequest` estende `StoreModuloRequest` (mesmas regras de campos e andares), mas sobrescreve `authorize()` para consultar `can('update', $modulo)`, ou seja, a `ModuloPolicy::update()`, que confere `modulos.atualizar`. Detalhes em [autorização](./autorizacao.md#autorização-nos-formrequests-e-no-edit).
 
 ---
 
@@ -405,9 +404,31 @@ A regra "não pode criar reserva com data passada" vale **apenas na criação** 
 | Campo | Rules | Propósito |
 |-------|-------|----------|
 | `data` | `nullable`, `date_format:Y-m-d`, `after_or_equal:hoje` | Dia pedido. "Hoje" é calculado no fuso `config('reservas.fuso_horario')` (America/Bahia), não no `app.timezone` (UTC) |
-| `turno` | `nullable`, `in:manha,tarde,noite` | Turno do dia. Sem `data`, o filtro é ignorado |
+| `turno` | `nullable`, `Rule::in(AgendaEnum)` | Turno do dia. Sem `data`, o filtro é ignorado |
 
 Sem `data`, a listagem não filtra por disponibilidade. Com `data`, o repositório mantém só os espaços com ao menos um slot livre naquele dia (e no turno, se informado). A regra de slot livre está em [fluxo de reservas](./fluxo-de-reservas.md#disponibilidade-na-lista-de-espaços).
+
+O `EspacoController::index` usa `validated()`, e não `only()`: a validação deste FormRequest passa a valer para os filtros que chegam à consulta.
+
+---
+
+### SemanaRequest e ListarReservasRequest
+
+**Localização:** `app/Http/Requests/SemanaRequest.php` e `app/Http/Requests/ListarReservasRequest.php`
+
+**Context:** Parâmetro `?semana=` das telas de espaço e de reserva (`SemanaRequest` nos `show` e `edit`), e filtros da listagem de reservas (`ListarReservasRequest` no `index` do solicitante e do gestor).
+
+| Campo | Rules | Propósito |
+|-------|-------|----------|
+| `semana` | `nullable`, `bail`, `string`, regra de `SemanaDeReferencia::regras()` | Data de referência. Aceita `Y-m-d` ou `today`. Qualquer outro valor vira erro de validação (volta ao formulário com `errors.semana`), não `500` |
+| `search`, `situacao`, `arquivo`, `ordenar` | `nullable`, `string`, `max:255` | Filtros de texto da listagem. Texto malformado (situação desconhecida, por exemplo) cai no padrão do domínio, como antes |
+| `reserva` | `nullable`, `string`, `max:20` | Id da reserva destacada na listagem |
+| `data_inicio`, `data_fim` | `nullable`, `string`, `max:10` | Período do filtro. Data fora do formato cai no padrão do domínio, como antes |
+
+- `SemanaDeReferencia::de()` resolve `null` e `today` para hoje, e qualquer `Y-m-d` válido para a própria data. A semana vai de segunda a domingo.
+- Valor não escalar (ex.: `?semana[]=x` ou `?search[]=x`) é barrado pela regra `string`. Antes, esse caso virava `TypeError` e `500`.
+- Quando `errors.semana` ou `errors.search` chega ao front, o hook `useErrosParametrosUrl` mostra um toast de erro.
+- `ListarReservasRequest::filtros()` devolve só as chaves de filtro, lidas com `safe()`.
 
 ---
 
@@ -419,15 +440,15 @@ A sobreposição com horário `deferida` é verificada em quatro pontos, todos n
 |---|---|---|---|
 | Envio | `HorarioDisponivel` em `StoreReservaRequest` e `UpdateReservaRequest` | No POST/PUT | Rejeita com 422. Verifica todas as datas geradas pela expansão da recorrência (`ExpansaoHorariosService::datasExpandidasParaSlot()`), respeitando seleções explícitas por semana. Com `edit_scope === 'single'`, checa só os slots da semana de `edited_week_date`. |
 | Envio | `DataDoHorarioNoPeriodo` em `StoreReservaRequest` e `UpdateReservaRequest` | No POST/PUT | Rejeita com 422 a data de um horário fora de `data_inicial`–`data_final`. Na edição, só com `edit_scope === 'recurring'`. |
-| Processamento | `ProcessarCriacaoReserva` e `UpdateReservaJob`, sob lock | Na fila | Revalida antes de gravar; o conflito faz o job falhar e o solicitante é notificado. Ver [fluxo de reservas](./fluxo-de-reservas.md). |
-| Avaliação | `AvaliarReservaJob`, via `ConflictDetectionService::findConflictsFor()` | Quando o gestor avalia | O horário em conflito com um `deferida` é marcado `indeferida` automaticamente. |
+| Processamento | `CriacaoDeReservaService` e `EdicaoDeReservaService` (chamados pelos jobs), sob trava | Na fila | Revalida com `conflitosDeferidos` antes de gravar; o conflito é erro de domínio (`ConflitoDeHorarioException`), sem retry, e o solicitante é notificado. Ver [fluxo de reservas](./fluxo-de-reservas.md). |
+| Avaliação | `AvaliacaoDeReservaService`, via `ConflictDetectionService::findConflictsFor()` | Quando o gestor avalia | O horário em conflito com um `deferida` é marcado `indeferida` automaticamente. |
 | Tela de avaliação e snapshot | `ReservaService` (prop `todosOsConflitos`) e `ValidateReservationConflictsJob` | Ao abrir a avaliação; depois de criar, editar, avaliar ou cancelar | O gestor vê os conflitos no `ConflictAlertBox`, que é só informativo; o snapshot fica em `conflict_cache` ([cache de conflitos](./cache-de-conflitos.md)). |
 
 ### Horários em análise (#107)
 
 Horários `em_analise` não bloqueiam o envio (`HorarioDisponivel`) e não contam como conflito (`ConflictDetectionService` só considera `deferida`). Por isso é possível enviar uma solicitação para um intervalo que já tem outra pendente; o gestor decide na avaliação. Mostrar essas solicitações pendentes é o item #107 do [backlog](../backlog.md).
 
-Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` para `em_analise` faria o `AvaliarReservaJob` indeferir automaticamente horários que só concorrem com pedidos ainda não avaliados.
+Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` para `em_analise` faria a avaliação indeferir automaticamente horários que só concorrem com pedidos ainda não avaliados.
 
 ---
 
@@ -443,7 +464,7 @@ Ao implementar, use um serviço à parte. Ampliar o `ConflictDetectionService` p
 | `termo_responsabilidade` (`accepted`) | Backend (FormRequest) | ✅ Sim |
 | `publico_estimado` e `categoria` | Backend (FormRequest) | ✅ Sim, só o formato (são opcionais) |
 | Conflitos na tela de avaliação | Backend (`ConflictDetectionService`), exibido ao gestor | ⚠️ Informativo |
-| Conflito na avaliação | Backend (`AvaliarReservaJob`) | ✅ Sim (indefere o horário) |
+| Conflito na avaliação | Backend (`AvaliacaoDeReservaService`) | ✅ Sim (indefere o horário) |
 | Solicitações em análise | Não implementado (#107) | — |
 
 ### Atribuição de Gestores

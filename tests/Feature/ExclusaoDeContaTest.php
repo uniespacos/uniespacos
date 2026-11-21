@@ -20,10 +20,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mockery;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ExclusaoDeContaTest extends TestCase
 {
+    use CongelaRelogio;
+
     private const NOME_ORIGINAL = 'Maria Titular Exclusiva';
 
     private const TELEFONE_ORIGINAL = '77999990000';

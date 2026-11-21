@@ -8,13 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AlterarGestoresEspacoRequest;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarEspacosRequest;
+use App\Http\Requests\SemanaRequest;
 use App\Http\Requests\StoreEspacoRequest;
 use App\Http\Requests\UpdateEspacoRequest;
 use App\Models\Espaco;
 use App\Services\EspacoService;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -22,8 +21,6 @@ use Inertia\Response;
 
 class InstitucionalEspacoController extends Controller
 {
-    use AuthorizesRequests;
-
     public function __construct(
         protected EspacoService $service,
     ) {}
@@ -33,7 +30,7 @@ class InstitucionalEspacoController extends Controller
         $this->authorize('viewAny', Espaco::class);
 
         $user = Auth::user();
-        $instituicaoId = $user->setor->unidade->instituicao_id;
+        $instituicaoId = $user?->instituicaoId() ?? abort(403);
         $filters = $request->validated();
         $filterOptions = $this->service->getFilterOptions($instituicaoId);
 
@@ -50,7 +47,7 @@ class InstitucionalEspacoController extends Controller
 
     public function create(): Response
     {
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $formData = $this->service->getFormData($instituicaoId);
 
         return Inertia::render('Administrativo/Espacos/CadastrarEspaco', $formData);
@@ -77,22 +74,24 @@ class InstitucionalEspacoController extends Controller
         }
     }
 
-    public function show(Request $request, Espaco $espaco): Response|RedirectResponse
+    public function show(SemanaRequest $request, Espaco $espaco): Response|RedirectResponse
     {
         if (! $this->service->hasManager($espaco)) {
             return redirect()->route('espacos.index')
                 ->with('error', __('This space does not have a manager defined yet.'));
         }
 
-        $data = $this->service->getWithWeekSchedule($espaco, $request->string('semana', 'today')->toString());
+        $data = $this->service->getWithWeekSchedule($espaco, $request->semana());
 
         return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }
 
     public function edit(Espaco $espaco): Response
     {
+        $this->authorize('update', $espaco);
+
         $espaco->load('andar.modulo.unidade');
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $formData = $this->service->getFormData($instituicaoId);
 
         return Inertia::render('Administrativo/Espacos/CadastrarEspaco', array_merge(

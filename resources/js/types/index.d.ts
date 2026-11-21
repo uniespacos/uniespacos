@@ -158,7 +158,6 @@ export interface BreadcrumbItem {
 export interface ConflictInfo {
     horario_checado_id: number;
     conflito_reserva_titulo: string;
-    conflito_user_name?: string;
 }
 
 // =============================================================================
@@ -265,6 +264,16 @@ export interface Horario {
 }
 
 /**
+ * Solicitante de uma reserva, conforme o payload reduzido por LGPD.
+ * Listagem do usuário: só `id` e `name`. Modal do gestor: + `email` e `profile_pic`.
+ * Tela de avaliação do gestor: + `telefone`. Os campos opcionais podem estar ausentes.
+ */
+export type ReservaSolicitante = Pick<User, 'id' | 'name'> &
+    Partial<Pick<User, 'email' | 'profile_pic' | 'telefone'>> & {
+        setor?: Setor;
+    };
+
+/**
  * Modelo de Reserva. Esta é a estrutura principal que será usada nas páginas
  * 'minhasReservas' e 'gerenciarReservas', contendo todas as relações aninhadas.
  */
@@ -281,7 +290,7 @@ export interface Reserva {
     observacao: string | null;
     created_at: string;
     updated_at: string;
-    user?: User; // O usuário que fez a reserva (carregar com with('usuario'))
+    user?: ReservaSolicitante; // O solicitante da reserva (payload reduzido por LGPD, ver ReservaSolicitante)
     horarios: Horario[]; // O array de horários pertencentes a esta reserva
     can_update?: boolean; // Permissão de edição dinâmica
     validation_status?: ValidationStatus; // Validação de conflitos em segundo plano

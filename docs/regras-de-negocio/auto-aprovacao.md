@@ -121,7 +121,7 @@ Em uma edição, o proprietário de referência é o **dono da reserva** (`$this
 
 `UpdateReservaJob` **não** chama `calcularSituacaoReserva()`. Após uma edição (escopo `recurring`), a coluna `reservas.situacao` permanece com o valor que tinha antes da edição.
 
-**Nota:** O recálculo agregado da situação de uma reserva acontece em outro mecanismo: `AvaliarReservaJob::updateReservaOverallStatus()`, chamado quando um gestor avalia horários. Esse mecanismo está documentado em [modelos Eloquent](../arquitetura/modelos-eloquent.md#regras-de-negócio--cascata-de-situação), seção "Regras de Negócio — Cascata de Situação".
+**Nota:** O recálculo agregado da situação de uma reserva acontece em outro mecanismo: `AvaliacaoDeReservaService::atualizarSituacaoGeral()`, chamado quando um gestor avalia horários. Esse mecanismo está documentado em [modelos Eloquent](../arquitetura/modelos-eloquent.md#regras-de-negócio--cascata-de-situação), seção "Regras de Negócio — Cascata de Situação".
 
 ---
 

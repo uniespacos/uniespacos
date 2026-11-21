@@ -52,8 +52,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     }
 
     /**
-     * Update the given verified user's profile information.
-     *
      * @param  array<string, string>  $input
      */
     protected function updateVerifiedUser(User $user, array $input): void

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Instituicao;
 use App\Repositories\InstituicaoRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class InstituicaoService
 {
@@ -23,8 +24,16 @@ class InstituicaoService
     }
 
     /**
-     * Creates and persists a new institution.
+     * Returns every institution with its sectors and their units loaded.
      *
+     * @return Collection<int, Instituicao>
+     */
+    public function listarComSetores(): Collection
+    {
+        return $this->repoInstituicao->getList()->load(['setors.unidade']);
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     public function store(array $data): Instituicao
@@ -33,8 +42,6 @@ class InstituicaoService
     }
 
     /**
-     * Updates an existing institution with the given data.
-     *
      * @param  array<string, mixed>  $data
      */
     public function update(Instituicao $instituicao, array $data): Instituicao
@@ -42,9 +49,6 @@ class InstituicaoService
         return $this->repoInstituicao->update($data, $instituicao->id);
     }
 
-    /**
-     * Deletes the given institution from the database.
-     */
     public function delete(Instituicao $instituicao): bool
     {
         return $this->repoInstituicao->destroy($instituicao->id);

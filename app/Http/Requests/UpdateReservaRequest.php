@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Reserva\EscopoEdicaoEnum;
+use App\Enums\Reserva\RecorrenciaReservaEnum;
 use App\Models\Reserva;
 use App\Rules\DataDoHorarioNoPeriodo;
 use App\Rules\HorarioDisponivel;
@@ -38,7 +40,7 @@ class UpdateReservaRequest extends FormRequest
     {
         $route = $this->route('reserva');
         $reservaId = $route instanceof Reserva ? $route->id : null;
-        $regraPeriodoDosHorarios = $this->input('edit_scope') === 'recurring' ? [new DataDoHorarioNoPeriodo] : [];
+        $regraPeriodoDosHorarios = $this->input('edit_scope') === EscopoEdicaoEnum::RECURRING->value ? [new DataDoHorarioNoPeriodo] : [];
 
         return [
             'titulo' => ['required', 'string', 'max:255'],
@@ -48,8 +50,8 @@ class UpdateReservaRequest extends FormRequest
             'termo_responsabilidade' => ['sometimes', 'accepted'],
             'data_inicial' => ['required', 'date'],
             'data_final' => ['required', 'date', 'after_or_equal:data_inicial'],
-            'recorrencia' => ['required', 'in:unica,15dias,1mes,personalizado'],
-            'edit_scope' => ['required', 'string', Rule::in(['single', 'recurring'])],
+            'recorrencia' => ['required', Rule::enum(RecorrenciaReservaEnum::class)],
+            'edit_scope' => ['required', 'string', Rule::enum(EscopoEdicaoEnum::class)],
             'edited_week_date' => ['required_if:edit_scope,single', 'nullable', 'date'],
             'horarios_solicitados' => ['present', 'array', new HorariosMesmoEspaco],
             'horarios_solicitados.*.data' => ['required', 'date', ...$regraPeriodoDosHorarios],
@@ -73,7 +75,7 @@ class UpdateReservaRequest extends FormRequest
     {
         return [
             'edit_scope.required' => 'O escopo de edição é obrigatório.',
-            'edit_scope.in' => 'O escopo de edição deve ser "single" ou "recurring".',
+            'edit_scope.enum' => 'O escopo de edição deve ser "single" ou "recurring".',
             'edited_week_date.required_if' => 'A data da semana editada é obrigatória para edição de ocorrência única.',
             'descricao.max' => __('The description may not have more than :max characters.', ['max' => 2000]),
             'publico_estimado.integer' => __('The estimated audience must be an integer.'),

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ConfirmPasswordRequest;
+use App\Http\Requests\ListarReservasRequest;
+use App\Http\Requests\SemanaRequest;
 use App\Http\Requests\StoreReservaRequest;
 use App\Http\Requests\UpdateReservaRequest;
 use App\Models\Reserva;
 use App\Services\ReservaService;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -19,24 +19,20 @@ use Inertia\Response;
 
 class ReservaController extends Controller
 {
-    use AuthorizesRequests;
-
     public function __construct(
         protected ReservaService $service,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(ListarReservasRequest $request): Response
     {
         $data = $this->service->getListingForUser(
             Auth::user(),
-            $request->input('semana', 'today'),
-            $request->only(['search', 'situacao', 'arquivo', 'ordenar', 'reserva', 'data_inicio', 'data_fim'])
+            $request->semana(),
+            $request->filtros(),
         );
 
         return Inertia::render('Reservas/ReservasPage', $data);
     }
-
-    public function create(): void {}
 
     public function store(StoreReservaRequest $request): RedirectResponse
     {
@@ -64,11 +60,11 @@ class ReservaController extends Controller
         ]);
     }
 
-    public function edit(Request $request, Reserva $reserva): Response
+    public function edit(SemanaRequest $request, Reserva $reserva): Response
     {
         $this->authorize('update', $reserva);
 
-        $data = $this->service->getEditData($reserva, $request->input('semana', ''));
+        $data = $this->service->getEditData($reserva, $request->semana());
 
         return Inertia::render('Espacos/VisualizarEspacoPage', $data);
     }

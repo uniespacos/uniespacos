@@ -394,4 +394,89 @@ class PayloadsDePaginaPrivacidadeTest extends TestCase
         $response->assertOk();
         $this->assertCount(15, $response->viewData('page')['props']['notifications']);
     }
+
+    #[Test]
+    public function modal_da_propria_reserva_expoe_so_id_e_nome_do_solicitante(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $gestor = User::factory()->create(['setor_id' => $setor->id, 'email_verified_at' => now()]);
+        $gestor->assignRole('gestor');
+        $solicitante = User::factory()->create([
+            'setor_id' => $setor->id,
+            'email' => 'solicitante-proprio@exemplo-teste.local',
+            'telefone' => '77-98888-0002',
+            'email_verified_at' => now(),
+        ]);
+
+        [, $agenda] = $this->espacoComAgenda($gestor, $setor);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $solicitante->id,
+            'situacao' => 'em_analise',
+            'data_inicial' => self::SEMANA,
+            'data_final' => self::SEMANA,
+            'recorrencia' => 'unica',
+            'titulo' => 'Reserva do Proprio Solicitante',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => self::SEMANA,
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '10:00:00',
+        ]);
+
+        $response = $this->actingAs($solicitante)
+            ->get(route('reservas.index', ['reserva' => $reserva->id, 'semana' => self::SEMANA]));
+
+        $response->assertOk();
+        $usuario = $response->viewData('page')['props']['reservaToShow']['user'];
+        $this->assertChavesExatas(['id', 'name'], $usuario, 'reservaToShow.user do proprio solicitante deveria ter só id e name');
+        $this->assertSame($solicitante->id, $usuario['id']);
+    }
+
+    #[Test]
+    public function modal_do_gestor_recebe_email_do_solicitante_mas_nunca_telefone(): void
+    {
+        $setor = $this->unidadeComSetor();
+        $gestor = User::factory()->create(['setor_id' => $setor->id, 'email_verified_at' => now()]);
+        $gestor->assignRole('gestor');
+        $solicitante = User::factory()->create([
+            'setor_id' => $setor->id,
+            'email' => 'solicitante-modal-gestor@exemplo-teste.local',
+            'telefone' => '77-98888-0003',
+            'email_verified_at' => now(),
+        ]);
+
+        [, $agenda] = $this->espacoComAgenda($gestor, $setor);
+
+        $reserva = Reserva::factory()->create([
+            'user_id' => $solicitante->id,
+            'situacao' => 'em_analise',
+            'data_inicial' => self::SEMANA,
+            'data_final' => self::SEMANA,
+            'recorrencia' => 'unica',
+            'titulo' => 'Reserva para Avaliacao',
+        ]);
+        Horario::factory()->create([
+            'reserva_id' => $reserva->id,
+            'agenda_id' => $agenda->id,
+            'situacao' => 'em_analise',
+            'data' => self::SEMANA,
+            'horario_inicio' => '08:00:00',
+            'horario_fim' => '10:00:00',
+        ]);
+
+        $response = $this->actingAs($gestor)
+            ->get(route('gestor.reservas.index', ['reserva' => $reserva->id, 'semana' => self::SEMANA]));
+
+        $response->assertOk();
+        $usuario = $response->viewData('page')['props']['reservaToShow']['user'];
+        $this->assertChavesExatas(['id', 'name', 'email', 'profile_pic'], $usuario,
+            'reservaToShow.user do modal do gestor deveria ter só id, name, email e profile_pic');
+        $this->assertSame('solicitante-modal-gestor@exemplo-teste.local', $usuario['email']);
+        $this->assertArrayNotHasKey('telefone', $usuario);
+        $response->assertDontSee('77-98888-0003');
+    }
 }
