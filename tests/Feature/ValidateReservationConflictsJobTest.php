@@ -17,10 +17,13 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ValidateReservationConflictsJobTest extends TestCase
 {
+    use CongelaRelogio;
+
     public function test_validate_reservation_conflicts_job_dispatches_event_on_completion(): void
     {
         Event::fake();

@@ -10,6 +10,7 @@ use App\Notifications\Auth\ResetPasswordQueued;
 use App\Notifications\Auth\VerifyEmailQueued;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -20,6 +21,8 @@ use Tests\TestCase;
  */
 class InstitucionalUsuarioAdminTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarAdmin(Setor $setor): User
     {
         $admin = User::factory()->create(['setor_id' => $setor->id]);

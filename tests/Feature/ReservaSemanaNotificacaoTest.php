@@ -11,6 +11,7 @@ use App\Models\Reserva;
 use App\Models\User;
 use Carbon\Carbon;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,8 @@ use Tests\TestCase;
  */
 class ReservaSemanaNotificacaoTest extends TestCase
 {
+    use CongelaRelogio;
+
     /**
      * Builds a reservation whose slots sit a given number of weeks away from today.
      *

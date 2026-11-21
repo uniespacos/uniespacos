@@ -10,6 +10,7 @@ use App\Models\Espaco;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -28,6 +29,8 @@ use Tests\TestCase;
  */
 class ErrorHandlingTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function reservaDeOutroUsuario(): Reserva
     {
         $dono = User::factory()->create();

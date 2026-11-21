@@ -9,6 +9,7 @@ use App\Models\Espaco;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -21,6 +22,8 @@ use Tests\TestCase;
  */
 class ReservaEdicaoBloqueadaTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarReserva(User $dono, string $situacao, string $situacaoHorario): Reserva
     {
         $espaco = Espaco::factory()->create();

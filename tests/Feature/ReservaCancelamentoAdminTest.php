@@ -11,10 +11,13 @@ use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ReservaCancelamentoAdminTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarReserva(User $dono): Reserva
     {
         $espaco = Espaco::factory()->create();

@@ -15,6 +15,7 @@ use App\Services\ReservaService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,8 @@ use Tests\TestCase;
  */
 class ReservaArquivamentoTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarReserva(User $dono, User $gestorDaAgenda, string $situacao, string $titulo): Reserva
     {
         $espaco = Espaco::factory()->create();

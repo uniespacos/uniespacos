@@ -16,10 +16,13 @@ use App\Models\Unidade;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class ReservaEdicaoPrivacidadeTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarReservaEditavelComOutroSolicitante(): array
     {
         $instituicao = Instituicao::factory()->create();

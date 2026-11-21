@@ -16,10 +16,13 @@ use App\Models\Unidade;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class EspacoShowPrivacidadeTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function criarEspacoComAgendaEReserva(): array
     {
         $instituicao = Instituicao::factory()->create();

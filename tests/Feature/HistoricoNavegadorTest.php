@@ -7,10 +7,13 @@ namespace Tests\Feature;
 use App\Models\Setor;
 use App\Models\User;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\CongelaRelogio;
 use Tests\TestCase;
 
 class HistoricoNavegadorTest extends TestCase
 {
+    use CongelaRelogio;
+
     private function usuarioVerificado(): User
     {
         return User::factory()->create([
