@@ -10,6 +10,7 @@ use App\Enums\SituacaoReserva\SituacaoReservaEnum;
 use Carbon\Carbon;
 use Database\Factories\ReservaFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,23 +52,20 @@ class Reserva extends Model
     ];
 
     /**
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'conflict_cache' => 'array',
-        'publico_estimado' => 'integer',
-        'termo_aceito_em' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'conflict_cache' => 'array',
+            'publico_estimado' => 'integer',
+            'termo_aceito_em' => 'datetime',
+        ];
+    }
 
     /**
-     * Aplica o eixo de arquivamento a uma listagem.
-     *
-     * Fica no model, e nao em cada repositorio, porque a regra estava escrita
-     * de duas formas divergentes: getPaginatedForGestor tinha o default certo,
-     * e getPaginatedForUser aplicava `!= 'inativa'` incondicionalmente — o que
-     * transformava um filtro por arquivadas na contradicao
-     * `situacao != 'inativa' AND situacao = 'inativa'`. Uma definicao so
-     * elimina a chance de as duas divergirem de novo.
+     * Definido no model para que os repositórios não reescrevam a regra de
+     * arquivamento de formas divergentes.
      *
      * @param  Builder<Reserva>  $query
      * @return Builder<Reserva>
@@ -75,20 +73,15 @@ class Reserva extends Model
     public function scopeArquivo(Builder $query, mixed $modo): Builder
     {
         return match (ModoArquivoEnum::fromFiltro($modo)) {
-            ModoArquivoEnum::ARQUIVADAS => $query->where('situacao', 'inativa'),
+            ModoArquivoEnum::ARQUIVADAS => $query->where('situacao', SituacaoReservaEnum::INATIVA->value),
             ModoArquivoEnum::TODAS => $query,
-            ModoArquivoEnum::ATIVAS => $query->where('situacao', '!=', 'inativa'),
+            ModoArquivoEnum::ATIVAS => $query->where('situacao', '!=', SituacaoReservaEnum::INATIVA->value),
         };
     }
 
     /**
-     * Aplica o criterio de ordenacao escolhido pelo usuario nas listagens
-     * (Minhas Reservas / Gerenciar Reservas).
-     *
-     * Por situacao usa uma prioridade fixa (pendente > parcial > indeferida >
-     * deferida > inativa) em vez da ordem alfabetica das cases do enum, que
-     * nao carrega esse significado. `->latest()` como desempate: dentro do
-     * mesmo grupo de situacao, a mais recente primeiro.
+     * A prioridade por situação segue a ordem de tratamento da reserva, não a
+     * ordem das cases do enum. `latest()` desempata dentro do mesmo grupo.
      *
      * @param  Builder<Reserva>  $query
      * @return Builder<Reserva>
@@ -96,74 +89,85 @@ class Reserva extends Model
     public function scopeOrdenar(Builder $query, mixed $criterio): Builder
     {
         return match (OrdenacaoReservaEnum::fromFiltro($criterio)) {
-            OrdenacaoReservaEnum::SITUACAO => $query->orderByRaw(
-                "CASE situacao
-                    WHEN 'em_analise' THEN 1
-                    WHEN 'parcialmente_deferida' THEN 2
-                    WHEN 'indeferida' THEN 3
-                    WHEN 'deferida' THEN 4
-                    WHEN 'inativa' THEN 5
-                    ELSE 6
-                END"
-            )->latest(),
+            OrdenacaoReservaEnum::SITUACAO => $query->orderByRaw(self::expressaoOrdemDaSituacao())->latest(),
             OrdenacaoReservaEnum::DATA_SOLICITACAO => $query->latest(),
         };
     }
 
-    /**
-     * Returns a human-readable label for the current situacao value.
-     */
-    public function getSituacaoFormatadaAttribute(): string
+    private static function expressaoOrdemDaSituacao(): string
     {
-        return SituacaoReservaEnum::labelDe($this->situacao);
+        $ordem = [
+            SituacaoReservaEnum::EM_ANALISE,
+            SituacaoReservaEnum::PARCIALMENTE_DEFERIDA,
+            SituacaoReservaEnum::INDEFERIDA,
+            SituacaoReservaEnum::DEFERIDA,
+            SituacaoReservaEnum::INATIVA,
+        ];
+
+        $quando = '';
+        foreach ($ordem as $posicao => $situacao) {
+            $quando .= sprintf(" WHEN '%s' THEN %d", $situacao->value, $posicao + 1);
+        }
+
+        return 'CASE situacao'.$quando.' ELSE '.(count($ordem) + 1).' END';
     }
 
     /**
-     * Returns a summary of the reservation's horarios.
-     * For 10 or fewer horarios, returns a detailed list.
-     * For larger sets, groups by agenda/time slot showing date ranges and days of the week.
-     *
-     * @return array<int, object>
+     * @return Attribute<string, never>
      */
-    public function getResumoHorariosAttribute(): array
+    protected function situacaoFormatada(): Attribute
     {
-        $horarios = $this->horarios()->with('agenda.espaco')->get();
+        return Attribute::make(
+            get: fn (): string => SituacaoReservaEnum::labelDe($this->situacao),
+        );
+    }
 
-        if ($horarios->count() <= 10) {
-            return $horarios->map(fn ($h) => (object) [
-                'is_summary' => false,
-                'texto' => Carbon::parse($h->data)->format('d/m/Y').
-                           ' das '.Carbon::parse($h->horario_inicio)->format('H:i').
-                           ' às '.Carbon::parse($h->horario_fim)->format('H:i').
-                           ' (Turno: '.$h->agenda->turno.')',
-            ])->toArray();
-        }
+    /**
+     * @return Attribute<array<int, object>, never>
+     */
+    protected function resumoHorarios(): Attribute
+    {
+        return Attribute::make(
+            get: function (): array {
+                $horarios = $this->horarios()->with('agenda.espaco')->get();
 
-        $grouped = $horarios->groupBy(function ($h) {
-            return $h->agenda_id.'-'.$h->horario_inicio.'-'.$h->horario_fim;
-        });
+                if ($horarios->count() <= 10) {
+                    return $horarios->map(fn ($h) => (object) [
+                        'is_summary' => false,
+                        'texto' => Carbon::parse($h->data)->format('d/m/Y').
+                                   ' das '.Carbon::parse($h->horario_inicio)->format('H:i').
+                                   ' às '.Carbon::parse($h->horario_fim)->format('H:i').
+                                   ' (Turno: '.$h->agenda->turno.')',
+                    ])->toArray();
+                }
 
-        return $grouped->map(function ($group) {
-            $first = $group->first();
-            $dates = $group->pluck('data')->map(fn ($d) => Carbon::parse($d));
-            $minDate = $dates->min()->format('d/m/Y');
-            $maxDate = $dates->max()->format('d/m/Y');
+                $grouped = $horarios->groupBy(function ($h) {
+                    return $h->agenda_id.'-'.$h->horario_inicio.'-'.$h->horario_fim;
+                });
 
-            $daysOfWeek = $dates->map(fn ($d) => ucfirst($d->locale('pt_BR')->dayName))->unique()->values();
+                return $grouped->map(function ($group) {
+                    $first = $group->first();
+                    $dates = $group->pluck('data')->map(fn ($d) => Carbon::parse($d));
+                    $minDate = $dates->min()->format('d/m/Y');
+                    $maxDate = $dates->max()->format('d/m/Y');
 
-            $diasTexto = $daysOfWeek->count() > 1
-                ? $daysOfWeek->slice(0, -1)->implode(', ').' e '.$daysOfWeek->last()
-                : $daysOfWeek->first();
+                    $daysOfWeek = $dates->map(fn ($d) => ucfirst($d->locale('pt_BR')->dayName))->unique()->values();
 
-            return (object) [
-                'is_summary' => true,
-                'texto' => "$diasTexto das ".
-                           Carbon::parse($first->horario_inicio)->format('H:i').
-                           ' às '.Carbon::parse($first->horario_fim)->format('H:i').
-                           ' (Turno: '.$first->agenda->turno.') no espaço '.$first->agenda->espaco->nome.
-                           " - período de $minDate a $maxDate (".$group->count().' sessões)',
-            ];
-        })->values()->toArray();
+                    $diasTexto = $daysOfWeek->count() > 1
+                        ? $daysOfWeek->slice(0, -1)->implode(', ').' e '.$daysOfWeek->last()
+                        : $daysOfWeek->first();
+
+                    return (object) [
+                        'is_summary' => true,
+                        'texto' => "$diasTexto das ".
+                                   Carbon::parse($first->horario_inicio)->format('H:i').
+                                   ' às '.Carbon::parse($first->horario_fim)->format('H:i').
+                                   ' (Turno: '.$first->agenda->turno.') no espaço '.$first->agenda->espaco->nome.
+                                   " - período de $minDate a $maxDate (".$group->count().' sessões)',
+                    ];
+                })->values()->toArray();
+            },
+        );
     }
 
     /**

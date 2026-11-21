@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Database\Factories\EspacoFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,11 +28,14 @@ class Espaco extends Model
     ];
 
     /**
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'imagens' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'imagens' => 'array',
+        ];
+    }
 
     /**
      * @var list<string>
@@ -84,26 +88,27 @@ class Espaco extends Model
     }
 
     /**
-     * Returns whether the currently authenticated user has favorited this space.
+     * @return Attribute<bool, never>
      */
-    public function getIsFavoritedByUserAttribute(): bool
+    protected function isFavoritedByUser(): Attribute
     {
-        $user = Auth::user();
+        return Attribute::make(
+            get: function (): bool {
+                $user = Auth::user();
 
-        if (! $user) {
-            return false;
-        }
+                if (! $user) {
+                    return false;
+                }
 
-        // Como este atributo está em $appends, ele é calculado toda vez que um
-        // Espaco vira array/JSON. Antes cada espaço disparava seu próprio
-        // EXISTS: telas que serializam a árvore de espaços passavam de 100
-        // queries por request só com isto. Agora é uma query por usuário,
-        // reaproveitada por todos os espaços do mesmo request.
-        static::$favoritosPorUsuario[$user->id] ??= array_fill_keys(
-            $user->favoritos()->pluck('espacos.id')->all(),
-            true
+                // Está em $appends: é calculado para cada espaço serializado. Os favoritos
+                // são carregados uma vez por usuário, sem um EXISTS por espaço.
+                static::$favoritosPorUsuario[$user->id] ??= array_fill_keys(
+                    $user->favoritos()->pluck('espacos.id')->all(),
+                    true
+                );
+
+                return isset(static::$favoritosPorUsuario[$user->id][$this->id]);
+            },
         );
-
-        return isset(static::$favoritosPorUsuario[$user->id][$this->id]);
     }
 }
