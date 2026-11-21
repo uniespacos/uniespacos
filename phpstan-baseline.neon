@@ -805,102 +805,6 @@ parameters:
 			path: app/Providers/FortifyServiceProvider.php
 
 		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AgendaRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AgendaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\AndarRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/AndarRepositoryInterface.php
-
-		-
 			message: '#^Binary operation "\." between ''%%'' and mixed results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 3
@@ -925,18 +829,6 @@ parameters:
 			path: app/Repositories/EspacoRepositoryEloquent.php
 
 		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryEloquent.php
-
-		-
 			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:getPaginatedForAdmin\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
@@ -947,30 +839,6 @@ parameters:
 			identifier: missingType.generics
 			count: 1
 			path: app/Repositories/EspacoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryInterface.php
 
 		-
 			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:getPaginatedForAdmin\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
@@ -985,106 +853,10 @@ parameters:
 			path: app/Repositories/EspacoRepositoryInterface.php
 
 		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\EspacoRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/EspacoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\HorarioRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/HorarioRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryEloquent.php
-
-		-
 			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:getPaginated\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
 			path: app/Repositories/InstituicaoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryInterface.php
 
 		-
 			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:getPaginated\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
@@ -1093,58 +865,10 @@ parameters:
 			path: app/Repositories/InstituicaoRepositoryInterface.php
 
 		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\InstituicaoRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/InstituicaoRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryEloquent.php
-
-		-
 			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
 			path: app/Repositories/ModuloRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryInterface.php
 
 		-
 			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
@@ -1153,33 +877,9 @@ parameters:
 			path: app/Repositories/ModuloRepositoryInterface.php
 
 		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ModuloRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ModuloRepositoryInterface.php
-
-		-
 			message: '#^Binary operation "\." between ''%%'' and mixed results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 2
-			path: app/Repositories/ReservaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
 			path: app/Repositories/ReservaRepositoryEloquent.php
 
 		-
@@ -1195,34 +895,10 @@ parameters:
 			path: app/Repositories/ReservaRepositoryEloquent.php
 
 		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryEloquent.php
-
-		-
 			message: '#^Part \$s \(mixed\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 2
 			path: app/Repositories/ReservaRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryInterface.php
 
 		-
 			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForGestor\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
@@ -1233,18 +909,6 @@ parameters:
 		-
 			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:getPaginatedForUser\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/ReservaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/ReservaRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\ReservaRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Repositories/ReservaRepositoryInterface.php
 
@@ -1297,110 +961,14 @@ parameters:
 			path: app/Repositories/RoleRepositoryInterface.php
 
 		-
-			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\SetorRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/SetorRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryEloquent.php
-
-		-
 			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
 			path: app/Repositories/UnidadeRepositoryEloquent.php
 
 		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryEloquent\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryEloquent.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getList\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getList\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryInterface.php
-
-		-
 			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:getPaginatedByInstituicao\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
-			count: 1
-			path: app/Repositories/UnidadeRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:store\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Repositories/UnidadeRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Repositories\\UnidadeRepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Repositories/UnidadeRepositoryInterface.php
 

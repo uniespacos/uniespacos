@@ -7,22 +7,14 @@ namespace App\Repositories;
 use App\Models\Espaco;
 use App\Support\SemanaDeReferencia;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 
-interface EspacoRepositoryInterface
+/**
+ * @extends CrudRepositoryInterface<Espaco>
+ */
+interface EspacoRepositoryInterface extends CrudRepositoryInterface
 {
     public function __construct(Espaco $espaco);
-
-    public function store(array $data): Espaco;
-
-    /**
-     * Returns all instances of Espaco from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Espaco>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection;
 
     /**
      * Returns a paginated list of Espaco for the public listing, scoped to an institution with optional filters
@@ -50,10 +42,4 @@ interface EspacoRepositoryInterface
      * semana e o horizonte de conflito.
      */
     public function carregarAgendaDaSemana(Espaco $espaco, SemanaDeReferencia $semana, ?string $horizonteFim = null): Espaco;
-
-    public function get(int|string $id): ?Espaco;
-
-    public function update(array $data, int|string $id): Espaco;
-
-    public function destroy(int|string $id): bool;
 }

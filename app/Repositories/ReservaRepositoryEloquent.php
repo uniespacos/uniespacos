@@ -10,37 +10,19 @@ use App\Models\Reserva;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class ReservaRepositoryEloquent implements ReservaRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Reserva>
+ */
+class ReservaRepositoryEloquent extends BaseRepositoryEloquent implements ReservaRepositoryInterface
 {
-    public function __construct(
-        protected Reserva $reserva,
-    ) {}
+    public function __construct(Reserva $reserva)
+    {
+        parent::__construct($reserva);
+    }
 
     private function dataFiltro(mixed $valor): string
     {
         return is_string($valor) ? $valor : '';
-    }
-
-    public function store(array $data): Reserva
-    {
-        return $this->reserva->create($data);
-    }
-
-    /**
-     * Returns all instances of Reserva from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Reserva>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->reserva->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
     }
 
     /**
@@ -50,7 +32,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPaginatedForUser(int $userId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->where('user_id', $userId)
             ->arquivo($filters['arquivo'] ?? null)
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($q2) => $q2->where('titulo', 'like', '%'.$s.'%')->orWhere('descricao', 'like', '%'.$s.'%')))
@@ -82,7 +64,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function findWithWeekSlots(int $reservaId, string $weekStart, string $weekEnd): ?Reserva
     {
-        return $this->reserva->with([
+        return $this->model->with([
             'user',
             'horarios' => function ($query) {
                 $query->orderBy('data')->orderBy('horario_inicio')
@@ -99,7 +81,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPaginatedForGestor(array $agendaIds, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->whereHas('horarios', function ($q) use ($agendaIds) {
                 $q->whereIn('agenda_id', $agendaIds);
             })
@@ -133,7 +115,7 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function findForGestorModal(int $reservaId, array $agendaIds, string $weekStart, string $weekEnd): ?Reserva
     {
-        return $this->reserva
+        return $this->model
             ->whereHas('horarios', fn ($q) => $q->whereIn('agenda_id', $agendaIds))
             ->with([
                 'user',
@@ -151,19 +133,6 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
             ])->find($reservaId);
     }
 
-    public function get(int|string $id): ?Reserva
-    {
-        return $this->reserva->find($id);
-    }
-
-    public function update(array $data, int|string $id): Reserva
-    {
-        $reserva = $this->reserva->findOrFail($id);
-        $reserva->update($data);
-
-        return $reserva;
-    }
-
     public function inserirHorarios(array $linhas): void
     {
         Horario::insert($linhas);
@@ -174,15 +143,10 @@ class ReservaRepositoryEloquent implements ReservaRepositoryInterface
      */
     public function getPendentesDoSolicitante(int $userId): Collection
     {
-        return $this->reserva->newQuery()
+        return $this->model->newQuery()
             ->where('user_id', $userId)
             ->where('situacao', SituacaoReservaEnum::EM_ANALISE->value)
             ->lockForUpdate()
             ->get();
-    }
-
-    public function destroy(int|string $id): bool
-    {
-        return (bool) $this->reserva->findOrFail($id)->delete();
     }
 }

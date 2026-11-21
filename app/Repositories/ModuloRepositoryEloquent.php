@@ -8,35 +8,14 @@ use App\Models\Modulo;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class ModuloRepositoryEloquent implements ModuloRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Modulo>
+ */
+class ModuloRepositoryEloquent extends BaseRepositoryEloquent implements ModuloRepositoryInterface
 {
-    public function __construct(
-        protected Modulo $modulo,
-    ) {}
-
-    /**
-     * Stores a new instance of Modulo in the database
-     */
-    public function store(array $data): Modulo
+    public function __construct(Modulo $modulo)
     {
-        return $this->modulo->create($data);
-    }
-
-    /**
-     * Returns all instances of Modulo from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Modulo>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->modulo->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
+        parent::__construct($modulo);
     }
 
     /**
@@ -44,7 +23,7 @@ class ModuloRepositoryEloquent implements ModuloRepositoryInterface
      */
     public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null, ?string $unidadeNome = null): LengthAwarePaginator
     {
-        return $this->modulo
+        return $this->model
             ->whereHas('unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->when($search, fn ($q) => $q->where('nome', 'ilike', "%{$search}%"))
             ->when($unidadeNome && $unidadeNome !== 'all', fn ($q) => $q->whereHas('unidade', fn ($q2) => $q2->where('nome', $unidadeNome)))
@@ -60,36 +39,9 @@ class ModuloRepositoryEloquent implements ModuloRepositoryInterface
      */
     public function getAllByInstituicao(int $instituicaoId): Collection
     {
-        return $this->modulo
+        return $this->model
             ->whereHas('unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->with(['unidade', 'andars'])
             ->get();
-    }
-
-    /**
-     * Returns an instance of Modulo from the given id
-     */
-    public function get(int|string $id): ?Modulo
-    {
-        return $this->modulo->find($id);
-    }
-
-    /**
-     * Updates the data of an instance of Modulo
-     */
-    public function update(array $data, int|string $id): Modulo
-    {
-        $modulo = $this->modulo->findOrFail($id);
-        $modulo->update($data);
-
-        return $modulo;
-    }
-
-    /**
-     * Removes an instance of Modulo from the database
-     */
-    public function destroy(int|string $id): bool
-    {
-        return (bool) $this->modulo->findOrFail($id)->delete();
     }
 }

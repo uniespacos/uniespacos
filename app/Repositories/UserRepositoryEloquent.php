@@ -17,9 +17,6 @@ class UserRepositoryEloquent implements UserRepositoryInterface
         protected User $user,
     ) {}
 
-    /**
-     * Stores a new instance of User in the database
-     */
     public function store(array $data): User
     {
         return $this->user->create($data);
@@ -127,17 +124,11 @@ class UserRepositoryEloquent implements UserRepositoryInterface
             ->find($id);
     }
 
-    /**
-     * Returns an instance of User from the given id
-     */
     public function get(int|string $id): ?User
     {
         return $this->user->find($id);
     }
 
-    /**
-     * Updates the data of an instance of User
-     */
     public function update(array $data, int|string $id): User
     {
         $user = $this->user->findOrFail($id);

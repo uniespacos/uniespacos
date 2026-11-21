@@ -10,37 +10,18 @@ use App\Support\SemanaDeReferencia;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
-class EspacoRepositoryEloquent implements EspacoRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Espaco>
+ */
+class EspacoRepositoryEloquent extends BaseRepositoryEloquent implements EspacoRepositoryInterface
 {
-    public function __construct(
-        protected Espaco $espaco,
-    ) {}
-
-    public function store(array $data): Espaco
+    public function __construct(Espaco $espaco)
     {
-        return $this->espaco->create($data);
-    }
-
-    /**
-     * Returns all instances of Espaco from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Espaco>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->espaco->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
+        parent::__construct($espaco);
     }
 
     /**
@@ -50,7 +31,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getPaginatedForPublic(int $instituicaoId, array $filters = [], int $perPage = 6): LengthAwarePaginator
     {
-        $query = $this->espaco->newQuery()
+        $query = $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
         $disponibilidade = $this->disponibilidadeSolicitada($filters);
@@ -192,7 +173,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getPaginatedForAdmin(int $instituicaoId, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = $this->espaco->newQuery()
+        $query = $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId));
 
         return $this->applyFilters($query, $filters)
@@ -229,7 +210,7 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
      */
     public function getDistinctCapacidadesByInstituicao(int $instituicaoId): SupportCollection
     {
-        return $this->espaco->newQuery()
+        return $this->model->newQuery()
             ->whereHas('andar.modulo.unidade', fn ($q) => $q->where('instituicao_id', $instituicaoId))
             ->select('capacidade_pessoas')
             ->distinct()
@@ -261,23 +242,5 @@ class EspacoRepositoryEloquent implements EspacoRepositoryInterface
                 ]);
             },
         ]);
-    }
-
-    public function get(int|string $id): ?Espaco
-    {
-        return $this->espaco->find($id);
-    }
-
-    public function update(array $data, int|string $id): Espaco
-    {
-        $espaco = $this->espaco->findOrFail($id);
-        $espaco->update($data);
-
-        return $espaco;
-    }
-
-    public function destroy(int|string $id): bool
-    {
-        return (bool) $this->espaco->findOrFail($id)->delete();
     }
 }

@@ -8,35 +8,14 @@ use App\Models\Unidade;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class UnidadeRepositoryEloquent implements UnidadeRepositoryInterface
+/**
+ * @extends BaseRepositoryEloquent<Unidade>
+ */
+class UnidadeRepositoryEloquent extends BaseRepositoryEloquent implements UnidadeRepositoryInterface
 {
-    public function __construct(
-        protected Unidade $unidade,
-    ) {}
-
-    /**
-     * Stores a new instance of Unidade in the database
-     */
-    public function store(array $data): Unidade
+    public function __construct(Unidade $unidade)
     {
-        return $this->unidade->create($data);
-    }
-
-    /**
-     * Returns all instances of Unidade from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Unidade>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection
-    {
-        $query = $this->unidade->newQuery();
-
-        if ($filters) {
-            $query->where($filters);
-        }
-
-        return $query->get($columns);
+        parent::__construct($unidade);
     }
 
     /**
@@ -46,7 +25,7 @@ class UnidadeRepositoryEloquent implements UnidadeRepositoryInterface
      */
     public function getAllByInstituicao(int $instituicaoId): Collection
     {
-        return $this->unidade
+        return $this->model
             ->where('instituicao_id', $instituicaoId)
             ->with(['instituicao'])
             ->get();
@@ -57,7 +36,7 @@ class UnidadeRepositoryEloquent implements UnidadeRepositoryInterface
      */
     public function getPaginatedByInstituicao(int $instituicaoId, int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return $this->unidade
+        return $this->model
             ->where('instituicao_id', $instituicaoId)
             ->when($search, fn ($q) => $q->where(
                 fn ($q2) => $q2->where('nome', 'ilike', "%{$search}%")
@@ -66,32 +45,5 @@ class UnidadeRepositoryEloquent implements UnidadeRepositoryInterface
             ->with(['instituicao'])
             ->latest()
             ->paginate($perPage);
-    }
-
-    /**
-     * Returns an instance of Unidade from the given id
-     */
-    public function get(int|string $id): ?Unidade
-    {
-        return $this->unidade->find($id);
-    }
-
-    /**
-     * Updates the data of an instance of Unidade
-     */
-    public function update(array $data, int|string $id): Unidade
-    {
-        $unidade = $this->unidade->findOrFail($id);
-        $unidade->update($data);
-
-        return $unidade;
-    }
-
-    /**
-     * Removes an instance of Unidade from the database
-     */
-    public function destroy(int|string $id): bool
-    {
-        return (bool) $this->unidade->findOrFail($id)->delete();
     }
 }

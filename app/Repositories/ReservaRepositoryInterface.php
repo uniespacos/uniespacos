@@ -8,22 +8,12 @@ use App\Models\Reserva;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-interface ReservaRepositoryInterface
+/**
+ * @extends CrudRepositoryInterface<Reserva>
+ */
+interface ReservaRepositoryInterface extends CrudRepositoryInterface
 {
     public function __construct(Reserva $reserva);
-
-    /**
-     * Stores a new instance of Reserva in the database
-     */
-    public function store(array $data): Reserva;
-
-    /**
-     * Returns all instances of Reserva from the database
-     *
-     * @param  array<array>|null  $filters
-     * @return Collection<int, Reserva>
-     */
-    public function getList(array $columns = ['*'], ?array $filters = null): Collection;
 
     /**
      * Returns a paginated list of Reserva for a specific user, with optional filters
@@ -53,16 +43,6 @@ interface ReservaRepositoryInterface
     public function findForGestorModal(int $reservaId, array $agendaIds, string $weekStart, string $weekEnd): ?Reserva;
 
     /**
-     * Returns an instance of Reserva from the given id
-     */
-    public function get(int|string $id): ?Reserva;
-
-    /**
-     * Updates the data of an instance of Reserva
-     */
-    public function update(array $data, int|string $id): Reserva;
-
-    /**
      * Insere em lote horarios ja montados; cada linha traz o reserva_id.
      *
      * @param  array<int, array<string, mixed>>  $linhas
@@ -75,9 +55,4 @@ interface ReservaRepositoryInterface
      * @return Collection<int, Reserva>
      */
     public function getPendentesDoSolicitante(int $userId): Collection;
-
-    /**
-     * Removes an instance of Reserva from the database
-     */
-    public function destroy(int|string $id): bool;
 }

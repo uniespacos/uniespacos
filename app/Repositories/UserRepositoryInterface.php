@@ -12,9 +12,6 @@ interface UserRepositoryInterface
 {
     public function __construct(User $user);
 
-    /**
-     * Stores a new instance of User in the database
-     */
     public function store(array $data): User;
 
     /**
@@ -50,14 +47,8 @@ interface UserRepositoryInterface
      */
     public function getWithPermissionContext(int|string $id): ?User;
 
-    /**
-     * Returns an instance of User from the given id
-     */
     public function get(int|string $id): ?User;
 
-    /**
-     * Updates the data of an instance of User
-     */
     public function update(array $data, int|string $id): User;
 
     public function temAgendaGerida(User $user): bool;
