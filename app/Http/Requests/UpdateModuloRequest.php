@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Support\Facades\Auth;
+use App\Models\Modulo;
 
 class UpdateModuloRequest extends StoreModuloRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return Auth::user()?->hasPermissionTo('modulos.atualizar') ?? false;
+        $modulo = $this->route('modulo');
+
+        return $modulo instanceof Modulo && ($this->user()?->can('update', $modulo) ?? false);
     }
 }

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Instituicao;
 use App\Repositories\InstituicaoRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class InstituicaoService
 {
@@ -20,6 +21,16 @@ class InstituicaoService
     public function paginate(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
         return $this->repoInstituicao->getPaginated($perPage, $search);
+    }
+
+    /**
+     * Returns every institution with its sectors and their units loaded.
+     *
+     * @return Collection<int, Instituicao>
+     */
+    public function listarComSetores(): Collection
+    {
+        return $this->repoInstituicao->getList()->load(['setors.unidade']);
     }
 
     /**

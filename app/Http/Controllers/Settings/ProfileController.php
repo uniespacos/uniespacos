@@ -8,8 +8,8 @@ use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteProfileRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Models\Instituicao;
 use App\Services\ExclusaoDeContaService;
+use App\Services\InstituicaoService;
 use App\Services\ProcessadorDeFotoDePerfil;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -24,12 +24,12 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): Response
+    public function edit(Request $request, InstituicaoService $instituicaoService): Response
     {
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-            'instituicaos' => Instituicao::with(['setors.unidade'])->get(),
+            'instituicaos' => $instituicaoService->listarComSetores(),
         ]);
     }
 

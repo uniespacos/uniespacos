@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Institucional;
 
+use App\Http\Controllers\Concerns\RespondeComFlash;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarUnidadesRequest;
@@ -11,8 +12,6 @@ use App\Http\Requests\StoreUnidadeRequest;
 use App\Http\Requests\UpdateUnidadeRequest;
 use App\Models\Unidade;
 use App\Services\UnidadeService;
-use App\Support\MensagemDeErro;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -20,7 +19,7 @@ use Inertia\Response;
 
 class InstitucionalUnidadeController extends Controller
 {
-    use AuthorizesRequests;
+    use RespondeComFlash;
 
     public function __construct(
         protected UnidadeService $service,
@@ -30,7 +29,7 @@ class InstitucionalUnidadeController extends Controller
     {
         $this->authorize('viewAny', Unidade::class);
 
-        $instituicaoId = Auth::user()->setor->unidade->instituicao_id;
+        $instituicaoId = Auth::user()?->instituicaoId() ?? abort(403);
         $validated = $request->validated();
         $search = $validated['search'] ?? null;
 
@@ -45,10 +44,8 @@ class InstitucionalUnidadeController extends Controller
 
     public function create(): Response
     {
-        $user = Auth::user();
-
         return Inertia::render('Administrativo/Unidades/CadastrarUnidade', [
-            'instituicao' => $user->setor->unidade->instituicao,
+            'instituicao' => Auth::user()?->instituicao() ?? abort(403),
         ]);
     }
 
@@ -56,23 +53,21 @@ class InstitucionalUnidadeController extends Controller
     {
         $this->authorize('create', Unidade::class);
 
-        try {
-            $this->service->store($request->validated());
-
-            return redirect()->route('institucional.unidades.index')
-                ->with('success', __('Unit created successfully.'));
-        } catch (\Throwable $th) {
-            return redirect()->route('institucional.unidades.index')
-                ->with('error', __('Error creating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
-        }
+        return $this->executar(
+            fn () => $this->service->store($request->validated()),
+            __('Unit created successfully.'),
+            'Error creating unit: :message',
+            rotaSucesso: 'institucional.unidades.index',
+            rotaErro: 'institucional.unidades.index',
+        );
     }
 
     public function edit(Unidade $unidade): Response
     {
-        $user = Auth::user();
+        $this->authorize('update', $unidade);
 
         return Inertia::render('Administrativo/Unidades/EditarUnidade', [
-            'instituicao' => $user->setor->unidade->instituicao,
+            'instituicao' => Auth::user()?->instituicao() ?? abort(403),
             'unidade' => $unidade,
         ]);
     }
@@ -81,14 +76,13 @@ class InstitucionalUnidadeController extends Controller
     {
         $this->authorize('update', $unidade);
 
-        try {
-            $this->service->update($unidade, $request->validated());
-
-            return redirect()->route('institucional.unidades.index')
-                ->with('success', __('Unit updated successfully.'));
-        } catch (\Throwable $th) {
-            return back()->withInput()->with('error', __('Error updating unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
-        }
+        return $this->executar(
+            fn () => $this->service->update($unidade, $request->validated()),
+            __('Unit updated successfully.'),
+            'Error updating unit: :message',
+            rotaSucesso: 'institucional.unidades.index',
+            comEntrada: true,
+        );
     }
 
     public function destroy(ConfirmPasswordRequest $request, Unidade $unidade): RedirectResponse
@@ -99,12 +93,10 @@ class InstitucionalUnidadeController extends Controller
             return back()->with('error', __('The password provided is incorrect.'));
         }
 
-        try {
-            $this->service->delete($unidade);
-
-            return back()->with('success', __('Unit deleted successfully.'));
-        } catch (\Throwable $th) {
-            return back()->with('error', __('Error deleting unit: :message', ['message' => MensagemDeErro::paraUsuario($th)]));
-        }
+        return $this->executar(
+            fn () => $this->service->delete($unidade),
+            __('Unit deleted successfully.'),
+            'Error deleting unit: :message',
+        );
     }
 }

@@ -187,36 +187,6 @@ parameters:
 			path: app/Http/Controllers/Institucional/InstitucionalInstituicaoController.php
 
 		-
-			message: '#^Cannot access property \$id on App\\Models\\Instituicao\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
-
-		-
-			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
-
-		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
-
-		-
-			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalModuloController.php
-
-		-
 			message: '#^Parameter \#3 \$search of method App\\Services\\ModuloService\:\:paginate\(\) expects string\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -253,30 +223,6 @@ parameters:
 			path: app/Http/Controllers/Institucional/InstitucionalRoleController.php
 
 		-
-			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
-
-		-
-			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
-
-		-
-			message: '#^Cannot call method load\(\) on App\\Models\\Instituicao\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
 			count: 1
@@ -287,30 +233,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Institucional/InstitucionalSetorController.php
-
-		-
-			message: '#^Cannot access property \$instituicao on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
-
-		-
-			message: '#^Cannot access property \$instituicao_id on App\\Models\\Unidade\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
-
-		-
-			message: '#^Cannot access property \$setor on App\\Models\\User\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
-
-		-
-			message: '#^Cannot access property \$unidade on App\\Models\\Setor\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Institucional/InstitucionalUnidadeController.php
 
 		-
 			message: '#^Parameter \#3 \$search of method App\\Services\\UnidadeService\:\:paginate\(\) expects string\|null, mixed given\.$#'

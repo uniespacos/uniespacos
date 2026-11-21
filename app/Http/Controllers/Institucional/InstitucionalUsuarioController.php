@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Institucional;
 
 use App\Exceptions\ContaNaoPodeSerAnonimizadaException;
+use App\Http\Controllers\Concerns\RespondeComFlash;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarUsuariosRequest;
@@ -14,7 +15,6 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\UserService;
 use App\Support\MensagemDeErro;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +24,7 @@ use Inertia\Response;
 
 class InstitucionalUsuarioController extends Controller
 {
-    use AuthorizesRequests;
+    use RespondeComFlash;
 
     public function __construct(
         protected UserService $service,
@@ -68,13 +68,11 @@ class InstitucionalUsuarioController extends Controller
     {
         $this->authorize('update', $usuario);
 
-        try {
-            $this->service->resendVerificationEmail($usuario);
-
-            return back()->with('success', __('Verification email resent.'));
-        } catch (\Exception $e) {
-            return back()->with('error', MensagemDeErro::paraUsuario($e));
-        }
+        return $this->executar(
+            fn () => $this->service->resendVerificationEmail($usuario),
+            __('Verification email resent.'),
+            ':message',
+        );
     }
 
     public function sendPasswordReset(User $usuario): RedirectResponse

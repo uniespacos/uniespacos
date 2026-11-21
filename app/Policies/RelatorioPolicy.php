@@ -22,14 +22,9 @@ class RelatorioPolicy
     {
         // Institucional: acesso a todas as agendas de sua instituição
         if ($user->can('relatorios.escopo-instituicao') || $user->can('secao.dashboard-institucional')) {
-            $instituicaoId = $user->setor?->unidade?->instituicao_id;
-            if (! is_int($instituicaoId)) {
-                $instituicaoId = null;
-            }
-
             return [
                 'tipo' => 'institucional',
-                'instituicaoId' => $instituicaoId,
+                'instituicaoId' => $user->instituicaoId(),
                 'unidadeId' => null,
                 'agendaIds' => [],
             ];

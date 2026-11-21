@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Institucional;
 
+use App\Http\Controllers\Concerns\RespondeComFlash;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmPasswordRequest;
 use App\Http\Requests\ListarSetoresRequest;
@@ -12,8 +13,6 @@ use App\Http\Requests\UpdateSetorRequest;
 use App\Models\Setor;
 use App\Services\SetorService;
 use App\Services\UnidadeService;
-use App\Support\MensagemDeErro;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +21,7 @@ use Inertia\Response;
 
 class InstitucionalSetorController extends Controller
 {
-    use AuthorizesRequests;
+    use RespondeComFlash;
 
     public function __construct(
         protected SetorService $service,
@@ -33,8 +32,8 @@ class InstitucionalSetorController extends Controller
     {
         $this->authorize('viewAny', Setor::class);
 
-        $user = Auth::user();
-        $instituicao = $user->setor->unidade->instituicao->load(['unidades']);
+        $instituicao = Auth::user()?->instituicao() ?? abort(403);
+        $instituicao->load(['unidades']);
         $instituicaoId = $instituicao->id;
         $validated = $request->validated();
         $search = $validated['search'] ?? null;
@@ -75,14 +74,13 @@ class InstitucionalSetorController extends Controller
     {
         $this->authorize('create', Setor::class);
 
-        try {
-            $this->service->store($request->validated());
-
-            return redirect()->route('institucional.setors.index')
-                ->with('success', __('Sector registered successfully!'));
-        } catch (\Exception $e) {
-            return back()->with(['error' => __('Error creating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
-        }
+        return $this->executar(
+            fn () => $this->service->store($request->validated()),
+            __('Sector registered successfully!'),
+            'Error creating sector: :message',
+            rotaSucesso: 'institucional.setors.index',
+            comEntrada: true,
+        );
     }
 
     public function edit(Setor $setor): RedirectResponse
@@ -95,13 +93,12 @@ class InstitucionalSetorController extends Controller
     {
         $this->authorize('update', $setor);
 
-        try {
-            $this->service->update($setor, $request->validated());
-
-            return back()->with('success', __('Sector updated successfully!'));
-        } catch (\Exception $e) {
-            return back()->with(['error' => __('Error updating sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])])->withInput();
-        }
+        return $this->executar(
+            fn () => $this->service->update($setor, $request->validated()),
+            __('Sector updated successfully!'),
+            'Error updating sector: :message',
+            comEntrada: true,
+        );
     }
 
     public function destroy(ConfirmPasswordRequest $request, Setor $setor): RedirectResponse
@@ -112,12 +109,10 @@ class InstitucionalSetorController extends Controller
             return back()->with('error', __('The password provided is incorrect.'));
         }
 
-        try {
-            $this->service->delete($setor);
-
-            return back()->with('success', __('Sector removed successfully!'));
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => __('Error removing sector: :message', ['message' => MensagemDeErro::paraUsuario($e)])]);
-        }
+        return $this->executar(
+            fn () => $this->service->delete($setor),
+            __('Sector removed successfully!'),
+            'Error removing sector: :message',
+        );
     }
 }
