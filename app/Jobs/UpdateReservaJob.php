@@ -11,7 +11,6 @@ use App\Notifications\ReservationUpdatedNotification;
 use App\Notifications\ReservationUpdateFailedNotification;
 use App\Services\EdicaoDeReservaService;
 use App\Services\ReservaBroadcaster;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -78,7 +77,7 @@ class UpdateReservaJob implements ShouldQueue
         if ($this->reserva->user !== null) {
             try {
                 $this->reserva->user->notify(new ReservationUpdateFailedNotification($this->reserva, $this->user));
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 Log::error('Failed to send reservation update failure notification', [
                     'reserva_id' => $this->reserva->id,
                     'exception' => $e,
@@ -92,7 +91,7 @@ class UpdateReservaJob implements ShouldQueue
         if ($this->reserva->user !== null) {
             try {
                 $this->reserva->user->notify(new ReservationUpdatedNotification($this->reserva));
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 Log::warning('Failed to send reservation update notification', [
                     'reserva_id' => $this->reserva->id,
                     'exception' => $e,
@@ -102,9 +101,17 @@ class UpdateReservaJob implements ShouldQueue
 
         try {
             ValidateReservationConflictsJob::dispatch($this->reserva);
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da edição de reserva: validação de conflitos não despachada', [
+                'reserva_id' => $this->reserva->id,
+                'exception' => $e,
+            ]);
+        }
+
+        try {
             $broadcaster->publicar($this->reserva, 'updated');
         } catch (Throwable $e) {
-            Log::warning('Falha em efeito pós-commit da edição de reserva', [
+            Log::warning('Falha em efeito pós-commit da edição de reserva: broadcast não publicado', [
                 'reserva_id' => $this->reserva->id,
                 'exception' => $e,
             ]);

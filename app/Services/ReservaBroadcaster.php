@@ -15,7 +15,15 @@ class ReservaBroadcaster
     public function publicar(Reserva $reserva, string $acao): void
     {
         if (in_array($acao, ReservaAlterada::ACOES_QUE_ALTERAM_RELATORIOS, true)) {
-            ReservaAlterada::dispatch($acao, $reserva->id);
+            try {
+                ReservaAlterada::dispatch($acao, $reserva->id);
+            } catch (Throwable $e) {
+                Log::warning('Falha ao invalidar cache de relatórios após alteração de reserva', [
+                    'reserva_id' => $reserva->id,
+                    'acao' => $acao,
+                    'exception_class' => $e::class,
+                ]);
+            }
         }
 
         try {

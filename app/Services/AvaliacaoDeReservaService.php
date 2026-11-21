@@ -18,7 +18,6 @@ use App\Notifications\ReservationEvaluatedNotification;
 use App\Repositories\HorarioRepositoryInterface;
 use App\Repositories\ReservaRepositoryInterface;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -317,7 +316,14 @@ class AvaliacaoDeReservaService
 
         $this->notificarSolicitante($reserva, $gestor);
 
-        $this->broadcaster->publicar($reserva, 'evaluated');
+        try {
+            $this->broadcaster->publicar($reserva, 'evaluated');
+        } catch (Throwable $e) {
+            Log::warning('Falha em efeito pós-commit da avaliação de reserva: broadcast não publicado', [
+                'reserva_id' => $reserva->id,
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**
@@ -358,7 +364,7 @@ class AvaliacaoDeReservaService
                 $reserva->situacao_formatada,
                 $gestor
             ));
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::warning('Falha ao enviar notificação de avaliação da reserva', [
                 'reserva_id' => $reserva->id,
                 'exception' => $e,
