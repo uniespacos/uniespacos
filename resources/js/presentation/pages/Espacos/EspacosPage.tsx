@@ -69,7 +69,7 @@ export default function EspacosPage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('espacos.titulo')} />
-            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
                 <GenericHeader titulo={t('espacos.consultar_espacos')} descricao={t('espacos.consultar_espacos_desc')} />
 
                 <EspacoFiltroBusca
@@ -84,7 +84,7 @@ export default function EspacosPage() {
                 {espacos.length > 0 ? (
                     <>
                         {resumoDisponibilidade && <p className="text-muted-foreground -mt-2 text-sm">{resumoDisponibilidade}</p>}
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                             {espacos.map((espaco) => (
                                 <EspacoCard
                                     key={espaco.id}

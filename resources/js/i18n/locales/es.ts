@@ -701,6 +701,8 @@ export const es = {
             disponibilidade_resumo: 'Mostrando espacios con horario libre el {{data}}',
             disponibilidade_resumo_turno: 'Mostrando espacios con horario libre el {{data}} ({{turno}})',
             quantas_pessoas: '¿Cuántas personas?',
+            atalho_hoje: 'Hoy',
+            atalho_amanha: 'Mañana',
             capacidade_nome: 'Capacidad',
             busca_label: 'Búsqueda',
             limpar_busca: 'Limpiar búsqueda',

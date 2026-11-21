@@ -697,6 +697,8 @@ export const ptBR = {
             disponibilidade_resumo: 'Mostrando espaços com horário livre em {{data}}',
             disponibilidade_resumo_turno: 'Mostrando espaços com horário livre em {{data}} ({{turno}})',
             quantas_pessoas: 'Quantas pessoas?',
+            atalho_hoje: 'Hoje',
+            atalho_amanha: 'Amanhã',
             capacidade_nome: 'Capacidade',
             busca_label: 'Busca',
             limpar_busca: 'Limpar busca',

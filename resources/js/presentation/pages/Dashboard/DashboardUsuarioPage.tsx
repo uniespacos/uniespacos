@@ -104,27 +104,6 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {atalhosSecundarios.map(({ label, descricao, Icone, href }) => (
-                        <Link key={href} href={href} className="group block min-w-0">
-                            <Card className="border-border/70 group-hover:border-primary/50 h-full min-w-0 transition-all duration-200 group-hover:shadow-sm">
-                                <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-5">
-                                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-3 transition-colors">
-                                            <Icone className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
-                                            <p className="text-muted-foreground truncate text-xs">{descricao}</p>
-                                        </div>
-                                    </div>
-                                    <ArrowRight className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
-
                 {espacosRecentes.length > 0 && (
                     <section aria-labelledby="dashboard-reservar-de-novo" className="space-y-3">
                         <div>
@@ -153,6 +132,27 @@ export default function DashboardUsuarioPage(props: DashboardUsuarioProps) {
                         </ul>
                     </section>
                 )}
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    {atalhosSecundarios.map(({ label, descricao, Icone, href }) => (
+                        <Link key={href} href={href} className="group block min-w-0">
+                            <Card className="border-border/70 group-hover:border-primary/50 h-full min-w-0 transition-all duration-200 group-hover:shadow-sm">
+                                <CardContent className="flex items-center justify-between gap-3 overflow-hidden p-3 sm:p-5">
+                                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                                        <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground shrink-0 rounded-xl p-2.5 transition-colors sm:p-3">
+                                            <Icone className="h-5 w-5" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">{label}</p>
+                                            <p className="text-muted-foreground hidden truncate text-xs sm:block">{descricao}</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="text-muted-foreground group-hover:text-primary hidden h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 sm:block" />
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
 
                 <Tabs defaultValue="reservas" className="w-full space-y-4">
                     <TabsList className="grid w-full grid-cols-2 sm:w-[440px]">

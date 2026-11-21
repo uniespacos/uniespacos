@@ -699,6 +699,8 @@ export const en = {
             disponibilidade_resumo: 'Showing spaces with free time on {{data}}',
             disponibilidade_resumo_turno: 'Showing spaces with free time on {{data}} ({{turno}})',
             quantas_pessoas: 'How many people?',
+            atalho_hoje: 'Today',
+            atalho_amanha: 'Tomorrow',
             capacidade_nome: 'Capacity',
             busca_label: 'Search',
             limpar_busca: 'Clear search',

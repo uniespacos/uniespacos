@@ -198,7 +198,7 @@ export default function EspacoCard({
 
             <CardContent className="flex-grow space-y-2.5 px-4 py-2">
                 {espaco.descricao ? (
-                    <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed" title={espaco.descricao}>
+                    <p className="text-muted-foreground line-clamp-2 hidden text-xs leading-relaxed sm:block" title={espaco.descricao}>
                         {espaco.descricao}
                     </p>
                 ) : null}
@@ -249,7 +249,7 @@ export default function EspacoCard({
                     <Link
                         href={urlAgenda}
                         prefetch="hover"
-                        className="text-primary flex w-full items-center justify-between group-hover:underline"
+                        className="text-primary flex min-h-11 w-full items-center justify-between group-hover:underline"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (handleSolicitarReserva) {
